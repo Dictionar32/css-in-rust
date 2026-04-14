@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "paths": {
+      "@tailwind-styled/shared": ["./packages/domain/shared/src/index.ts"],
+      "@tailwind-styled/compiler": ["./packages/domain/compiler/src/index.ts"],
+      "@tailwind-styled/compiler/internal": ["./packages/domain/compiler/src/internal.ts"],
+      "@tailwind-styled/scanner": ["./packages/domain/scanner/src/index.ts"],
+      "@tailwind-styled/analyzer": ["./packages/domain/analyzer/src/index.ts"],
+      "@tailwind-styled/engine": ["./packages/domain/engine/src/index.ts"],
+      "@tailwind-styled/engine/internal": ["./packages/domain/engine/src/internal.ts"],
+      "@tailwind-styled/theme": ["./packages/domain/theme/src/index.ts"],
+      "@tailwind-styled/plugin": ["./packages/domain/plugin/src/index.ts"],
+      "@tailwind-styled/plugin-api": ["./packages/domain/plugin-api/src/index.ts"],
+      "@tailwind-styled/plugin/presets": ["./packages/domain/plugin/src/presets.ts"],
+      "@tailwind-styled/syntax": ["./packages/domain/syntax/src/index.ts"],
+      "@tailwind-styled/next": ["./packages/presentation/next/src/index.ts"],
+      "@tailwind-styled/vite": ["./packages/presentation/vite/src/plugin.ts"],
+      "@tailwind-styled/rspack": ["./packages/presentation/rspack/src/index.ts"],
+      "@tailwind-styled/vue": ["./packages/presentation/vue/src/index.ts"],
+      "@tailwind-styled/svelte": ["./packages/presentation/svelte/src/index.ts"],
+      "@tailwind-styled/devtools": ["./packages/infrastructure/devtools/src/index.tsx"],
+      "@tailwind-styled/animate": ["./packages/domain/animate/src/index.ts"],
+      "@tailwind-styled/runtime-css": ["./packages/domain/runtime-css/src/index.ts"],
+      "@tailwind-styled/preset": ["./packages/domain/preset/src/index.ts"],
+      "@tailwind-styled/theme/live-tokens": ["./packages/domain/theme/src/liveTokens.ts"],
+      "create-tailwind-styled": ["./packages/infrastructure/cli/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
+  "exclude": ["packages/*/src/**/*.test.ts", "packages/*/src/**/*.test.tsx", "packages/_experiments/**"]
+}
