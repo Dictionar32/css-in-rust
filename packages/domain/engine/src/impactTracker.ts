@@ -81,23 +81,29 @@ export class ImpactTracker {
       // Graceful fallback ke calculateImpact tanpa bundle data
     }
 
-    if (!bundleAnalysis) {
-      // Buat BundleAnalysisResult minimal dari scan data saja
-      const usedIn = (scanResult?.files ?? []).filter(f =>
-        f.classes?.includes(normalizedClass)
-      )
-      bundleAnalysis = {
-        className: normalizedClass,
-        totalUsage: usedIn.length,
-        files: usedIn.map(f => f.file),
-        bundleSizeBytes: 0,
-        variantChains: [],
-        isDeadCode: usedIn.length === 0,
-        dependencies: [],
-      }
-    }
+    const resolvedBundleAnalysis =
+      bundleAnalysis ??
+      (() => {
+        // Buat BundleAnalysisResult minimal dari scan data saja
+        const usedIn = (scanResult?.files ?? []).filter((f) =>
+          f.classes?.includes(normalizedClass)
+        )
+        return {
+          className: normalizedClass,
+          totalUsage: usedIn.length,
+          files: usedIn.map((f) => ({
+            file: f.file,
+            line: 1,
+            column: 1,
+          })),
+          bundleSizeBytes: 0,
+          variantChains: [],
+          isDeadCode: usedIn.length === 0,
+          dependencies: [],
+        } satisfies BundleAnalysisResult
+      })()
 
-    return this.calculateImpact(normalizedClass, bundleAnalysis, scanResult)
+    return this.calculateImpact(normalizedClass, resolvedBundleAnalysis, scanResult)
   }
 
   /**

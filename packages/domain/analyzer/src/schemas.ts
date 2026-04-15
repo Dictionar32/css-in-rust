@@ -2,6 +2,15 @@ import { TwError } from "@tailwind-styled/shared"
 import type { ScanWorkspaceOptions } from "@tailwind-styled/scanner"
 import { z } from "zod"
 
+const formatIssuePath = (path: readonly PropertyKey[]): string =>
+  path.length > 0
+    ? path
+        .map((segment) =>
+          typeof segment === "symbol" ? segment.description ?? segment.toString() : String(segment)
+        )
+        .join(".")
+    : "<root>"
+
 const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false
   const proto = Object.getPrototypeOf(value)
@@ -11,7 +20,7 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
 const formatIssues = (error: z.ZodError): string =>
   error.issues
     .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join(".") : "<root>"
+      const path = formatIssuePath(issue.path)
       return `${path}: ${issue.message}`
     })
     .join("; ")
@@ -19,7 +28,13 @@ const formatIssues = (error: z.ZodError): string =>
 const parseWithSchema = <T>(schema: z.ZodType<T>, data: unknown, label: string): T => {
   const parsed = schema.safeParse(data)
   if (parsed.success) return parsed.data
-  throw TwError.fromZod(parsed.error)
+  const details = formatIssues(parsed.error)
+  throw new TwError(
+    "validation",
+    "SCHEMA_VALIDATION_FAILED",
+    details ? `${label}: ${details}` : label,
+    parsed.error
+  )
 }
 
 const CountSchema = z.number().int().min(0)

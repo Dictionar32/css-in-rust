@@ -64,6 +64,20 @@ export function createDebugLogger(namespace: string, label?: string): (msg: stri
 
 export type ErrorSource = "rust" | "validation" | "compile" | "io" | "config" | "unknown"
 
+type ZodLikeIssue = {
+  path?: readonly PropertyKey[]
+  message?: string
+}
+
+function formatIssuePath(path?: readonly PropertyKey[]): string {
+  if (!path || path.length === 0) return "(root)"
+  return path
+    .map((segment) =>
+      typeof segment === "symbol" ? segment.description ?? segment.toString() : String(segment)
+    )
+    .join(".")
+}
+
 export class TwError extends Error {
   /** @deprecated Gunakan source */
   public readonly domain: string
@@ -99,10 +113,10 @@ export class TwError extends Error {
     return new TwError("rust", "RUST_ERROR", String(err), err)
   }
 
-  /** Buat TwError dari ZodError — ambil issue pertama sebagai message */
-  static fromZod(err: { errors?: Array<{ path?: (string | number)[]; message?: string }> }): TwError {
-    const first = err.errors?.[0]
-    const path = first?.path?.join(".") ?? "(root)"
+  /** Buat TwError dari ZodError — dukung shape Zod v3 (`errors`) dan v4 (`issues`). */
+  static fromZod(err: { issues?: ZodLikeIssue[]; errors?: ZodLikeIssue[] }): TwError {
+    const first = err.issues?.[0] ?? err.errors?.[0]
+    const path = formatIssuePath(first?.path)
     const message = first ? `${path}: ${first.message}` : "Schema validation failed"
     return new TwError("validation", "SCHEMA_VALIDATION_FAILED", message, err)
   }

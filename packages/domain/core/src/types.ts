@@ -6,6 +6,8 @@
  */
 
 // ── Shared types (re-exported for backward compatibility) ─────────────────────
+import type React from "react"
+import type { AnimateOptions } from "@tailwind-styled/animate"
 import type { HtmlTagName, VariantMatrix, VariantProps, VariantValue } from "@tailwind-styled/shared"
 export type { HtmlTagName, VariantProps, VariantValue, VariantMatrix } from "@tailwind-styled/shared"
 
@@ -53,53 +55,72 @@ export type CvFn<C extends ComponentConfig> = (
 export interface StyledComponentProps {
   className?: string
   as?: HtmlTagName
-  [key: string]: VariantValue
+  children?: React.ReactNode
+  [key: string]: unknown
 }
 
 // ── Sub Component Map ────────────────────────────────────────────────────────
 export type SubComponentMap = Record<string, unknown>
 
 // ── Tw Object ────────────────────────────────────────────────────────────────
-export interface TwObject {
-  tag: HtmlTagName
-  config: ComponentConfig
-}
-
 // ── Tw Styled Component ──────────────────────────────────────────────────────
 export interface TwStyledComponent<Config extends ComponentConfig = ComponentConfig> {
-  (props: StyledComponentProps & InferVariantProps<Config>): unknown
+  (props: StyledComponentProps & InferVariantProps<Config>): React.ReactElement | null
   displayName?: string
-  extend?: (strings: TemplateStringsArray) => TwStyledComponent<Config>
-  withVariants?: (config: Partial<Config>) => TwStyledComponent<Config>
-  [key: string]: ((props: StyledComponentProps) => unknown) | string | undefined
+  extend: {
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
+    (config: {
+      classes?: string
+      variants?: ComponentConfig["variants"]
+      defaultVariants?: ComponentConfig["defaultVariants"]
+      compoundVariants?: ComponentConfig["compoundVariants"]
+    }): TwStyledComponent<Config>
+  }
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config>
+  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config>>
+  [key: string]:
+    | ((strings: TemplateStringsArray) => TwStyledComponent<Config>)
+    | ((config: Partial<Config>) => TwStyledComponent<Config>)
+    | ((props: StyledComponentProps) => unknown)
+    | ((opts: AnimateOptions) => Promise<TwStyledComponent<Config>>)
+    | string
+    | undefined
 }
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
 export interface TwSubComponent<P = unknown> {
-  (props: P): unknown
+  (props: P): React.ReactElement | null
   displayName?: string
+}
+
+export interface TwTemplateFactory<Config extends ComponentConfig = ComponentConfig> {
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
+  <C extends ComponentConfig>(config: C): TwStyledComponent<C>
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────
 export type TwTagFactory = {
-  [K in HtmlTagName]: <C extends ComponentConfig>(config?: C) => TwStyledComponent<C>
+  [K in HtmlTagName]: TwTemplateFactory
 }
 
 // ── Tw Tag Factory Any ───────────────────────────────────────────────────────
 export type TwTagFactoryAny = {
-  [key: string]: <C extends ComponentConfig>(config?: C) => TwStyledComponent<C>
+  [key: string]: TwTemplateFactory
 }
 
 // ── Tw Component Factory ────────────────────────────────────────────────────
-export type TwComponentFactory<T extends HtmlTagName = HtmlTagName> = <C extends ComponentConfig>(
-  tag: T,
-  config?: C
-) => TwStyledComponent<C>
+export type TwComponentFactory<T extends React.ElementType = React.ElementType> = (
+  tag: T
+) => TwTemplateFactory
 
 // ── Tw Server Object ────────────────────────────────────────────────────────
 // Intersection dengan TwTagFactory — server variant yang hanya support static classes
 export type TwServerObject = TwTagFactory & {
-  [K in HtmlTagName as `${K}`]: <C extends ComponentConfig>(config?: C) => TwStyledComponent<C>
+  [K in HtmlTagName as `${K}`]: TwTemplateFactory
+}
+
+export type TwObject = TwComponentFactory & TwTagFactory & {
+  server: TwServerObject
 }
 
 // ── Storybook utilities ──────────────────────────────────────────────────────

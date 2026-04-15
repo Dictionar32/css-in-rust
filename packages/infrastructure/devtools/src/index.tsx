@@ -420,7 +420,8 @@ function ContainerPanel() {
         React.createElement(
           "div",
           null,
-          entry.breakpoints.map((bp: { minWidth: string; label?: string }, i: number =>
+          entry.breakpoints.map(
+            (bp: { minWidth: string; classes: string; label?: string }, i: number) =>
             React.createElement(
               "div",
               { key: i, style: { ...S.row, marginBottom: "2px" } },

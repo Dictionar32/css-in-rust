@@ -4,14 +4,24 @@
  *
  * Pattern: buat preset custom dengan extend/merge tanpa menyentuh compiler.
  */
-import type { ComponentConfig } from "@tailwind-styled/shared"
 import { defaultPreset, designTokens } from "./defaultPreset"
+
+// Keep preset typing local so preset does not depend on core-only component contracts.
+export interface PresetComponentConfig {
+  readonly base?: string
+  readonly variants?: Record<string, Record<string, string>>
+  readonly defaultVariants?: Record<string, string>
+  readonly compoundVariants?: Array<{ class: string; [key: string]: string }>
+  readonly state?: Record<string, Record<string, string>>
+  readonly container?: Record<string, string>
+  readonly containerName?: string
+}
 
 export interface PresetExtension {
   /** Token tambahan (akan di-merge dengan defaultPreset tokens) */
   tokens?: Record<string, string>
   /** Component configs default yang bisa di-override */
-  components?: Record<string, ComponentConfig>
+  components?: Record<string, PresetComponentConfig>
   /** CSS tambahan yang di-inject setelah @theme default */
   additionalCss?: string
   /** Override dark mode strategy */

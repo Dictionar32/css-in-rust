@@ -22,6 +22,20 @@ export interface TransformErrorInfo {
   snippet?: string
 }
 
+type ZodLikeIssue = {
+  path?: readonly PropertyKey[]
+  message?: string
+}
+
+function formatIssuePath(path?: readonly PropertyKey[]): string {
+  if (!path || path.length === 0) return "(root)"
+  return path
+    .map((segment) =>
+      typeof segment === "symbol" ? segment.description ?? segment.toString() : String(segment)
+    )
+    .join(".")
+}
+
 /**
  * Unified error class untuk semua domain di tailwind-styled.
  *
@@ -89,9 +103,9 @@ export class TwError extends Error {
     return new TwError("rust", "RUST_ERROR", String(err), err)
   }
 
-  static fromZod(err: { errors?: Array<{ path?: (string | number)[]; message?: string }> }): TwError {
-    const first = err.errors?.[0]
-    const path = first?.path?.join(".") ?? "(root)"
+  static fromZod(err: { issues?: ZodLikeIssue[]; errors?: ZodLikeIssue[] }): TwError {
+    const first = err.issues?.[0] ?? err.errors?.[0]
+    const path = formatIssuePath(first?.path)
     const message = first ? `${path}: ${first.message}` : "Schema validation failed"
     return new TwError("validation", "SCHEMA_VALIDATION_FAILED", message, err)
   }

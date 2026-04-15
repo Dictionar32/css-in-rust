@@ -1,11 +1,10 @@
 //! export-schemas — Generate JSON Schema dari semua public Rust structs.
-//! 
+//!
 //! Output: native/json-schemas/*.json
 //! Dijalankan oleh: npm run generate:schemas
-//! 
+//!
 //! Usage: cargo run --bin export-schemas
 
-use schemars::schema_for;
 use serde_json;
 use std::fs;
 use std::path::Path;
@@ -36,6 +35,12 @@ fn main() {
         exported += 1;
     }
 
-    println!("[export-schemas] Done. {} schemas exported to {}/", exported, out_dir.display());
-    println!("[export-schemas] Run: npx tsx scripts/generate-json-schemas.ts to create Zod schemas");
+    println!(
+        "[export-schemas] Done. {} schemas exported to {}/",
+        exported,
+        out_dir.display()
+    );
+    println!(
+        "[export-schemas] Run: npx tsx scripts/generate-json-schemas.ts to create Zod schemas"
+    );
 }

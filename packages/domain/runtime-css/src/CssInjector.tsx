@@ -1,5 +1,3 @@
-"use server"
-
 /**
  * tailwind-styled-v5 — CSS Injector (React Server Component)
  *

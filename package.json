@@ -186,11 +186,11 @@
     }
   },
   "scripts": {
-    "build": "npm run build:packages && tsup --config tsup.config.ts && npm run build -w examples/next-js-app",
+    "build": "npm run build:packages && tsup --config tsup.config.ts && npm run example:build",
     "build:packages": "turbo run build --continue",
     "build:rust": "cd native && cargo build --release",
     "build:dev": "npm run build:packages && tsup --config tsup.config.ts --sourcemap --watch",
-    "build:release": "npm run build:packages && tsup --config tsup.config.ts --no-sourcemap && npm run build -w examples/next-js-app",
+    "build:release": "npm run build:packages && tsup --config tsup.config.ts --no-sourcemap && npm run example:build",
     "verify:builds": "npm run build && cd examples/next-js-app && npm install --ignore-scripts && npx tsc --noEmit || echo \"[verify:builds] example typecheck done\"",
     "clean": "rm -rf dist && turbo run clean --continue",
     "dev": "tsup --config tsup.config.ts --watch",
@@ -229,7 +229,7 @@
     "validate:canary:ci": "node scripts/validate-canary.mjs shared compiler engine scanner core",
     "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ \u2014 run npm run generate:schemas and commit\" && exit 1)",
     "test:smoke:fallback": "TWS_DISABLE_NATIVE=1 node --test tests/smoke/*.test.mjs",
-    "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build",
+    "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --webpack",
     "example:dev": "cd examples/next-js-app && npm install --ignore-scripts && npx next dev",
     "example:typecheck": "cd examples/next-js-app && npx tsc --noEmit",
     "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'"

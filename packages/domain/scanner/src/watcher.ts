@@ -7,8 +7,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import type { ScanWorkspaceResult, ScanFileResult } from "./types"
-import { scanFile } from "./scanFile"
-import { isScannableFile, DEFAULT_EXTENSIONS, DEFAULT_IGNORES } from "./index"
+import { scanFile, isScannableFile, DEFAULT_EXTENSIONS, DEFAULT_IGNORES } from "./index"
 
 export interface WatchOptions {
   rootDir: string

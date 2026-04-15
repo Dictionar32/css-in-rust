@@ -161,7 +161,7 @@ async function tryRunAnalyzer(root: string, options: EngineOptions) {
         semantic?.conflicts.map((conflict) => ({
           className: conflict.className,
           files: [],
-          classes: conflict.classes,
+          classes: [...conflict.classes],
           message: conflict.message,
         })) ?? [],
       classUsage,
@@ -662,11 +662,10 @@ export async function build(
 ): Promise<{ css: string; classes: string[]; totalFiles: number }> {
   const engine = await createEngine(opts)
   const result = await engine.build()
-  await engine.close?.()
   return {
     css: result.css,
-    classes: result.classes,
-    totalFiles: result.metadata?.totalFiles ?? 0,
+    classes: result.mergedClassList.split(/\s+/).filter(Boolean),
+    totalFiles: result.scan.totalFiles,
   }
 }
 
@@ -703,7 +702,11 @@ export async function traceClass(
     const { trace } = await import("./trace")
 
     const { rules, classToRuleIds } = parseCssToIr(css)
-    const resolver = new CascadeResolver(rules, classToRuleIds)
+    const resolver = new CascadeResolver()
+    resolver.addRules(rules)
+    for (const [registeredClassName, ruleIds] of classToRuleIds) {
+      resolver.registerClass(registeredClassName, ruleIds)
+    }
 
     return trace(className, resolver)
   } catch {
@@ -771,6 +774,7 @@ export async function inspectClass(
   const usedIn = (scanResult.files ?? [])
     .filter(f => f.classes?.includes(normalizedClass))
     .map(f => f.file)
+  const usedInLocations = usedIn.map((file) => ({ file, line: 1, column: 1 }))
 
   // Trace: get CSS properties
   const traceResult = await traceClass(normalizedClass, scanResult, css)
@@ -781,7 +785,7 @@ export async function inspectClass(
   const dummyBundle = {
     className: normalizedClass,
     totalUsage: usedIn.length,
-    files: usedIn,
+    files: usedInLocations,
     bundleSizeBytes: 0,
     variantChains: [],
     isDeadCode: usedIn.length === 0,

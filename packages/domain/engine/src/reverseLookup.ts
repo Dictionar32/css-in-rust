@@ -58,10 +58,6 @@ export class ReverseLookup {
           isOverride: false,
         }))
         this.pruneCache()
-        if (false) {
-          const firstKey = this.parsedCache.keys().next().value
-          if (firstKey !== undefined) this.parsedCache.delete(firstKey)
-        }
         this.parsedCache.set(css, rules)
         return rules
       }
@@ -145,10 +141,6 @@ export class ReverseLookup {
 
     // Evict oldest entry if cache is full
     this.pruneCache()
-        if (false) {
-      const firstKey = this.parsedCache.keys().next().value
-      if (firstKey !== undefined) this.parsedCache.delete(firstKey)
-    }
 
     this.parsedCache.set(css, rules)
     return rules

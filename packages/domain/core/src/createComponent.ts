@@ -9,8 +9,6 @@ import type { ComponentConfig, TwStyledComponent } from "./types"
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
 type RuntimeProps = Record<string, unknown> & { className?: string }
-// biome-ignore lint: exported for external consumers
-type RuntimeComponent = TwStyledComponent<RuntimeProps>
 
 function normalizeClassName(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
@@ -230,7 +228,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
       })
     })
 
-    const component = baseComponent as TwStyledComponent<P>
+    const component = baseComponent as unknown as TwStyledComponent<P>
     component.displayName = `tw.${tagLabel}`
     return attachExtend<P>(component, tag, base, config)
   }
@@ -248,7 +246,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
     })
   })
 
-  const component = baseComponent as TwStyledComponent<P>
+  const component = baseComponent as unknown as TwStyledComponent<P>
   component.displayName = `tw.${tagLabel}`
   return attachExtend<P>(component, tag, base, config)
 }
