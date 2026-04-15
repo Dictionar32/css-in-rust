@@ -11,7 +11,7 @@ pub(crate) use crate::domain::transform_components::{
     build_metadata_json, parse_subcomponent_blocks,
 };
 pub(crate) use crate::domain::transform_parser::{normalise_classes, parse_classes_inner};
-use crate::shared::utils::short_hash;
+use crate::shared::utils::{serde_json_string, short_hash};
 
 static RE_TEMPLATE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"\btw\.(server\.)?(\w+)`((?:[^`\\]|\\.)*)`").unwrap());
