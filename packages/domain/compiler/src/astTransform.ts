@@ -55,12 +55,16 @@ const OBJECT_RE = /\btw\.(server\.)?(\w+)\(\s*(\{[\s\S]*?\})\s*\)/g
 const EXTEND_RE = /(\w+)\.extend`((?:[^`\\]|\\.)*)`/g
 const WRAP_RE = /\btw\((\w+)\)`((?:[^`\\]|\\.)*)`/g
 
-const idState = { current: 0 }
-const _getId = () => `c${(++idState.current).toString(36)}`
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Render functions (sama seperti sebelumnya)
 // ─────────────────────────────────────────────────────────────────────────────
+
+const sanitizeIdentifier = (input: string, fallback = "TwComp"): string => {
+  const normalized = input.replace(/[^A-Za-z0-9_$]/g, "_")
+  if (!normalized) return fallback
+  if (/^[0-9]/.test(normalized)) return `_${normalized}`
+  return normalized
+}
 
 const renderStaticComponent = (
   tag: string,
@@ -68,10 +72,10 @@ const renderStaticComponent = (
   opts: { addDataAttr: boolean; isServer: boolean; compName?: string }
 ): string => {
   const { addDataAttr, compName } = opts
-  const fnName = compName ? `_Tw_${compName}` : `_Tw_${tag}`
-  const dataAttr = addDataAttr
-    ? `, "data-tw": "${fnName}:${classes.split(" ").slice(0, 3).join(" ")}${classes.split(" ").length > 3 ? "..." : ""}"`
-    : ""
+  const fnName = sanitizeIdentifier(compName ? `_Tw_${compName}` : `_Tw_${tag}`)
+  const classParts = classes.split(/\s+/).filter(Boolean)
+  const dataAttrPreview = `${fnName}:${classParts.slice(0, 3).join(" ")}${classParts.length > 3 ? "..." : ""}`
+  const dataAttr = addDataAttr ? `, "data-tw": ${JSON.stringify(dataAttrPreview)}` : ""
 
   return `React.forwardRef(function ${fnName}(props, ref) {
   var _c = props.className;
@@ -90,8 +94,8 @@ const renderVariantComponent = (
   opts: { addDataAttr: boolean; isServer: boolean }
 ): string => {
   const { addDataAttr } = opts
-  const fnName = `_TwV_${tag}_${id}`
-  const dataAttr = addDataAttr ? `, "data-tw": "${fnName}"` : ""
+  const fnName = sanitizeIdentifier(`_TwV_${tag}_${id}`)
+  const dataAttr = addDataAttr ? `, "data-tw": ${JSON.stringify(fnName)}` : ""
 
   const vKeys = variantKeys.map((k) => `"${k}"`).join(", ")
   const destructure =
@@ -104,7 +108,7 @@ const renderVariantComponent = (
       ? variantKeys
           .map(
             (k) =>
-              `(__vt_${id}["${k}"] && __vt_${id}["${k}"][_vp["${k}"] ?? ${JSON.stringify(defaults[k] ?? "")}] || "")`
+              `(__vt_${id}["${k}"] && __vt_${id}["${k}"][(_vp["${k}"] !== undefined ? _vp["${k}"] : ${JSON.stringify(defaults[k] ?? "")})] || "")`
           )
           .join(", ")
       : ""
@@ -142,6 +146,21 @@ const shortHash = (input: string): string => {
     .toString(16)
     .padStart(6, "0")
     .slice(-6)
+}
+
+const stableVariantId = (
+  filename: string,
+  tag: string,
+  objectStr: string,
+  index: number,
+  used: Set<string>
+): string => {
+  const base = `c${shortHash(`${filename}:${tag}:${objectStr}:${index}`)}`
+  if (!used.has(base)) return base
+
+  let counter = 1
+  while (used.has(`${base}_${counter}`)) counter += 1
+  return `${base}_${counter}`
 }
 
 const parseSubcomponentBlocks = (
@@ -193,8 +212,8 @@ const renderCompoundComponent = (
   subComponents: SubComponentBlock[],
   opts: { addDataAttr: boolean }
 ): string => {
-  const fnName = `_Tw_${componentName}`
-  const dataAttr = opts.addDataAttr ? `, "data-tw": "${fnName}"` : ""
+  const fnName = sanitizeIdentifier(`_Tw_${componentName}`)
+  const dataAttr = opts.addDataAttr ? `, "data-tw": ${JSON.stringify(fnName)}` : ""
 
   const baseBody = `React.forwardRef(function ${fnName}(props, ref) {
   var _c = props.className;
@@ -207,7 +226,7 @@ const renderCompoundComponent = (
 
   const subAssignments = subComponents
     .map((sub) => {
-      const subFn = `_Tw_${componentName}_${sub.name}`
+      const subFn = sanitizeIdentifier(`_Tw_${componentName}_${sub.name}`)
       return `  _base.${sub.name} = React.forwardRef(function ${subFn}(props, ref) {
     var _c = props.className;
     var _r = Object.assign({}, props);
@@ -333,6 +352,7 @@ export const transformSource = (source: string, rawOpts: TransformOptions = {}):
     addDataAttr,
     autoClientBoundary,
     preserveImports,
+    filename,
   })
 
   return {
@@ -358,9 +378,10 @@ const processAllTransformations = (
     addDataAttr: boolean
     autoClientBoundary: boolean
     preserveImports: boolean
+    filename: string
   }
 ): { finalCode: string; allClasses: string[]; changed: boolean } => {
-  const { rscAnalysis, addDataAttr, autoClientBoundary, preserveImports } = context
+  const { rscAnalysis, addDataAttr, autoClientBoundary, preserveImports, filename } = context
 
   // Build assign map for template matching
   const assignMap = new Map<number, string>()
@@ -414,6 +435,7 @@ const processAllTransformations = (
         code: newCode,
         allClasses: newClasses,
         prelude: acc.prelude,
+        usedVariantIds: acc.usedVariantIds,
         changed: true,
         needsReact: true,
       }
@@ -422,6 +444,7 @@ const processAllTransformations = (
       code: initialCode,
       allClasses: [] as string[],
       prelude: [] as string[],
+      usedVariantIds: new Set<string>(),
       changed: false,
       needsReact: false,
     }
@@ -486,10 +509,15 @@ const processAllTransformations = (
         }
       }
 
-      const id = _getId()
-      const compiled = compileVariants(nextBase, nextVariants, nextCompounds, nextDefaults)
       const variantKeys = Object.keys(nextVariants)
-      const rendered = renderVariantComponent(tag, id, nextBase, variantKeys, nextDefaults, {
+      const uniqueVariantKeys = Array.from(new Set(variantKeys))
+      if (uniqueVariantKeys.length !== variantKeys.length) return acc
+
+      const id = stableVariantId(filename, tag, objectStr, match.index ?? 0, acc.usedVariantIds)
+      const newUsedVariantIds = new Set(acc.usedVariantIds)
+      newUsedVariantIds.add(id)
+      const compiled = compileVariants(nextBase, nextVariants, nextCompounds, nextDefaults)
+      const rendered = renderVariantComponent(tag, id, nextBase, uniqueVariantKeys, nextDefaults, {
         addDataAttr,
         isServer: rscAnalysis.isServer || isServerOnly,
       })
@@ -502,6 +530,7 @@ const processAllTransformations = (
         code: newCode,
         allClasses: newClasses,
         prelude: newPrelude,
+        usedVariantIds: newUsedVariantIds,
         changed: true,
         needsReact: true,
       }
@@ -510,6 +539,7 @@ const processAllTransformations = (
       code: afterTemplate.code,
       allClasses: afterTemplate.allClasses,
       prelude: afterTemplate.prelude,
+      usedVariantIds: afterTemplate.usedVariantIds,
       changed: afterTemplate.changed,
       needsReact: afterTemplate.needsReact,
     }
@@ -554,6 +584,7 @@ const processAllTransformations = (
         code: newCode,
         allClasses: newClasses,
         prelude: acc.prelude,
+        usedVariantIds: acc.usedVariantIds,
         changed: true,
         needsReact: true,
       }
@@ -562,6 +593,7 @@ const processAllTransformations = (
       code: afterObject.code,
       allClasses: afterObject.allClasses,
       prelude: afterObject.prelude,
+      usedVariantIds: afterObject.usedVariantIds,
       changed: afterObject.changed,
       needsReact: afterObject.needsReact,
     }
