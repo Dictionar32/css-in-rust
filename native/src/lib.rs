@@ -1,16 +1,11 @@
 /*!
-  * tailwind-styled-v4 ??? Native Rust Engine
+ * Native Rust engine for tailwind-styled.
  *
- * Exposes the following to Node.js via N-API:
- *   parse_classes           ??? tokenise + parse individual class tokens
- *   has_tw_usage            ??? fast pre-check before running the full transform
- *   is_already_transformed  ??? idempotency guard
- *   transform_source        ??? full compile: extract ??? normalise ??? generate component code
- *   analyze_rsc             ??? detect RSC / "use client" boundary
- *
- * Also exposes C ABI symbols for bindings/ (Go, Swift, ???):
- *   tailwind_compile, tailwind_compile_with_stats,
- *   tailwind_free, tailwind_version, tailwind_clear_cache
+ * Public API uses a DDD-style layout similar to the monorepo package layers:
+ * - `ddd::domain`         => business/core rules
+ * - `ddd::application`    => use-cases / orchestration
+ * - `ddd::infrastructure` => adapters (parser/cache/watch)
+ * - `ddd::interface`      => external boundary (FFI/N-API)
  */
 
 mod application;
@@ -23,23 +18,67 @@ mod scan_cache;
 mod shared;
 mod watcher;
 
-pub use application::analyzer::*;
-pub use application::ast_extract::*;
-pub use application::css_analysis::*;
-pub use application::engine::*;
-pub use application::insights::*;
-pub use application::optimization::*;
-pub use application::scanner::*;
-pub use domain::animation::*;
-pub use domain::css_compiler::*;
-pub use domain::semantic::*;
-pub use domain::theme::*;
-pub use domain::transform::*;
-pub use infrastructure::cache_store::*;
-pub use infrastructure::oxc_api::*;
-pub use infrastructure::scan_cache_api::*;
-pub use infrastructure::watch_api::*;
-pub use interface::ffi::*;
+/// Domain-Driven Design public layout.
+pub mod ddd {
+    /// Domain layer: core business capabilities and rules.
+    pub mod domain {
+        pub use crate::domain::animation;
+        pub use crate::domain::css_compiler;
+        pub use crate::domain::semantic;
+        pub use crate::domain::theme;
+        pub use crate::domain::transform;
+    }
+
+    /// Application layer: use-case and orchestration services.
+    pub mod application {
+        pub use crate::application::analyzer;
+        pub use crate::application::ast_extract;
+        pub use crate::application::css_analysis;
+        pub use crate::application::engine;
+        pub use crate::application::insights;
+        pub use crate::application::optimization;
+        pub use crate::application::scanner;
+    }
+
+    /// Infrastructure layer: concrete adapter implementations.
+    pub mod infrastructure {
+        pub use crate::infrastructure::cache_store;
+        pub use crate::infrastructure::oxc_api;
+        pub use crate::infrastructure::scan_cache_api;
+        pub use crate::infrastructure::watch_api;
+    }
+
+    /// Interface layer: integration boundaries (FFI / external entrypoints).
+    pub mod interface {
+        pub use crate::interface::ffi;
+    }
+}
+
+/// Legacy flat API re-exports (incremental migration path).
+///
+/// Prefer the new namespaced DDD API above for new code.
+pub mod legacy {
+    pub use crate::application::analyzer::*;
+    pub use crate::application::ast_extract::*;
+    pub use crate::application::css_analysis::*;
+    pub use crate::application::engine::*;
+    pub use crate::application::insights::*;
+    pub use crate::application::optimization::*;
+    pub use crate::application::scanner::*;
+    pub use crate::domain::animation::*;
+    pub use crate::domain::css_compiler::*;
+    pub use crate::domain::semantic::*;
+    pub use crate::domain::theme::*;
+    pub use crate::domain::transform::*;
+    pub use crate::infrastructure::cache_store::*;
+    pub use crate::infrastructure::oxc_api::*;
+    pub use crate::infrastructure::scan_cache_api::*;
+    pub use crate::infrastructure::watch_api::*;
+    pub use crate::interface::ffi::*;
+}
+
+// Keep existing flat API surface for compatibility with existing tests/callers.
+pub use legacy::*;
 
 #[cfg(test)]
 mod tests;

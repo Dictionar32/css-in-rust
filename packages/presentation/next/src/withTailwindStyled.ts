@@ -1,8 +1,11 @@
 import fs from "node:fs"
+import { createRequire } from "node:module"
 import path from "node:path"
 import { getDirname, resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
+
+const require = createRequire(import.meta.url)
 
 interface TailwindStyledLoaderOptions {
   mode?: "zero-runtime"
@@ -24,10 +27,16 @@ export interface TailwindStyledNextOptions
   exclude?: RegExp
 }
 
+interface NextWebpackUseEntry {
+  loader: string
+  options?: TailwindStyledLoaderOptions
+}
+
 interface NextWebpackRule {
   test?: RegExp
   exclude?: RegExp
-  use?: Array<{ loader: string; options: TailwindStyledLoaderOptions }>
+  enforce?: "pre" | "post"
+  use?: NextWebpackUseEntry[]
 }
 
 interface NextWebpackConfig {
@@ -58,28 +67,31 @@ interface NextConfigWithTurbopack {
   [key: string]: unknown
 }
 
-const resolveRuntimeDir = (): string => {
-  if (typeof __dirname !== "undefined" && __dirname.length > 0) {
-    return __dirname
-  }
-  if (typeof import.meta !== "undefined" && import.meta.url) {
-    return getDirname(import.meta.url)
-  }
-  return process.cwd()
+interface TurbopackLoaderRule {
+  loaders: Array<{ loader: string; options: TailwindStyledLoaderOptions }>
 }
+
+const resolveRuntimeDir = (): string => getDirname(import.meta.url)
 
 const resolveLoaderPath = (basename: string): string => {
   try {
     return sharedResolveLoaderPath(basename, import.meta.url)
   } catch {
-    // Fallback: check same dir
     const runtimeDir = resolveRuntimeDir()
-    const exts = typeof __dirname !== "undefined" ? [".cjs", ".js"] : [".js", ".cjs"]
-    for (const ext of exts) {
-      const candidate = path.resolve(runtimeDir, `${basename}${ext}`)
-      if (fs.existsSync(candidate)) return candidate
+    const candidates = [
+      path.resolve(runtimeDir, `${basename}.js`),
+      path.resolve(runtimeDir, `${basename}.cjs`),
+    ]
+
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        return candidate
+      }
     }
-    return path.resolve(runtimeDir, `${basename}.js`)
+
+    throw new Error(
+      `[tailwind-styled] Loader not found for '${basename}'. Checked: ${candidates.join(", ")}`
+    )
   }
 }
 
@@ -101,7 +113,7 @@ function checkNextVersion(): void {
 const DEFAULT_INCLUDE = /\.[jt]sx?$/
 const DEFAULT_EXCLUDE = /node_modules/
 
-const createLoaderOptions = (options: TailwindStyledNextOptions): TailwindStyledLoaderOptions => {
+const createLoaderOptions = (options: TailwindStyledNextOptions): Readonly<TailwindStyledLoaderOptions> => {
   const opts: TailwindStyledLoaderOptions = {
     mode: options.mode ?? "zero-runtime",
     autoClientBoundary: options.autoClientBoundary ?? true,
@@ -112,18 +124,23 @@ const createLoaderOptions = (options: TailwindStyledNextOptions): TailwindStyled
   if (options.routeCss !== undefined) opts.routeCss = options.routeCss
   if (options.incremental !== undefined) opts.incremental = options.incremental
   if (options.verbose !== undefined) opts.verbose = options.verbose
-  return opts
+  return Object.freeze(opts)
 }
 
 const buildTurbopackRules = (
   loaderPath: string,
   loaderOptions: TailwindStyledLoaderOptions
-): Record<string, unknown> => ({
-  "*.js": { loaders: [{ loader: loaderPath, options: loaderOptions }] },
-  "*.jsx": { loaders: [{ loader: loaderPath, options: loaderOptions }] },
-  "*.ts": { loaders: [{ loader: loaderPath, options: loaderOptions }] },
-  "*.tsx": { loaders: [{ loader: loaderPath, options: loaderOptions }] },
-})
+): Record<string, TurbopackLoaderRule> => {
+  const extensions = ["js", "jsx", "ts", "tsx", "mjs", "cjs"]
+  return Object.fromEntries(
+    extensions.map((ext) => [
+      `*.${ext}`,
+      { loaders: [{ loader: loaderPath, options: loaderOptions }] },
+    ])
+  ) as Record<string, TurbopackLoaderRule>
+}
+
+const normalizeLoaderPath = (loaderPath: string): string => path.resolve(loaderPath)
 
 const applyWebpackRule = (
   config: NextWebpackConfig,
@@ -132,8 +149,16 @@ const applyWebpackRule = (
 ): NextWebpackConfig => {
   const loaderOptions = createLoaderOptions(options)
   const rules = config.module?.rules ?? []
-  const alreadyRegistered = rules.some((rule) =>
-    Array.isArray(rule?.use) && rule.use.some((entry) => entry.loader === loaderPath)
+  const normalizedLoaderPath = normalizeLoaderPath(loaderPath)
+
+  const alreadyRegistered = rules.some(
+    (rule) =>
+      Array.isArray(rule?.use) &&
+      rule.use.some(
+        (entry) =>
+          typeof entry.loader === "string" &&
+          normalizeLoaderPath(entry.loader) === normalizedLoaderPath
+      )
   )
 
   if (alreadyRegistered) return config
@@ -141,15 +166,52 @@ const applyWebpackRule = (
   const tailwindStyledRule: NextWebpackRule = {
     test: options.include ?? DEFAULT_INCLUDE,
     exclude: options.exclude ?? DEFAULT_EXCLUDE,
+    enforce: "pre",
     use: [{ loader: loaderPath, options: loaderOptions }],
   }
 
   config.module = {
     ...(config.module ?? {}),
-    rules: [tailwindStyledRule, ...rules],
+    rules: [...rules, tailwindStyledRule],
   }
 
   return config
+}
+
+const mergeTurbopackRules = (
+  existingRules: Record<string, unknown>,
+  nextRules: Record<string, TurbopackLoaderRule>
+): Record<string, unknown> => {
+  const merged = { ...existingRules }
+
+  for (const [pattern, incomingRule] of Object.entries(nextRules)) {
+    const current = merged[pattern]
+    if (current == null) {
+      merged[pattern] = incomingRule
+      continue
+    }
+
+    if (typeof current === "object" && current !== null && "loaders" in current) {
+      const typedCurrent = current as { loaders?: unknown }
+      if (Array.isArray(typedCurrent.loaders)) {
+        merged[pattern] = {
+          ...(current as Record<string, unknown>),
+          loaders: [...typedCurrent.loaders, ...incomingRule.loaders],
+        }
+        console.warn(
+          `[tailwind-styled] Turbopack rule '${pattern}' already exists. Appending tailwind-styled loader.`
+        )
+        continue
+      }
+    }
+
+    merged[pattern] = incomingRule
+    console.warn(
+      `[tailwind-styled] Turbopack rule '${pattern}' has incompatible shape. Replacing with tailwind-styled rule.`
+    )
+  }
+
+  return merged
 }
 
 export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
@@ -164,7 +226,6 @@ export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
 
     return {
       ...nextConfig,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       webpack(
         config: NextWebpackConfig,
         webpackOptions: NextWebpackOptions
@@ -176,15 +237,21 @@ export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
           return apply(config)
         }
 
-        const result = previousWebpack(config, webpackOptions)
-        return result instanceof Promise ? result.then(apply) : apply(result)
+        try {
+          const result = previousWebpack(config, webpackOptions)
+          return result instanceof Promise ? result.then(apply) : apply(result)
+        } catch (error) {
+          throw new Error("[tailwind-styled] Failed while executing existing Next webpack config.", {
+            cause: error,
+          })
+        }
       },
       turbopack: {
         ...(nextConfig.turbopack ?? {}),
-        rules: {
-          ...(nextConfig.turbopack?.rules ?? {}),
-          ...buildTurbopackRules(turbopackLoaderPath, loaderOptions),
-        },
+        rules: mergeTurbopackRules(
+          (nextConfig.turbopack?.rules as Record<string, unknown>) ?? {},
+          buildTurbopackRules(turbopackLoaderPath, loaderOptions)
+        ),
       },
     }
   }
