@@ -213,7 +213,7 @@ for (const tag of HTML_TAGS) {
   serverFactories[tag] = makeServerTag(tag as React.ElementType)
 }
 
-export const server: TwServerObject = serverFactories as TwServerObject
+export const server: TwServerObject = serverFactories as unknown as TwServerObject
 
 // ─────────────────────────────────────────────────────────────────────────────
 // tw — main export
@@ -224,8 +224,8 @@ for (const tag of HTML_TAGS) {
   tagFactories[tag] = makeTag(tag as React.ElementType)
 }
 
-function twCallable<C extends React.ComponentType<unknown>>(component: C): TwComponentFactory<C> {
-  return makeTag(component) as TwComponentFactory<C>
+function twCallable(component: React.ComponentType<unknown>) {
+  return makeTag(component)
 }
 
 // Explicit type annotation — TypeScript uses TwObject, DTS bundler inlines it correctly

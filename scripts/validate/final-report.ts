@@ -66,7 +66,7 @@ const checks = {
     return {
       label: "next-js-app/.next/BUILD_ID",
       ok: exists,
-      detail: exists ? "next build sudah jalan" : "jalankan: npm run build -w examples/next-js-app",
+      detail: exists ? "next build sudah jalan" : "jalankan: npm run example:build",
     }
   })(),
 }

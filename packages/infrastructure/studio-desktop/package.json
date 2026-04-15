@@ -38,15 +38,15 @@
     ],
     "extraResources": [
       {
-        "from": "../../scripts/v45/studio.mjs",
+        "from": "../../../scripts/v45/studio.mjs",
         "to": "scripts/v45/studio.mjs"
       },
       {
-        "from": "../../scripts/v45/ai.mjs",
+        "from": "../../../scripts/v45/ai.mjs",
         "to": "scripts/v45/ai.mjs"
       },
       {
-        "from": "../../scripts/v49/split-routes.mjs",
+        "from": "../../../scripts/v49/split-routes.mjs",
         "to": "scripts/v49/split-routes.mjs"
       }
     ],

@@ -1,65 +1,94 @@
 /**
- * Strict type contracts untuk @tailwind-styled/analyzer.
- * Dari monorepo checklist: "Perketat type contract pada `analyzer`"
+ * Public type contracts for @tailwind-styled/analyzer.
+ * Keep this file aligned with the runtime report shape exposed by src/index.ts.
  */
-import type { ScanWorkspaceResult } from "@tailwind-styled/scanner"
+import type { ScanWorkspaceOptions } from "@tailwind-styled/scanner"
 
-/** Class usage statistics */
-export interface ClassUsageStat {
+export interface ClassUsage {
   readonly name: string
   readonly count: number
-  readonly files: readonly string[]
-  readonly isDeadCode: boolean
+  readonly isUnused?: boolean
+  readonly isConflict?: boolean
 }
 
-/** Conflict antara dua atau lebih classes */
 export interface ClassConflict {
+  readonly className: string
+  readonly variants: readonly string[]
   readonly classes: readonly string[]
-  readonly property: string
-  readonly description: string
+  readonly message: string
 }
 
-/** Laporan analisis workspace */
+export interface AnalyzerClassStats {
+  readonly all: readonly ClassUsage[]
+  readonly top: readonly ClassUsage[]
+  readonly frequent: readonly ClassUsage[]
+  readonly unique: readonly ClassUsage[]
+  readonly distribution: Readonly<Record<string, number>>
+}
+
+export interface TailwindConfigSummary {
+  readonly path: string
+  readonly loaded: boolean
+  readonly safelistCount: number
+  readonly customUtilityCount: number
+  readonly warning?: string
+}
+
+export interface AnalyzerSemanticReport {
+  readonly unusedClasses: readonly ClassUsage[]
+  readonly unknownClasses: readonly ClassUsage[]
+  readonly conflicts: readonly ClassConflict[]
+  readonly tailwindConfig?: TailwindConfigSummary
+}
+
 export interface AnalyzerReport {
   readonly root: string
   readonly totalFiles: number
   readonly uniqueClassCount: number
-  readonly topClasses: readonly ClassUsageStat[]
-  readonly frequentClasses: readonly ClassUsageStat[]
-  readonly unusedClasses: readonly string[]
-  readonly conflicts: readonly ClassConflict[]
-  readonly durationMs: number
-  readonly generatedAt: number
+  readonly totalClassOccurrences: number
+  readonly classStats: AnalyzerClassStats
+  readonly safelist: readonly string[]
+  readonly semantic?: AnalyzerSemanticReport
 }
 
-/** Opsi untuk analisis workspace */
 export interface AnalyzerOptions {
-  readonly scanner?: {
-    readonly includeExtensions?: readonly string[]
-    readonly ignoreDirectories?: readonly string[]
-  }
+  readonly scanner?: ScanWorkspaceOptions
   readonly classStats?: {
     readonly top?: number
     readonly frequentThreshold?: number
   }
   readonly includeClass?: (className: string) => boolean
-  readonly semantic?: {
-    readonly tailwindConfigPath?: string
-  }
+  readonly semantic?:
+    | boolean
+    | {
+        readonly tailwindConfigPath?: string
+      }
 }
 
-/** Hasil analisis satu class */
-export interface ClassAnalysisResult {
-  readonly className: string
-  readonly css: string
-  readonly property: string
-  readonly value: string
-  readonly isValid: boolean
-  readonly variants: readonly string[]
-}
-
-/** Input untuk classToCss */
 export interface ClassToCssOptions {
-  readonly tailwindConfigPath?: string
-  readonly unknownClassBehavior?: "skip" | "throw"
+  readonly prefix?: string | null
+  readonly strict?: boolean
+}
+
+export interface ClassToCssResult {
+  readonly inputClasses: readonly string[]
+  readonly css: string
+  readonly declarations: string
+  readonly resolvedClasses: readonly string[]
+  readonly unknownClasses: readonly string[]
+  readonly sizeBytes: number
+}
+
+export interface LoadedTailwindConfig {
+  readonly path: string
+  readonly loaded: boolean
+  readonly warning?: string
+  readonly safelist: Set<string>
+  readonly customUtilities: Set<string>
+}
+
+export interface TailwindConfigCacheEntry {
+  readonly mtimeMs: number
+  readonly size: number
+  readonly config: LoadedTailwindConfig
 }

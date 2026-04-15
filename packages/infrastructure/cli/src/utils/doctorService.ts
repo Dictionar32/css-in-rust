@@ -50,7 +50,7 @@ export interface RunDiagnosticsOptions {
   include?: DiagnosticInclude[]
 }
 
-function calculateBundleSizeEstimate(classes: string[]): number {
+function calculateBundleSizeEstimate(classes: readonly string[]): number {
   const avgClassSize = 15
   const avgRuleSize = 80
   return classes.length * (avgClassSize + avgRuleSize)

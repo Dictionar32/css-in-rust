@@ -130,8 +130,11 @@ function debounceUpdate(document: vscode.TextDocument, engineService: EngineServ
   }, DEBOUNCE_DELAY)
 }
 
-export function createInlineDecorationProvider(engineService: EngineService): void {
-  const _changeListener = vscode.workspace.onDidChangeTextDocument(
+export function registerInlineDecorationProvider(
+  _context: vscode.ExtensionContext,
+  engineService: EngineService
+): vscode.Disposable {
+  const changeListener = vscode.workspace.onDidChangeTextDocument(
     (event: vscode.TextDocumentChangeEvent) => {
       try {
         const document = event.document
@@ -171,7 +174,7 @@ export function createInlineDecorationProvider(engineService: EngineService): vo
     }
   )
 
-  const _visibleTextEditorsChangeListener = vscode.window.onDidChangeVisibleTextEditors(
+  const visibleTextEditorsChangeListener = vscode.window.onDidChangeVisibleTextEditors(
     (editors: readonly vscode.TextEditor[]) => {
       try {
         for (const editor of editors) {
@@ -221,4 +224,20 @@ export function createInlineDecorationProvider(engineService: EngineService): vo
       }
     }
   }
+
+  return new vscode.Disposable(() => {
+    if (_state.debounceTimer) {
+      clearTimeout(_state.debounceTimer)
+      _state.debounceTimer = null
+    }
+
+    changeListener.dispose()
+    visibleTextEditorsChangeListener.dispose()
+
+    for (const entry of Object.values(activeDecorations)) {
+      for (const disposable of entry.disposables) {
+        disposable.dispose()
+      }
+    }
+  })
 }

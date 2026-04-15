@@ -32,7 +32,7 @@ export default defineConfig({
   },
   target: "node20",
   platform: "node",
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: true,
   outDir: "dist",
   clean: true,

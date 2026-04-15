@@ -9,7 +9,11 @@
 
 use once_cell::sync::Lazy;
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{
+    walk::{walk_import_declaration, walk_variable_declarator},
+    Visit,
+};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use regex::Regex;
@@ -48,37 +52,34 @@ impl StructuralVisitor {
     }
 
     fn is_tw(expr: &Expression) -> bool {
-        match expr {
-            Expression::MemberExpression(me) => match me.object() {
-                Expression::Identifier(id) => id.name == "tw",
-                Expression::MemberExpression(inner) => {
-                    matches!(inner.object(), Expression::Identifier(id) if id.name == "tw")
-                }
-                _ => false,
-            },
-            Expression::CallExpression(ce) => {
-                matches!(&ce.callee, Expression::Identifier(id) if id.name == "tw")
+        match expr.get_inner_expression() {
+            Expression::Identifier(id) => id.name == "tw",
+            expr if expr.is_member_expression() => {
+                Self::is_tw(expr.to_member_expression().object())
             }
+            Expression::CallExpression(ce) => Self::is_tw(&ce.callee),
+            Expression::ChainExpression(chain) => chain
+                .expression
+                .as_member_expression()
+                .is_some_and(|me| Self::is_tw(me.object())),
             _ => false,
         }
     }
 }
 
 impl<'a> Visit<'a> for StructuralVisitor {
-    fn visit_directive(&mut self, dir: &Directive) {
+    fn visit_directive(&mut self, dir: &Directive<'a>) {
         if dir.expression.value == "use client" {
             self.has_use_client = true;
         }
     }
 
-    fn visit_import_declaration(&mut self, decl: &'a ImportDeclaration<'a>) {
+    fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
         self.imports.push(decl.source.value.to_string());
-        for spec in &decl.specifiers {
-            self.visit_import_declaration_specifier(spec);
-        }
+        walk_import_declaration(self, decl);
     }
 
-    fn visit_variable_declarator(&mut self, decl: &'a VariableDeclarator<'a>) {
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
         if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
             if let Some(init) = &decl.init {
                 let is_tw = matches!(init,
@@ -91,9 +92,7 @@ impl<'a> Visit<'a> for StructuralVisitor {
                 }
             }
         }
-        if let Some(init) = &decl.init {
-            self.visit_expression(init);
-        }
+        walk_variable_declarator(self, decl);
     }
 }
 

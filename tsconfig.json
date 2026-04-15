@@ -28,6 +28,15 @@
       "create-tailwind-styled": ["./packages/infrastructure/cli/src/index.ts"]
     }
   },
-  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx"],
-  "exclude": ["packages/*/src/**/*.test.ts", "packages/*/src/**/*.test.tsx", "packages/_experiments/**"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "packages/*/*/src/**/*.ts",
+    "packages/*/*/src/**/*.tsx"
+  ],
+  "exclude": [
+    "packages/*/*/src/**/*.test.ts",
+    "packages/*/*/src/**/*.test.tsx",
+    "packages/archive/_experiments/**"
+  ]
 }

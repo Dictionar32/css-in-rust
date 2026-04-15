@@ -25,18 +25,19 @@ const { setupAutoUpdater, checkForUpdatesManually } = require("./updater")
 const STUDIO_PORT = Number(process.env.STUDIO_PORT ?? 3030)
 const isDev = process.env.NODE_ENV === "development" || process.argv.includes("--dev")
 
-// Resolve studio script — electron-builder bundles scripts ke process.resourcesPath
+// Resolve studio script — packaged builds read from resources/, local dev from repo root.
 function resolveStudioScript() {
+  const repoScriptPath = path.join(__dirname, "../../../../scripts/v45/studio.mjs")
   const candidates = [
     // Packaged: electron-builder extraResources copies ke resources/
     process.resourcesPath ? path.join(process.resourcesPath, "scripts/v45/studio.mjs") : null,
     // Dev: monorepo root
-    path.join(__dirname, "../../scripts/v45/studio.mjs"),
+    repoScriptPath,
     // Fallback: cwd
     path.join(process.cwd(), "scripts/v45/studio.mjs"),
   ].filter(Boolean)
 
-  return candidates.find((p) => fs.existsSync(p)) ?? candidates[1]
+  return candidates.find((p) => fs.existsSync(p)) ?? repoScriptPath
 }
 
 const STUDIO_SCRIPT = resolveStudioScript()

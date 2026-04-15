@@ -45,6 +45,7 @@ interface NativeScannerBinding {
       mtimeMs: number
       size: number
       hitCount: number
+      lastSeenMs?: number
     }>
     version: number
   } | null
@@ -57,6 +58,7 @@ interface NativeScannerBinding {
       mtimeMs: number
       size: number
       hitCount: number
+      lastSeenMs?: number
     }>
   ) => boolean
   cachePriority?: (

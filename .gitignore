@@ -14,7 +14,6 @@ build.log
 
 # Lock files (monorepo)
 
-Cargo.lock
 
 # npm config
 .npmrc

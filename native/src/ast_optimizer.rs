@@ -9,7 +9,7 @@
 /// - Better cache invalidation based on AST changes
 use once_cell::sync::Lazy;
 use oxc_allocator::Allocator;
-use oxc_parser::{Parser, ParserReturn};
+use oxc_parser::Parser;
 use oxc_span::SourceType;
 use regex::Regex;
 use std::path::Path;
@@ -53,12 +53,7 @@ pub fn extract_templates_from_ast(source: &str) -> (Vec<AstTemplateMatch>, bool,
         .with_module(true);
 
     let parser = Parser::new(&allocator, source, source_type);
-    let ParserReturn {
-        program: _,
-        errors: parse_errors,
-        trivias: _,
-        panicked: _,
-    } = parser.parse();
+    let parse_errors = parser.parse().errors;
 
     // ─ Early return: If parsing completely fails, fall back to regex
     if !parse_errors.is_empty() && parse_errors.len() > 5 {

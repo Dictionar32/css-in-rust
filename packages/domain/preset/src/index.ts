@@ -12,6 +12,7 @@ export {
   createPreset,
   extendPreset,
   mergePresets,
+  type PresetComponentConfig,
   type PresetExtension,
   type PresetOptions,
 } from "./presetExtension"
