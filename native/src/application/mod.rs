@@ -5,3 +5,4 @@ pub mod engine;
 pub mod insights;
 pub mod optimization;
 pub mod scanner;
+pub mod services;
