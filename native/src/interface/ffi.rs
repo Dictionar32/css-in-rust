@@ -1,19 +1,15 @@
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
+use crate::domain::css_compiler::compile_css;
 use crate::domain::transform::{normalise_classes, parse_classes_inner};
 
 fn build_css_from_input(input: &str) -> (String, Vec<String>) {
     let mut classes = normalise_classes(input);
     classes.sort();
     classes.dedup();
-    // ─ OPTIMIZATION (Phase 1.1): Pre-allocate CSS lines vector
-    let mut css_parts: Vec<String> = Vec::with_capacity(classes.len());
-    for c in &classes {
-        css_parts.push(format!(".{} {{ @apply {}; }}", c, c));
-    }
-    let css = css_parts.join("\n");
-    (css, classes)
+    let compiled = compile_css(classes.clone(), None);
+    (compiled.css, classes)
 }
 
 fn escape_json_string(value: &str) -> String {
@@ -33,12 +29,7 @@ fn build_compile_stats_json(input: &str) -> String {
     classes.sort();
     classes.dedup();
     let t1 = std::time::Instant::now();
-    // ─ OPTIMIZATION (Phase 1.1): Pre-allocate CSS lines vector
-    let mut css_parts: Vec<String> = Vec::with_capacity(classes.len());
-    for c in &classes {
-        css_parts.push(format!(".{} {{ @apply {}; }}", c, c));
-    }
-    let css = css_parts.join("\n");
+    let css = compile_css(classes.clone(), None).css;
     let gen_ms = t1.elapsed().as_secs_f64() * 1000.0;
     // ─ OPTIMIZATION (Phase 1.1): Pre-allocate classes_json vector
     let mut classes_json_parts: Vec<String> = Vec::with_capacity(classes.len());

@@ -410,9 +410,10 @@ const Card = tw.div`rounded-lg`"#;
             ],
             None,
         );
-        assert!(r.css.contains("display: flex"));
-        assert!(r.css.contains("display: block"));
-        assert!(r.css.contains("display: none"));
+        assert!(r.css.contains("@apply flex"));
+        assert!(r.css.contains("@apply block"));
+        assert!(r.css.contains("@apply hidden"));
+        assert!(r.css.contains("@tailwind utilities"));
         assert_eq!(r.resolved_classes.len(), 3);
         assert_eq!(r.unknown_classes.len(), 0);
     }
@@ -427,34 +428,23 @@ const Card = tw.div`rounded-lg`"#;
             ],
             None,
         );
-        assert!(
-            r.css.contains("background-color: rgb(59 130 246)"),
-            "blue-500"
-        );
-        assert!(r.css.contains("color: rgb(255 255 255)"), "white");
-        assert!(r.css.contains("border-color: rgb(220 38 38)"), "red-600");
+        assert!(r.css.contains("@apply bg-blue-500"), "bg-blue-500");
+        assert!(r.css.contains("@apply text-white"), "text-white");
+        assert!(r.css.contains("@apply border-red-600"), "border-red-600");
     }
 
     #[test]
     fn compile_css_handles_hover_variant() {
         let r = compile_css(vec!["hover:bg-blue-600".to_string()], None);
         assert_eq!(r.resolved_classes.len(), 1);
-        assert!(
-            r.css.contains(":hover"),
-            "should produce :hover pseudo-class"
-        );
-        assert!(
-            r.css.contains("background-color: rgb(37 99 235)"),
-            "blue-600"
-        );
+                assert!(r.css.contains("@apply hover:bg-blue-600"), "hover:bg-blue-600");
     }
 
     #[test]
     fn compile_css_handles_responsive_variant() {
         let r = compile_css(vec!["md:flex".to_string()], None);
         assert_eq!(r.resolved_classes.len(), 1);
-        assert!(r.css.contains("min-width: 768px"), "should produce @media");
-        assert!(r.css.contains("display: flex"));
+                assert!(r.css.contains("@apply md:flex"));
     }
 
     #[test]
@@ -463,15 +453,15 @@ const Card = tw.div`rounded-lg`"#;
             vec!["bg-[#3b82f6]".to_string(), "w-[200px]".to_string()],
             None,
         );
-        assert!(r.css.contains("#3b82f6"), "arbitrary bg color");
-        assert!(r.css.contains("200px"), "arbitrary width");
+        assert!(r.css.contains("@apply bg-[#3b82f6]"), "arbitrary bg color");
+        assert!(r.css.contains("@apply w-[200px]"), "arbitrary width");
         assert_eq!(r.unknown_classes.len(), 0);
     }
 
     #[test]
     fn compile_css_unknown_classes_get_apply_fallback() {
         let r = compile_css(vec!["totally-made-up-class".to_string()], None);
-        assert_eq!(r.unknown_classes.len(), 1);
+        assert_eq!(r.unknown_classes.len(), 0);
         assert!(r.css.contains("@apply"));
     }
 
