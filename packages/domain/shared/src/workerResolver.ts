@@ -9,9 +9,47 @@
  *
  * Solusi: resolve path secara hierarchical dengan fallback yang eksplisit.
  */
-import fs from "node:fs"
-import path from "node:path"
-import { getDirname } from "./esmHelpers"
+
+const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
+
+const NODE_URL = typeof window === "undefined" || typeof document === "undefined" ? "node:url" : null
+const NODE_FS = typeof window === "undefined" || typeof document === "undefined" ? "node:fs" : null
+const NODE_PATH = typeof window === "undefined" || typeof document === "undefined" ? "node:path" : null
+
+function getDirnameFromUrl(importMetaUrl: string): string {
+  if (!importMetaUrl) return ""
+  if (isBrowser) return ""
+
+  try {
+    const nodeUrl = require(NODE_URL!)
+    return nodeUrl.fileURLToPath(importMetaUrl)
+  } catch {
+    if (importMetaUrl.startsWith("file://")) {
+      return importMetaUrl.slice(7)
+    }
+    return ""
+  }
+}
+
+function resolvePath(...segments: string[]): string {
+  if (isBrowser) return segments.join("/").replace(/\/+/g, "/")
+  try {
+    const nodePath = require(NODE_PATH!)
+    return nodePath.resolve(...segments)
+  } catch {
+    return segments.join("/").replace(/\/+/g, "/")
+  }
+}
+
+function existsSync(path: string): boolean {
+  if (isBrowser) return false
+  try {
+    const nodeFs = require(NODE_FS!)
+    return nodeFs.existsSync(path)
+  } catch {
+    return false
+  }
+}
 
 export interface WorkerPathOptions {
   /** Nama file worker tanpa extension */
@@ -51,6 +89,10 @@ export interface WorkerPathResult {
  * // → "/path/to/dist/scanner-worker.cjs"
  */
 export function resolveWorkerPath(opts: WorkerPathOptions): WorkerPathResult {
+  if (isBrowser) {
+    throw new Error("Worker resolution not available in browser")
+  }
+
   const {
     basename,
     importMetaUrl,
@@ -59,13 +101,13 @@ export function resolveWorkerPath(opts: WorkerPathOptions): WorkerPathResult {
     required = true,
   } = opts
 
-  const runtimeDir = getDirname(importMetaUrl)
+  const runtimeDir = getDirnameFromUrl(importMetaUrl)
 
   // Try each subdir + extension combination
   for (const subdir of subdirs) {
     for (const ext of extensions) {
-      const candidate = path.resolve(runtimeDir, subdir, `${basename}${ext}`)
-      if (fs.existsSync(candidate)) {
+      const candidate = resolvePath(runtimeDir, subdir, `${basename}${ext}`)
+      if (existsSync(candidate)) {
         return {
           path: candidate,
           extension: ext,
@@ -77,7 +119,7 @@ export function resolveWorkerPath(opts: WorkerPathOptions): WorkerPathResult {
 
   if (required) {
     const tried = subdirs.flatMap(d =>
-      extensions.map(e => path.join(runtimeDir, d, `${basename}${e}`))
+      extensions.map(e => resolvePath(runtimeDir, d, `${basename}${e}`))
     )
     throw new Error(
       `[worker-resolver] Could not find worker script "${basename}".\n` +

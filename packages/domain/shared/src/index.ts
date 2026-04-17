@@ -1,8 +1,38 @@
-import { createHash } from "node:crypto"
-import { existsSync, readdirSync } from "node:fs"
-import { createRequire } from "node:module"
-import { dirname, join, resolve } from "node:path"
-import { fileURLToPath, pathToFileURL } from "node:url"
+const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
+
+const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+
+let _nodeCrypto: any = null
+let _nodeFs: any = null
+let _nodeModule: any = null
+let _nodePath: any = null
+let _nodeUrl: any = null
+
+function getNodeCrypto() {
+  if (isBrowser) throw new Error("node:crypto not available in browser")
+  if (!_nodeCrypto) _nodeCrypto = nodeRequire("node:crypto")
+  return _nodeCrypto!
+}
+function getNodeFs() {
+  if (isBrowser) throw new Error("node:fs not available in browser")
+  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  return _nodeFs!
+}
+function getNodeModule() {
+  if (isBrowser) throw new Error("node:module not available in browser")
+  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  return _nodeModule!
+}
+function getNodePath() {
+  if (isBrowser) throw new Error("node:path not available in browser")
+  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  return _nodePath!
+}
+function getNodeUrl() {
+  if (isBrowser) throw new Error("node:url not available in browser")
+  if (!_nodeUrl) _nodeUrl = nodeRequire("node:url")
+  return _nodeUrl!
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -166,16 +196,21 @@ export interface LoadNativeBindingResult<T> {
 }
 
 export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): LoadNativeBindingResult<T> {
+  if (isBrowser) {
+    return { binding: null, loadErrors: [{ path: "", message: "Native bindings not available in browser" }] }
+  }
+  
   const { runtimeDir, candidates, isValid } = options
   const loadErrors: Array<{ path: string; message: string }> = []
+  const path = getNodePath()
+  const fs = getNodeFs()
 
   for (const candidate of candidates) {
-    const candidatePath = resolve(runtimeDir, candidate)
+    const candidatePath = path.resolve(runtimeDir, candidate)
     try {
-      if (!existsSync(candidatePath) && !existsSync(candidatePath + ".node")) {
+      if (!fs.existsSync(candidatePath) && !fs.existsSync(candidatePath + ".node")) {
         continue
       }
-      // Dynamic require for native modules
       const mod = requireNativeModule(candidatePath)
       if (mod && isValid(mod)) {
         return { binding: mod, loadErrors, loadedPath: candidatePath }
@@ -190,11 +225,12 @@ export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): Load
 }
 
 function getRequire(): NodeRequire {
+  // In browser, this should never be called, but return require anyway
+  // which will throw if actually executed
+  if (isBrowser) return require as NodeRequire
   try {
-    return createRequire(import.meta.url)
+    return getNodeModule().createRequire(import.meta.url)
   } catch {
-    // CJS context — require is already available as global
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require as NodeRequire
   }
 }
@@ -213,10 +249,13 @@ export interface ResolveCandidatesOptions {
 }
 
 export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions): string[] {
+  if (isBrowser) return []
+  
   const { runtimeDir, envVarNames = [], includeDefaultCandidates = true, enforceNodeExtensionForEnvPath = false } = options
   const candidates: string[] = []
+  const path = getNodePath()
+  const fs = getNodeFs()
 
-  // Check environment variables for custom paths
   for (const envVar of envVarNames) {
     const envPath = process.env[envVar]
     if (envPath) {
@@ -230,10 +269,9 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
 
   if (!includeDefaultCandidates) return candidates
 
-  // Scan the runtime directory for native bindings
-  if (existsSync(runtimeDir)) {
+  if (fs.existsSync(runtimeDir)) {
     try {
-      const entries = readdirSync(runtimeDir)
+      const entries = fs.readdirSync(runtimeDir)
       for (const entry of entries) {
         if (entry.endsWith(".node")) {
           candidates.push(entry)
@@ -244,20 +282,20 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
     }
   }
 
-  // Add explicit monorepo root native directory candidates
-  // Packages live at packages/<name>/dist, so we need to walk up to monorepo root
   const defaultBindingName = "tailwind_styled_parser.node"
-  candidates.push(resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
-  candidates.push(resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
-  candidates.push(resolve(process.cwd(), "native", defaultBindingName))
+  candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
+  candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+  candidates.push(path.resolve(process.cwd(), "native", defaultBindingName))
 
   return Array.from(new Set(candidates))
 }
 
 export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string): string {
-  if (dir) return resolve(dir)
+  if (isBrowser) return ""
+  
+  if (dir) return getNodePath().resolve(dir)
   try {
-    return dirname(fileURLToPath(importMetaUrl))
+    return getNodeUrl().fileURLToPath(importMetaUrl)
   } catch {
     return process.cwd()
   }
@@ -268,7 +306,17 @@ export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function hashContent(content: string, algorithm: string = "md5", length?: number): string {
-  const hash = createHash(algorithm).update(content).digest("hex")
+  if (isBrowser) {
+    // Simple hash fallback for browser
+    let hash = 0
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash
+    }
+    return Math.abs(hash).toString(16).slice(0, length ?? 8)
+  }
+  const hash = getNodeCrypto().createHash(algorithm).update(content).digest("hex")
   return length ? hash.slice(0, length) : hash
 }
 

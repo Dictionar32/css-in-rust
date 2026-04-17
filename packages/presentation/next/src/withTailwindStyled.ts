@@ -1,7 +1,25 @@
 import fs from "node:fs"
 import { createRequire } from "node:module"
 import path from "node:path"
-import { getDirname, resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
+
+function getDirnameFromUrl(importMetaUrl: string): string {
+  if (typeof importMetaUrl !== 'string') return ''
+  // Simple URL parsing without Node.js modules
+  if (importMetaUrl.startsWith('file://')) {
+    let withoutFile = importMetaUrl.slice(7)
+    // On Windows, file URLs can be like file:///C:/path
+    if (withoutFile[0] === '/' && withoutFile[2] === ':') {
+      withoutFile = withoutFile.slice(1)  // Remove leading / from C:/
+    }
+    const lastSlash = Math.max(withoutFile.lastIndexOf('/'), withoutFile.lastIndexOf('\\'))
+    return lastSlash > 0 ? withoutFile.slice(0, lastSlash) : '/'
+  }
+  // Fallback for other URL types
+  const lastSlash = Math.max(importMetaUrl.lastIndexOf('/'), importMetaUrl.lastIndexOf('\\'))
+  return lastSlash > 0 ? importMetaUrl.slice(0, lastSlash) : ''
+}
+
+import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
 
@@ -71,7 +89,7 @@ interface TurbopackLoaderRule {
   loaders: Array<{ loader: string; options: TailwindStyledLoaderOptions }>
 }
 
-const resolveRuntimeDir = (): string => getDirname(import.meta.url)
+const resolveRuntimeDir = (): string => getDirnameFromUrl(import.meta.url)
 
 const resolveLoaderPath = (basename: string): string => {
   try {
@@ -79,6 +97,7 @@ const resolveLoaderPath = (basename: string): string => {
   } catch {
     const runtimeDir = resolveRuntimeDir()
     const candidates = [
+      path.resolve(runtimeDir, `${basename}.mjs`),
       path.resolve(runtimeDir, `${basename}.js`),
       path.resolve(runtimeDir, `${basename}.cjs`),
     ]

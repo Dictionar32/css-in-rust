@@ -6,11 +6,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::ast_optimizer;
-use crate::domain::transform_components::{render_compound_component, render_static_component};
 pub(crate) use crate::domain::transform_components::{
     build_metadata_json, parse_subcomponent_blocks,
 };
-pub(crate) use crate::domain::transform_parser::{normalise_classes, parse_classes_inner};
+use crate::domain::transform_components::{render_compound_component, render_static_component};
+pub use crate::domain::transform_parser::{normalise_classes, parse_classes_inner};
 use crate::shared::utils::{serde_json_string, short_hash};
 
 static RE_TEMPLATE: Lazy<Regex> =

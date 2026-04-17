@@ -12,4 +12,4 @@ const nextConfig = {
   },
 }
 
-export default withTailwindStyled({ autoClientBoundary: true })(nextConfig)
+export default withTailwindStyled()(nextConfig)

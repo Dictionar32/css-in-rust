@@ -3,7 +3,6 @@ use napi_derive::napi;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-
 #[napi(object)]
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct CssCompileResult {

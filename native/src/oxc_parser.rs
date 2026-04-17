@@ -279,4 +279,3 @@ pub fn extract_classes_oxc(source: &str, _filename: &str) -> OxcExtractResult {
         imports,
     }
 }
-
