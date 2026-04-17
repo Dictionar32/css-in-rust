@@ -30,9 +30,9 @@
     "typescript": "^6"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --external node:*",
-    "build:dev": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --sourcemap --watch --external node:*",
-    "build:release": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --no-sourcemap --external node:*",
+    "build": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --external node:fs --external node:path --external node:crypto --external node:module --external node:url --external node:os",
+    "build:dev": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --sourcemap --watch --external node:fs --external node:path --external node:crypto --external node:module --external node:url --external node:os",
+    "build:release": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --no-sourcemap --external node:fs --external node:path --external node:crypto --external node:module --external node:url --external node:os",
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "node --test tests/*.test.mjs",
