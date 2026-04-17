@@ -16,7 +16,10 @@ pub struct ClassApplicationService {
 
 impl ClassApplicationService {
     pub fn new(parser: ClassParserService, css_generator: CssGeneratorService) -> Self {
-        Self { parser, css_generator }
+        Self {
+            parser,
+            css_generator,
+        }
     }
 
     pub fn parse_classes(&self, input: String) -> Vec<ParsedClass> {

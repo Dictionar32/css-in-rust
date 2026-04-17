@@ -7,11 +7,36 @@
  * 2. Prebuilt binary dari platform-specific npm package
  * 3. Local build dari source (developer mode)
  */
-import fs from "node:fs"
-import path from "node:path"
-import { createRequire } from "node:module"
 
-const _require = createRequire(import.meta.url)
+const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
+
+const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+
+let _nodeFs: any = null
+let _nodePath: any = null
+let _nodeModule: any = null
+let _require: any = null
+
+function getNodeFs() {
+  if (isBrowser) return { existsSync: () => false }
+  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  return _nodeFs
+}
+function getNodePath() {
+  if (isBrowser) return { resolve: () => "", dirname: "" }
+  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  return _nodePath!
+}
+function getNodeModule() {
+  if (isBrowser) return { createRequire: () => { throw new Error("node:module not available") } }
+  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  return _nodeModule
+}
+function getRequire(_importMetaUrl: string) {
+  if (isBrowser) return () => { throw new Error("node:module not available") }
+  if (!_require) _require = getNodeModule().createRequire(_importMetaUrl)
+  return _require
+}
 
 export interface NativeResolutionResult {
   path: string | null
@@ -31,6 +56,7 @@ const PLATFORM_MAP: Record<string, string[]> = {
 }
 
 function platformKey(): string {
+  if (isBrowser) return "browser"
   return `${process.platform}-${process.arch}`
 }
 
@@ -48,6 +74,14 @@ function platformKey(): string {
 export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult {
   const platform = platformKey()
   const tried: string[] = []
+
+  if (isBrowser) {
+    return { path: null, source: "not-found", platform, tried: ["not available in browser"] }
+  }
+
+  const fs = getNodeFs()
+  const path = getNodePath()
+  const _req = getRequire(import.meta.url)
 
   // 1. Env var override
   const envPath = process.env.TW_NATIVE_PATH?.trim()
@@ -71,7 +105,7 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   const prebuiltPkgs = PLATFORM_MAP[platform] ?? []
   for (const pkg of prebuiltPkgs) {
     try {
-      const candidate = _require.resolve(`${pkg}/tailwind_styled_parser.node`)
+      const candidate = _req.resolve(`${pkg}/tailwind_styled_parser.node`)
       if (fs.existsSync(candidate)) {
         return { path: candidate, source: "prebuilt", platform, tried }
       }

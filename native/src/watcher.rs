@@ -103,4 +103,3 @@ where
 
     Ok(WatcherHandle { _watcher: watcher })
 }
-

@@ -1,13 +1,43 @@
-import fs from "node:fs"
-import { createRequire } from "node:module"
-import os from "node:os"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
+const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
+
+const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+
+let _nodeFs: any = null
+let _nodeModule: any = null
+let _nodeOs: any = null
+let _nodePath: any = null
+let _nodeUrl: any = null
+
+function getNodeFs() {
+  if (isBrowser) throw new Error("node:fs not available in browser")
+  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  return _nodeFs!
+}
+function getNodeModule() {
+  if (isBrowser) throw new Error("node:module not available in browser")
+  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  return _nodeModule!
+}
+function getNodeOs() {
+  if (isBrowser) throw new Error("node:os not available in browser")
+  if (!_nodeOs) _nodeOs = nodeRequire("node:os")
+  return _nodeOs!
+}
+function getNodePath() {
+  if (isBrowser) throw new Error("node:path not available in browser")
+  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  return _nodePath!
+}
+function getNodeUrl() {
+  if (isBrowser) throw new Error("node:url not available in browser")
+  if (!_nodeUrl) _nodeUrl = nodeRequire("node:url")
+  return _nodeUrl!
+}
 
 export type PlatformExtension = ".node" | ".dll" | ".dylib" | ".so"
 
 export function getPlatformExtension(): PlatformExtension {
-  const platform = os.platform()
+  const platform = getNodeOs().platform()
   switch (platform) {
     case "win32":
       return ".node"
@@ -55,22 +85,28 @@ export function resolveRuntimeDir(
   moduleImportUrl: string
 ): string {
   if (typeof dirnameValue === "string" && dirnameValue.length > 0) return dirnameValue
-  return path.dirname(fileURLToPath(moduleImportUrl))
+  if (isBrowser) return ""
+  const nodePath = getNodePath()
+  const nodeUrl = getNodeUrl()
+  return nodePath.dirname(nodeUrl.fileURLToPath(moduleImportUrl))
 }
 
 export function resolveNativeBindingCandidates(
   options: ResolveNativeBindingCandidatesOptions
 ): string[] {
+  if (isBrowser) return []
+  
   const out: string[] = []
+  const nodePath = getNodePath()
   const envVarNames = options.envVarNames ?? ["TWS_NATIVE_PATH"]
 
   for (const envVarName of envVarNames) {
     const raw = process.env[envVarName]?.trim()
     if (!raw) continue
-    const resolved = path.resolve(raw)
+    const resolved = nodePath.resolve(raw)
 
     if (options.enforceNodeExtensionForEnvPath) {
-      if (path.extname(resolved).toLowerCase() !== ".node") {
+      if (nodePath.extname(resolved).toLowerCase() !== ".node") {
         throw new Error(
           `Invalid native binding path from ${envVarName}="${raw}". Expected a .node file.`
         )
@@ -84,9 +120,9 @@ export function resolveNativeBindingCandidates(
     const ext = options.platformExtension ?? getPlatformExtension()
     const defaultBindingName = `tailwind_styled_parser${ext}`
 
-    out.push(path.resolve(process.cwd(), "native", defaultBindingName))
-    out.push(path.resolve(options.runtimeDir, "..", "..", "..", "native", defaultBindingName))
-    out.push(path.resolve(options.runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+    out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
+    out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", defaultBindingName))
+    out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
   }
 
   return Array.from(new Set(out))
@@ -119,7 +155,14 @@ export function createDebugLogger(namespace: string, label = namespace): (messag
 export function loadNativeBinding<T>(
   options: LoadNativeBindingOptions<T>
 ): LoadNativeBindingResult<T> {
-  // Semua alias untuk disable native — TWS_DISABLE_NATIVE ditambahkan untuk compat test scripts
+  if (isBrowser) {
+    return {
+      binding: null as unknown as T,
+      loadedPath: null,
+      loadErrors: [{ path: "(browser)", message: "Native bindings not available in browser" }],
+    }
+  }
+
   const isDisabled =
     process.env.TWS_NO_NATIVE === "1" || process.env.TWS_NO_NATIVE === "true" ||
     process.env.TWS_NO_RUST === "1" || process.env.TWS_NO_RUST === "true" ||
@@ -136,11 +179,14 @@ export function loadNativeBinding<T>(
     }
   }
 
-  const req = createRequire(path.join(options.runtimeDir, "noop.cjs"))
+  const nodeModule = getNodeModule()
+  const nodePath = getNodePath()
+  const nodeFs = getNodeFs()
+  const req = nodeModule.createRequire(nodePath.join(options.runtimeDir, "noop.cjs"))
   const loadErrors: NativeBindingLoadError[] = []
 
   for (const candidate of options.candidates) {
-    if (!fs.existsSync(candidate)) continue
+    if (!nodeFs.existsSync(candidate)) continue
     try {
       const mod = req(candidate)
       if (options.isValid(mod)) {

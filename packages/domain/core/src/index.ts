@@ -35,9 +35,25 @@ export {
 } from "./liveTokenEngine"
 export type { MergeOptions } from "./merge"
 export { createTwMerge, mergeWithRules, twMerge } from "./merge"
-export type { ParsedClass, ParsedClassModifier } from "./parser"
-// ── Tailwind v4 class parser ────────────────────────────────────────────────
-export { parseClassToken, parseTailwindClasses, splitClassList } from "./parser"
+// ── Native Rust Bindings ───────────────────────────────────────────────────────
+export {
+  resetNativeBinding,
+  getNativeBinding,
+  compileTheme,
+  extractCssVars,
+  parseCssRules,
+  parseCssToRules,
+  detectDeadCode,
+  classifyKnownClasses,
+  detectClassConflicts,
+  extractThemeFromCSS,
+  splitClassList,
+  parseClassToken,
+  parseTailwindClasses,
+  type ParsedClass,
+  type ParsedClassModifier,
+  type ThemeConfig,
+} from "./native"
 export type { SubComponentEntry, SubComponentProps } from "./registry"
 // ── Sub-Component Registry ───────────────────────────────────────────────────
 export {
@@ -64,14 +80,6 @@ export type {
 } from "./styledSystem"
 // ── Design System Factory ─────────────────────────────────────────────────────
 export { createStyledSystem } from "./styledSystem"
-export type { ThemeConfig } from "./themeReader"
-// ── CSS-first theme reader ──────────────────────────────────────────────────
-export {
-  clearThemeReaderCache,
-  extractThemeFromCSS,
-  generateTypeDefinitions,
-  resolveThemeValue,
-} from "./themeReader"
 // ── Core ──────────────────────────────────────────────────────────────────────
 export { server, tw } from "./twProxy"
 export type { ResolvedThemeTokens, ThemeTokenMap } from "./twTheme"

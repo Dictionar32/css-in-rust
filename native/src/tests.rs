@@ -437,14 +437,17 @@ const Card = tw.div`rounded-lg`"#;
     fn compile_css_handles_hover_variant() {
         let r = compile_css(vec!["hover:bg-blue-600".to_string()], None);
         assert_eq!(r.resolved_classes.len(), 1);
-                assert!(r.css.contains("@apply hover:bg-blue-600"), "hover:bg-blue-600");
+        assert!(
+            r.css.contains("@apply hover:bg-blue-600"),
+            "hover:bg-blue-600"
+        );
     }
 
     #[test]
     fn compile_css_handles_responsive_variant() {
         let r = compile_css(vec!["md:flex".to_string()], None);
         assert_eq!(r.resolved_classes.len(), 1);
-                assert!(r.css.contains("@apply md:flex"));
+        assert!(r.css.contains("@apply md:flex"));
     }
 
     #[test]

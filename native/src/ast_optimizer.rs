@@ -117,4 +117,3 @@ pub fn extract_templates_from_ast(source: &str) -> (Vec<AstTemplateMatch>, bool,
 
     (templates, !has_client_directive, false)
 }
-

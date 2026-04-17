@@ -3,19 +3,19 @@
   "version": "5.0.4",
   "description": "Shared utilities and types for tailwind-styled-v4",
   "license": "MIT",
-  "type": "module",
+  "type": "commonjs",
   "sideEffects": false,
   "engines": {
     "node": ">=20"
   },
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     }
   },
   "files": [
@@ -30,9 +30,9 @@
     "typescript": "^6"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean",
-    "build:dev": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --sourcemap --watch",
-    "build:release": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --no-sourcemap",
+    "build": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --external node:*",
+    "build:dev": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --sourcemap --watch --external node:*",
+    "build:release": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --no-sourcemap --external node:*",
     "check": "tsc --noEmit -p tsconfig.json",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "node --test tests/*.test.mjs",

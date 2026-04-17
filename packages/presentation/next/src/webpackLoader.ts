@@ -80,8 +80,9 @@ export default function webpackLoader(this: WebpackContext, source: string): voi
     }
 
     if (options.verbose && output.changed) {
-      const env = output.rsc?.isServer ? "server" : "client"
-      const engine = output.engine ?? "js"
+      const rsc = (output as any).rsc
+      const engine = (output as any).engine ?? "js"
+      const env = rsc?.isServer ? "server" : "client"
       const name = path.basename(filepath)
       process.stdout.write(
         `[tailwind-styled/webpack] ${name} -> ${output.classes.length} classes (${env}) [${engine}]\n`

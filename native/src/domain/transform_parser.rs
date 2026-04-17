@@ -7,7 +7,7 @@ static RE_TOKEN: Lazy<Regex> = Lazy::new(|| Regex::new(r"\S+").unwrap());
 static RE_OPACITY: Lazy<Regex> = Lazy::new(|| Regex::new(r"^(.*)/(\d{1,3})$").unwrap());
 static RE_ARBITRARY: Lazy<Regex> = Lazy::new(|| Regex::new(r"\((--[a-zA-Z0-9_-]+)\)").unwrap());
 
-pub(crate) fn parse_classes_inner(input: &str) -> Vec<ParsedClass> {
+pub fn parse_classes_inner(input: &str) -> Vec<ParsedClass> {
     // ─ OPTIMIZATION (Phase 1.1): Pre-allocate vector based on whitespace token count estimates
     // Typical case: 10-15 classes per template, reducing realloc from ~5 to ~0 times
     let estimated_capacity = input.split_whitespace().count().max(1);
@@ -48,7 +48,7 @@ pub(crate) fn parse_classes_inner(input: &str) -> Vec<ParsedClass> {
     out
 }
 
-pub(crate) fn normalise_classes(raw: &str) -> Vec<String> {
+pub fn normalise_classes(raw: &str) -> Vec<String> {
     let parsed = parse_classes_inner(raw);
     // ─ OPTIMIZATION (Phase 1.1): Pre-allocate with exact capacity
     let mut classes: Vec<String> = Vec::with_capacity(parsed.len());
@@ -59,4 +59,3 @@ pub(crate) fn normalise_classes(raw: &str) -> Vec<String> {
     classes.dedup();
     classes
 }
-

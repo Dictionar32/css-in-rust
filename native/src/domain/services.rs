@@ -24,7 +24,11 @@ impl ClassParserService {
 pub struct ComponentTransformerService;
 
 impl ComponentTransformerService {
-    pub fn transform(&self, source: String, opts: Option<std::collections::HashMap<String, String>>) -> TransformResult {
+    pub fn transform(
+        &self,
+        source: String,
+        opts: Option<std::collections::HashMap<String, String>>,
+    ) -> TransformResult {
         crate::domain::transform::transform_source(source, opts)
     }
 }

@@ -1,8 +1,6 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  // Bundle index + loaders sebagai entry points terpisah
-  // sehingga require.resolve("./turbopackLoader") resolve ke file di dist
   entry: {
     index:           "src/index.ts",
     turbopackLoader: "src/turbopackLoader.ts",
@@ -11,28 +9,46 @@ export default defineConfig({
   format: ["esm"],
   dts: true,
   clean: true,
+  platform: "node",
   external: [
-    // Framework & Node built-ins — tetap external
-    "next",
+    // All node built-ins must be external
     "fs",
-    "path",
+    "path", 
     "crypto",
+    "module", 
+    "url",
+    "os",
+    "node:fs",
+    "node:path", 
+    "node:crypto",
+    "node:module",
+    "node:url",
+    "node:os",
+    // Framework
+    "next",
+    // Tailwind packages - use CJS require path
     "@tailwind-styled/compiler",
-    "@tailwind-styled/plugin",
+    "@tailwind-styled/plugin", 
     "@tailwind-styled/shared",
-    // Loader entry points — resolve ke file dist terpisah
+    "@tailwind-styled/engine",
+    // Loaders
     "./turbopackLoader",
     "./webpackLoader",
-    // Tailwind runtime & postcss — native .node bindings tidak bisa di-bundle
+    // Other deps
     "tailwindcss",
     "@tailwindcss/oxide",
     "@tailwindcss/postcss",
     "postcss",
     "tailwind-merge",
+    "zod",
+    "inversify",
+    "reflect-metadata",
   ],
-  esbuildOptions(options) {
-    // Skip platform-specific native bindings — tidak bisa di-bundle
-    options.external = [...(options.external ?? []), "*.node"]
-  },
+  noExternal: [],
   tsconfig: "tsconfig.json",
+  outExtension({ format }) {
+    return {
+      js: format === "esm" ? ".mjs" : ".cjs"
+    }
+  }
 })
