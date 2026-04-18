@@ -13,48 +13,62 @@
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-// Access native require through a Function constructor to bypass bundled wrapper
-const getNativeRequire = (() => {
+// Safe check for require availability - works in both CJS and ESM
+let nodeModuleRef: any = null
+function getNodeModuleRef() {
+  if (isBrowser) return null
+  if (nodeModuleRef !== null) return nodeModuleRef
   try {
-    // This creates a function that has direct access to the native require
-    // without going through the bundled __require wrapper
-    return new Function('return require')()
+    // Test if require actually works
+    const test = typeof require === 'function' ? require('node:module') : null
+    nodeModuleRef = test
+    return test
   } catch {
+    nodeModuleRef = null
     return null
   }
-})()
-
-const nodeRequire = getNativeRequire || (typeof require !== "undefined" ? require : (globalThis as any).require)
-
-function safeRequire(mod: string) {
-  if (!nodeRequire) throw new Error(`require not available for ${mod}`)
-  return nodeRequire(mod)
 }
 
-let _nodeModule: any = null
 let _nodePath: any = null
 let _nodeUrl: any = null
 let _nodeFs: any = null
+let _nodeCrypto: any = null
+let _nodeOs: any = null
 
-function getNodeModule() {
-  if (isBrowser) throw new Error("node:module not available in browser")
-  if (!_nodeModule) _nodeModule = safeRequire("node:module")
-  return _nodeModule!
-}
 function getNodePath() {
   if (isBrowser) throw new Error("node:path not available in browser")
-  if (!_nodePath) _nodePath = safeRequire("node:path")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
   return _nodePath!
 }
 function getNodeUrl() {
   if (isBrowser) throw new Error("node:url not available in browser")
-  if (!_nodeUrl) _nodeUrl = safeRequire("node:url")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url")
   return _nodeUrl!
 }
 function getNodeFs() {
   if (isBrowser) throw new Error("node:fs not available in browser")
-  if (!_nodeFs) _nodeFs = safeRequire("node:fs")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
   return _nodeFs!
+}
+function getNodeCrypto() {
+  if (isBrowser) throw new Error("node:crypto not available in browser")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto")
+  return _nodeCrypto!
+}
+function getNodeOs() {
+  if (isBrowser) throw new Error("node:os not available in browser")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeOs) _nodeOs = nodeRequire.createRequire(import.meta.url)("node:os")
+  return _nodeOs!
 }
 
 /**
@@ -67,7 +81,9 @@ function getNodeFs() {
  */
 export function createEsmRequire(importMetaUrl: string): NodeRequire {
   if (isBrowser) throw new Error("require not available in browser")
-  return getNodeModule().createRequire(importMetaUrl)
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  return nodeRequire.createRequire(importMetaUrl)
 }
 
 /**

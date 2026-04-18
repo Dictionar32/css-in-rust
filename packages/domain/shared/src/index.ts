@@ -1,6 +1,19 @@
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+// ESM-safe require detection
+let nodeModuleRef: any = null
+function getNodeModuleRef() {
+  if (isBrowser) return null
+  if (nodeModuleRef !== null) return nodeModuleRef
+  try {
+    const test = typeof require === 'function' ? require('node:module') : null
+    nodeModuleRef = test
+    return test
+  } catch {
+    nodeModuleRef = null
+    return null
+  }
+}
 
 let _nodeCrypto: any = null
 let _nodeFs: any = null
@@ -10,27 +23,37 @@ let _nodeUrl: any = null
 
 function getNodeCrypto() {
   if (isBrowser) throw new Error("node:crypto not available in browser")
-  if (!_nodeCrypto) _nodeCrypto = nodeRequire("node:crypto")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto")
   return _nodeCrypto!
 }
 function getNodeFs() {
   if (isBrowser) throw new Error("node:fs not available in browser")
-  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
   return _nodeFs!
 }
 function getNodeModule() {
   if (isBrowser) throw new Error("node:module not available in browser")
-  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeModule) _nodeModule = nodeRequire
   return _nodeModule!
 }
 function getNodePath() {
   if (isBrowser) throw new Error("node:path not available in browser")
-  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
   return _nodePath!
 }
 function getNodeUrl() {
   if (isBrowser) throw new Error("node:url not available in browser")
-  if (!_nodeUrl) _nodeUrl = nodeRequire("node:url")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) throw new Error("require not available")
+  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url")
   return _nodeUrl!
 }
 
@@ -225,14 +248,10 @@ export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): Load
 }
 
 function getRequire(): NodeRequire {
-  // In browser, this should never be called, but return require anyway
-  // which will throw if actually executed
-  if (isBrowser) return require as NodeRequire
-  try {
-    return getNodeModule().createRequire(import.meta.url)
-  } catch {
-    return require as NodeRequire
-  }
+  if (isBrowser) return (() => { throw new Error("require not available in browser") }) as unknown as NodeRequire
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) return (() => { throw new Error("require not available") }) as unknown as NodeRequire
+  return nodeRequire.createRequire(import.meta.url)
 }
 
 const _require = getRequire()
@@ -282,7 +301,9 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
     }
   }
 
-  const defaultBindingName = "tailwind_styled_parser.node"
+  const platform = typeof process !== "undefined" ? process.platform : ""
+  const ext = platform === "win32" ? ".dll" : platform === "darwin" ? ".dylib" : ".so"
+  const defaultBindingName = `tailwind_styled_parser${ext}`
   candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
   candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
   candidates.push(path.resolve(process.cwd(), "native", defaultBindingName))

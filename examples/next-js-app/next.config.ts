@@ -1,4 +1,4 @@
-import { withTailwindStyled } from "tailwind-styled-v4/next"
+import { withTailwindStyled } from "@tailwind-styled/next"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 

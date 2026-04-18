@@ -1,0 +1,7 @@
+autonomy_level: 1
+auto_scan_background: true
+notify_before_action: true
+require_approval_for: ["delete", "refactor_complex"]
+remember_preferences: true
+daily_summary: true
+max_auto_refactor_per_day: 5

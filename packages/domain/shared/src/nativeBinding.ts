@@ -40,13 +40,13 @@ export function getPlatformExtension(): PlatformExtension {
   const platform = getNodeOs().platform()
   switch (platform) {
     case "win32":
-      return ".node"
+      return ".dll"
     case "darwin":
       return ".dylib"
     case "linux":
       return ".so"
     default:
-      return ".node"
+      return ".dll"
   }
 }
 

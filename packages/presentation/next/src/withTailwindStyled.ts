@@ -194,6 +194,39 @@ const applyWebpackRule = (
     rules: [...rules, tailwindStyledRule],
   }
 
+  const externalPackages = [
+    "@tailwind-styled/shared",
+    "@tailwind-styled/compiler", 
+    "@tailwind-styled/engine",
+    "@tailwind-styled/plugin",
+    "@tailwind-styled/core",
+    "@tailwind-styled/runtime-css",
+    "@tailwind-styled/runtime",
+    "@tailwind-styled/scanner",
+    "@tailwind-styled/analyzer",
+    "@tailwind-styled/theme",
+    "@tailwind-styled/preset",
+  ]
+
+  const configAny = config as any
+
+  if (!configAny.externals) {
+    configAny.externals = []
+  }
+
+const ext = configAny.externals
+  if (Array.isArray(ext)) {
+    externalPackages.forEach((pkg) => {
+      const found = ext.find((e: any) => 
+        (typeof e === "string" && e.includes(pkg)) ||
+        (typeof e === "object" && e !== null && Object.keys(e).some((k) => k.includes(pkg)))
+      )
+      if (!found) {
+        ext.push(pkg)
+      }
+    })
+  }
+
   return config
 }
 
@@ -239,7 +272,7 @@ export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
   const webpackLoaderPath = resolveLoaderPath("webpackLoader")
   const turbopackLoaderPath = resolveLoaderPath("turbopackLoader")
 
-  return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTurbopack {
+return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTurbopack {
     const previousWebpack = nextConfig.webpack
     const loaderOptions = createLoaderOptions(normalizedOptions)
 
@@ -248,9 +281,23 @@ export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
       webpack(
         config: NextWebpackConfig,
         webpackOptions: NextWebpackOptions
-      ): NextWebpackConfig | Promise<NextWebpackConfig> {
-        const apply = (resolvedConfig: NextWebpackConfig) =>
-          applyWebpackRule(resolvedConfig, normalizedOptions, webpackLoaderPath)
+      ): NextConfigWithTurbopack | Promise<NextConfigWithTurbopack> {
+        const apply = (resolvedConfig: NextConfigWithTurbopack) => {
+          const finalConfig = applyWebpackRule(resolvedConfig, normalizedOptions, webpackLoaderPath)
+          if (!finalConfig.externals) {
+            finalConfig.externals = []
+          }
+          const externals = finalConfig.externals
+          if (Array.isArray(externals)) {
+            externals.push({
+              "@tailwind-styled/shared": "commonjs2 @tailwind-styled/shared",
+              "@tailwind-styled/compiler": "commonjs2 @tailwind-styled/compiler",
+              "@tailwind-styled/engine": "commonjs2 @tailwind-styled/engine",
+              "@tailwind-styled/plugin": "commonjs2 @tailwind-styled/plugin",
+            })
+          }
+          return finalConfig
+        }
 
         if (typeof previousWebpack !== "function") {
           return apply(config)

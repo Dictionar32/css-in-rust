@@ -107,11 +107,14 @@ function tryCompileClasses(classes: string[]) {
   }
 
   try {
-    const compiled = compileCssFromClasses(classes, {})
+    const compiled = compileCssFromClasses(classes, "")
+    const cssCode = compiled.code || ""
+    const resolvedClasses = compiled.classes || []
+    const unknownClasses = classes.filter(c => !resolvedClasses.includes(c))
     return {
-      cssBytes: compiled.sizeBytes,
-      resolvedClassCount: compiled.resolvedClasses.length,
-      unknownClasses: compiled.unknownClasses,
+      cssBytes: new TextEncoder().encode(cssCode).length,
+      resolvedClassCount: resolvedClasses.length,
+      unknownClasses,
       compilerAvailable: true,
       compilerError: undefined as string | undefined,
     }

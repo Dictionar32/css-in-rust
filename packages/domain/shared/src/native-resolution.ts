@@ -10,7 +10,20 @@
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+// ESM-safe require detection
+let nodeModuleRef: any = null
+function getNodeModuleRef() {
+  if (isBrowser) return null
+  if (nodeModuleRef !== null) return nodeModuleRef
+  try {
+    const test = typeof require === 'function' ? require('node:module') : null
+    nodeModuleRef = test
+    return test
+  } catch {
+    nodeModuleRef = null
+    return null
+  }
+}
 
 let _nodeFs: any = null
 let _nodePath: any = null
@@ -19,22 +32,30 @@ let _require: any = null
 
 function getNodeFs() {
   if (isBrowser) return { existsSync: () => false }
-  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) return { existsSync: () => false }
+  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
   return _nodeFs
 }
 function getNodePath() {
   if (isBrowser) return { resolve: () => "", dirname: "" }
-  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) return { resolve: () => "", dirname: "" }
+  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
   return _nodePath!
 }
 function getNodeModule() {
   if (isBrowser) return { createRequire: () => { throw new Error("node:module not available") } }
-  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) return { createRequire: () => { throw new Error("require not available") } }
+  if (!_nodeModule) _nodeModule = nodeRequire
   return _nodeModule
 }
 function getRequire(_importMetaUrl: string) {
   if (isBrowser) return () => { throw new Error("node:module not available") }
-  if (!_require) _require = getNodeModule().createRequire(_importMetaUrl)
+  const nodeRequire = getNodeModuleRef()
+  if (!nodeRequire) return () => { throw new Error("require not available") }
+  if (!_require) _require = nodeRequire.createRequire(_importMetaUrl)
   return _require
 }
 
