@@ -33,7 +33,12 @@ export default defineConfig({
   target: "node20",
   platform: "node",
   format: ["esm", "cjs"],
-  dts: true,
+  // dts: true → gagal silently karena tidak resolve cross-package types
+  // dts: { resolve: true } → inline semua types dari workspace packages
+  dts: {
+    resolve: true,
+  },
+  tsconfig: "./tsconfig.json",
   outDir: "dist",
   clean: true,
   splitting: false,

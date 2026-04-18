@@ -23,7 +23,7 @@ packages/*/vitest.config.ts
 packages/*/tsup.config.ts
 
 # Build artifacts (keep only dist)
-**/dist/**/*.map
+# *.map diinclude supaya user bisa debug → tidak di-exclude
 **/*.tsbuildinfo
 
 # Configuration files
