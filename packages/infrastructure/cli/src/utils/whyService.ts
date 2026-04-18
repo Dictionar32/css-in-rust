@@ -113,7 +113,7 @@ export async function whyClass(className: string, options?: { root?: string }): 
 
   const compiledCss = (() => {
     try {
-      return compileCssFromClasses(uniqueClasses, {}).css
+      return compileCssFromClasses(uniqueClasses, "").code
     } catch (error) {
       return {
         error: error instanceof Error ? error.message : String(error),

@@ -208,19 +208,21 @@ const applyWebpackRule = (
     "@tailwind-styled/preset",
   ]
 
-  if (!config.externals) {
-    config.externals = []
+  const configAny = config as any
+
+  if (!configAny.externals) {
+    configAny.externals = []
   }
 
-  const ext = config.externals
+const ext = configAny.externals
   if (Array.isArray(ext)) {
     externalPackages.forEach((pkg) => {
-      const found = ext.find((e) => 
+      const found = ext.find((e: any) => 
         (typeof e === "string" && e.includes(pkg)) ||
         (typeof e === "object" && e !== null && Object.keys(e).some((k) => k.includes(pkg)))
       )
       if (!found) {
-        ext.push({ [pkg]: "commonjs2 " + pkg })
+        ext.push(pkg)
       }
     })
   }

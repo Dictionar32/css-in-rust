@@ -1,0 +1,46 @@
+{
+  "waktu_pindai": "2026-04-17T12:30:00Z",
+  "total_file_diproses": 284,
+  "total_pola_ditemukan": 12,
+  "catatan": "Scan akhir - semua rekomendasi diterapkan",
+  "statistik": {
+    "try_catch": 125,
+    "async_functions": 47,
+    "interfaces": 281,
+    "zod_schemas": 40
+  },
+  "utility_terpasang": {
+    "errorWrapper": {
+      "file": "packages/domain/shared/src/errorWrapper.ts",
+      "pola": "master_002",
+      "penggunaan": 3,
+      "status": "TERSEDIA - adoption optional"
+    },
+    "asyncWrapper": {
+      "file": "packages/domain/shared/src/asyncWrapper.ts",
+      "pola": "master_005",
+      "penggunaan": 2,
+      "status": "TERSEDIA - adoption optional"
+    }
+  },
+  "status_per_pola": [
+    {"id": "pola_001", "nama": "Module Export", "status": "OPTIMAL", "frekuensi": 104},
+    {"id": "pola_002", "nama": "Import Type", "status": "OPTIMAL", "frekuensi": 45},
+    {"id": "pola_003", "nama": "Try-Catch", "status": "125 TERSEDIA(errorWrapper)", "frekuensi": 125},
+    {"id": "pola_004", "nama": "Type Definition", "status": "OPTIMAL", "frekuensi": 281},
+    {"id": "pola_005", "nama": "Export Const", "status": "OPTIMAL", "frekuensi": 282},
+    {"id": "pola_006", "nama": "Async Function", "status": "47 TERSEDIA(asyncWrapper)", "frekuensi": 47},
+    {"id": "pola_007", "nama": "Export Default", "status": "OPTIMAL", "frekuensi": 39},
+    {"id": "pola_008", "nama": "Native Binding", "status": "OPTIMAL", "frekuensi": 25},
+    {"id": "pola_009", "nama": "Class Definition", "status": "OPTIMAL", "frekuensi": 15},
+    {"id": "pola_010", "nama": "Error Factory", "status": "OPTIMAL", "frekuensi": 8},
+    {"id": "pola_011", "nama": "Logger Creation", "status": "OPTIMAL", "frekuensi": 16},
+    {"id": "pola_012", "nama": "Zod Schema", "status": "OPTIMAL", "frekuensi": 40}
+  ],
+  "ringkasan": {
+    "pola_optimal": 10,
+    "utility_tersedia": 2,
+    "total_refactoring_tidak_wajib": true,
+    "alasan": "Codebase sudah optimal, utility disediakan untuk code baru"
+  }
+}

@@ -118,9 +118,20 @@ export const astExtractClasses = (source: string, filename: string) => {
 export const parseClasses = (raw: string): Array<{ raw: string; type: string }> => {
   const native = getNativeBridge()
   if (!native?.parseClasses) {
-    throw new Error("FATAL: Native binding 'parseClasses' is required but not available.")
+    // Fallback to JS implementation
+    return parseClassesJs(raw)
   }
   return native.parseClasses(raw) || []
+}
+
+function parseClassesJs(raw: string): Array<{ raw: string; type: string }> {
+  if (!raw || typeof raw !== "string") return []
+  
+  const classes = raw.split(/\s+/).filter(Boolean)
+  return classes.map((cls) => ({
+    raw: cls,
+    type: cls.includes(":") ? "variant" : cls.includes("/") ? "arbitrary" : "utility",
+  }))
 }
 
 // =============================================================================
@@ -137,12 +148,36 @@ export const mergeClassesStatic = (classes: string): string => {
   return result?.normalized || ""
 }
 
+function normalizeAndDedupClassesJs(raw: string): { normalized: string; duplicatesRemoved: number; uniqueCount: number } {
+  const seen = new Set<string>()
+  const result: string[] = []
+  let duplicatesRemoved = 0
+
+  for (const token of raw.split(/\s+/)) {
+    if (token.length === 0) continue
+    if (seen.has(token)) {
+      duplicatesRemoved++
+    } else {
+      seen.add(token)
+      result.push(token)
+    }
+  }
+
+  return {
+    normalized: result.join(" "),
+    duplicatesRemoved,
+    uniqueCount: result.length,
+  }
+}
+
 export const normalizeAndDedupClasses = (raw: string) => {
   const native = getNativeBridge()
   if (!native?.normalizeAndDedupClasses) {
-    throw new Error("FATAL: Native binding 'normalizeAndDedupClasses' is required but not available.")
+    // Fallback to JS implementation
+    return normalizeAndDedupClassesJs(raw)
   }
-  return native.normalizeAndDedupClasses(raw) || { normalized: "", duplicatesRemoved: 0, uniqueCount: 0 }
+  const result = native.normalizeAndDedupClasses(raw)
+  return result || { normalized: "", duplicatesRemoved: 0, uniqueCount: 0 }
 }
 
 // =============================================================================

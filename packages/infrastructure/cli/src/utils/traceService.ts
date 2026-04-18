@@ -594,7 +594,7 @@ export async function traceClass(className: string, options?: TraceOptions): Pro
 
   const cssResult: CssCompileResult = (() => {
     try {
-      return compileCssFromClasses([className], {})
+      return compileCssFromClasses([className], "")
     } catch (error) {
       throw wrapUnknownError(
         "compile",
@@ -604,14 +604,14 @@ export async function traceClass(className: string, options?: TraceOptions): Pro
     }
   })()
 
-  if (!cssResult.css || cssResult.css.trim() === "") {
+  if (!cssResult.code || cssResult.code.trim() === "") {
     throw TwError.fromCompile(
       "TRACE_NO_CSS_RULES",
       `Class "${className}" has no CSS rules. The class may not be a valid Tailwind class.`
     )
   }
 
-  const { rules, classToRuleIds } = parseCssToIr(cssResult.css)
+  const { rules, classToRuleIds } = parseCssToIr(cssResult.code)
 
   const ruleIds = classToRuleIds.get(className)
   if (!ruleIds || ruleIds.length === 0) {

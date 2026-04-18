@@ -1,0 +1,11 @@
+{
+  "preferensi": {
+    "zod_schema": "file terpisah",
+    "error_handling": "errorWrapper",
+    "ts_wrapper": "compute wrapper di Rust native"
+  },
+  "hindari": [
+    "nested ternary"
+  ],
+  "suka": []
+}

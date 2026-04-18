@@ -7,8 +7,13 @@ docs/
 examples/
 plans/
 scripts/
+
 test/
-native/
+# Exclude Rust source & build artifacts, keep binary
+native/target/
+# ✅ Keep native binary
+!native/target/release/*.node
+!native/target/x86_64-pc-windows-msvc/release/*.node
 
 # Source files (should be compiled)
 packages/*/src/

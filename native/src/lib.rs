@@ -51,6 +51,7 @@ pub use domain::theme::*;
 pub use domain::transform::{
     has_tw_usage, is_already_transformed, normalise_classes, parse_classes,
 };
+pub use domain::variants::{resolve_simple_variants, resolve_variants};
 
 // Infrastructure
 pub use infrastructure::cache_store::*;
