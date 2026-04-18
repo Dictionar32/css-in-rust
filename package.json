@@ -49,8 +49,7 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "native/target/release/*.node",
-    "native/tailwind_styled_parser.node",
+    "native/*.node",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -190,7 +189,7 @@
   "scripts": {
     "build": "npm run build:packages && tsup --config tsup.config.ts && npm run example:build",
     "build:packages": "turbo run build --continue",
-    "build:rust": "cd native && cargo build --release",
+    "build:rust": "cd native && npx @napi-rs/cli build --release",
     "build:dev": "npm run build:packages && tsup --config tsup.config.ts --sourcemap --watch",
     "build:release": "npm run build:packages && tsup --config tsup.config.ts --no-sourcemap && npm run example:build",
     "verify:builds": "npm run build && cd examples/next-js-app && npm install --ignore-scripts && npx tsc --noEmit || echo \"[verify:builds] example typecheck done\"",
@@ -262,6 +261,11 @@
     "vue": "^3.5.30"
   },
   "optionalDependencies": {
+    "@tailwind-styled/native-linux-x64-gnu":   "5.0.6-canary.0.0",
+    "@tailwind-styled/native-linux-arm64-gnu": "5.0.6-canary.0.0",
+    "@tailwind-styled/native-darwin-x64":      "5.0.6-canary.0.0",
+    "@tailwind-styled/native-darwin-arm64":    "5.0.6-canary.0.0",
+    "@tailwind-styled/native-win32-x64-msvc":  "5.0.6-canary.0.0",
     "oxc-minify": "^0.120.0",
     "oxc-parser": "^0.120.0",
     "oxc-transform": "^0.120.0"

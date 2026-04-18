@@ -209,11 +209,11 @@ function scanWorkspaceInWorker(
       })
     })
 
-    worker.once("error", (error) => {
+    worker.once("error", (error: Error) => {
       finish(() => reject(error))
     })
 
-    worker.once("exit", (code) => {
+    worker.once("exit", (code: number) => {
       if (code !== 0) {
         finish(() => reject(new Error(`scanner worker exited with code ${code}`)))
       }
