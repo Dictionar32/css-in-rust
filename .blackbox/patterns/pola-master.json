@@ -1,0 +1,61 @@
+{
+  "waktu_dibuat": "2026-04-17T10:35:00Z",
+  "total_pola_master": 5,
+  "pola_master": [
+    {
+      "id": "master_001",
+      "nama": "Module Export Pattern",
+      "deskripsi": "Pola umum untuk export dari module (re-export dari file lain)",
+      "abstraksi": "export { xxx } from \"./path\"",
+      "pola_induk": ["pola_001", "pola_005", "pola_007"],
+      "contoh_sederhana": "export { foo, bar } from \"./module\"",
+      "frekuensi_kumulatif": 425,
+      "rekomendasi_refaktor": "Gunakan barrel file pattern dengan re-export dari index.ts"
+    },
+    {
+      "id": "master_002",
+      "nama": "Error Handling Pattern",
+      "deskripsi": "Pola error handling dengan factory methods",
+      "abstraksi": "try { ... } catch { ... } + static fromXxx() factory",
+      "pola_induk": ["pola_003", "pola_010"],
+      "contoh_sederhana": "try {\n  // logic\n} catch (e) {\n  return ErrorClass.fromXxx(e)\n}",
+      "frekuensi_kumulatif": 204,
+      "rekomendasi_refaktor": "Buat utility function errorWrapper() untuk reuse"
+    },
+    {
+      "id": "master_003",
+      "nama": "Native Binding Loader Pattern",
+      "deskripsi": "Pola loading native Rust bindings dengan validation",
+      "abstraksi": "const binding = getNativeXxx()\nif (!binding?.method) throw Error",
+      "pola_induk": ["pola_008"],
+      "contoh_sederhana": "const native = getNativeBridge()\nif (!native?.transform) {\n  throw new Error(\"Native required\")\n}",
+      "frekuensi_kumulatif": 25,
+      "rekomendasi_refaktor": "Ekstrak menjadi loadNativeBinding() utility"
+    },
+    {
+      "id": "master_004",
+      "nama": "Type Definition Pattern",
+      "deskripsi": "Pola definisi tipe dengan interface dan Zod schema",
+      "abstraksi": "interface Xxx { ... } + export const XxxSchema = z.object({...})",
+      "pola_induk": ["pola_002", "pola_004", "pola_012"],
+      "contoh_sederhana": "interface Config { ... }\nexport const ConfigSchema = z.object({...})",
+      "frekuensi_kumulatif": 446,
+      "rekomendasi_refaktor": "Gunakan schema+zod combo di setiap domain package"
+    },
+    {
+      "id": "master_005",
+      "nama": "Logger + Async Pattern",
+      "deskripsi": "Pola async functions dengan logging",
+      "abstraksi": "const log = createLogger(...)\nasync function fn() { ... }",
+      "pola_induk": ["pola_006", "pola_011"],
+      "contoh_sederhana": "const log = createLogger(\"domain\")\nasync function scan() {\n  log.debug(\"start\")\n  // ...\n}",
+      "frekuensi_kumulatif": 113,
+      "rekomendasi_refaktor": "Buat async wrapper dengan logging built-in"
+    }
+  ],
+  "ringkasan": {
+    "total_pola_asli": 12,
+    "total_pola_master": 5,
+    "penghematan": "58% pengurangan dengan abstraksi"
+  }
+}

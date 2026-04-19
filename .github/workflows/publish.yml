@@ -1,0 +1,95 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  # Step 1: Build .node untuk setiap platform
+  build-native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            pkg: native-linux-x64-gnu
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            pkg: native-linux-arm64-gnu
+            cross: true
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            pkg: native-darwin-x64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            pkg: native-darwin-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            pkg: native-win32-x64-msvc
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      - name: Build native .node
+        run: cd native && npx @napi-rs/cli build --release --target ${{ matrix.target }}
+
+      # Upload artifact agar bisa di-download di job publish
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.pkg }}
+          path: native/*.node
+
+  # Step 2: Publish main package + semua native packages
+  publish:
+    needs: build-native
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+
+      # Download semua .node artifacts
+      - uses: actions/download-artifact@v4
+        with:
+          path: native/
+          merge-multiple: true
+
+      - name: Build TypeScript
+        run: npm run build:packages && npx tsup --config tsup.config.ts
+
+      # Publish masing-masing native platform package
+      - name: Publish native packages
+        run: |
+          for dir in native/platform-pkgs/*/; do
+            cd "$dir" && npm publish --access public && cd -
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish main package
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
