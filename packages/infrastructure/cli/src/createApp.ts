@@ -126,7 +126,7 @@ async function createNextApp(context: CreateContext): Promise<void> {
           react: "^19",
           "react-dom": "^19",
           "tailwind-styled-v4": "^5.0.0",
-          "@tailwind-styled/next": "^5.0.0",
+          "tailwind-styled-v4/next": "^5.0.0",
         },
         devDependencies: {
           tailwindcss: "^4",
@@ -144,7 +144,7 @@ async function createNextApp(context: CreateContext): Promise<void> {
     context,
     "next.config.ts",
     `import type { NextConfig } from "next"
-import { withTailwindStyled } from "@tailwind-styled/next"
+import { withTailwindStyled } from "tailwind-styled-v4/next"
 
 const nextConfig: NextConfig = {}
 export default withTailwindStyled()(nextConfig)
@@ -189,7 +189,7 @@ async function createViteReactApp(context: CreateContext): Promise<void> {
         scripts: { dev: "vite", build: "vite build", preview: "vite preview" },
         dependencies: { react: "^19", "react-dom": "^19", "tailwind-styled-v4": "^5.0.0" },
         devDependencies: {
-          "@tailwind-styled/vite": "^5.0.0",
+          
           vite: "^6",
           "@vitejs/plugin-react": "^4",
           tailwindcss: "^4",
@@ -206,7 +206,7 @@ async function createViteReactApp(context: CreateContext): Promise<void> {
     "vite.config.ts",
     `import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
-import { tailwindStyledPlugin } from "@tailwind-styled/vite"
+import { tailwindStyledPlugin } from "tailwind-styled-v4/vite"
 
 export default defineConfig({ plugins: [react(), tailwindStyledPlugin()] })
 `
@@ -233,7 +233,7 @@ async function createViteVueApp(context: CreateContext): Promise<void> {
         dependencies: {
           vue: "^3.4.0",
           "tailwind-merge": "^3.5.0",
-          "@tailwind-styled/vue": "^5.0.0",
+          "tailwind-styled-v4/vue": "^5.0.0",
         },
         devDependencies: {
           vite: "^5.0.0",
@@ -265,7 +265,7 @@ export default defineConfig({
     context,
     "src/main.ts",
     `import { createApp } from "vue"
-import { TailwindStyledPlugin } from "@tailwind-styled/vue"
+import { TailwindStyledPlugin } from "tailwind-styled-v4/vue"
 import App from "./App.vue"
 import "./style.css"
 
@@ -278,7 +278,7 @@ createApp(App).use(TailwindStyledPlugin).mount("#app")
     "src/App.vue",
     `<script setup lang="ts">
 import { ref } from "vue"
-import { tw } from "@tailwind-styled/vue"
+import { tw } from "tailwind-styled-v4/vue"
 
 const Button = tw("button", {
   base: "px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2",
@@ -334,7 +334,7 @@ async function createViteSvelteApp(context: CreateContext): Promise<void> {
         private: true,
         type: "module",
         scripts: { dev: "vite", build: "vite build", preview: "vite preview" },
-        dependencies: { "tailwind-merge": "^3.5.0", "@tailwind-styled/svelte": "^5.0.0" },
+        dependencies: { "tailwind-merge": "^3.5.0", "tailwind-styled-v4/svelte": "^5.0.0" },
         devDependencies: {
           svelte: "^5.0.0",
           "@sveltejs/vite-plugin-svelte": "^3.0.0",
@@ -377,7 +377,7 @@ export default app
     context,
     "src/App.svelte",
     `<script lang="ts">
-  import { cv } from "@tailwind-styled/svelte"
+  import { cv } from "tailwind-styled-v4/svelte"
 
   const button = cv({
     base: "px-4 py-2 rounded-lg font-medium transition-colors focus:outline-none",

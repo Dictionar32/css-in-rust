@@ -2,6 +2,8 @@ import { defineConfig } from "tsup"
 
 const entries = {
   index: "src/umbrella/index.ts",
+  webpackLoader: "packages/presentation/next/src/webpackLoader.ts",
+  turbopackLoader: "packages/presentation/next/src/turbopackLoader.ts",
   animate: "src/umbrella/animate.ts",
   analyzer: "src/umbrella/analyzer.ts",
   atomic: "src/umbrella/atomic.ts",
@@ -42,17 +44,27 @@ export default defineConfig({
   tsconfig: "./tsconfig.json",
   outDir: "dist",
   splitting: false,
-  sourcemap: true,
+  sourcemap: false,
   treeshake: true,
   minify: false,
   external: [
-    "react",
-    "react-dom",
-    "react/jsx-runtime",
-    "next",
-    "vite",
-    "webpack",
-    "@rspack/core",
+  // Sudah ada
+  "react", "react-dom", "react/jsx-runtime",
+  "next", "vite", "webpack", "@rspack/core",
+
+  // Tambahkan ini
+  "vue",
+  "svelte",
+  "zod",
+  "tailwind-merge",
+  "tailwindcss",
+  "postcss",
+  "inversify",
+  "reflect-metadata",
+  "@clack/prompts",
+  "ts-pattern",
+  "@storybook/types",
+  "@storybook/core-events",
   ],
   banner: {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",

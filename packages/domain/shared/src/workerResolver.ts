@@ -142,7 +142,7 @@ export function resolveLoaderPath(
   return resolveWorkerPath({
     basename: loaderBasename,
     importMetaUrl,
-    extensions: [".cjs", ".js"],
+    extensions: [".cjs", ".js", ".mjs"],
     subdirs: [".", "loaders", "lib"],
   }).path
 }

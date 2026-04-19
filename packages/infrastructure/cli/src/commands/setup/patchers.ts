@@ -5,7 +5,7 @@ export function patchNextConfigImpl(src: string): string | null {
   const hasCjs = src.includes("module.exports")
 
   if (hasExport) {
-    const withImport = `import { withTailwindStyled } from "@tailwind-styled/next"\n${src}`
+    const withImport = `import { withTailwindStyled } from "tailwind-styled-v4/next"\n${src}`
 
     const patterns = [
       /export default\s+([\w]+);?\s*$/m,
@@ -24,7 +24,7 @@ export function patchNextConfigImpl(src: string): string | null {
 
   if (hasCjs) {
     const result =
-      `const { withTailwindStyled } = require("@tailwind-styled/next")\n` +
+      `const { withTailwindStyled } = require("tailwind-styled-v4/next")\n` +
       src.replace(
         /module\.exports\s*=\s*(.+)/s,
         (_match, expr) => `module.exports = withTailwindStyled()(${expr.trim()})`
@@ -40,12 +40,12 @@ export function patchViteConfigImpl(src: string): string | null {
 
   const patched = hasLegacyImport
     ? src
-        .replace(/from\s+['"]tailwind-styled-v4\/vite['"]/g, 'from "@tailwind-styled/vite"')
+        .replace(/from\s+['"]tailwind-styled-v4\/vite['"]/g, 'from "tailwind-styled-v4/vite"')
         .replace(/\btailwindStyled\(/g, "tailwindStyledPlugin(")
     : src.replace(/\btailwindStyled\(/g, "tailwindStyledPlugin(")
 
   const alreadyConfigured =
-    patched.includes("@tailwind-styled/vite") && patched.includes("tailwindStyledPlugin(")
+    patched.includes("tailwind-styled-v4/vite") && patched.includes("tailwindStyledPlugin(")
   if (alreadyConfigured) return patched === src ? null : patched
 
   const viteImportMatch = patched.match(/(import .+ from ['"]vite['"][^\n]*\n)/)
@@ -53,14 +53,14 @@ export function patchViteConfigImpl(src: string): string | null {
   const insertAfter = (reactImportMatch ?? viteImportMatch)?.[1]
 
   const result = (() => {
-    if (!patched.includes("@tailwind-styled/vite") && insertAfter) {
+    if (!patched.includes("tailwind-styled-v4/vite") && insertAfter) {
       return patched.replace(
         insertAfter,
-        `${insertAfter}import { tailwindStyledPlugin } from "@tailwind-styled/vite"\n`
+        `${insertAfter}import { tailwindStyledPlugin } from "tailwind-styled-v4/vite"\n`
       )
     }
-    if (!patched.includes("@tailwind-styled/vite")) {
-      return `import { tailwindStyledPlugin } from "@tailwind-styled/vite"\n${patched}`
+    if (!patched.includes("tailwind-styled-v4/vite")) {
+      return `import { tailwindStyledPlugin } from "tailwind-styled-v4/vite"\n${patched}`
     }
     return patched
   })()
@@ -69,21 +69,21 @@ export function patchViteConfigImpl(src: string): string | null {
 }
 
 export function patchRspackConfigImpl(src: string): string | null {
-  const hasModernImport = src.includes("@tailwind-styled/rspack")
+  const hasModernImport = src.includes("tailwind-styled-v4/rspack")
   const hasLegacyImport = src.includes("tailwind-styled-v4/rspack")
 
   const withLegacyFix = hasLegacyImport
-    ? src.replace(/from\s+['"]tailwind-styled-v4\/rspack['"]/g, 'from "@tailwind-styled/rspack"')
+    ? src.replace(/from\s+['"]tailwind-styled-v4\/rspack['"]/g, 'from "tailwind-styled-v4/rspack"')
     : src
 
   const patched = withLegacyFix.replace(/\btailwindStyled\(/g, "tailwindStyledRspackPlugin(")
 
   const alreadyConfigured =
-    patched.includes("@tailwind-styled/rspack") && patched.includes("tailwindStyledRspackPlugin(")
+    patched.includes("tailwind-styled-v4/rspack") && patched.includes("tailwindStyledRspackPlugin(")
   if (alreadyConfigured) return patched === src ? null : patched
 
   const result = (() => {
-    if (!patched.includes("@tailwind-styled/rspack") && !hasModernImport) {
+    if (!patched.includes("tailwind-styled-v4/rspack") && !hasModernImport) {
       const lines = patched.split("\n")
       const lastImportIdx = lines.reduce((maxIdx, line, idx) => {
         return line.trimStart().startsWith("import ") ? idx : maxIdx
@@ -91,7 +91,7 @@ export function patchRspackConfigImpl(src: string): string | null {
       lines.splice(
         lastImportIdx + 1,
         0,
-        'import { tailwindStyledRspackPlugin } from "@tailwind-styled/rspack"'
+        'import { tailwindStyledRspackPlugin } from "tailwind-styled-v4/rspack"'
       )
       return lines.join("\n")
     }

@@ -38,9 +38,9 @@ const cwd = process.cwd()
 // Keep these literals in this file for test compatibility:
 // "--dry-run", "--skip-install", "--yes", "--next", "--vite", "--rspack", "--react"
 const PROJECT_OPTIONS: SetupProjectOption[] = [
-  { label: "Next.js", value: "next", adapter: "@tailwind-styled/next" },
-  { label: "Vite", value: "vite", adapter: "@tailwind-styled/vite" },
-  { label: "Rspack", value: "rspack", adapter: "@tailwind-styled/rspack" },
+  { label: "Next.js", value: "next", adapter: "tailwind-styled-v4/next" },
+  { label: "Vite", value: "vite", adapter: "tailwind-styled-v4/vite" },
+  { label: "Rspack", value: "rspack", adapter: "tailwind-styled-v4/rspack" },
   { label: "React (other)", value: "react", adapter: "tailwind-styled-v4" },
 ]
 
