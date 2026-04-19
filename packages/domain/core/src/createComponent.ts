@@ -1,4 +1,5 @@
 // AnimateOptions loaded dynamically to avoid bundling @tailwind-styled/animate
+"use client";
 type AnimateOptions = { from: string; to: string; duration?: number; easing?: string; delay?: number; fill?: string; iterations?: number | "infinite"; direction?: string; name?: string }
 import React from "react"
 

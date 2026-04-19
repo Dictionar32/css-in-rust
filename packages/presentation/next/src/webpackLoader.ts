@@ -6,6 +6,7 @@ import {
   type LoaderOutput,
   runLoaderTransform,
   shouldSkipFile,
+  registerFileClasses,
 } from "@tailwind-styled/compiler/internal"
 import path from "node:path"
 import { z } from "zod"
@@ -87,6 +88,11 @@ export default function webpackLoader(this: WebpackContext, source: string): voi
       process.stdout.write(
         `[tailwind-styled/webpack] ${name} -> ${output.classes.length} classes (${env}) [${engine}]\n`
       )
+    }
+
+    // Register classes ke route map untuk TwCssInjector
+    if (output.classes.length > 0) {
+      registerFileClasses(filepath, output.classes)
     }
 
     callback(null, output.code)

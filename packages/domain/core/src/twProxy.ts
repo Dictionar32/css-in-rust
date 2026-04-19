@@ -7,7 +7,7 @@
  *   tw(Link)`underline text-blue-400`
  *   tw.server.div`p-4`   ← server-only, compiler enforced + runtime dev warning
  */
-
+"use client";
 import type React from "react"
 import { createComponent } from "./createComponent"
 import type {

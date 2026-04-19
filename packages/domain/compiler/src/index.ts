@@ -510,16 +510,34 @@ export const getAllRoutes = (): string[] => {
   return ['/', '__global']
 }
 
+// In-memory route → classes map (populated by webpack/turbopack loader per file)
+const _routeClassMap = new Map<string, Set<string>>()
+
 export const getRouteClasses = (route: string): Set<string> => {
-  return new Set()
+  return _routeClassMap.get(route) ?? new Set()
+}
+
+export const getAllRouteClasses = (): Map<string, Set<string>> => {
+  return new Map(_routeClassMap)
 }
 
 export const registerFileClasses = (filepath: string, classes: string[]): void => {
-  // Could be implemented with native
+  if (!classes.length) return
+  const route = fileToRoute(filepath) ?? '__global'
+  const existing = _routeClassMap.get(route) ?? new Set<string>()
+  for (const cls of classes) existing.add(cls)
+  _routeClassMap.set(route, existing)
 }
 
 export const registerGlobalClasses = (classes: string[]): void => {
-  // Could be implemented with native
+  if (!classes.length) return
+  const existing = _routeClassMap.get('__global') ?? new Set<string>()
+  for (const cls of classes) existing.add(cls)
+  _routeClassMap.set('__global', existing)
+}
+
+export const clearRouteClasses = (): void => {
+  _routeClassMap.clear()
 }
 
 // =============================================================================

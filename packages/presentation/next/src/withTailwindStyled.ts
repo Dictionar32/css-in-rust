@@ -22,6 +22,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
+import { getAllRouteClasses, buildStyleTag } from "@tailwind-styled/compiler/internal"
 
 const require = createRequire(import.meta.url)
 
@@ -266,6 +267,64 @@ const mergeTurbopackRules = (
   return merged
 }
 
+/**
+ * Webpack plugin yang emit CSS manifest per-route setelah build selesai.
+ * Output ke .next/static/css/tw/ — dibaca oleh TwCssInjector.
+ */
+class TwCssManifestPlugin {
+  apply(compiler: any): void {
+    compiler.hooks.emit.tapAsync("TwCssManifestPlugin", async (compilation: any, callback: () => void) => {
+      try {
+        const routeMap = getAllRouteClasses()
+        if (routeMap.size === 0) {
+          callback()
+          return
+        }
+
+        const manifest: Record<string, string> = {}
+
+        for (const [route, classes] of routeMap.entries()) {
+          if (classes.size === 0) continue
+
+          // Compile classes → CSS via Rust
+          let css = ""
+          try {
+            css = buildStyleTag(Array.from(classes))
+              .replace(/<style[^>]*>/, "")
+              .replace(/<\/style>/, "")
+              .trim()
+          } catch {
+            // Native binding not available — skip
+          }
+
+          if (!css) continue
+
+          const filename = route === "/" ? "index.css"
+            : route === "__global" ? "_global.css"
+            : `${route.replace(/^\//, "").replace(/\//g, "_")}.css`
+
+          const outputPath = `static/css/tw/${filename}`
+          compilation.assets[outputPath] = {
+            source: () => css,
+            size: () => css.length,
+          }
+          manifest[route] = filename
+        }
+
+        // Emit manifest
+        const manifestJson = JSON.stringify({ routes: manifest }, null, 2)
+        compilation.assets["static/css/tw/css-manifest.json"] = {
+          source: () => manifestJson,
+          size: () => manifestJson.length,
+        }
+      } catch {
+        // Non-fatal — app still works without route CSS
+      }
+      callback()
+    })
+  }
+}
+
 export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
   checkNextVersion()
   const normalizedOptions = parseNextAdapterOptions(options)
@@ -295,6 +354,13 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
               "@tailwind-styled/engine": "commonjs2 @tailwind-styled/engine",
               "@tailwind-styled/plugin": "commonjs2 @tailwind-styled/plugin",
             })
+          }
+          // Tambah CSS manifest plugin
+          if (!(finalConfig as any)._twCssPluginAdded) {
+            const plugins = (finalConfig as any).plugins as unknown[] ?? []
+            plugins.push(new TwCssManifestPlugin())
+            ;(finalConfig as any).plugins = plugins
+            ;(finalConfig as any)._twCssPluginAdded = true
           }
           return finalConfig
         }
