@@ -7,6 +7,7 @@ import { runSetupCli } from "../setup"
 import { runStatsCli } from "../stats"
 import { ensureFlag } from "../utils/args"
 import { runDoctorCli } from "./doctor"
+import { runCompileVariantsCli } from "../compileVariants"
 import { runTraceCli } from "./trace"
 import type { CommandDefinition } from "./types"
 
@@ -80,6 +81,14 @@ const doctorCommand: CommandDefinition = {
   },
 }
 
+const compileVariantsCommand: CommandDefinition = {
+  name: "compile-variants",
+  aliases: ["cv-build"],
+  async run(args, context) {
+    await runCompileVariantsCli(args)
+  },
+}
+
 export const coreCommands: CommandDefinition[] = [
   setupCommand,
   initCommand,
@@ -90,4 +99,5 @@ export const coreCommands: CommandDefinition[] = [
   extractCommand,
   traceCommand,
   doctorCommand,
+  compileVariantsCommand,
 ]

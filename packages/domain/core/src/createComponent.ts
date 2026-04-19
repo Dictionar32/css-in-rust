@@ -1,4 +1,5 @@
-import type { AnimateOptions } from "@tailwind-styled/animate"
+// AnimateOptions loaded dynamically to avoid bundling @tailwind-styled/animate
+type AnimateOptions = { from: string; to: string; duration?: number; easing?: string; delay?: number; fill?: string; iterations?: number | "infinite"; direction?: string; name?: string }
 import React from "react"
 
 import { processContainer } from "./containerQuery"
@@ -170,20 +171,14 @@ function attachExtend<P extends object>(
     })
   }
 
-  component.animate = async (opts: AnimateOptions) => {
-    try {
-      const { animate } =
-        require("@tailwind-styled/animate") as typeof import("@tailwind-styled/animate")
-      const animationClass = await animate(opts)
-      const merged = twMerge(base, animationClass)
-      return createComponent<P>(
-        originalTag,
-        typeof config === "string" ? merged : { ...config, base: merged }
-      )
-    } catch {
-      console.warn("[tailwind-styled-v4] .animate() requires @tailwind-styled/animate")
-      return component
-    }
+  // .animate() dipindah ke tailwind-styled-v4/animate agar tidak bundle @tailwind-styled/animate
+  // ke dalam main browser bundle (animate butuh Rust native binding → Node.js only)
+  component.animate = async (_opts: AnimateOptions) => {
+    console.warn(
+      "[tailwind-styled-v4] .animate() tidak tersedia di main bundle.\n" +
+      "Gunakan: import { animate } from \"tailwind-styled-v4/animate\""
+    )
+    return component
   }
 
   return component

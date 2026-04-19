@@ -9,6 +9,7 @@
  */
 
 import path from "node:path"
+import pc from "picocolors"
 import {
   patchNextConfigImpl,
   patchRspackConfigImpl,
@@ -38,9 +39,9 @@ const cwd = process.cwd()
 // Keep these literals in this file for test compatibility:
 // "--dry-run", "--skip-install", "--yes", "--next", "--vite", "--rspack", "--react"
 const PROJECT_OPTIONS: SetupProjectOption[] = [
-  { label: "Next.js", value: "next", adapter: "tailwind-styled-v4/next" },
-  { label: "Vite", value: "vite", adapter: "tailwind-styled-v4/vite" },
-  { label: "Rspack", value: "rspack", adapter: "tailwind-styled-v4/rspack" },
+  { label: "Next.js", value: "next", adapter: "tailwind-styled-v4" },
+  { label: "Vite", value: "vite", adapter: "tailwind-styled-v4" },
+  { label: "Rspack", value: "rspack", adapter: "tailwind-styled-v4" },
   { label: "React (other)", value: "react", adapter: "tailwind-styled-v4" },
 ]
 
@@ -102,9 +103,10 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
     },
   })
 
-  output.writeText("\n+-----------------------------------------+")
-  output.writeText("|  tailwind-styled-v4  ->  tw setup      |")
-  output.writeText("+-----------------------------------------+\n")
+  output.writeText("")
+  output.writeText(pc.bold(pc.cyan("  ◆ tailwind-styled-v4")) + pc.dim("  setup wizard"))
+  output.writeText(pc.dim("  ─────────────────────────────────────"))
+  output.writeText("")
 
   const bootSpinner = output.spinner()
   bootSpinner.start("Inspecting workspace")
@@ -113,41 +115,34 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
 
   if (detected) {
     const label = PROJECT_OPTIONS.find((option) => option.value === detected)?.label ?? detected
-    output.writeText(`  Terdeteksi: ${label}`)
+    output.writeText("  " + pc.dim("framework  ") + pc.cyan(label))
   } else {
-    output.writeText("  Project type tidak terdeteksi dari package.json.")
+    output.writeText("  " + pc.dim("framework  ") + pc.yellow("tidak terdeteksi"))
   }
-  output.writeText("")
 
   const bundler = await pickProjectType(detected, setupFlags, PROJECT_OPTIONS)
 
-  output.writeText(`  PM      : ${pm}`)
-  if (setupFlags.isDryRun) output.writeText("  Mode    : dry-run")
+  output.writeText("  " + pc.dim("package mg ") + pc.white(pm))
+  if (setupFlags.isDryRun) output.writeText("  " + pc.dim("mode       ") + pc.yellow("dry-run"))
+  output.writeText("")
+  output.writeText(pc.dim("  ─────────────────────────────────────"))
   output.writeText("")
 
-  output.writeText(">> [1/5] Install packages")
-  const adapterPkg =
-    PROJECT_OPTIONS.find((option) => option.value === bundler)?.adapter ?? "tailwind-styled-v4"
-  const [hasCorePkg, hasMergePkg, hasAdapterPkg] = await Promise.all([
+  output.writeText(pc.bold("  [1/4]") + pc.cyan("  packages"))
+  const [hasCorePkg, hasMergePkg] = await Promise.all([
     alreadyInstalled(cwd, "tailwind-styled-v4"),
     alreadyInstalled(cwd, "tailwind-merge"),
-    alreadyInstalled(cwd, adapterPkg),
   ])
 
   const toInstall = [
     hasCorePkg ? null : "tailwind-styled-v4",
     hasMergePkg ? null : "tailwind-merge",
   ].filter(Boolean) as string[]
-  const toInstallDev = [hasAdapterPkg ? null : adapterPkg].filter(Boolean) as string[]
 
   if (toInstall.length > 0) await installPackages(cwd, pm, toInstall, false, setupFlags, logger)
   else logger.skip("tailwind-styled-v4 + tailwind-merge sudah terpasang")
 
-  if (toInstallDev.length > 0)
-    await installPackages(cwd, pm, toInstallDev, true, setupFlags, logger)
-  else logger.skip(`${adapterPkg} sudah terpasang`)
-
-  output.writeText("\n>> [2/5] Patch bundler config")
+  output.writeText("\n" + pc.bold("  [2/4]") + pc.cyan("  bundler config"))
 
   const bundlerConfigMap: Record<
     string,
@@ -182,32 +177,7 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
     logger.info("Tambahkan tailwind-styled-v4 langsung ke komponen React kamu")
   }
 
-  output.writeText("\n>> [3/5] tailwind-styled.config.json")
-  const twsCfgPath = path.join(cwd, "tailwind-styled.config.json")
-  const hasTwsConfig = await findExisting(cwd, ["tailwind-styled.config.json"])
-
-  if (hasTwsConfig) {
-    logger.skip("tailwind-styled.config.json sudah ada")
-  } else {
-    await writeFileWithDryRun(
-      cwd,
-      twsCfgPath,
-      `${JSON.stringify(
-        {
-          version: 1,
-          compiler: { engine: "rust" },
-          css: { entry: "src/tailwind.css" },
-        },
-        null,
-        2
-      )}\n`,
-      "tailwind-styled.config.json",
-      setupFlags,
-      logger
-    )
-  }
-
-  output.writeText("\n>> [4/5] Tailwind CSS (@import)")
+  output.writeText("\n" + pc.bold("  [3/4]") + pc.cyan("  globals.css"))
   const cssCandidates = [
     "src/app/globals.css",
     "src/globals.css",
@@ -227,57 +197,27 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
       logger
     )
   } else {
-    await writeFileWithDryRun(
-      cwd,
-      path.join(cwd, "src/tailwind.css"),
-      '@import "tailwindcss";\n',
-      "src/tailwind.css",
-      setupFlags,
-      logger
-    )
-    logger.info("Import ke entry file: import './tailwind.css'")
+    logger.warn("CSS entry tidak ditemukan — tambahkan @import \"tailwindcss\" manual ke globals.css")
   }
 
-  output.writeText("\n>> [5/5] tsconfig.json")
+  output.writeText("\n" + pc.bold("  [4/4]") + pc.cyan("  tsconfig.json"))
   const tsCfg = path.join(cwd, "tsconfig.json")
   const hasTsConfig = await findExisting(cwd, ["tsconfig.json"])
 
   if (hasTsConfig) {
     await patchFileWithDryRun(tsCfg, patchTsConfig, "tsconfig.json", setupFlags, logger)
   } else {
-    await writeFileWithDryRun(
-      cwd,
-      tsCfg,
-      `${JSON.stringify(
-        {
-          compilerOptions: {
-            target: "ES2020",
-            lib: ["DOM", "DOM.Iterable", "ESNext"],
-            module: "ESNext",
-            moduleResolution: "bundler",
-            strict: true,
-            jsx: "react-jsx",
-            esModuleInterop: true,
-            skipLibCheck: true,
-          },
-          include: ["src"],
-          exclude: ["node_modules", "dist"],
-        },
-        null,
-        2
-      )}\n`,
-      "tsconfig.json",
-      setupFlags,
-      logger
-    )
+    logger.skip("tsconfig.json tidak ditemukan — skip")
   }
 
-  output.writeText("\n+-----------------------------------------+")
-  output.writeText("|  Setup selesai!                        |")
-  output.writeText("+-----------------------------------------+\n")
-  output.writeText("  Langkah selanjutnya:")
-  output.writeText("    npx tw preflight   <- verifikasi semua config benar")
-  output.writeText("    npm run dev        <- mulai development\n")
+  output.writeText("")
+  output.writeText(pc.dim("  ─────────────────────────────────────"))
+  output.writeText(pc.bold(pc.green("  ✓ setup selesai")))
+  output.writeText("")
+  output.writeText(pc.dim("  selanjutnya"))
+  output.writeText("    " + pc.cyan("npx tw preflight") + pc.dim("   — verifikasi config"))
+  output.writeText("    " + pc.cyan("npm run dev") + pc.dim("        — mulai development"))
+  output.writeText("")
 
   if (setupFlags.isJson) {
     const report: SetupReport = {

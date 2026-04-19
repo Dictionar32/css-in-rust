@@ -44,27 +44,36 @@ export default defineConfig({
   tsconfig: "./tsconfig.json",
   outDir: "dist",
   splitting: false,
-  sourcemap: false,
+  noExternal: [
+    // Force-bundle semua workspace packages ke dalam dist
+    // Tanpa ini, tsup treat @tailwind-styled/* sebagai external karena ada di node_modules via symlink
+    /^@tailwind-styled\//,
+  ],
+  sourcemap: true,
   treeshake: true,
   minify: false,
   external: [
-  // Sudah ada
-  "react", "react-dom", "react/jsx-runtime",
-  "next", "vite", "webpack", "@rspack/core",
-
-  // Tambahkan ini
-  "vue",
-  "svelte",
-  "zod",
-  "tailwind-merge",
-  "tailwindcss",
-  "postcss",
-  "inversify",
-  "reflect-metadata",
-  "@clack/prompts",
-  "ts-pattern",
-  "@storybook/types",
-  "@storybook/core-events",
+    // Frameworks
+    "react", "react-dom", "react/jsx-runtime",
+    "next", "vite", "webpack", "@rspack/core",
+    "vue", "svelte",
+    // Dependencies
+    "zod",
+    "tailwind-merge",
+    "tailwindcss",
+    "postcss",
+    "inversify",
+    "reflect-metadata",
+    "@clack/prompts",
+    "ts-pattern",
+    "@storybook/types",
+    "@storybook/core-events",
+    // Node.js built-ins — tidak boleh masuk browser bundle
+    "fs", "path", "os", "url", "crypto", "module",
+    "child_process", "worker_threads", "stream", "events", "util",
+    "node:fs", "node:path", "node:os", "node:url", "node:crypto",
+    "node:module", "node:child_process", "node:worker_threads",
+    "node:stream", "node:events", "node:util",
   ],
   banner: {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",

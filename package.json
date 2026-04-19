@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0",
+  "version": "5.0.6-canary.0.0.6",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -273,6 +273,7 @@
     "oxc-transform": "^0.120.0"
   },
   "dependencies": {
+    "tailwind-merge": "^3.5.0",
     "@clack/prompts": "^1.1.0",
     "ts-pattern": "^5.9.0"
   }
