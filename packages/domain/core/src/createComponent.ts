@@ -1,5 +1,4 @@
 // AnimateOptions loaded dynamically to avoid bundling @tailwind-styled/animate
-"use client";
 type AnimateOptions = { from: string; to: string; duration?: number; easing?: string; delay?: number; fill?: string; iterations?: number | "infinite"; direction?: string; name?: string }
 import React from "react"
 
@@ -181,6 +180,10 @@ function attachExtend<P extends object>(
     )
     return component
   }
+
+  // .withSub<"icon" | "badge">() — declare sub-component names untuk TypeScript
+  // Runtime: no-op, hanya untuk type inference
+  component.withSub = () => component
 
   return component
 }

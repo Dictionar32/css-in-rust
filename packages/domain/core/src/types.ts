@@ -64,27 +64,74 @@ export type SubComponentMap = Record<string, unknown>
 
 // ── Tw Object ────────────────────────────────────────────────────────────────
 // ── Tw Styled Component ──────────────────────────────────────────────────────
-export interface TwStyledComponent<Config extends ComponentConfig = ComponentConfig> {
+// Sub-component accessor — typed untuk registered sub-components
+export type TwSubComponentAccessor = React.FC<{ children?: React.ReactNode; className?: string }>
+
+// Sub-component props yang bisa di-extend user
+// ── Template Literal Sub-Component Inference ─────────────────────────────────
+// Extract sub-component names dari template literal: [icon] { ... }
+type TrimLeft<S extends string> =
+  S extends ` ${infer R}` | `
+${infer R}` | `	${infer R}` | `
+${infer R}`
+    ? TrimLeft<R>
+    : S
+
+type TrimRight<S extends string> =
+  S extends `${infer L} ` | `${infer L}
+` | `${infer L}	` | `${infer L}
+`
+    ? TrimRight<L>
+    : S
+
+type Trim<S extends string> = TrimLeft<TrimRight<S>>
+
+// Recursively extract [name] patterns dari template string
+type ExtractSubNames<T extends string> =
+  T extends `${infer _}[${infer Name}]${infer Rest}`
+    ? (Trim<Name> extends string ? Trim<Name> : never) | ExtractSubNames<Rest>
+    : never
+
+// ── DetectedSubComponents — di-generate oleh `npx tw generate-types`
+// Fallback ke string kalau belum di-generate
+export type DetectedSubComponents = string
+
+export interface TwSubComponentProps {
+  children?: React.ReactNode
+  className?: string
+}
+
+// TwStyledComponent dengan generic Sub untuk nama sub-component
+// S = union of sub-component names yang user deklarasi, default string
+export interface TwStyledComponent<
+  Config extends ComponentConfig = ComponentConfig,
+  S extends string = string
+> {
   (props: StyledComponentProps & InferVariantProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
-    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S>
     (config: {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config>
+    }): TwStyledComponent<Config, S>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config>
-  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config>>
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S>
+  withSub<NewS extends string>(): TwStyledComponent<Config, S | NewS>
+  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>
+} & {
+  // Sub-components — di-infer dari [name] patterns di template literal
+  [K in S]: TwSubComponentAccessor
+} & {
   [key: string]:
-    | ((strings: TemplateStringsArray) => TwStyledComponent<Config>)
-    | ((config: Partial<Config>) => TwStyledComponent<Config>)
+    | TwSubComponentAccessor
+    | ((strings: TemplateStringsArray) => TwStyledComponent<Config, S>)
+    | ((config: Partial<Config>) => TwStyledComponent<Config, S>)
     | ((props: StyledComponentProps) => unknown)
-    | ((opts: AnimateOptions) => Promise<TwStyledComponent<Config>>)
+    | ((opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>)
     | string
-    | undefined
 }
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
@@ -94,8 +141,10 @@ export interface TwSubComponent<P = unknown> {
 }
 
 export interface TwTemplateFactory<Config extends ComponentConfig = ComponentConfig> {
-  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
-  <C extends ComponentConfig>(config: C): TwStyledComponent<C>
+  // Template literal — TypeScript infer sub-component names dari [name] { ... }
+  <const T extends string>(strings: readonly [T, ...unknown[]], ...exprs: unknown[]): TwStyledComponent<Config, ExtractSubNames<T>>
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string>
+  <C extends ComponentConfig>(config: C): TwStyledComponent<C, string>
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ import { runStatsCli } from "../stats"
 import { ensureFlag } from "../utils/args"
 import { runDoctorCli } from "./doctor"
 import { runCompileVariantsCli } from "../compileVariants"
+import { runGenerateTypesCli } from "../generateTypes"
 import { runTraceCli } from "./trace"
 import type { CommandDefinition } from "./types"
 
@@ -81,6 +82,14 @@ const doctorCommand: CommandDefinition = {
   },
 }
 
+const generateTypesCommand: CommandDefinition = {
+  name: "generate-types",
+  aliases: ["gen-types", "gt"],
+  async run(args) {
+    await runGenerateTypesCli(args)
+  },
+}
+
 const compileVariantsCommand: CommandDefinition = {
   name: "compile-variants",
   aliases: ["cv-build"],
@@ -100,4 +109,5 @@ export const coreCommands: CommandDefinition[] = [
   traceCommand,
   doctorCommand,
   compileVariantsCommand,
+  generateTypesCommand,
 ]

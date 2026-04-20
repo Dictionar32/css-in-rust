@@ -1,0 +1,147 @@
+/**
+ * tw generate-types
+ *
+ * Scan seluruh codebase menggunakan Rust AST scanner,
+ * extract semua sub-component names dari:
+ *   - registerSubComponent({ name: "..." })
+ *   - .withSub<"icon" | "badge">()
+ *
+ * Lalu generate .d.ts augmentation otomatis ke src/types/tailwind-styled.d.ts
+ * TypeScript langsung pick up — tanpa deklarasi manual.
+ */
+
+import fs from "node:fs"
+import path from "node:path"
+import pc from "picocolors"
+import { createCliOutput } from "./utils/output"
+import { createCliLogger } from "./utils/logger"
+
+export async function runGenerateTypesCli(rawArgs: string[]): Promise<void> {
+  const output = createCliOutput({ json: rawArgs.includes("--json") })
+  const logger = createCliLogger({ output })
+  const cwd = process.cwd()
+
+  const outFile = rawArgs.find((a) => a.startsWith("--out="))?.slice(6)
+    ?? "src/types/tailwind-styled.d.ts"
+  const outPath = path.resolve(cwd, outFile)
+
+  output.writeText("")
+  output.writeText(pc.bold(pc.cyan("  ◆ tw generate-types")))
+  output.writeText(pc.dim("  ─────────────────────────────────────"))
+  output.writeText("")
+
+  const spinner = output.spinner()
+  spinner.start("Scanning sub-components (Rust)...")
+
+  let result: { names: string[]; dtsContent: string; filesScanned: number } | null = null
+
+  try {
+    // Lazy load native binding
+    const binding = await loadNativeBinding(cwd)
+    if (!binding?.generateSubComponentTypes) {
+      throw new Error("Native binding 'generateSubComponentTypes' tidak tersedia — pastikan build:rust sudah dijalankan")
+    }
+
+    result = binding.generateSubComponentTypes(cwd, outPath)
+    spinner.stop(`Scanned ${result.filesScanned} files`)
+  } catch (err) {
+    spinner.error("Scan gagal")
+    logger.warn(err instanceof Error ? err.message : String(err))
+
+    // Fallback: JS regex scan
+    output.writeText(pc.dim("  → fallback ke JS scanner..."))
+    result = await fallbackJsScan(cwd, outPath)
+  }
+
+  if (!result) {
+    logger.warn("Tidak ada hasil scan")
+    return
+  }
+
+  output.writeText("")
+  output.writeText(pc.bold("  [1/2]") + pc.cyan("  sub-components ditemukan"))
+
+  if (result.names.length === 0) {
+    logger.skip("Tidak ada sub-component terdeteksi")
+    output.writeText(pc.dim("  Gunakan registerSubComponent({ name: '...' }) atau .withSub<'name'>()"))
+  } else {
+    for (const name of result.names) {
+      logger.ok(name)
+    }
+  }
+
+  output.writeText("")
+  output.writeText(pc.bold("  [2/2]") + pc.cyan("  generate .d.ts"))
+
+  // Buat directory jika belum ada
+  const outDir = path.dirname(outPath)
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true })
+  }
+
+  fs.writeFileSync(outPath, result.dtsContent, "utf-8")
+  logger.ok(path.relative(cwd, outPath))
+
+  output.writeText("")
+  output.writeText(pc.dim("  ─────────────────────────────────────"))
+  output.writeText(pc.bold(pc.green("  ✓ types generated")))
+  output.writeText("")
+  output.writeText(pc.dim("  TypeScript sekarang tahu semua sub-component names."))
+  output.writeText(pc.dim("  Jalankan ulang jika ada sub-component baru."))
+  output.writeText("")
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function loadNativeBinding(cwd: string): Promise<Record<string, (...args: unknown[]) => unknown> | null> {
+  const candidates = [
+    path.join(cwd, "native", "tailwind-styled-native.node"),
+    path.join(cwd, "node_modules", "tailwind-styled-v4", "native", "tailwind-styled-native.node"),
+  ]
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      try {
+        return require(candidate)
+      } catch {}
+    }
+  }
+  return null
+}
+
+async function fallbackJsScan(
+  cwd: string,
+  outPath: string
+): Promise<{ names: string[]; dtsContent: string; filesScanned: number }> {
+  const { execSync } = await import("node:child_process")
+  const registerRe = /registerSubComponent\s*\(\s*\{[^}]*name\s*:\s*["']([a-zA-Z][a-zA-Z0-9_-]*)["']/g
+  const withSubRe = /\.withSub\s*<\s*([^>]+)\s*>/g
+  const literalRe = /["']([a-zA-Z][a-zA-Z0-9_-]*)["']/g
+
+  const names = new Set<string>()
+  let filesScanned = 0
+
+  try {
+    const files = execSync(
+      `find . -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" | grep -v node_modules | grep -v .next | grep -v dist`,
+      { cwd, encoding: "utf-8" }
+    ).trim().split("\n").filter(Boolean)
+
+    for (const file of files) {
+      try {
+        const source = fs.readFileSync(path.join(cwd, file), "utf-8")
+        filesScanned++
+
+        for (const m of source.matchAll(registerRe)) names.add(m[1])
+        for (const m of source.matchAll(withSubRe)) {
+          for (const lit of m[1].matchAll(literalRe)) names.add(lit[1])
+        }
+      } catch {}
+    }
+  } catch {}
+
+  const sorted = [...names].sort()
+  const union = sorted.map((n) => `"${n}"`).join(" | ") || "never"
+  const dtsContent = `// AUTO-GENERATED by tailwind-styled-v4 (JS fallback)\n// DO NOT EDIT — Run: npx tw generate-types to regenerate\n\ndeclare module "tailwind-styled-v4" {\n  export type DetectedSubComponents = ${union}\n}\n`
+
+  return { names: sorted, dtsContent, filesScanned }
+}
