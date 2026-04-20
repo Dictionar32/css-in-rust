@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.8",
+  "version": "5.0.6-canary.0.0.9",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -228,13 +228,13 @@
     "check:binary-size:strict": "node scripts/check-binary-size.mjs --max-mb=15",
     "validate:canary": "node scripts/validate-canary.mjs",
     "validate:canary:ci": "node scripts/validate-canary.mjs shared compiler engine scanner core",
-    "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ — run npm run generate:schemas and commit\" && exit 1)",
+    "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ \u2014 run npm run generate:schemas and commit\" && exit 1)",
     "test:smoke:fallback": "TWS_DISABLE_NATIVE=1 node --test tests/smoke/*.test.mjs",
     "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --webpack",
     "example:dev": "cd examples/next-js-app && npm install --ignore-scripts && npx next dev",
     "example:typecheck": "cd examples/next-js-app && npx tsc --noEmit",
     "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'",
-    "postinstall": "tw generate-types",
+    "postinstall": "tw generate-types || true",
     "generate-types": "tw generate-types"
   },
   "peerDependencies": {
