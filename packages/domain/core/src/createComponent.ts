@@ -9,6 +9,45 @@ import type { ComponentConfig, TwStyledComponent } from "./types"
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
+// ── Sub-component auto-registration ──────────────────────────────────────────
+
+/** Extract [name] patterns dari template string: "[icon] { color: red }" → ["icon"] */
+function parseSubComponentNames(template: string): string[] {
+  const matches = [...template.matchAll(/\[(\w+)\]/g)]
+  return [...new Set(matches.map((m) => m[1]!))]
+}
+
+/**
+ * Buat sub-component React FC untuk setiap name yang ditemukan di template.
+ * Sub-component meneruskan className ke elemen wrapper agar bisa di-style.
+ */
+function createSubComponentAccessor(
+  parentDisplayName: string,
+  name: string
+): React.FC<{ children?: React.ReactNode; className?: string }> {
+  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+    children,
+    className,
+  }) => React.createElement(React.Fragment, null, children)
+  SubComponent.displayName = `${parentDisplayName}[${name}]`
+  return SubComponent
+}
+
+/** Register semua sub-components yang di-parse dari template ke component object. */
+function registerSubComponents<P extends object>(
+  component: TwStyledComponent<P>,
+  template: string
+): void {
+  const names = parseSubComponentNames(template)
+  const displayName = component.displayName ?? "tw"
+  const map = component as unknown as Record<string, unknown>
+  for (const name of names) {
+    if (!(name in map)) {
+      map[name] = createSubComponentAccessor(displayName, name)
+    }
+  }
+}
+
 type RuntimeProps = Record<string, unknown> & { className?: string }
 
 function normalizeClassName(value: unknown): string | undefined {
@@ -66,10 +105,10 @@ function carryOverSubComponents<P extends object>(
   target: TwStyledComponent<P>,
   source: TwStyledComponent<P>
 ): void {
-  const INTERNAL_KEYS = new Set(["extend", "withVariants", "animate", "displayName"])
+  const INTERNAL_KEYS = new Set(["extend", "withVariants", "animate", "withSub", "displayName"])
   for (const key of Object.keys(source)) {
     if (!INTERNAL_KEYS.has(key)) {
-      ;(target as Record<string, unknown>)[key] = (source as Record<string, unknown>)[key]
+      ;(target as unknown as Record<string, unknown>)[key] = (source as unknown as Record<string, unknown>)[key]
     }
   }
 }
@@ -183,7 +222,7 @@ function attachExtend<P extends object>(
 
   // .withSub<"icon" | "badge">() — declare sub-component names untuk TypeScript
   // Runtime: no-op, hanya untuk type inference
-  component.withSub = () => component
+  component.withSub = (() => component) as TwStyledComponent<P>["withSub"]
 
   return component
 }
@@ -229,7 +268,9 @@ export function createComponent<P extends object = Record<string, unknown>>(
 
     const component = baseComponent as unknown as TwStyledComponent<P>
     component.displayName = `tw.${tagLabel}`
-    return attachExtend<P>(component, tag, base, config)
+    const result = attachExtend<P>(component, tag, base, config)
+    registerSubComponents(result, base)
+    return result
   }
 
   const baseComponent = React.forwardRef<unknown, RuntimeProps>((props, ref) => {
@@ -247,5 +288,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
 
   const component = baseComponent as unknown as TwStyledComponent<P>
   component.displayName = `tw.${tagLabel}`
-  return attachExtend<P>(component, tag, base, config)
+  const result = attachExtend<P>(component, tag, base, config)
+  registerSubComponents(result, base)
+  return result
 }

@@ -144,16 +144,33 @@ function Alert({ type, children }) {
 
 ### 6. Sub-components (Inline)
 
+Definisikan sub-components langsung di template literal dengan syntax `[name] { classes }` — **TypeScript otomatis infer nama tanpa perlu `.withSub<>()`**.
+
 ```tsx
-// Semua dalam satu definition — tapi TIDAK mewarisi style base
 const Card = tw.div`
-  flex flex-col p-4 rounded-xl
-  header { font-bold text-lg }
-  body { text-gray-600 }
-  footer { border-t pt-4 }
+  flex flex-col p-4 rounded-xl bg-white shadow
+  [header] { font-bold text-lg border-b pb-2 }
+  [body]   { text-gray-600 py-2 }
+  [footer] { border-t pt-2 text-sm text-gray-400 }
 `
-// Usage: <Card.header>Title</Card.header>
-// CATATAN: Sub-components TIDAK mewarisi style base secara otomatis
+
+// TypeScript otomatis tahu: Card.header, Card.body, Card.footer
+<Card>
+  <Card.header>Judul</Card.header>
+  <Card.body>Konten</Card.body>
+  <Card.footer>Footer</Card.footer>
+</Card>
+
+// Autocomplete ✓ — Card.nonexistent akan error TypeScript
+```
+
+> **Catatan:** Sub-components **tidak mewarisi** style base `Card`. Mereka adalah komponen terpisah dengan classes dari block `[name] { ... }`. Untuk mewarisi, gunakan `.extend()` (Pattern B di bawah).
+
+**`.withSub<>()`** hanya diperlukan jika nama sub-component tidak muncul di template literal (misalnya di-register secara dinamis):
+
+```tsx
+// Kasus khusus — nama tidak ada di template
+const Modal = tw.div`fixed inset-0`.withSub<"overlay" | "content">()
 ```
 
 ### 7. State Engine — Zero-JS State Management
@@ -202,9 +219,19 @@ const tokens = liveToken({
 ### 10. tw.server — RSC-only Components
 
 ```tsx
-const Avatar = tw.server`rounded-full object-cover`
-// Hanya render di server (Next.js App Router)
-// Auto-inject 'use client' kalo diperlukan
+// tw.server adalah namespace terpisah — pakai tw.server.tagname
+const Avatar = tw.server.img`rounded-full object-cover`
+const Hero   = tw.server.section`py-24 text-center`
+
+// Bisa pakai sub-components juga
+const Card = tw.server.div`
+  p-4 rounded-xl shadow
+  [header] { font-bold text-lg }
+  [body]   { text-gray-600 }
+`
+
+// Di browser (dev): otomatis log warning kalau ter-render di client
+// Di production: silent, tidak ada overhead
 ```
 
 ### 11. Component Wrapping — tw(ExistingComponent)
@@ -219,34 +246,53 @@ const IconButton = Button.extend`p-2 rounded-full`
 
 ---
 
-### Pattern untuk "4 Anak yang Mewarisi Style Base"
+### Pattern Sub-components
 
-Karena sub-components TIDAK mewarisi style base, gunakan salah satu pattern ini:
+**Pattern A: Inline `[name] { }` — Direkomendasikan**
 
-**Pattern A: Base Variable**
+Cocok kalau sub-components punya style sendiri yang *tidak perlu* mewarisi base:
+
 ```tsx
-const base = "flex flex-col p-4 rounded-xl"
-const Card = tw.div`${base} bg-white shadow`
-const CardHeader = tw.div`${base} font-bold`
-const CardBody = tw.div`${base} text-gray-600`
-const CardFooter = tw.div`${base} border-t`
+const Card = tw.div`
+  flex flex-col p-4 rounded-xl bg-white shadow
+  [header] { font-bold text-lg border-b pb-2 }
+  [body]   { text-gray-600 py-2 }
+  [footer] { border-t pt-2 text-sm }
+`
+// TypeScript otomatis: Card.header, Card.body, Card.footer ✓
 ```
 
-**Pattern B: .extend()**
+**Pattern B: `.extend()` — Sub-components Mewarisi Style Base**
+
+Pakai ini kalau sub-components butuh semua style dari parent:
+
 ```tsx
 const Card = tw.div`flex flex-col p-4 bg-white shadow`
-const CardHeader = Card.extend`font-bold text-lg`
-const CardBody = Card.extend`text-gray-600`
-const CardFooter = Card.extend`border-t pt-4`
+const CardHeader = Card.extend`font-bold text-lg border-b`
+const CardBody   = Card.extend`text-gray-600`
+const CardFooter = Card.extend`border-t pt-4 text-sm`
 ```
 
 **Pattern C: tw() Wrapper**
+
+Mirip `.extend()` tapi untuk wrapping komponen yang sudah ada:
+
+```tsx
+const Card = tw.div`flex flex-col p-4 bg-white shadow`
+const CardHeader = tw(Card)`font-bold text-lg`
+const CardBody   = tw(Card)`text-gray-600`
+const CardFooter = tw(Card)`border-t pt-4`
+```
+
+**Pattern D: Base Variable**
+
+Kalau butuh share classes ke komponen yang benar-benar independen:
+
 ```tsx
 const base = "flex flex-col p-4 rounded-xl"
-const Card = tw.div`${base} bg-white shadow`
-const CardHeader = tw(Card)`font-bold text-lg`
-const CardBody = tw(Card)`text-gray-600`
-const CardFooter = tw(Card)`border-t pt-4`
+const Card       = tw.div`${base} bg-white shadow`
+const CardHeader = tw.div`${base} font-bold`
+const CardBody   = tw.div`${base} text-gray-600`
 ```
 
 ---

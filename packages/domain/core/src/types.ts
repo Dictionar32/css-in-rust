@@ -101,12 +101,21 @@ export interface TwSubComponentProps {
   className?: string
 }
 
+// Helper: kalau S = string (belum di-narrow), fallback ke loose index signature.
+// Kalau S sudah spesifik ("icon" | "badge"), pakai strict mapped type supaya
+// autocomplete hanya munculkan key yang terdaftar.
+type SubComponentKeys<S extends string> =
+  string extends S
+    ? { [key: string]: TwSubComponentAccessor }
+    : { [K in S]: TwSubComponentAccessor }
+
 // TwStyledComponent dengan generic Sub untuk nama sub-component
-// S = union of sub-component names yang user deklarasi, default string
-export interface TwStyledComponent<
+// S = union of sub-component names — di-infer otomatis dari [name] patterns
+// di template literal via ExtractSubNames, atau di-declare manual via .withSub<>()
+export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
   S extends string = string
-> {
+> = {
   (props: StyledComponentProps & InferVariantProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
@@ -121,18 +130,7 @@ export interface TwStyledComponent<
   withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S>
   withSub<NewS extends string>(): TwStyledComponent<Config, S | NewS>
   animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>
-} & {
-  // Sub-components — di-infer dari [name] patterns di template literal
-  [K in S]: TwSubComponentAccessor
-} & {
-  [key: string]:
-    | TwSubComponentAccessor
-    | ((strings: TemplateStringsArray) => TwStyledComponent<Config, S>)
-    | ((config: Partial<Config>) => TwStyledComponent<Config, S>)
-    | ((props: StyledComponentProps) => unknown)
-    | ((opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>)
-    | string
-}
+} & SubComponentKeys<S>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
 export interface TwSubComponent<P = unknown> {

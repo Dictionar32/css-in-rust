@@ -22,6 +22,7 @@ import { storybookCommand } from "./storybook"
 import { studioCommand } from "./studio"
 import { syncCommand } from "./sync"
 import { runTraceCli } from "./trace"
+import { runGenerateTypesCli } from "../generateTypes"
 import type { CommandContext, CommandDefinition } from "./types"
 import { runWhyCli } from "./why"
 
@@ -286,6 +287,20 @@ export function buildMainProgram(context: CommandContext): Command {
     .allowUnknownOption(true)
     .action(async (args: string[] | undefined) => {
       await installRegistryCommand.run(contextArgs(toVariadic(args), context), context)
+    })
+
+  program
+    .command("generate-types")
+    .aliases(["gen-types", "gt"])
+    .description("Generate TypeScript sub-component types from scanned template literals")
+    .option("--out <path>", "Output file path (default: src/tailwind-styled.d.ts)")
+    .option("--dry-run", "Preview output without writing")
+    .action(async (...actionArgs) => {
+      const options = actionCommand(actionArgs).opts()
+      const args: string[] = []
+      if (options.out) args.push(`--out=${options.out}`)
+      if (options.dryRun) args.push("--dry-run")
+      await runGenerateTypesCli(args)
     })
 
   const sync = program.command("sync").description("Design token sync commands")
