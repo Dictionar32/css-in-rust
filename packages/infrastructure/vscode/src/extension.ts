@@ -51,7 +51,9 @@ export function activate(context: vscode.ExtensionContext) {
         '"',
         "'",
         " ",
-        ":"
+        ":",
+        "`",  // tagged template literal tw`...` / tw.el`...`
+        "\n"  // newline di dalam template literal
       )
     )
   }

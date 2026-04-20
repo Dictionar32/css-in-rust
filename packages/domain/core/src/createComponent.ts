@@ -18,6 +18,18 @@ function parseSubComponentNames(template: string): string[] {
 }
 
 /**
+ * Strip semua `[name] { ... }` blocks dari template string sehingga
+ * twMerge hanya menerima base classes (outer scope).
+ *
+ * Tanpa ini, twMerge membaca `flex h-12 ... [icon] { flex h-4 }` sebagai
+ * satu flat class list dan melaporkan conflict antara `h-12` dan `h-4`
+ * padahal keduanya berada di elemen yang berbeda.
+ */
+function extractBaseClasses(template: string): string {
+  return template.replace(/\[\w+\]\s*\{[^}]*\}/g, "").replace(/\s+/g, " ").trim()
+}
+
+/**
  * Buat sub-component React FC untuk setiap name yang ditemukan di template.
  * Sub-component meneruskan className ke elemen wrapper agar bisa di-style.
  */
@@ -155,7 +167,7 @@ function attachExtend<P extends object>(
     // Template literal path
     if (Array.isArray(stringsOrConfig) && "raw" in stringsOrConfig) {
       const extra = (stringsOrConfig as TemplateStringsArray).raw.join("").trim().replace(/\s+/g, " ")
-      const merged = twMerge(base, extra)
+      const merged = twMerge(extractBaseClasses(base), extra)
       const extended = createComponent<P>(
         originalTag,
         typeof config === "string" ? merged : { ...config, base: merged }
@@ -172,7 +184,7 @@ function attachExtend<P extends object>(
       compoundVariants?: ComponentConfig["compoundVariants"]
     }
     const extraClasses = extCfg.classes ?? ""
-    const merged = twMerge(base, extraClasses)
+    const merged = twMerge(extractBaseClasses(base), extraClasses)
     const existing = typeof config === "object" ? config : {}
     const extended = createComponent<P>(originalTag, {
       ...existing,
@@ -262,7 +274,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
       return React.createElement(tag, {
         ref,
         ...filterProps(rest),
-        className: twMerge(base, engineClasses, runtimeClassName),
+        className: twMerge(extractBaseClasses(base), engineClasses, runtimeClassName),
       })
     })
 
@@ -282,7 +294,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
     return React.createElement(tag, {
       ref,
       ...filterProps(rest),
-      className: twMerge(base, variantClasses, compoundClasses, engineClasses, runtimeClassName),
+      className: twMerge(extractBaseClasses(base), variantClasses, compoundClasses, engineClasses, runtimeClassName),
     })
   })
 

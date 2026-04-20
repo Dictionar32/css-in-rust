@@ -72,6 +72,9 @@ interface NextWebpackOptions {
   nextRuntime?: "nodejs" | "edge"
   defaultLoaders: { babel: unknown }
   webpack: unknown
+  dir: string
+  config: Record<string, unknown>
+  totalPages: number
 }
 
 interface NextConfigWithTurbopack {
@@ -271,6 +274,68 @@ const mergeTurbopackRules = (
  * Webpack plugin yang emit CSS manifest per-route setelah build selesai.
  * Output ke .next/static/css/tw/ — dibaca oleh TwCssInjector.
  */
+/**
+ * Plugin untuk dev mode — tulis safelist.css setiap kali webpack selesai compile.
+ * Tailwind CSS scanner akan pick up file ini sehingga semua class yang di-extract
+ * dari tw`...` template literals ter-include di output CSS.
+ *
+ * File ditulis ke: <cwd>/.next/tailwind-styled-safelist.css
+ * Format: satu class per baris, dibungkus selector dummy agar Tailwind scan-nya
+ */
+class TwSafelistDevPlugin {
+  private readonly outputPath: string
+  private lastHash = ""
+
+  constructor(cwd: string) {
+    this.outputPath = path.resolve(cwd, ".next", "tailwind-styled-safelist.css")
+  }
+
+  apply(compiler: any): void {
+    // afterCompile — jalan di setiap HMR cycle, bukan hanya emit
+    compiler.hooks.afterCompile.tap("TwSafelistDevPlugin", () => {
+      try {
+        const routeMap = getAllRouteClasses()
+        const allClasses = new Set<string>()
+        for (const classes of routeMap.values()) {
+          for (const cls of classes) allClasses.add(cls)
+        }
+
+        if (allClasses.size === 0) return
+
+        // Hash check — skip write jika tidak ada perubahan
+        const sorted = [...allClasses].sort()
+        const hash = sorted.join(",")
+        if (hash === this.lastHash) return
+        this.lastHash = hash
+
+        // Format: dummy selector agar Tailwind CSS v4 scanner mengenali class-nya
+        const css = [
+          "/* tailwind-styled-v4 safelist — auto-generated, do not edit */",
+          "/* @tw-safelist */",
+          ".tw-safelist {",
+          sorted.map((cls) => `  /* ${cls} */`).join("
+"),
+          "}",
+          // Juga emit sebagai @layer utilities agar v4 langsung generate
+          "@layer utilities {",
+          sorted.map((cls) => `.${CSS.escape?.(cls) ?? cls} {}`).join("
+"),
+          "}",
+        ].join("
+")
+
+        // Pastikan .next/ dir ada
+        const dir = path.dirname(this.outputPath)
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+        fs.writeFileSync(this.outputPath, css, "utf-8")
+      } catch {
+        // Non-fatal
+      }
+    })
+  }
+}
+
 class TwCssManifestPlugin {
   apply(compiler: any): void {
     compiler.hooks.emit.tapAsync("TwCssManifestPlugin", async (compilation: any, callback: () => void) => {
@@ -355,10 +420,13 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
               "@tailwind-styled/plugin": "commonjs2 @tailwind-styled/plugin",
             })
           }
-          // Tambah CSS manifest plugin
+          // Tambah CSS manifest plugin (build) + safelist dev plugin (dev/HMR)
           if (!(finalConfig as any)._twCssPluginAdded) {
             const plugins = (finalConfig as any).plugins as unknown[] ?? []
             plugins.push(new TwCssManifestPlugin())
+            if (webpackOptions.dev) {
+              plugins.push(new TwSafelistDevPlugin(webpackOptions.dir))
+            }
             ;(finalConfig as any).plugins = plugins
             ;(finalConfig as any)._twCssPluginAdded = true
           }
