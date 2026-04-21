@@ -492,22 +492,37 @@ export const shouldSkipFile = (filepath: string): boolean => {
 
 export const fileToRoute = (filepath: string): string | null => {
   const normalized = filepath.replace(/\\/g, '/')
-  
-  if (normalized.includes('/layout.') || normalized.includes('/loading.') || normalized.includes('/error.')) {
+
+  // Layout / loading / error — shared across all routes
+  if (
+    normalized.includes('/layout.') ||
+    normalized.includes('/loading.') ||
+    normalized.includes('/error.')
+  ) {
     return '__global'
   }
-  
-  const pageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
-  if (pageMatch) return `/${pageMatch[1]}`
-  
-  const rootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
-  if (rootPage) return '/'
-  
+
+  // App Router — /app/[...]/page.[tj]sx?
+  const appPageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
+  if (appPageMatch) return `/${appPageMatch[1]}`
+
+  const appRootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
+  if (appRootPage) return '/'
+
+  // Pages Router — /pages/[...].tsx (exclude _app, _document, _error, api/)
+  const pagesMatch = normalized.match(/\/pages\/(.+?)\.[tj]sx?$/)
+  if (pagesMatch) {
+    const pagePath = pagesMatch[1]
+    if (pagePath.startsWith('_') || pagePath.startsWith('api/')) return '__global'
+    // /pages/index → /, /pages/about → /about, /pages/blog/[slug] → /blog/[slug]
+    return pagePath === 'index' ? '/' : `/${pagePath}`
+  }
+
   return null
 }
 
 export const getAllRoutes = (): string[] => {
-  return ['/', '__global']
+  return Array.from(_routeClassMap.keys())
 }
 
 // In-memory route → classes map (populated by webpack/turbopack loader per file)

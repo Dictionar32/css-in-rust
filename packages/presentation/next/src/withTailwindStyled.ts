@@ -22,7 +22,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
-import { getAllRouteClasses, buildStyleTag } from "@tailwind-styled/compiler/internal"
+import { getAllRouteClasses, buildStyleTag, clearRouteClasses } from "@tailwind-styled/compiler/internal"
 
 const require = createRequire(import.meta.url)
 
@@ -35,6 +35,8 @@ interface TailwindStyledLoaderOptions {
   incremental?: boolean
   verbose?: boolean
   preserveImports?: boolean
+  /** Path ke safelist dev file — di-inject oleh TwSafelistDevPlugin (dev only) */
+  safelistPath?: string
 }
 
 export interface TailwindStyledNextOptions
@@ -282,6 +284,14 @@ const mergeTurbopackRules = (
  * File ditulis ke: <cwd>/.next/tailwind-styled-safelist.css
  * Format: satu class per baris, dibungkus selector dummy agar Tailwind scan-nya
  */
+/**
+ * Escape CSS class name untuk dipakai sebagai selector.
+ * CSS.escape hanya tersedia di browser — Node tidak punya.
+ */
+function escapeClassName(cls: string): string {
+  return cls.replace(/([^a-zA-Z0-9_-])/g, "\\$1")
+}
+
 class TwSafelistDevPlugin {
   private readonly outputPath: string
   private lastHash = ""
@@ -291,6 +301,14 @@ class TwSafelistDevPlugin {
   }
 
   apply(compiler: any): void {
+    // Reset classes setiap kali webpack mulai compile baru —
+    // tanpa ini, file yang dihapus tetap ada classnya di safelist selamanya
+    const resetClasses = () => {
+      try { clearRouteClasses() } catch { /* non-fatal */ }
+    }
+    compiler.hooks.watchRun.tap("TwSafelistDevPlugin", resetClasses)   // HMR cycle
+    compiler.hooks.beforeRun.tap("TwSafelistDevPlugin", resetClasses)  // fresh build
+
     // afterCompile — jalan di setiap HMR cycle, bukan hanya emit
     compiler.hooks.afterCompile.tap("TwSafelistDevPlugin", () => {
       try {
@@ -313,16 +331,13 @@ class TwSafelistDevPlugin {
           "/* tailwind-styled-v4 safelist — auto-generated, do not edit */",
           "/* @tw-safelist */",
           ".tw-safelist {",
-          sorted.map((cls) => `  /* ${cls} */`).join("
-"),
+          sorted.map((cls) => `  /* ${cls} */`).join("\n"),
           "}",
           // Juga emit sebagai @layer utilities agar v4 langsung generate
           "@layer utilities {",
-          sorted.map((cls) => `.${CSS.escape?.(cls) ?? cls} {}`).join("
-"),
+          sorted.map((cls) => `.${escapeClassName(cls)} {}`).join("\n"),
           "}",
-        ].join("
-")
+        ].join("\n")
 
         // Pastikan .next/ dir ada
         const dir = path.dirname(this.outputPath)
@@ -339,6 +354,8 @@ class TwSafelistDevPlugin {
 class TwCssManifestPlugin {
   apply(compiler: any): void {
     compiler.hooks.emit.tapAsync("TwCssManifestPlugin", async (compilation: any, callback: () => void) => {
+      // Skip di dev mode — TwSafelistDevPlugin sudah handle safelist via afterCompile
+      if ((compiler as any).options?.mode === "development") { callback(); return }
       try {
         const routeMap = getAllRouteClasses()
         if (routeMap.size === 0) {
@@ -400,6 +417,12 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
     const previousWebpack = nextConfig.webpack
     const loaderOptions = createLoaderOptions(normalizedOptions)
 
+    const safelistPath = path.resolve(
+      typeof process !== "undefined" ? process.cwd() : "",
+      ".next",
+      "tailwind-styled-safelist.css"
+    )
+
     return {
       ...nextConfig,
       webpack(
@@ -450,7 +473,7 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
         ...(nextConfig.turbopack ?? {}),
         rules: mergeTurbopackRules(
           (nextConfig.turbopack?.rules as Record<string, unknown>) ?? {},
-          buildTurbopackRules(turbopackLoaderPath, loaderOptions)
+          buildTurbopackRules(turbopackLoaderPath, { ...loaderOptions, safelistPath })
         ),
       },
     }

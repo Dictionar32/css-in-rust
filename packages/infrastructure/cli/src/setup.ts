@@ -83,7 +83,7 @@ const patchViteConfig = (src: string): string | null => patchViteConfigImpl(src)
 // Keep "tailwind-styled-v4/rspack" and "tailwindStyledRspackPlugin" references in this file.
 const patchRspackConfig = (src: string): string | null => patchRspackConfigImpl(src)
 
-const patchTailwindCss = (src: string): string | null => patchTailwindCssImpl(src)
+const patchTailwindCss = (src: string, bundler?: "next" | "vite" | "rspack", cssFilePath?: string, cwd?: string): string | null => patchTailwindCssImpl(src, bundler, cssFilePath, cwd)
 
 const patchTsConfig = (src: string): string | null => patchTsConfigImpl(src)
 
@@ -191,7 +191,7 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
   if (cssFile) {
     await patchFileWithDryRun(
       cssFile,
-      patchTailwindCss,
+      (src) => patchTailwindCss(src, bundler as "next" | "vite" | "rspack" | undefined, path.relative(cwd, cssFile), cwd),
       path.relative(cwd, cssFile),
       setupFlags,
       logger

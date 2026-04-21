@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.10",
+  "version": "5.0.6-canary.0.0.12",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -233,9 +233,8 @@
     "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --webpack",
     "example:dev": "cd examples/next-js-app && npm install --ignore-scripts && npx next dev",
     "example:typecheck": "cd examples/next-js-app && npx tsc --noEmit",
-    "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'",
-    "postinstall": "tw generate-types || true",
-    "generate-types": "tw generate-types"
+    "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'"
+
   },
   "peerDependencies": {
     "react": ">=18",

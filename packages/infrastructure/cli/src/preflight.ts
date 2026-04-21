@@ -95,6 +95,26 @@ async function hasTailwindCssImport(cwd: string): Promise<boolean> {
   return false
 }
 
+async function hasSafelistSource(cwd: string): Promise<{ found: boolean; cssFile: string | null }> {
+  const cssFiles = [
+    "src/app/globals.css",
+    "src/globals.css",
+    "src/styles/globals.css",
+    "src/index.css",
+    "src/tailwind.css",
+    "styles/globals.css",
+    "app/globals.css",
+  ]
+  for (const file of cssFiles) {
+    const raw = await readFileSafe(path.join(cwd, file))
+    if (raw === null) continue
+    if (raw.includes("tailwind-styled-safelist.css")) return { found: true, cssFile: file }
+    // CSS entry found but missing @source — report which file needs fixing
+    if (raw.includes("tailwindcss")) return { found: false, cssFile: file }
+  }
+  return { found: false, cssFile: null }
+}
+
 async function applyTailwindInit(cwd: string): Promise<void> {
   await ensureFileSafe(path.join(cwd, "src", "tailwind.css"), DEFAULT_TAILWIND_CSS)
   await ensureFileSafe(path.join(cwd, "tailwind-styled.config.json"), DEFAULT_TW_CONFIG)
@@ -226,6 +246,28 @@ export async function runPreflightCli(rawArgs: string[]): Promise<PreflightRepor
     hasTsConfig,
     hasTsConfig ? "tsconfig.json found OK" : "No tsconfig.json (optional - recommended for best DX)"
   )
+
+  // Next.js only: check @source for safelist dev plugin
+  if (pkg) {
+    const hasNext = pkgHasDep(pkg, "next")
+    if (hasNext) {
+      const safelist = await hasSafelistSource(cwd)
+      const pass = safelist.found
+      const message = pass
+        ? `@source tailwind-styled-safelist.css found in ${safelist.cssFile} OK`
+        : safelist.cssFile
+          ? `${safelist.cssFile} missing: @source "../.next/tailwind-styled-safelist.css" — add it or run: tw setup`
+          : "@source tailwind-styled-safelist.css not found — run: tw setup"
+      check(
+        results,
+        "safelist-source",
+        "Safelist @source configured",
+        pass,
+        message,
+        "tw setup"
+      )
+    }
+  }
 
   if (autoFix) {
     // Keep this call path present for compatibility and traceability.

@@ -117,11 +117,58 @@ export function patchRspackConfigImpl(src: string): string | null {
   return finalResult === src ? null : finalResult
 }
 
-export function patchTailwindCssImpl(src: string): string | null {
+/**
+ * Hitung path relatif dari cssFilePath ke `.next/tailwind-styled-safelist.css`.
+ * Contoh:
+ *   cssFile = "src/app/globals.css" → "../../.next/tailwind-styled-safelist.css"
+ *   cssFile = "src/globals.css"     → "../.next/tailwind-styled-safelist.css"
+ */
+export function computeSafelistSourcePath(cssFilePath: string, cwd: string): string {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require("node:path") as typeof import("node:path")
+    const cssAbs = nodePath.resolve(cwd, cssFilePath)
+    const cssDir = nodePath.dirname(cssAbs)
+    const safelistAbs = nodePath.resolve(cwd, ".next", "tailwind-styled-safelist.css")
+    const rel = nodePath.relative(cssDir, safelistAbs).replace(/\\/g, "/")
+    return rel.startsWith(".") ? rel : `./${rel}`
+  } catch {
+    const depth = cssFilePath.split("/").length - 1
+    const ups = Array(depth).fill("..").join("/")
+    return `${ups}/.next/tailwind-styled-safelist.css`
+  }
+}
+
+export function patchTailwindCssImpl(
+  src: string,
+  bundler?: "next" | "vite" | "rspack",
+  cssFilePath?: string,
+  cwd?: string
+): string | null {
   const hasTailwindImport =
     src.includes('@import "tailwindcss"') || src.includes("@import 'tailwindcss'")
-  if (hasTailwindImport) return null
-  return `@import "tailwindcss";\n\n${src}`
+
+  const hasSafelistSource = src.includes("tailwind-styled-safelist.css")
+  const needsSafelistSource = bundler === "next" && !hasSafelistSource
+
+  const safelistRelPath =
+    needsSafelistSource && cssFilePath && cwd
+      ? computeSafelistSourcePath(cssFilePath, cwd)
+      : "../.next/tailwind-styled-safelist.css"
+
+  const safelistSource = `@source "${safelistRelPath}";`
+
+  if (hasTailwindImport) {
+    if (!needsSafelistSource) return null
+    const patched = src.replace(
+      /(@import\s+['"]tailwindcss['"];?)/,
+      `$1\n${safelistSource}`
+    )
+    return patched === src ? null : patched
+  }
+
+  const base = `@import "tailwindcss";\n${needsSafelistSource ? `${safelistSource}\n` : ""}\n${src}`
+  return base
 }
 
 export function patchTsConfigImpl(src: string): string | null {

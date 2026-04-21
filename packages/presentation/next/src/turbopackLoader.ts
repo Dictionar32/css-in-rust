@@ -9,7 +9,8 @@
  * - Skip non-component files (node_modules, .d.ts, already transformed)
  */
 
-import { runLoaderTransform } from "@tailwind-styled/compiler/internal"
+import { runLoaderTransform, registerFileClasses } from "@tailwind-styled/compiler/internal"
+import fs from "node:fs"
 import path from "node:path"
 
 export interface TurbopackContext {
@@ -28,6 +29,8 @@ export interface TurbopackLoaderOptions {
   debug?: boolean | string
   /** Explicit Next.js major version */
   nextMajor?: number | string
+  /** Path ke safelist CSS file — di-inject oleh withTailwindStyled (dev only) */
+  safelistPath?: string
 }
 
 function parseBool(val: boolean | string | undefined, fallback = false): boolean {
@@ -68,6 +71,59 @@ function extractDirective(source: string): { directive: string; stripped: string
   const directive = match[1].trim().replace(/['"]/g, '"') + "\n"
   const stripped = source.slice(match[0].length)
   return { directive, stripped }
+}
+
+
+// ─── Safelist write scheduler ────────────────────────────────────────────────
+// Turbopack tidak punya afterCompile hook seperti webpack, jadi safelist ditulis
+// langsung dari loader dengan debounce 80ms agar burst cold-start hanya trigger
+// satu kali write.
+
+let _safelistTimer: ReturnType<typeof setTimeout> | null = null
+const _pendingSafelistPaths = new Set<string>()
+
+function scheduleSafelistWrite(safelistPath: string | undefined): void {
+  if (!safelistPath) return
+  _pendingSafelistPaths.add(safelistPath)
+
+  if (_safelistTimer) clearTimeout(_safelistTimer)
+  _safelistTimer = setTimeout(() => {
+    _safelistTimer = null
+    for (const outPath of _pendingSafelistPaths) {
+      writeSafelist(outPath)
+    }
+    _pendingSafelistPaths.clear()
+  }, 80)
+}
+
+function writeSafelist(safelistPath: string): void {
+  try {
+    const { getAllRouteClasses } = require("@tailwind-styled/compiler/internal")
+    const routeMap: Map<string, Set<string>> = getAllRouteClasses()
+    const allClasses = new Set<string>()
+    for (const classes of routeMap.values()) {
+      for (const cls of classes) allClasses.add(cls)
+    }
+    if (allClasses.size === 0) return
+
+    const sorted = [...allClasses].sort()
+    const css = [
+      "/* tailwind-styled-v4 safelist — auto-generated, do not edit */",
+      "/* @tw-safelist */",
+      ".tw-safelist {",
+      sorted.map((cls) => `  /* ${cls} */`).join("\n"),
+      "}",
+      "@layer utilities {",
+      sorted.map((cls) => `.${cls.replace(/([^a-zA-Z0-9_-])/g, "\\$1")} {}`).join("\n"),
+      "}",
+    ].join("\n")
+
+    const dir = safelistPath.slice(0, safelistPath.lastIndexOf("/"))
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(safelistPath, css, "utf-8")
+  } catch {
+    // Non-fatal
+  }
 }
 
 /**
@@ -115,6 +171,14 @@ export default function turbopackLoader(
 
     // Tidak ada perubahan → return original (avoid unnecessary HMR)
     if (!output.changed && !output.code.length) return source
+
+    // Register classes untuk safelist dev plugin
+    if (output.classes.length > 0) {
+      registerFileClasses(this.resourcePath, output.classes)
+      // Turbopack tidak punya afterCompile hook — schedule write langsung dari loader.
+      // safelistPath di-inject oleh withTailwindStyled sebagai loader option.
+      scheduleSafelistWrite(options.safelistPath)
+    }
 
     // Re-attach directive di depan
     if (!directive) return output.code
