@@ -4,17 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --webpack",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "test": "npm install --ignore-scripts && npx tsc --noEmit && npx next build"
   },
   "dependencies": {
-    "@tailwind-styled/next": "file:../../packages/presentation/next",
     "next": "16.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tailwind-styled-v4": "file:../.."
+    "tailwind-styled-v4": "5.0.6-canary.0.0.14"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,15 +1,9 @@
-import { withTailwindStyled } from "@tailwind-styled/next"
-import path from "node:path"
-import { fileURLToPath } from "node:url"
+import { withTailwindStyled } from "tailwind-styled-v4/next"
+import type { NextConfig } from "next";
 
-const exampleRoot = path.dirname(fileURLToPath(import.meta.url))
-const workspaceRoot = path.resolve(exampleRoot, "..", "..")
-
-const nextConfig = {
+const nextConfig: NextConfig = {
+  /* config options here */
   reactCompiler: true,
-  turbopack: {
-    root: workspaceRoot,
-  },
-}
+};
 
 export default withTailwindStyled()(nextConfig)
