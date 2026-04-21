@@ -129,13 +129,15 @@ export function computeSafelistSourcePath(cssFilePath: string, cwd: string): str
     const nodePath = require("node:path") as typeof import("node:path")
     const cssAbs = nodePath.resolve(cwd, cssFilePath)
     const cssDir = nodePath.dirname(cssAbs)
-    const safelistAbs = nodePath.resolve(cwd, ".next", "tailwind-styled-safelist.css")
+    // Per-file safelist dir — Turbopack writes one CSS file per component here
+    const safelistAbs = nodePath.resolve(cwd, ".next", "tw-classes")
     const rel = nodePath.relative(cssDir, safelistAbs).replace(/\\/g, "/")
-    return rel.startsWith(".") ? rel : `./${rel}`
+    const relPath = rel.startsWith(".") ? rel : `./${rel}`
+    return `${relPath}/**`
   } catch {
     const depth = cssFilePath.split("/").length - 1
     const ups = Array(depth).fill("..").join("/")
-    return `${ups}/.next/tailwind-styled-safelist.css`
+    return `${ups}/.next/tw-classes/**`
   }
 }
 

@@ -297,17 +297,30 @@ class TwSafelistDevPlugin {
   private lastHash = ""
 
   constructor(cwd: string) {
-    this.outputPath = path.resolve(cwd, ".next", "tailwind-styled-safelist.css")
+    this.outputPath = path.resolve(cwd, ".next", "tw-classes", "_webpack-merged.css")
   }
 
   apply(compiler: any): void {
-    // Reset classes setiap kali webpack mulai compile baru —
-    // tanpa ini, file yang dihapus tetap ada classnya di safelist selamanya
-    const resetClasses = () => {
-      try { clearRouteClasses() } catch { /* non-fatal */ }
+    const twClassesDir = path.dirname(this.outputPath)
+
+    // Reset di awal setiap compile cycle:
+    // 1. Clear in-memory route class map (hapus classes dari file yang sudah dihapus)
+    // 2. Clear tw-classes/ dir supaya Turbopack per-file safelist tidak stale
+    const resetAll = () => {
+      try {
+        clearRouteClasses()
+        // Hapus semua file di tw-classes/ kecuali _webpack-merged.css yang ditulis afterCompile
+        if (fs.existsSync(twClassesDir)) {
+          for (const file of fs.readdirSync(twClassesDir)) {
+            if (file !== "_webpack-merged.css") {
+              try { fs.unlinkSync(path.join(twClassesDir, file)) } catch { /* non-fatal */ }
+            }
+          }
+        }
+      } catch { /* non-fatal */ }
     }
-    compiler.hooks.watchRun.tap("TwSafelistDevPlugin", resetClasses)   // HMR cycle
-    compiler.hooks.beforeRun.tap("TwSafelistDevPlugin", resetClasses)  // fresh build
+    compiler.hooks.watchRun.tap("TwSafelistDevPlugin", resetAll)   // HMR cycle
+    compiler.hooks.beforeRun.tap("TwSafelistDevPlugin", resetAll)  // fresh build
 
     // afterCompile — jalan di setiap HMR cycle, bukan hanya emit
     compiler.hooks.afterCompile.tap("TwSafelistDevPlugin", () => {
@@ -417,11 +430,25 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
     const previousWebpack = nextConfig.webpack
     const loaderOptions = createLoaderOptions(normalizedOptions)
 
+    // safelistPath = anchor path; loader derives tw-classes/ from dirname(safelistPath)
     const safelistPath = path.resolve(
       typeof process !== "undefined" ? process.cwd() : "",
       ".next",
       "tailwind-styled-safelist.css"
     )
+
+    // Tulis _start.txt ke tw-classes/ — ini adalah "ID" untuk dev server session ini.
+    // turbopackLoader membaca file ini untuk detect compile cycle baru dan clear stale files.
+    // wrap() dipanggil sekali saat next.config.ts di-load → timestamp unik per dev server start.
+    try {
+      const twClassesDir = path.resolve(path.dirname(safelistPath), "tw-classes")
+      fs.mkdirSync(twClassesDir, { recursive: true })
+      fs.writeFileSync(
+        path.join(twClassesDir, "_start.txt"),
+        Date.now().toString(),
+        "utf-8"
+      )
+    } catch { /* non-fatal */ }
 
     return {
       ...nextConfig,

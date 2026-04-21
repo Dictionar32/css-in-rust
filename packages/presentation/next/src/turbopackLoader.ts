@@ -74,53 +74,104 @@ function extractDirective(source: string): { directive: string; stripped: string
 }
 
 
-// ─── Safelist write scheduler ────────────────────────────────────────────────
-// Turbopack tidak punya afterCompile hook seperti webpack, jadi safelist ditulis
-// langsung dari loader dengan debounce 80ms agar burst cold-start hanya trigger
-// satu kali write.
+// ─── Per-file safelist writer ─────────────────────────────────────────────────
+// Turbopack tidak punya afterCompile hook dan bisa spawn multiple workers.
+// Solusi: tiap file menulis file CSS-nya sendiri di .next/tw-classes/<slug>.css
+// Tailwind scan seluruh direktori via @source ".next/tw-classes/**"
+// Tidak ada race condition karena tiap file punya output path unik.
+//
+// Stale file handling:
+// - Setiap dev server start, Next.js hapus .next/ → tw-classes/ otomatis hilang
+// - Setiap compile cycle, TwSafelistDevPlugin (webpack) clear tw-classes/
+// - Turbopack: pakai _cycle sentinel file — kalau cycle berubah, clear dulu
 
-let _safelistTimer: ReturnType<typeof setTimeout> | null = null
-const _pendingSafelistPaths = new Set<string>()
+// ─── Cycle ID ─────────────────────────────────────────────────────────────────
+// withTailwindStyled menulis _start.txt saat wrap() dipanggil (= saat next.config.ts
+// di-load, yaitu sekali per dev server start). Setiap compile cycle Turbopack,
+// loader baca _start.txt dan compare dengan _cycle.txt di tw-classes/:
+//
+//   _start.txt  = timestamp dev server start  (ditulis withTailwindStyled)
+//   _cycle.txt  = timestamp cycle terakhir    (ditulis loader pertama di tiap cycle)
+//
+// Kalau _cycle.txt != _start.txt → compile cycle baru → clear tw-classes/ dulu.
+// Ini solve masalah "file yang dihapus tetap ada di safelist" tanpa butuh hook.
 
-function scheduleSafelistWrite(safelistPath: string | undefined): void {
-  if (!safelistPath) return
-  _pendingSafelistPaths.add(safelistPath)
+const CYCLE_SENTINEL = "_cycle.txt"
+const START_SENTINEL = "_start.txt"
 
-  if (_safelistTimer) clearTimeout(_safelistTimer)
-  _safelistTimer = setTimeout(() => {
-    _safelistTimer = null
-    for (const outPath of _pendingSafelistPaths) {
-      writeSafelist(outPath)
-    }
-    _pendingSafelistPaths.clear()
-  }, 80)
+// Cached per worker instance — hindari readFileSync berulang di file yang sama
+const _workerCache = new Map<string, string>()
+
+function getTwClassesDir(safelistPath: string): string {
+  return path.join(path.dirname(safelistPath), "tw-classes")
 }
 
-function writeSafelist(safelistPath: string): void {
-  try {
-    const { getAllRouteClasses } = require("@tailwind-styled/compiler/internal")
-    const routeMap: Map<string, Set<string>> = getAllRouteClasses()
-    const allClasses = new Set<string>()
-    for (const classes of routeMap.values()) {
-      for (const cls of classes) allClasses.add(cls)
-    }
-    if (allClasses.size === 0) return
+function readSentinel(filePath: string): string {
+  try { return fs.readFileSync(filePath, "utf-8").trim() } catch { return "" }
+}
 
-    const sorted = [...allClasses].sort()
+function clearAndMarkCycle(twClassesDir: string, startId: string): void {
+  try {
+    if (fs.existsSync(twClassesDir)) {
+      for (const file of fs.readdirSync(twClassesDir)) {
+        if (file === START_SENTINEL || file === "_webpack-merged.css") continue
+        try { fs.unlinkSync(path.join(twClassesDir, file)) } catch { /* non-fatal */ }
+      }
+    } else {
+      fs.mkdirSync(twClassesDir, { recursive: true })
+    }
+    fs.writeFileSync(path.join(twClassesDir, CYCLE_SENTINEL), startId, "utf-8")
+    _workerCache.set(twClassesDir, startId)
+  } catch { /* non-fatal */ }
+}
+
+function getPerFileSafelistPath(safelistDir: string, resourcePath: string): string {
+  const normalized = resourcePath.replace(/\\/g, "/")
+  const slug = normalized
+    .replace(/^.*\/src\//, "")
+    .replace(/\.[tj]sx?$/, "")
+    .replace(/[^a-zA-Z0-9]/g, "_")
+    .slice(0, 80)
+  return path.join(safelistDir, `${slug}.css`)
+}
+
+function writePerFileSafelist(
+  safelistPath: string | undefined,
+  resourcePath: string,
+  classes: string[]
+): void {
+  if (!safelistPath || classes.length === 0) return
+  try {
+    const twClassesDir = getTwClassesDir(safelistPath)
+
+    // Baca start ID dari _start.txt (ditulis withTailwindStyled saat config load)
+    const startId = readSentinel(path.join(twClassesDir, START_SENTINEL))
+
+    // Compare dengan cycle ID terakhir — pakai in-memory cache dulu, fallback ke disk
+    const cachedCycle = _workerCache.get(twClassesDir) ?? readSentinel(path.join(twClassesDir, CYCLE_SENTINEL))
+
+    if (startId && cachedCycle !== startId) {
+      // Compile cycle baru — clear tw-classes/ dan tulis _cycle.txt baru
+      clearAndMarkCycle(twClassesDir, startId)
+    } else if (!fs.existsSync(twClassesDir)) {
+      fs.mkdirSync(twClassesDir, { recursive: true })
+    }
+
+    const outPath = getPerFileSafelistPath(twClassesDir, resourcePath)
+    const sorted = [...new Set(classes)].sort()
     const css = [
-      "/* tailwind-styled-v4 safelist — auto-generated, do not edit */",
-      "/* @tw-safelist */",
-      ".tw-safelist {",
-      sorted.map((cls) => `  /* ${cls} */`).join("\n"),
-      "}",
+      `/* tw-safelist: ${path.basename(resourcePath)} — auto-generated */`,
       "@layer utilities {",
       sorted.map((cls) => `.${cls.replace(/([^a-zA-Z0-9_-])/g, "\\$1")} {}`).join("\n"),
       "}",
     ].join("\n")
 
-    const dir = safelistPath.slice(0, safelistPath.lastIndexOf("/"))
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(safelistPath, css, "utf-8")
+    // Skip write jika isi sama — avoid Tailwind re-scan yang tidak perlu
+    try {
+      if (fs.readFileSync(outPath, "utf-8") === css) return
+    } catch { /* file belum ada, lanjut write */ }
+
+    fs.writeFileSync(outPath, css, "utf-8")
   } catch {
     // Non-fatal
   }
@@ -172,12 +223,12 @@ export default function turbopackLoader(
     // Tidak ada perubahan → return original (avoid unnecessary HMR)
     if (!output.changed && !output.code.length) return source
 
-    // Register classes untuk safelist dev plugin
+    // Register classes untuk route map (dipakai webpack dev plugin & build manifest)
     if (output.classes.length > 0) {
       registerFileClasses(this.resourcePath, output.classes)
-      // Turbopack tidak punya afterCompile hook — schedule write langsung dari loader.
-      // safelistPath di-inject oleh withTailwindStyled sebagai loader option.
-      scheduleSafelistWrite(options.safelistPath)
+      // Turbopack: tulis per-file safelist langsung dari loader.
+      // Race-condition-safe karena tiap file punya output path unik.
+      writePerFileSafelist(options.safelistPath, this.resourcePath, output.classes)
     }
 
     // Re-attach directive di depan

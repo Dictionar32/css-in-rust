@@ -108,7 +108,7 @@ async function hasSafelistSource(cwd: string): Promise<{ found: boolean; cssFile
   for (const file of cssFiles) {
     const raw = await readFileSafe(path.join(cwd, file))
     if (raw === null) continue
-    if (raw.includes("tailwind-styled-safelist.css")) return { found: true, cssFile: file }
+    if (raw.includes("tw-classes")) return { found: true, cssFile: file }
     // CSS entry found but missing @source — report which file needs fixing
     if (raw.includes("tailwindcss")) return { found: false, cssFile: file }
   }
