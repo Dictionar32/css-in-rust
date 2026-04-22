@@ -20,7 +20,6 @@ import {
   compileCssFromClasses,
   compileCssNative,
   buildStyleTag,
-  getAllRouteClasses,
   extractAllClasses,
   extractClassesFromSource,
   astExtractClasses,
@@ -60,7 +59,6 @@ import {
   getRouteClasses,
   registerFileClasses,
   registerGlobalClasses,
-  clearRouteClasses,
   getIncrementalEngine,
   resetIncrementalEngine,
   getBucketEngine,
@@ -81,7 +79,6 @@ export {
   compileCssFromClasses,
   compileCssNative,
   buildStyleTag,
-  getAllRouteClasses,
   extractAllClasses,
   extractClassesFromSource,
   astExtractClasses,
@@ -121,7 +118,6 @@ export {
   getRouteClasses,
   registerFileClasses,
   registerGlobalClasses,
-  clearRouteClasses,
   getIncrementalEngine,
   resetIncrementalEngine,
   getBucketEngine,
@@ -135,3 +131,6 @@ export {
 export { type NativeBridge, type NativeTransformResult, type ComponentMetadata, type NativeRscResult, type LoaderOutput }
 
 export type CssCompileResult = NativeTransformResult
+
+// CSS pipeline — Tailwind → LightningCSS
+export { runCssPipeline, runCssPipelineSync, generateRawCss, type CssPipelineResult } from "./tailwindEngine"

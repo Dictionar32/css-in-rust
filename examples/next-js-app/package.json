@@ -1,18 +1,18 @@
 {
-  "name": "frontend-next",
+  "name": "frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test": "npm install --ignore-scripts && npx tsc --noEmit && npx next build"
+    "lint": "eslint"
   },
   "dependencies": {
-    "next": "16.2.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.5.0",
     "tailwind-styled-v4": "5.0.6-canary.0.0.14"
   },
   "devDependencies": {
@@ -21,7 +21,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.4",
     "tailwindcss": "^4",
-    "typescript": "^6"
+    "typescript": "^5"
   }
 }

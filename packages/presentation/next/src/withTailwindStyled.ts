@@ -22,7 +22,6 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
-import { getAllRouteClasses, buildStyleTag, clearRouteClasses } from "@tailwind-styled/compiler/internal"
 
 const require = createRequire(import.meta.url)
 
@@ -35,8 +34,6 @@ interface TailwindStyledLoaderOptions {
   incremental?: boolean
   verbose?: boolean
   preserveImports?: boolean
-  /** Path ke safelist dev file — di-inject oleh TwSafelistDevPlugin (dev only) */
-  safelistPath?: string
 }
 
 export interface TailwindStyledNextOptions
@@ -47,6 +44,21 @@ export interface TailwindStyledNextOptions
   include?: RegExp
   exclude?: RegExp
 }
+
+import type { NextConfig } from "next"
+
+// Derive webpack types directly from Next.js — always in sync with installed version
+type NextWebpackFn = NonNullable<NextConfig["webpack"]>
+type NextWebpackConfig = Parameters<NextWebpackFn>[0]
+type NextWebpackOptions = Parameters<NextWebpackFn>[1]
+
+// Derive turbopack rule types from NextConfig
+type TurboRules = NonNullable<NonNullable<NextConfig["turbopack"]>["rules"]>
+type TurbopackLoaderRule = TurboRules[string]
+
+// Derive webpack module rule type for safe iteration
+type ModuleRule = NonNullable<NonNullable<NextWebpackConfig["module"]>["rules"]>[number]
+type RuleUseEntry = { loader?: string; options?: unknown }
 
 interface NextWebpackUseEntry {
   loader: string
@@ -60,40 +72,6 @@ interface NextWebpackRule {
   use?: NextWebpackUseEntry[]
 }
 
-interface NextWebpackConfig {
-  module?: {
-    rules?: NextWebpackRule[]
-  }
-  [key: string]: unknown
-}
-
-interface NextWebpackOptions {
-  buildId: string
-  dev: boolean
-  isServer: boolean
-  nextRuntime?: "nodejs" | "edge"
-  defaultLoaders: { babel: unknown }
-  webpack: unknown
-  dir: string
-  config: Record<string, unknown>
-  totalPages: number
-}
-
-interface NextConfigWithTurbopack {
-  webpack?:
-    | ((
-        config: NextWebpackConfig,
-        options: NextWebpackOptions
-      ) => NextWebpackConfig | Promise<NextWebpackConfig>)
-    | null
-    | undefined
-  turbopack?: Record<string, unknown>
-  [key: string]: unknown
-}
-
-interface TurbopackLoaderRule {
-  loaders: Array<{ loader: string; options: TailwindStyledLoaderOptions }>
-}
 
 const resolveRuntimeDir = (): string => getDirnameFromUrl(import.meta.url)
 
@@ -155,14 +133,14 @@ const createLoaderOptions = (options: TailwindStyledNextOptions): Readonly<Tailw
 const buildTurbopackRules = (
   loaderPath: string,
   loaderOptions: TailwindStyledLoaderOptions
-): Record<string, TurbopackLoaderRule> => {
+): TurboRules => {
   const extensions = ["js", "jsx", "ts", "tsx", "mjs", "cjs"]
   return Object.fromEntries(
     extensions.map((ext) => [
       `*.${ext}`,
       { loaders: [{ loader: loaderPath, options: loaderOptions }] },
     ])
-  ) as Record<string, TurbopackLoaderRule>
+  ) as TurboRules
 }
 
 const normalizeLoaderPath = (loaderPath: string): string => path.resolve(loaderPath)
@@ -177,10 +155,10 @@ const applyWebpackRule = (
   const normalizedLoaderPath = normalizeLoaderPath(loaderPath)
 
   const alreadyRegistered = rules.some(
-    (rule) =>
+    (rule: ModuleRule) =>
       Array.isArray(rule?.use) &&
-      rule.use.some(
-        (entry) =>
+      (rule.use as RuleUseEntry[]).some(
+        (entry: RuleUseEntry) =>
           typeof entry.loader === "string" &&
           normalizeLoaderPath(entry.loader) === normalizedLoaderPath
       )
@@ -214,21 +192,23 @@ const applyWebpackRule = (
     "@tailwind-styled/preset",
   ]
 
-  const configAny = config as any
+  type ExternalsArray = Extract<NonNullable<NextWebpackConfig["externals"]>, readonly unknown[]>
+  type ExternalItem = ExternalsArray[number]
 
-  if (!configAny.externals) {
-    configAny.externals = []
+  if (!config.externals) {
+    config.externals = []
   }
 
-const ext = configAny.externals
+  const ext = config.externals
   if (Array.isArray(ext)) {
     externalPackages.forEach((pkg) => {
-      const found = ext.find((e: any) => 
+      const found = (ext as ExternalItem[]).find((e: ExternalItem) =>
         (typeof e === "string" && e.includes(pkg)) ||
-        (typeof e === "object" && e !== null && Object.keys(e).some((k) => k.includes(pkg)))
+        (typeof e === "object" && e !== null && !Array.isArray(e) &&
+          Object.keys(e as object).some((k) => k.includes(pkg)))
       )
       if (!found) {
-        ext.push(pkg)
+        (ext as string[]).push(pkg)
       }
     })
   }
@@ -237,10 +217,10 @@ const ext = configAny.externals
 }
 
 const mergeTurbopackRules = (
-  existingRules: Record<string, unknown>,
-  nextRules: Record<string, TurbopackLoaderRule>
-): Record<string, unknown> => {
-  const merged = { ...existingRules }
+  existingRules: TurboRules,
+  nextRules: TurboRules
+): TurboRules => {
+  const merged: TurboRules = { ...existingRules }
 
   for (const [pattern, incomingRule] of Object.entries(nextRules)) {
     const current = merged[pattern]
@@ -252,10 +232,11 @@ const mergeTurbopackRules = (
     if (typeof current === "object" && current !== null && "loaders" in current) {
       const typedCurrent = current as { loaders?: unknown }
       if (Array.isArray(typedCurrent.loaders)) {
+        const incomingLoaders = (incomingRule as { loaders?: unknown[] }).loaders ?? []
         merged[pattern] = {
-          ...(current as Record<string, unknown>),
-          loaders: [...typedCurrent.loaders, ...incomingRule.loaders],
-        }
+          ...(current as TurbopackLoaderRule),
+          loaders: [...typedCurrent.loaders, ...incomingLoaders],
+        } as TurbopackLoaderRule
         console.warn(
           `[tailwind-styled] Turbopack rule '${pattern}' already exists. Appending tailwind-styled loader.`
         )
@@ -272,191 +253,23 @@ const mergeTurbopackRules = (
   return merged
 }
 
-/**
- * Webpack plugin yang emit CSS manifest per-route setelah build selesai.
- * Output ke .next/static/css/tw/ — dibaca oleh TwCssInjector.
- */
-/**
- * Plugin untuk dev mode — tulis safelist.css setiap kali webpack selesai compile.
- * Tailwind CSS scanner akan pick up file ini sehingga semua class yang di-extract
- * dari tw`...` template literals ter-include di output CSS.
- *
- * File ditulis ke: <cwd>/.next/tailwind-styled-safelist.css
- * Format: satu class per baris, dibungkus selector dummy agar Tailwind scan-nya
- */
-/**
- * Escape CSS class name untuk dipakai sebagai selector.
- * CSS.escape hanya tersedia di browser — Node tidak punya.
- */
-function escapeClassName(cls: string): string {
-  return cls.replace(/([^a-zA-Z0-9_-])/g, "\\$1")
-}
-
-class TwSafelistDevPlugin {
-  private readonly outputPath: string
-  private lastHash = ""
-
-  constructor(cwd: string) {
-    this.outputPath = path.resolve(cwd, ".next", "tw-classes", "_webpack-merged.css")
-  }
-
-  apply(compiler: any): void {
-    const twClassesDir = path.dirname(this.outputPath)
-
-    // Reset di awal setiap compile cycle:
-    // 1. Clear in-memory route class map (hapus classes dari file yang sudah dihapus)
-    // 2. Clear tw-classes/ dir supaya Turbopack per-file safelist tidak stale
-    const resetAll = () => {
-      try {
-        clearRouteClasses()
-        // Hapus semua file di tw-classes/ kecuali _webpack-merged.css yang ditulis afterCompile
-        if (fs.existsSync(twClassesDir)) {
-          for (const file of fs.readdirSync(twClassesDir)) {
-            if (file !== "_webpack-merged.css") {
-              try { fs.unlinkSync(path.join(twClassesDir, file)) } catch { /* non-fatal */ }
-            }
-          }
-        }
-      } catch { /* non-fatal */ }
-    }
-    compiler.hooks.watchRun.tap("TwSafelistDevPlugin", resetAll)   // HMR cycle
-    compiler.hooks.beforeRun.tap("TwSafelistDevPlugin", resetAll)  // fresh build
-
-    // afterCompile — jalan di setiap HMR cycle, bukan hanya emit
-    compiler.hooks.afterCompile.tap("TwSafelistDevPlugin", () => {
-      try {
-        const routeMap = getAllRouteClasses()
-        const allClasses = new Set<string>()
-        for (const classes of routeMap.values()) {
-          for (const cls of classes) allClasses.add(cls)
-        }
-
-        if (allClasses.size === 0) return
-
-        // Hash check — skip write jika tidak ada perubahan
-        const sorted = [...allClasses].sort()
-        const hash = sorted.join(",")
-        if (hash === this.lastHash) return
-        this.lastHash = hash
-
-        // Format: dummy selector agar Tailwind CSS v4 scanner mengenali class-nya
-        const css = [
-          "/* tailwind-styled-v4 safelist — auto-generated, do not edit */",
-          "/* @tw-safelist */",
-          ".tw-safelist {",
-          sorted.map((cls) => `  /* ${cls} */`).join("\n"),
-          "}",
-          // Juga emit sebagai @layer utilities agar v4 langsung generate
-          "@layer utilities {",
-          sorted.map((cls) => `.${escapeClassName(cls)} {}`).join("\n"),
-          "}",
-        ].join("\n")
-
-        // Pastikan .next/ dir ada
-        const dir = path.dirname(this.outputPath)
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-
-        fs.writeFileSync(this.outputPath, css, "utf-8")
-      } catch {
-        // Non-fatal
-      }
-    })
-  }
-}
-
-class TwCssManifestPlugin {
-  apply(compiler: any): void {
-    compiler.hooks.emit.tapAsync("TwCssManifestPlugin", async (compilation: any, callback: () => void) => {
-      // Skip di dev mode — TwSafelistDevPlugin sudah handle safelist via afterCompile
-      if ((compiler as any).options?.mode === "development") { callback(); return }
-      try {
-        const routeMap = getAllRouteClasses()
-        if (routeMap.size === 0) {
-          callback()
-          return
-        }
-
-        const manifest: Record<string, string> = {}
-
-        for (const [route, classes] of routeMap.entries()) {
-          if (classes.size === 0) continue
-
-          // Compile classes → CSS via Rust
-          let css = ""
-          try {
-            css = buildStyleTag(Array.from(classes))
-              .replace(/<style[^>]*>/, "")
-              .replace(/<\/style>/, "")
-              .trim()
-          } catch {
-            // Native binding not available — skip
-          }
-
-          if (!css) continue
-
-          const filename = route === "/" ? "index.css"
-            : route === "__global" ? "_global.css"
-            : `${route.replace(/^\//, "").replace(/\//g, "_")}.css`
-
-          const outputPath = `static/css/tw/${filename}`
-          compilation.assets[outputPath] = {
-            source: () => css,
-            size: () => css.length,
-          }
-          manifest[route] = filename
-        }
-
-        // Emit manifest
-        const manifestJson = JSON.stringify({ routes: manifest }, null, 2)
-        compilation.assets["static/css/tw/css-manifest.json"] = {
-          source: () => manifestJson,
-          size: () => manifestJson.length,
-        }
-      } catch {
-        // Non-fatal — app still works without route CSS
-      }
-      callback()
-    })
-  }
-}
-
 export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
   checkNextVersion()
   const normalizedOptions = parseNextAdapterOptions(options)
   const webpackLoaderPath = resolveLoaderPath("webpackLoader")
   const turbopackLoaderPath = resolveLoaderPath("turbopackLoader")
 
-return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTurbopack {
+return function wrap(nextConfig: NextConfig = {}): NextConfig {
     const previousWebpack = nextConfig.webpack
     const loaderOptions = createLoaderOptions(normalizedOptions)
-
-    // safelistPath = anchor path; loader derives tw-classes/ from dirname(safelistPath)
-    const safelistPath = path.resolve(
-      typeof process !== "undefined" ? process.cwd() : "",
-      ".next",
-      "tailwind-styled-safelist.css"
-    )
-
-    // Tulis _start.txt ke tw-classes/ — ini adalah "ID" untuk dev server session ini.
-    // turbopackLoader membaca file ini untuk detect compile cycle baru dan clear stale files.
-    // wrap() dipanggil sekali saat next.config.ts di-load → timestamp unik per dev server start.
-    try {
-      const twClassesDir = path.resolve(path.dirname(safelistPath), "tw-classes")
-      fs.mkdirSync(twClassesDir, { recursive: true })
-      fs.writeFileSync(
-        path.join(twClassesDir, "_start.txt"),
-        Date.now().toString(),
-        "utf-8"
-      )
-    } catch { /* non-fatal */ }
 
     return {
       ...nextConfig,
       webpack(
         config: NextWebpackConfig,
         webpackOptions: NextWebpackOptions
-      ): NextConfigWithTurbopack | Promise<NextConfigWithTurbopack> {
-        const apply = (resolvedConfig: NextConfigWithTurbopack) => {
+      ): ReturnType<NextWebpackFn> {
+        const apply = (resolvedConfig: NextWebpackConfig) => {
           const finalConfig = applyWebpackRule(resolvedConfig, normalizedOptions, webpackLoaderPath)
           if (!finalConfig.externals) {
             finalConfig.externals = []
@@ -469,16 +282,6 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
               "@tailwind-styled/engine": "commonjs2 @tailwind-styled/engine",
               "@tailwind-styled/plugin": "commonjs2 @tailwind-styled/plugin",
             })
-          }
-          // Tambah CSS manifest plugin (build) + safelist dev plugin (dev/HMR)
-          if (!(finalConfig as any)._twCssPluginAdded) {
-            const plugins = (finalConfig as any).plugins as unknown[] ?? []
-            plugins.push(new TwCssManifestPlugin())
-            if (webpackOptions.dev) {
-              plugins.push(new TwSafelistDevPlugin(webpackOptions.dir))
-            }
-            ;(finalConfig as any).plugins = plugins
-            ;(finalConfig as any)._twCssPluginAdded = true
           }
           return finalConfig
         }
@@ -499,8 +302,8 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
       turbopack: {
         ...(nextConfig.turbopack ?? {}),
         rules: mergeTurbopackRules(
-          (nextConfig.turbopack?.rules as Record<string, unknown>) ?? {},
-          buildTurbopackRules(turbopackLoaderPath, { ...loaderOptions, safelistPath })
+          (nextConfig.turbopack?.rules ?? {}) as TurboRules,
+          buildTurbopackRules(turbopackLoaderPath, loaderOptions)
         ),
       },
     }

@@ -71,6 +71,8 @@ export interface NativeBridge {
   // CSS compilation
   compileCss?: (classes: string[], prefix?: string | null) => { css: string; classes: string[] }
   compileCssLightning?: (classes: string[]) => string
+  /** Post-process raw Tailwind-generated CSS dengan LightningCSS di Rust */
+  processTailwindCssLightning?: (css: string) => { css: string; size_bytes: number; resolved_classes: string[]; unknown_classes: string[] }
 }
 
 export interface NativeTransformResult {
@@ -181,5 +183,16 @@ export const adaptNativeResult = (
     changed: raw.changed ?? false,
     rsc: raw.rscJson ? JSON.parse(raw.rscJson) : undefined,
     metadata: raw.metadataJson ? JSON.parse(raw.metadataJson) : undefined,
+  }
+}
+
+// ── Eager init — load native bridge saat module dimuat, bukan saat request pertama
+// Mencegah crash di Turbopack dev mode karena lazy init mid-request
+// ─────────────────────────────────────────────────────────────────────────────
+if (typeof process !== "undefined" && !bridgeLoadAttempted) {
+  try {
+    getNativeBridge()
+  } catch {
+    // Sudah di-capture di bridgeLoadError — akan di-throw saat dipanggil pertama kali
   }
 }

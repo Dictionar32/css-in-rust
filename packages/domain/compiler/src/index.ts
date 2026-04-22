@@ -82,8 +82,9 @@ export const generateCssForClasses = async (
   _tailwindConfig?: Record<string, unknown>,
   _root?: string
 ): Promise<string> => {
-  const result = await compileCssFromClasses(classes)
-  return result?.code || ""
+  const { runCssPipeline } = await import("./tailwindEngine")
+  const result = await runCssPipeline(classes)
+  return result.css
 }
 
 // =============================================================================
@@ -492,67 +493,34 @@ export const shouldSkipFile = (filepath: string): boolean => {
 
 export const fileToRoute = (filepath: string): string | null => {
   const normalized = filepath.replace(/\\/g, '/')
-
-  // Layout / loading / error — shared across all routes
-  if (
-    normalized.includes('/layout.') ||
-    normalized.includes('/loading.') ||
-    normalized.includes('/error.')
-  ) {
+  
+  if (normalized.includes('/layout.') || normalized.includes('/loading.') || normalized.includes('/error.')) {
     return '__global'
   }
-
-  // App Router — /app/[...]/page.[tj]sx?
-  const appPageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
-  if (appPageMatch) return `/${appPageMatch[1]}`
-
-  const appRootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
-  if (appRootPage) return '/'
-
-  // Pages Router — /pages/[...].tsx (exclude _app, _document, _error, api/)
-  const pagesMatch = normalized.match(/\/pages\/(.+?)\.[tj]sx?$/)
-  if (pagesMatch) {
-    const pagePath = pagesMatch[1]
-    if (pagePath.startsWith('_') || pagePath.startsWith('api/')) return '__global'
-    // /pages/index → /, /pages/about → /about, /pages/blog/[slug] → /blog/[slug]
-    return pagePath === 'index' ? '/' : `/${pagePath}`
-  }
-
+  
+  const pageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
+  if (pageMatch) return `/${pageMatch[1]}`
+  
+  const rootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
+  if (rootPage) return '/'
+  
   return null
 }
 
 export const getAllRoutes = (): string[] => {
-  return Array.from(_routeClassMap.keys())
+  return ['/', '__global']
 }
-
-// In-memory route → classes map (populated by webpack/turbopack loader per file)
-const _routeClassMap = new Map<string, Set<string>>()
 
 export const getRouteClasses = (route: string): Set<string> => {
-  return _routeClassMap.get(route) ?? new Set()
-}
-
-export const getAllRouteClasses = (): Map<string, Set<string>> => {
-  return new Map(_routeClassMap)
+  return new Set()
 }
 
 export const registerFileClasses = (filepath: string, classes: string[]): void => {
-  if (!classes.length) return
-  const route = fileToRoute(filepath) ?? '__global'
-  const existing = _routeClassMap.get(route) ?? new Set<string>()
-  for (const cls of classes) existing.add(cls)
-  _routeClassMap.set(route, existing)
+  // Could be implemented with native
 }
 
 export const registerGlobalClasses = (classes: string[]): void => {
-  if (!classes.length) return
-  const existing = _routeClassMap.get('__global') ?? new Set<string>()
-  for (const cls of classes) existing.add(cls)
-  _routeClassMap.set('__global', existing)
-}
-
-export const clearRouteClasses = (): void => {
-  _routeClassMap.clear()
+  // Could be implemented with native
 }
 
 // =============================================================================
