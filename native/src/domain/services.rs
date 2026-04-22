@@ -38,15 +38,15 @@ impl ComponentTransformerService {
 pub struct CssGeneratorService;
 
 impl CssGeneratorService {
-    pub fn generate(&self, classes: Vec<String>, prefix: Option<String>) -> CssCompileResult {
-        crate::domain::css_compiler::compile_css(classes, prefix)
+    pub fn generate(&self, css: String, _prefix: Option<String>) -> CssCompileResult {
+        crate::domain::css_compiler::process_tailwind_css_lightning(css)
     }
 
-    pub fn generate_bundle(&self, classes: Vec<String>, prefix: Option<String>) -> CssBundle {
-        let result = self.generate(classes.clone(), prefix);
+    pub fn generate_bundle(&self, css: String, prefix: Option<String>) -> CssBundle {
+        let result = self.generate(css, prefix);
         CssBundle {
-            css: result.css,
-            classes: classes.into_iter().map(ClassName).collect(),
+            css: result.css.clone(),
+            classes: Vec::<ClassName>::new(),
             size_bytes: result.size_bytes,
         }
     }

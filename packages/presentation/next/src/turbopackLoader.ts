@@ -220,8 +220,11 @@ export default function turbopackLoader(
       options: effective,
     })
 
-    // Tidak ada perubahan → return original (avoid unnecessary HMR)
-    if (!output.changed && !output.code.length) return source
+    // Tidak ada perubahan — Rust kembalikan source asli (bukan string kosong).
+    // Guard lama `!output.code.length` selalu false karena code = original source.
+    // Fix: cukup cek changed flag saja; return source asli agar Next.js RSC boundary
+    // tetap intact dan tidak ada interaksi dengan React Compiler locale detection.
+    if (!output.changed) return source
 
     // Register classes untuk route map (dipakai webpack dev plugin & build manifest)
     if (output.classes.length > 0) {

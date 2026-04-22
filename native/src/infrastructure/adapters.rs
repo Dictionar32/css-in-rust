@@ -35,8 +35,8 @@ impl FileSystemScanner {
 pub struct CssCompiler;
 
 impl CssCompiler {
-    pub fn compile_css(&self, classes: Vec<String>, prefix: Option<String>) -> CssCompileResult {
-        crate::domain::css_compiler::compile_css(classes, prefix)
+    pub fn compile_css(&self, css: String, _prefix: Option<String>) -> CssCompileResult {
+        crate::domain::css_compiler::process_tailwind_css_lightning(css)
     }
 }
 

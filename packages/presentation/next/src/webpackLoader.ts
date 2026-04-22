@@ -80,6 +80,14 @@ export default function webpackLoader(this: WebpackContext, source: string): voi
       throw new TypeError(`[tailwind-styled] Invalid transform output for ${filepath}: code is not a string`)
     }
 
+    // Tidak ada perubahan — Rust kembalikan source asli, bukan string kosong.
+    // Return source asli via callback agar webpack pipeline tidak memperlakukan
+    // file sebagai "modified" dan RSC boundary Next.js tetap utuh.
+    if (!output.changed) {
+      callback(null, source)
+      return
+    }
+
     if (options.verbose && output.changed) {
       const rsc = (output as any).rsc
       const engine = (output as any).engine ?? "js"

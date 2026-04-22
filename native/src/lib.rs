@@ -49,6 +49,7 @@ pub use domain::animation::*;
 pub use domain::css_compiler::compile_css;
 pub use domain::css_compiler::compile_css_lightning;
 pub use domain::css_compiler::process_tailwind_css_lightning;
+pub use domain::css_compiler::process_tailwind_css_with_targets;
 pub use domain::theme::*;
 pub use domain::transform::{
     has_tw_usage, is_already_transformed, normalise_classes, parse_classes,

@@ -30,8 +30,8 @@ impl ClassApplicationService {
         self.parser.normalize(classes)
     }
 
-    pub fn compile_css_bundle(&self, classes: Vec<String>, prefix: Option<String>) -> CssBundle {
-        self.css_generator.generate_bundle(classes, prefix)
+    pub fn compile_css_bundle(&self, css: String, prefix: Option<String>) -> CssBundle {
+        self.css_generator.generate_bundle(css, prefix)
     }
 }
 

@@ -116,6 +116,30 @@ function checkNextVersion(): void {
 const DEFAULT_INCLUDE = /\.[jt]sx?$/
 const DEFAULT_EXCLUDE = /node_modules/
 
+/**
+ * Next.js App Router entry-point files yang TIDAK boleh diproses oleh TW loader.
+ *
+ * Mengapa: file-file ini adalah RSC boundary points yang dikelola Next.js secara khusus.
+ * Jika loader menginjeksi TRANSFORM_MARKER atau memodifikasi source-nya—bahkan ketika
+ * `changed: false`—Next.js/React Compiler kehilangan sinyal bahwa file adalah pure RSC,
+ * sehingga locale injection dari Accept-Language header (Next.js 16+) tidak konsisten
+ * antara SSR pass (server: lang="id") dan hydration pass (client: lang="en").
+ *
+ * File yang dikecualikan: layout, page, loading, error, not-found, template, default
+ * semuanya adalah Next.js segment conventions yang tidak boleh disentuh loader pihak ketiga.
+ */
+const NEXT_RSC_ENTRIES =
+  /(?:^|[\\/])(?:layout|page|loading|error|not-found|template|default)\.[jt]sx?$/
+
+/**
+ * Gabungkan user-supplied exclude dengan NEXT_RSC_ENTRIES.
+ * Menggunakan non-capturing group agar tidak interferensi dengan capture group lain.
+ */
+const buildExcludePattern = (userExclude?: RegExp): RegExp => {
+  if (!userExclude) return new RegExp(`(?:${DEFAULT_EXCLUDE.source})|(?:${NEXT_RSC_ENTRIES.source})`)
+  return new RegExp(`(?:${userExclude.source})|(?:${NEXT_RSC_ENTRIES.source})`)
+}
+
 const createLoaderOptions = (options: TailwindStyledNextOptions): Readonly<TailwindStyledLoaderOptions> => {
   const opts: TailwindStyledLoaderOptions = {
     mode: options.mode ?? "zero-runtime",
@@ -168,7 +192,9 @@ const applyWebpackRule = (
 
   const tailwindStyledRule: NextWebpackRule = {
     test: options.include ?? DEFAULT_INCLUDE,
-    exclude: options.exclude ?? DEFAULT_EXCLUDE,
+    // Selalu kecualikan Next.js RSC entry files (layout, page, dll) bahkan jika
+    // user menyuplai exclude pattern sendiri — lihat buildExcludePattern.
+    exclude: buildExcludePattern(options.exclude),
     enforce: "pre",
     use: [{ loader: loaderPath, options: loaderOptions }],
   }

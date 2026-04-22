@@ -239,17 +239,13 @@ export interface ClassToken {
 export declare function compileAnimation(from: string, to: string, name?: string | undefined | null, durationMs?: number | undefined | null, easing?: string | undefined | null, delayMs?: number | undefined | null, fill?: string | undefined | null, iterations?: string | undefined | null, direction?: string | undefined | null): CompiledAnimation
 
 /**
- * Compile a list of Tailwind classes into atomic CSS.
- * For classes without a known mapping, generates `@apply` fallback rules.
+ * Backward compat — sekarang input adalah raw CSS, bukan class names.
+ * CSS harus datang dari Tailwind JS engine.
  */
-export declare function compileCss(classes: Array<string>, prefix?: string | undefined | null): CssCompileResult
+export declare function compileCss(css: string, prefix?: string | undefined | null): CssCompileResult
 
-/**
- * Compile Tailwind classes and post-process with Lightning CSS in Rust.
- * This keeps Tailwind-like class resolution in Rust and delegates CSS optimisation
- * (minify + canonical print) to Lightning CSS.
- */
-export declare function compileCssLightning(classes: Array<string>, prefix?: string | undefined | null): CssCompileResult
+/** Alias untuk backward compat. */
+export declare function compileCssLightning(css: string, prefix?: string | undefined | null): CssCompileResult
 
 export interface CompiledAnimation {
   className: string
@@ -326,14 +322,10 @@ export interface ConflictDetectionResult {
 }
 
 export interface CssCompileResult {
-  /** Generated CSS output */
   css: string
-  /** Classes that were successfully resolved */
-  resolvedClasses: Array<string>
-  /** Classes that had no known mapping (passed through as @apply) */
-  unknownClasses: Array<string>
-  /** Byte size of generated CSS */
   sizeBytes: number
+  resolvedClasses: Array<string>
+  unknownClasses: Array<string>
 }
 
 export interface CssDeclarationMap {
@@ -432,6 +424,15 @@ export interface FileScanEntry {
   classes: Array<string>
   hash: string
 }
+
+/**
+ * Scan workspace untuk semua sub-component names yang dipakai,
+ * lalu generate TypeScript declaration file untuk type inference otomatis.
+ *
+ * Output .d.ts berisi module augmentation yang membuat TypeScript
+ * tahu nama sub-component tanpa user perlu declare manual.
+ */
+export declare function generateSubComponentTypes(root: string, outputPath?: string | undefined | null): SubComponentScanResult
 
 /** Hash a file's content for change detection. */
 export declare function hashFileContent(content: string): string
@@ -613,11 +614,11 @@ export declare function pollWatchEvents(handleId: number): Array<WatchChangeEven
  */
 export declare function processFileChange(filePath: string, newClasses: Array<string>, content?: string | undefined | null): FileChangeDiff
 
-/**
- * Process final Tailwind-generated CSS with Lightning CSS in Rust.
- * Use this when Tailwind expansion already happened in external pipeline.
- */
+/** Entry point utama — post-process raw CSS dari Tailwind JS dengan LightningCSS. */
 export declare function processTailwindCssLightning(css: string): CssCompileResult
+
+/** Post-process dengan vendor prefix sesuai target browser. */
+export declare function processTailwindCssWithTargets(css: string, targets?: string | undefined | null): CssCompileResult
 
 /**
  * Simple variant resolution - no compound variants support
@@ -712,6 +713,16 @@ export interface SubComponent {
   tag: string
   classes: string
   scopedClass: string
+}
+
+/** Result dari scan sub-component names */
+export interface SubComponentScanResult {
+  /** Semua nama sub-component yang ditemukan di codebase */
+  names: Array<string>
+  /** Generated TypeScript declaration content */
+  dtsContent: string
+  /** Jumlah file yang di-scan */
+  filesScanned: number
 }
 
 export interface ThemeToken {
