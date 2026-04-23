@@ -11,69 +11,64 @@ const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "container
 
 // ── Sub-component auto-registration ──────────────────────────────────────────
 
-/**
- * Extract subcomponent names dari template string.
- * Support dua syntax:
- *   - Bracket  : `[icon] { ... }` → "icon"
- *   - Bare-word: `icon { ... }`   → "icon"
- *
- * FIX: sebelumnya hanya handle bracket syntax `[name]`,
- * sehingga bare-word blocks tidak dikenali → kelas dari block
- * ikut masuk ke twMerge bersama base classes → conflict.
- */
-function parseSubComponentNames(template: string): string[] {
-  const bracketMatches = [...template.matchAll(/\[(\w+)\]\s*\{/g)].map((m) => m[1]!)
-  const bareMatches = [...template.matchAll(/(?<![\[\w])([a-z][a-zA-Z0-9_-]*)\s*\{/g)].map((m) => m[1]!)
-  return [...new Set([...bracketMatches, ...bareMatches])]
+/** Extract `[name] { classes }` blocks dari template → Map<name, classes> */
+function parseSubComponentBlocks(template: string): Map<string, string> {
+  const map = new Map<string, string>()
+  const re = /\[([a-zA-Z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(template)) !== null) {
+    const name = m[1]!
+    const classes = m[2]!.trim().replace(/\s+/g, " ")
+    if (classes) map.set(name, classes)
+  }
+  return map
 }
 
 /**
- * Strip semua subcomponent blocks dari template string sehingga
+ * Strip semua `[name] { ... }` blocks dari template string sehingga
  * twMerge hanya menerima base classes (outer scope).
  *
- * Support dua syntax:
- *   - Bracket  : `[name] { classes }` — syntax lama
- *   - Bare-word: `name { classes }`   — syntax baru di examples/
- *
- * FIX: sebelumnya hanya strip `[name] { }`. Bare-word blocks tidak di-strip
- * → `icon { flex h-4 w-4 }` terbaca flat oleh twMerge bersama base
- * `flex h-12 w-full` → conflict h-12/h-4 dan w-full/w-4.
+ * Tanpa ini, twMerge membaca `flex h-12 ... [icon] { flex h-4 }` sebagai
+ * satu flat class list dan melaporkan conflict antara `h-12` dan `h-4`
+ * padahal keduanya berada di elemen yang berbeda.
  */
 function extractBaseClasses(template: string): string {
-  return template
-    .replace(/\[\w+\]\s*\{[^}]*\}/g, "")
-    .replace(/(?<![\[\w])[a-z][a-zA-Z0-9_-]*\s*\{[^}]*\}/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
+  return template.replace(/\[[a-zA-Z][a-zA-Z0-9_-]*\]\s*\{[^}]*\}/g, "").replace(/\s+/g, " ").trim()
 }
 
 /**
- * Buat sub-component React FC untuk setiap name yang ditemukan di template.
- * Sub-component meneruskan className ke elemen wrapper agar bisa di-style.
+ * Buat sub-component React FC dengan classes-nya sendiri.
+ * className prop di-merge ke belakang agar bisa di-override dari luar.
  */
 function createSubComponentAccessor(
   parentDisplayName: string,
-  name: string
+  name: string,
+  classes: string
 ): React.FC<{ children?: React.ReactNode; className?: string }> {
   const SubComponent: React.FC<{ children?: React.ReactNode; className?: string }> = ({
     children,
     className,
-  }) => React.createElement(React.Fragment, null, children)
+  }) =>
+    React.createElement(
+      "span",
+      { className: className ? `${classes} ${className}` : classes },
+      children
+    )
   SubComponent.displayName = `${parentDisplayName}[${name}]`
   return SubComponent
 }
 
-/** Register semua sub-components yang di-parse dari template ke component object. */
+/** Register semua sub-components dari template ke component object. */
 function registerSubComponents<P extends object>(
   component: TwStyledComponent<P>,
   template: string
 ): void {
-  const names = parseSubComponentNames(template)
+  const blocks = parseSubComponentBlocks(template)
   const displayName = component.displayName ?? "tw"
   const map = component as unknown as Record<string, unknown>
-  for (const name of names) {
+  for (const [name, classes] of blocks) {
     if (!(name in map)) {
-      map[name] = createSubComponentAccessor(displayName, name)
+      map[name] = createSubComponentAccessor(displayName, name, classes)
     }
   }
 }
