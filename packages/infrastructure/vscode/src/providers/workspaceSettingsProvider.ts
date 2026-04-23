@@ -37,17 +37,28 @@ const CLASS_PATTERN = "(?:^|\\s)([\\w:!/-]+(?:\\[(?:[^\\[\\]]*|\\[[^\\[\\]]*\\])
 
 /**
  * Entry untuk BASE classes di dalam template literal tw.el`BASE [block] { ... }`.
- * Menggunakan negative lookahead untuk stop sebelum first `[name] {` block.
+ * Menggunakan negative lookahead untuk stop sebelum first sub-block, baik
+ * yang menggunakan syntax bracket `[name] {` maupun bare-word `name {`.
+ *
+ * FIX: sebelumnya hanya stop sebelum `[name] {`, sehingga base pattern
+ * masih "menelan" bare-word blocks → kelas di dalam block dianggap base scope.
  */
 const BASE_CONTAINER_PATTERN =
-  "tw(?:\\.[a-zA-Z][a-zA-Z0-9]*)?\\s*`((?:(?!\\[[a-z][a-zA-Z0-9_-]*\\]\\s*\\{)[\\s\\S])*)"
+  "tw(?:\\.[a-zA-Z][a-zA-Z0-9]*)?\\s*`((?:(?!(?:\\[[a-z][a-zA-Z0-9_-]*\\]|(?<![`\\s])[a-z][a-zA-Z0-9_-]*)\\s*\\{)[\\s\\S])*)"
 
 /**
- * Entry untuk subcomponent block `[name] { classes }`.
+ * Entry untuk subcomponent block — support DUA syntax:
+ *   1. Bracket  : `[name] { classes }` → contoh: `[icon] { w-4 h-4 }`
+ *   2. Bare word: `name { classes }`   → contoh: `icon { w-4 h-4 }`
+ *
  * Mengekstrak hanya isi di dalam `{ ... }` sebagai scope terpisah.
+ *
+ * FIX: sebelumnya hanya `\[name\] { }` sehingga bare-word blocks tidak dikenali
+ * → tailwindcss-intellisense menganggap kelas di dalam block sebagai satu scope
+ * dengan base → false-positive cssConflict.
  */
 const SUB_BLOCK_CONTAINER_PATTERN =
-  "\\[[a-z][a-zA-Z0-9_-]*\\]\\s*\\{([^}]*)\\}"
+  "(?:\\[[a-z][a-zA-Z0-9_-]*\\]|[a-z][a-zA-Z0-9_-]*)\\s*\\{([^}]*)\\}"
 
 /**
  * classRegex array yang akan di-inject ke tailwindCSS.experimental.classRegex.
@@ -64,6 +75,13 @@ export const TW_STYLED_CLASS_REGEX: [string, string][] = [
 const VSCODE_SETTINGS_DIR = ".vscode"
 const SETTINGS_FILE = "settings.json"
 const CLASS_REGEX_KEY = "tailwindCSS.experimental.classRegex"
+/**
+ * Nuclear fallback: matikan cssConflict lint dari tailwindcss-intellisense.
+ * Dipakai jika classRegex approach tidak cukup suppress false-positive cross-block.
+ * Trade-off: genuine single-scope conflict juga tidak terdeteksi — acceptable
+ * karena tw-styled sudah handle conflict resolution via twMerge di runtime.
+ */
+const CSS_CONFLICT_LINT_KEY = "tailwindCSS.lint.cssConflict"
 
 /**
  * Baca .vscode/settings.json, return {} jika tidak ada atau parse error.
@@ -116,6 +134,27 @@ function injectClassRegex(workspacePath: string): boolean {
   if (alreadyInjected(existing)) return false
 
   settings[CLASS_REGEX_KEY] = [...existing, ...TW_STYLED_CLASS_REGEX]
+
+  try {
+    writeSettings(settingsPath, settings)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Nuclear fallback: set `tailwindCSS.lint.cssConflict` ke "ignore".
+ * Dipakai manual via command jika classRegex tidak cukup.
+ * Returns true jika setting berhasil diubah.
+ */
+function disableCssConflictLint(workspacePath: string): boolean {
+  const settingsPath = path.join(workspacePath, VSCODE_SETTINGS_DIR, SETTINGS_FILE)
+  const settings = readSettings(settingsPath)
+
+  if (settings[CSS_CONFLICT_LINT_KEY] === "ignore") return false
+
+  settings[CSS_CONFLICT_LINT_KEY] = "ignore"
 
   try {
     writeSettings(settingsPath, settings)
@@ -182,11 +221,46 @@ export function registerWorkspaceSettingsProvider(
     }
   )
 
-  context.subscriptions.push(command)
+  // Nuclear fallback: matikan cssConflict lint sepenuhnya
+  // Dipakai jika classRegex approach masih memunculkan false-positive
+  const nuclearCommand = vscode.commands.registerCommand(
+    "tailwind-styled.disableCssConflict",
+    () => {
+      if (!workspacePath) {
+        vscode.window.showWarningMessage("Tidak ada workspace yang terbuka.")
+        return
+      }
+      vscode.window
+        .showWarningMessage(
+          "[tailwind-styled] Ini akan set tailwindCSS.lint.cssConflict = 'ignore' " +
+            "di .vscode/settings.json. Semua cssConflict warning dimatikan, " +
+            "termasuk yang genuine. Lanjutkan?",
+          "Ya, matikan",
+          "Batal"
+        )
+        .then((action) => {
+          if (action !== "Ya, matikan") return
+          const ok = disableCssConflictLint(workspacePath)
+          if (ok) {
+            vscode.window.showInformationMessage(
+              "[tailwind-styled] tailwindCSS.lint.cssConflict di-set ke 'ignore'. " +
+                "Restart VSCode window jika warning masih muncul."
+            )
+          } else {
+            vscode.window.showInformationMessage(
+              "[tailwind-styled] cssConflict sudah di-ignore di settings."
+            )
+          }
+        })
+    }
+  )
+
+  context.subscriptions.push(command, nuclearCommand)
 
   return {
     dispose() {
       command.dispose()
+      nuclearCommand.dispose()
     },
   }
 }

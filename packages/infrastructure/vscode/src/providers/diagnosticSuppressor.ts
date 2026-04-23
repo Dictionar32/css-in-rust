@@ -49,12 +49,19 @@ const TW_TEMPLATE_RE =
   /tw(?:\.[a-zA-Z][a-zA-Z0-9]*)?\s*`([\s\S]*?)`/g
 
 /**
- * Match subcomponent block dengan bracket syntax: `[name] { classes... }`
- * Capture group 1 = block name, group 2 = full block content dengan braces,
- * group 3 = classes di dalam block.
+ * Match subcomponent block — support DUA syntax:
+ *   1. Bracket  : `[name] { classes... }`  → capture group 1 = name
+ *   2. Bare word: `name { classes... }`    → capture group 2 = name
+ *
+ * Capture group 3 = full block content dengan braces,
+ * Capture group 4 = classes di dalam block.
+ *
+ * FIX: sebelumnya hanya handle syntax bracket `[name]`, sehingga template
+ * yang menggunakan bare-word `icon { ... }` tidak dideteksi sebagai block
+ * terpisah → false-positive cssConflict tidak tersuppress.
  */
 const SUB_BLOCK_RE =
-  /\[([a-z][a-zA-Z0-9_-]*)\]\s*(\{([^}]*)\})/g
+  /(?:\[([a-z][a-zA-Z0-9_-]*)\]|([a-z][a-zA-Z0-9_-]*))\s*(\{([^}]*)\})/g
 
 // ─── Block boundary map ───────────────────────────────────────────────────────
 
@@ -94,9 +101,11 @@ function buildBlockRanges(document: vscode.TextDocument): BlockRange[] {
     while ((blockMatch = SUB_BLOCK_RE.exec(templateContent)) !== null) {
       const blockRelStart = blockMatch.index
       const blockRelEnd = blockMatch.index + blockMatch[0].length
+      // group 1 = bracket syntax [name], group 2 = bare-word syntax name
+      const blockName = blockMatch[1] ?? blockMatch[2]
 
       subBlockPositions.push({
-        name: blockMatch[1],
+        name: blockName,
         startOffset: contentOffset + blockRelStart,
         endOffset: contentOffset + blockRelEnd,
       })

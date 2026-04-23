@@ -11,22 +11,40 @@ const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "container
 
 // ── Sub-component auto-registration ──────────────────────────────────────────
 
-/** Extract [name] patterns dari template string: "[icon] { color: red }" → ["icon"] */
+/**
+ * Extract subcomponent names dari template string.
+ * Support dua syntax:
+ *   - Bracket  : `[icon] { ... }` → "icon"
+ *   - Bare-word: `icon { ... }`   → "icon"
+ *
+ * FIX: sebelumnya hanya handle bracket syntax `[name]`,
+ * sehingga bare-word blocks tidak dikenali → kelas dari block
+ * ikut masuk ke twMerge bersama base classes → conflict.
+ */
 function parseSubComponentNames(template: string): string[] {
-  const matches = [...template.matchAll(/\[(\w+)\]/g)]
-  return [...new Set(matches.map((m) => m[1]!))]
+  const bracketMatches = [...template.matchAll(/\[(\w+)\]\s*\{/g)].map((m) => m[1]!)
+  const bareMatches = [...template.matchAll(/(?<![\[\w])([a-z][a-zA-Z0-9_-]*)\s*\{/g)].map((m) => m[1]!)
+  return [...new Set([...bracketMatches, ...bareMatches])]
 }
 
 /**
- * Strip semua `[name] { ... }` blocks dari template string sehingga
+ * Strip semua subcomponent blocks dari template string sehingga
  * twMerge hanya menerima base classes (outer scope).
  *
- * Tanpa ini, twMerge membaca `flex h-12 ... [icon] { flex h-4 }` sebagai
- * satu flat class list dan melaporkan conflict antara `h-12` dan `h-4`
- * padahal keduanya berada di elemen yang berbeda.
+ * Support dua syntax:
+ *   - Bracket  : `[name] { classes }` — syntax lama
+ *   - Bare-word: `name { classes }`   — syntax baru di examples/
+ *
+ * FIX: sebelumnya hanya strip `[name] { }`. Bare-word blocks tidak di-strip
+ * → `icon { flex h-4 w-4 }` terbaca flat oleh twMerge bersama base
+ * `flex h-12 w-full` → conflict h-12/h-4 dan w-full/w-4.
  */
 function extractBaseClasses(template: string): string {
-  return template.replace(/\[\w+\]\s*\{[^}]*\}/g, "").replace(/\s+/g, " ").trim()
+  return template
+    .replace(/\[\w+\]\s*\{[^}]*\}/g, "")
+    .replace(/(?<![\[\w])[a-z][a-zA-Z0-9_-]*\s*\{[^}]*\}/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 /**
