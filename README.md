@@ -142,9 +142,32 @@ function Alert({ type, children }) {
 }
 ```
 
-### 6. Sub-components (Inline)
+### 6. Sub-components
 
-Definisikan sub-components langsung di template literal dengan syntax `[name] { classes }` — **TypeScript otomatis infer nama tanpa perlu `.withSub<>()`**.
+Ada **dua cara** mendefinisikan sub-components:
+
+#### A. Config Object — Direkomendasikan (Autocomplete + Type Safe)
+
+```tsx
+const Card = tw.div({
+  base: "flex flex-col p-4 rounded-xl bg-white shadow",
+  sub: {
+    header: "font-bold text-lg border-b pb-2",
+    body:   "text-gray-600 py-2",
+    footer: "border-t pt-2 text-sm text-gray-400",
+  },
+})
+
+// TypeScript infer keys dari object literal → autocomplete penuh
+<Card>
+  <Card.header>Judul</Card.header>    // ✅ autocomplete
+  <Card.body>Konten</Card.body>       // ✅ autocomplete
+  <Card.footer>Footer</Card.footer>   // ✅ autocomplete
+  <Card.xyz>?</Card.xyz>              // ❌ TypeScript error
+</Card>
+```
+
+#### B. Template Literal Inline — Ringkas (tanpa autocomplete)
 
 ```tsx
 const Card = tw.div`
@@ -154,24 +177,18 @@ const Card = tw.div`
   [footer] { border-t pt-2 text-sm text-gray-400 }
 `
 
-// TypeScript otomatis tahu: Card.header, Card.body, Card.footer
+// Runtime benar, tapi TypeScript tidak bisa infer nama dari multiline template —
+// ini limitasi TypeScript, bukan bug library. Gunakan config object untuk type safety.
 <Card>
   <Card.header>Judul</Card.header>
   <Card.body>Konten</Card.body>
   <Card.footer>Footer</Card.footer>
 </Card>
-
-// Autocomplete ✓ — Card.nonexistent akan error TypeScript
 ```
 
-> **Catatan:** Sub-components **tidak mewarisi** style base `Card`. Mereka adalah komponen terpisah dengan classes dari block `[name] { ... }`. Untuk mewarisi, gunakan `.extend()` (Pattern B di bawah).
+> Sub-components **tidak mewarisi** style base. Untuk mewarisi, pakai `.extend()` (lihat Pattern B di bawah).
 
-**`.withSub<>()`** hanya diperlukan jika nama sub-component tidak muncul di template literal (misalnya di-register secara dinamis):
-
-```tsx
-// Kasus khusus — nama tidak ada di template
-const Modal = tw.div`fixed inset-0`.withSub<"overlay" | "content">()
-```
+> **Sub-component tidak terdefinisi** tidak akan crash — library otomatis fallback ke `<span>` passthrough. Tapi tetap gunakan config object untuk catch typo di TypeScript.
 
 ### 7. State Engine — Zero-JS State Management
 
@@ -248,9 +265,22 @@ const IconButton = Button.extend`p-2 rounded-full`
 
 ### Pattern Sub-components
 
-**Pattern A: Inline `[name] { }` — Direkomendasikan**
+**Pattern A: Config Object — Direkomendasikan (autocomplete + type safe)**
 
-Cocok kalau sub-components punya style sendiri yang *tidak perlu* mewarisi base:
+```tsx
+const Card = tw.div({
+  base: "flex flex-col p-4 rounded-xl bg-white shadow",
+  sub: {
+    header: "font-bold text-lg border-b pb-2",
+    body:   "text-gray-600 py-2",
+    footer: "border-t pt-2 text-sm",
+  },
+})
+// TypeScript infer: Card.header, Card.body, Card.footer ✅ autocomplete
+// Card.xyz → TypeScript error ✅
+```
+
+**Pattern A2: Inline Template `[name] { }` — Ringkas (tanpa autocomplete)**
 
 ```tsx
 const Card = tw.div`
@@ -259,7 +289,7 @@ const Card = tw.div`
   [body]   { text-gray-600 py-2 }
   [footer] { border-t pt-2 text-sm }
 `
-// TypeScript otomatis: Card.header, Card.body, Card.footer ✓
+// Runtime benar — TypeScript tidak bisa infer nama dari multiline template literal
 ```
 
 **Pattern B: `.extend()` — Sub-components Mewarisi Style Base**

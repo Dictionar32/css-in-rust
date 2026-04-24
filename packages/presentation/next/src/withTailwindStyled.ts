@@ -26,21 +26,40 @@ import { parseNextAdapterOptions } from "./schemas"
 const require = createRequire(import.meta.url)
 
 interface TailwindStyledLoaderOptions {
+  /** @deprecated — handled by engine internally */
   mode?: "zero-runtime"
+  /** @deprecated — handled by engine internally */
   autoClientBoundary?: boolean
+  /** @deprecated — handled by engine internally */
   addDataAttr?: boolean
+  /** @deprecated — handled by engine internally */
   hoist?: boolean
+  /** @deprecated — handled by engine internally */
   routeCss?: boolean
+  /** @deprecated — handled by engine internally */
   incremental?: boolean
   verbose?: boolean
   preserveImports?: boolean
+  safelistPath?: string
 }
 
-export interface TailwindStyledNextOptions
-  extends Pick<
-    TailwindStyledLoaderOptions,
-    "mode" | "autoClientBoundary" | "addDataAttr" | "hoist" | "routeCss" | "incremental" | "verbose"
-  > {
+export interface TailwindStyledNextOptions {
+  /** @deprecated — handled by engine internally */
+  mode?: "zero-runtime"
+  /** @deprecated — handled by engine internally */
+  autoClientBoundary?: boolean
+  /** @deprecated — handled by engine internally */
+  addDataAttr?: boolean
+  /** @deprecated — handled by engine internally */
+  hoist?: boolean
+  /** @deprecated — handled by engine internally */
+  routeCss?: boolean
+  /** @deprecated — handled by engine internally */
+  incremental?: boolean
+  /** Show detailed loader output */
+  verbose?: boolean
+  /** Path to generated safelist CSS file. Default: <cwd>/__tw_safelist.css */
+  safelistPath?: string
   include?: RegExp
   exclude?: RegExp
 }
@@ -141,16 +160,14 @@ const buildExcludePattern = (userExclude?: RegExp): RegExp => {
 }
 
 const createLoaderOptions = (options: TailwindStyledNextOptions): Readonly<TailwindStyledLoaderOptions> => {
+  // Deprecated options — still passed for loader backward compat but engine ignores them
   const opts: TailwindStyledLoaderOptions = {
-    mode: options.mode ?? "zero-runtime",
-    autoClientBoundary: options.autoClientBoundary ?? true,
+    mode: "zero-runtime",              // only supported mode
+    autoClientBoundary: true,          // always on (engine handles it)
     preserveImports: true,
   }
-  if (options.addDataAttr !== undefined) opts.addDataAttr = options.addDataAttr
-  if (options.hoist !== undefined) opts.hoist = options.hoist
-  if (options.routeCss !== undefined) opts.routeCss = options.routeCss
-  if (options.incremental !== undefined) opts.incremental = options.incremental
   if (options.verbose !== undefined) opts.verbose = options.verbose
+  opts.safelistPath = options.safelistPath ?? path.join(process.cwd(), "__tw_safelist.css")
   return Object.freeze(opts)
 }
 

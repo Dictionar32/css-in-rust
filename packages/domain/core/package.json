@@ -118,7 +118,7 @@
     "build": "tsup",
     "build:dev": "tsup --watch",
     "build:release": "tsup",
-    "check": "tsc --noEmit -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.typecheck.json",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "dev": "tsup --watch",
     "pack:check": "node ../../scripts/check-pack-artifacts.mjs packages/domain/core",

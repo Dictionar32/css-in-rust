@@ -37,7 +37,9 @@ interface ParsedTemplate {
   hasSubs: boolean
 }
 
-const SUB_RE = /\[([a-zA-Z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}/g
+// Matches both `[name] { ... }` (bracket) and `name { ... }` (no-bracket) sub-component blocks.
+// Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = classes inside braces.
+const SUB_RE = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
 const COMMENT_RE = /\/\/[^\n]*/g
 
 function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
@@ -50,12 +52,12 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
   const subs: Record<string, string> = {}
   let base = raw
 
-  // Extract dan hapus semua [name] { ... } blocks dari base
+  // Extract dan hapus semua sub-component blocks dari base (bracket dan no-bracket)
   let match: RegExpExecArray | null
   SUB_RE.lastIndex = 0
   while ((match = SUB_RE.exec(raw)) !== null) {
-    const name = match[1]
-    const inner = match[2]
+    const name = match[1] ?? match[2]
+    const inner = match[3]
       .replace(COMMENT_RE, "")           // strip //comments
       .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
       .replace(/\s+/g, " ").trim()
@@ -122,7 +124,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
           }, children)
         )
         SubComp.displayName = `tw.${typeof tag === "string" ? tag : "component"}.${name}`;
-        (component as Record<string, unknown>)[name] = SubComp
+        ;(component as unknown as Record<string, unknown>)[name] = SubComp
       }
     }
 

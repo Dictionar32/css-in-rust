@@ -27,7 +27,14 @@ export interface ComponentConfig {
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
   containerName?: string
+  /** Sub-component definitions — keys di-infer otomatis oleh TypeScript */
+  sub?: Record<string, string>
 }
+
+// Infer sub-component names dari config object { sub: { icon: "...", footer: "..." } }
+// TypeScript infer literal key types dari object literal secara sempurna.
+type InferSubFromConfig<C extends ComponentConfig> =
+  C extends { sub: Record<infer K extends string, string> } ? K : never
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
@@ -86,10 +93,15 @@ type TrimRight<S extends string> =
 
 type Trim<S extends string> = TrimLeft<TrimRight<S>>
 
-// Recursively extract [name] patterns dari template string
+// Recursively extract sub-component names dari template string.
+// Mendukung dua syntax:
+//   - Bracket:    `[name] { ... }`
+//   - No-bracket: `name { ... }`
 type ExtractSubNames<T extends string> =
-  T extends `${infer _}[${infer Name}]${infer Rest}`
-    ? (Trim<Name> extends string ? Trim<Name> : never) | ExtractSubNames<Rest>
+  T extends `${string}[${infer Name}]${string}{${string}}${infer Rest}`
+    ? Trim<Name> | ExtractSubNames<Rest>
+    : T extends `${string}\n${infer Name}{${string}}${infer Rest}`
+    ? (Trim<Name> extends "" ? never : Trim<Name>) | ExtractSubNames<Rest>
     : never
 
 // ── DetectedSubComponents — di-generate oleh `npx tw generate-types`
@@ -101,13 +113,14 @@ export interface TwSubComponentProps {
   className?: string
 }
 
-// Helper: kalau S = string (belum di-narrow), fallback ke loose index signature.
-// Kalau S sudah spesifik ("icon" | "badge"), pakai strict mapped type supaya
-// autocomplete hanya munculkan key yang terdaftar.
+// Helper: kalau S = string (belum di-narrow karena TypeScript tidak bisa
+// infer nama dari multiline template literal), fallback ke loose index signature.
+// Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid.
+// Gunakan .withSub<"icon" | "footer">() untuk opt-in ke strict mode manual.
 type SubComponentKeys<S extends string> =
   string extends S
-    ? { [key: string]: TwSubComponentAccessor }
-    : { [K in S]: TwSubComponentAccessor }
+    ? { [key: string]: TwSubComponentAccessor }  // loose — TypeScript gagal infer
+    : { [K in S]: TwSubComponentAccessor }        // strict — hanya nama terdaftar
 
 // TwStyledComponent dengan generic Sub untuk nama sub-component
 // S = union of sub-component names — di-infer otomatis dari [name] patterns
@@ -128,7 +141,20 @@ export type TwStyledComponent<
     }): TwStyledComponent<Config, S>
   }
   withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S>
-  withSub<NewS extends string>(): TwStyledComponent<Config, S | NewS>
+  /**
+   * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
+   *
+   * @example
+   * export const Button = tw.button`
+   *   flex h-12 ...
+   *   icon { flex h-4 }
+   * `.withSub<"icon" | "footer">()
+   *
+   * Button.icon   // ✅ autocomplete
+   * Button.footer // ✅ autocomplete
+   * Button.xyz    // ❌ TypeScript error
+   */
+  withSub<NewS extends string>(): TwStyledComponent<Config, NewS>
   animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>
 } & SubComponentKeys<S>
 
@@ -140,9 +166,12 @@ export interface TwSubComponent<P = unknown> {
 
 export interface TwTemplateFactory<Config extends ComponentConfig = ComponentConfig> {
   // Template literal — TypeScript infer sub-component names dari [name] { ... }
-  <const T extends string>(strings: readonly [T, ...unknown[]], ...exprs: unknown[]): TwStyledComponent<Config, ExtractSubNames<T>>
+  // Catatan: infer hanya works pada template TANPA expression (no ${}).
+  // Untuk template kompleks gunakan config object syntax: tw.button({ base: "...", sub: { icon: "..." } })
+  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>>
   (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string>
-  <C extends ComponentConfig>(config: C): TwStyledComponent<C, string>
+  // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
+  <C extends ComponentConfig>(config: C): TwStyledComponent<C, InferSubFromConfig<C>>
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────
