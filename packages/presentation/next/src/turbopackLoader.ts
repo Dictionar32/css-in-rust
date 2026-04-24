@@ -52,6 +52,22 @@ function detectRouter(resourcePath: string): "app" | "pages" | "unknown" {
   return "unknown"
 }
 
+/**
+ * Next.js App Router entry-point files yang TIDAK boleh diproses loader ini.
+ *
+ * Turbopack tidak support `exclude` di rule level seperti webpack, sehingga
+ * *.tsx glob akan match layout.tsx, page.tsx, dll. Guard ini memastikan loader
+ * skip file-file tersebut secara eksplisit — identik dengan NEXT_RSC_ENTRIES
+ * di withTailwindStyled.ts yang hanya efektif untuk webpack path.
+ *
+ * Tanpa guard ini: loader menyentuh layout.tsx → Next.js/React Compiler
+ * kehilangan sinyal pure RSC → locale injection dari Accept-Language header
+ * (Next.js 16+) tidak konsisten antara SSR pass dan hydration pass →
+ * hydration mismatch `lang="id"` vs `lang="en"`.
+ */
+const NEXT_RSC_ENTRIES =
+  /(?:^|[\\/])(?:layout|page|loading|error|not-found|template|default)\.[jt]sx?$/
+
 function isSkippable(resourcePath: string): boolean {
   const normalized = resourcePath.replace(/\\/g, "/")
   return (
@@ -60,7 +76,10 @@ function isSkippable(resourcePath: string): boolean {
     normalized.endsWith(".d.mts") ||
     normalized.endsWith(".d.cts") ||
     // Skip CSS/assets
-    /\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$/.test(normalized)
+    /\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$/.test(normalized) ||
+    // Skip Next.js RSC entry files — Turbopack tidak punya exclude di rule level,
+    // jadi guard ini menggantikan NEXT_RSC_ENTRIES exclude yang ada di webpack path.
+    NEXT_RSC_ENTRIES.test(normalized)
   )
 }
 
