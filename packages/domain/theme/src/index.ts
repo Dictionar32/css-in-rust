@@ -161,23 +161,11 @@ export function createTheme<T extends ThemeTokenMap>(
     }
   }
 
-  // ── JS fallback ────────────────────────────────────────────────────────────
-  const flatVars: Record<string, string> = {}
-  const cssLines: string[] = []
-
-  for (const group in values) {
-    for (const token in values[group]) {
-      const varName = `--${group}-${token}`
-      const value = values[group][token]
-      flatVars[varName] = value
-      cssLines.push(`  ${varName}: ${value};`)
-    }
-  }
-
-  const selector = asRoot ? ":root" : `[data-theme="${name}"]`
-  const css = `${selector} {\n${cssLines.join("\n")}\n}`
-
-  return { name, contract, values, css, vars: flatVars, selector }
+  // Native binding is required — no JS fallback
+  throw new Error(
+    "FATAL: Native binding 'compileTheme' is required but not available. " +
+    "Run 'npm run build:rust' to build the native module."
+  )
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -368,22 +356,11 @@ export function compileDesignTokens(tokens: DesignTokens, prefix = ""): string {
     if (result) return result.css
   }
 
-  // ── JS fallback ────────────────────────────────────────────────────────────
-  const vars: string[] = []
-
-  function flatten(obj: DesignTokens, path: string) {
-    for (const [key, value] of Object.entries(obj)) {
-      const varPath = path ? `${path}-${key}` : key
-      if (typeof value === "string") {
-        vars.push(`  --${varPath}: ${value};`)
-      } else {
-        flatten(value as DesignTokens, varPath)
-      }
-    }
-  }
-
-  flatten(tokens, prefix)
-  return `:root {\n${vars.join("\n")}\n}`
+  // Native binding is required — no JS fallback
+  throw new Error(
+    "FATAL: Native binding 'compileTheme' is required but not available. " +
+    "Run 'npm run build:rust' to build the native module."
+  )
 }
 
 // Re-export schemas

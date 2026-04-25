@@ -100,4 +100,8 @@ export interface NativeAnalyzerBinding {
 
 export interface NativeCssCompilerBinding extends NativeAnalyzerBinding {
   compileCss(classes: string[], prefix: string | null): unknown
+  parseCssRules?(css: string): Array<{
+    className: string; property: string; value: string
+    isImportant: boolean; variants: string[]; specificity: number
+  }>
 }

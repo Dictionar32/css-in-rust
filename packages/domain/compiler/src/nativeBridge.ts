@@ -72,6 +72,13 @@ export interface NativeBridge {
   compileCss?: (classes: string[], prefix?: string | null) => { css: string; classes: string[] }
   compileCssLightning?: (classes: string[]) => string
   /** Post-process raw Tailwind-generated CSS dengan LightningCSS di Rust */
+  detectDeadCode?: (scanResultJson: string, css: string) => {
+    deadInCss: string[]
+    deadInSource: string[]
+    liveClasses: string[]
+    totalCssClasses: number
+    totalSourceClasses: number
+  }
   processTailwindCssLightning?: (css: string) => { css: string; size_bytes: number; resolved_classes: string[]; unknown_classes: string[] }
 }
 

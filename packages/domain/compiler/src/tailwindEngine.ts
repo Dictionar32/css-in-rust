@@ -84,14 +84,11 @@ function postProcessWithLightning(rawCss: string): string {
   const native = getNativeBridge()
 
   // process_tailwind_css_lightning sudah ada di css_compiler.rs
-  if (typeof native.processTailwindCssLightning === "function") {
-    const result = native.processTailwindCssLightning(rawCss)
-    return result?.css ?? rawCss
+  if (typeof native.processTailwindCssLightning !== "function") {
+    throw new Error("FATAL: Native binding 'processTailwindCssLightning' is required but not available.")
   }
-
-  // Fallback: return raw jika binding belum tersedia
-  console.warn("[tailwind-styled] processTailwindCssLightning tidak tersedia — gunakan raw CSS")
-  return rawCss
+  const result = native.processTailwindCssLightning(rawCss)
+  return result?.css ?? rawCss
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

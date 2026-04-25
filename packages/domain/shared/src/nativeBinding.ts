@@ -163,22 +163,6 @@ export function loadNativeBinding<T>(
     }
   }
 
-  const isDisabled =
-    process.env.TWS_NO_NATIVE === "1" || process.env.TWS_NO_NATIVE === "true" ||
-    process.env.TWS_NO_RUST === "1" || process.env.TWS_NO_RUST === "true" ||
-    process.env.TWS_DISABLE_NATIVE === "1" || process.env.TWS_DISABLE_NATIVE === "true"
-
-  if (isDisabled) {
-    const envVar = process.env.TWS_DISABLE_NATIVE ? "TWS_DISABLE_NATIVE"
-      : process.env.TWS_NO_NATIVE ? "TWS_NO_NATIVE"
-      : "TWS_NO_RUST"
-    return {
-      binding: null as unknown as T,
-      loadedPath: null,
-      loadErrors: [{ path: "(disabled)", message: `Native binding disabled via ${envVar}` }],
-    }
-  }
-
   const nodeModule = getNodeModule()
   const nodePath = getNodePath()
   const nodeFs = getNodeFs()

@@ -3,8 +3,8 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 interface NativeSyntaxBridge {
-  extractClassesFromSourceNative?: (source: string) => string[] | null
-  parseClassesFromStringNative?: (raw: string) => string[]
+  extractClassesFromSource?: (source: string) => string[] | null
+  parseClassesFromString?: (raw: string) => string[]
 }
 
 const VALID_CLASS_RE = /^[-a-z0-9:/[\]!.()+%]+$/
@@ -56,7 +56,7 @@ function getNativeBridge(): NativeSyntaxBridge {
 
   for (const candidate of candidates) {
     const loaded = tryRequire(candidate)
-    if (loaded?.extractClassesFromSourceNative) {
+    if (loaded?.extractClassesFromSource) {
       bridgeState.current = loaded
       return bridgeState.current
     }
@@ -69,7 +69,7 @@ function getNativeBridge(): NativeSyntaxBridge {
 }
 
 export function extractAllClasses(source: string): string[] {
-  const result = getNativeBridge().extractClassesFromSourceNative?.(source)
+  const result = getNativeBridge().extractClassesFromSource?.(source)
   if (result === null || result === undefined) {
     throw new Error("[tailwind-styled/syntax] Native extractClassesFromSource returned null.")
   }
@@ -77,20 +77,9 @@ export function extractAllClasses(source: string): string[] {
 }
 
 export function parseClasses(raw: string): string[] {
-  // Gunakan Rust native jika tersedia (lebih cepat, tanpa regex overhead)
-  try {
-    const bridge = getNativeBridge()
-    if (bridge?.parseClassesFromStringNative) {
-      return (bridge.parseClassesFromStringNative as (r: string) => string[])(raw)
-    }
-  } catch { /* fallback to JS */ }
-
-  const parsed: string[] = []
-  for (const token of raw.split(/[\n\s]+/)) {
-    if (!token) continue
-    const normalized = token.trim()
-    if (!normalized || !VALID_CLASS_RE.test(normalized)) continue
-    parsed.push(normalized)
+  const bridge = getNativeBridge()
+  if (!bridge?.parseClassesFromString) {
+    throw new Error("FATAL: Native binding 'parseClassesFromString' is required but not available.")
   }
-  return parsed
+  return (bridge.parseClassesFromString as (r: string) => string[])(raw)
 }

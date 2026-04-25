@@ -1,3 +1,4 @@
+import { getNativeEngineBinding } from "./native-bridge"
 import {
   ConditionId,
   ConditionResult,
@@ -137,7 +138,6 @@ function parseSelector(selectorText: string): ParsedSelector {
 
   for (const [index, part] of parts.entries()) {
     if (index === 0) continue
-
     if (variantRegex.test(part)) {
       variants.push(part)
     } else if (pseudoRegex.test(`:${part}`)) {
@@ -147,61 +147,22 @@ function parseSelector(selectorText: string): ParsedSelector {
     }
   }
 
-  return {
-    className: baseClass,
-    variants,
-    pseudoClasses,
-    mediaQuery,
-  }
-}
-
-function parseDeclaration(
-  block: string
-): Array<{ property: string; value: string; important: boolean }> {
-  const declarations: Array<{ property: string; value: string; important: boolean }> = []
-
-  const propertyRegex = /([a-zA-Z-]+)\s*:\s*([^;!]+)(!important)?/g
-
-  // Use for...of + matchAll instead of while loop with let match
-  for (const match of block.matchAll(propertyRegex)) {
-    const property = match[1].trim()
-    const value = match[2].trim()
-    const important = match[3] !== undefined
-
-    declarations.push({ property, value, important })
-  }
-
-  return declarations
+  return { className: baseClass, variants, pseudoClasses, mediaQuery }
 }
 
 function parseRules(css: string): ParsedRule[] {
-  const rules: ParsedRule[] = []
-
-  const ruleRegex = /([^{}]+)\s*\{([^{}]*)\}/g
-
-  // Use for...of + matchAll instead of while loop with let match
-  for (const match of css.matchAll(ruleRegex)) {
-    const selectorText = match[1].trim()
-    const declarationBlock = match[2].trim()
-
-    if (selectorText.startsWith("@")) {
-      continue
-    }
-
-    const parsedSelector = parseSelector(selectorText)
-    const declarations = parseDeclaration(declarationBlock)
-
-    for (const decl of declarations) {
-      rules.push({
-        selector: parsedSelector,
-        property: decl.property,
-        value: decl.value,
-        important: decl.important,
-      })
-    }
+  const native = getNativeEngineBinding()
+  if (!native?.parseCssRules) {
+    throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
   }
 
-  return rules
+  const raw = native.parseCssRules(css)
+  return raw.map((r) => ({
+    selector: parseSelector(`.${r.className}`),
+    property: r.property,
+    value: r.value,
+    important: r.isImportant,
+  }))
 }
 
 function detectLayerFromSelector(className: string): string | null {
