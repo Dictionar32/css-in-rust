@@ -69,6 +69,7 @@ interface NativeBinding {
   }>
   compileTheme?: (themeConfig: string) => { css: string; variables: Record<string, string> }
   extractCssVars?: (css: string) => Record<string, string>
+  extractThemeFromCss?: (css: string) => Array<{ key: string; value: string }>
   parseCssRules?: (css: string) => Array<{
     className: string
     property: string
