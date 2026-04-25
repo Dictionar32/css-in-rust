@@ -82,6 +82,8 @@ interface NativeBinding {
   detectDeadCode?: (css: string, usedClasses: string[]) => string[]
   classifyKnownClasses?: (classes: string[]) => Array<{ className: string; category: string }>
   detectClassConflicts?: (classes: string) => { conflicts: Array<{ class1: string; class2: string; reason: string }>; conflictedClassNames: string[] }
+  resolveVariants?: (configJson: string, propsJson: string) => { classes: string; resolvedCount: number }
+  resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

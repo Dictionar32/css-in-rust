@@ -1,4 +1,4 @@
-import { getBinding } from "./native"
+import { getNativeBinding } from "./native"
 
 export interface ThemeConfig {
   colors: Record<string, string>
@@ -43,7 +43,7 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   const hit = cache.get(cssContent)
   if (hit) return hit
 
-  const binding = getBinding()
+  const binding = getNativeBinding()
   if (!binding?.extractThemeFromCss) {
     throw new Error(
       "FATAL: Native binding 'extractThemeFromCss' is required but not available.\n" +

@@ -77,6 +77,10 @@ interface NativeScannerBinding {
     ok: boolean
     error?: string | null
   }>
+  scanCacheGet?: (filePath: string, contentHash: string) => string[] | null
+  scanCachePut?: (filePath: string, contentHash: string, classes: string[], mtimeMs: number, size: number) => void
+  scanCacheInvalidate?: (filePath: string) => void
+  scanCacheStats?: () => { size: number }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -295,4 +299,46 @@ export function batchExtractClassesNative(filePaths: string[]): Array<{
     throw new Error("FATAL: Native binding 'batchExtractClasses' is required but not available.")
   }
   return binding.batchExtractClasses(filePaths) ?? []
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// In-memory scan cache (Rust DashMap — zero disk I/O)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function scanCacheGet(filePath: string, contentHash: string): string[] | null {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheGet) {
+    throw new Error("FATAL: Native binding 'scanCacheGet' is required but not available.")
+  }
+  return binding.scanCacheGet(filePath, contentHash) ?? null
+}
+
+export function scanCachePut(
+  filePath: string,
+  contentHash: string,
+  classes: string[],
+  mtimeMs: number,
+  size: number
+): void {
+  const binding = scannerGetBinding()
+  if (!binding.scanCachePut) {
+    throw new Error("FATAL: Native binding 'scanCachePut' is required but not available.")
+  }
+  binding.scanCachePut(filePath, contentHash, classes, mtimeMs, size)
+}
+
+export function scanCacheInvalidate(filePath: string): void {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheInvalidate) {
+    throw new Error("FATAL: Native binding 'scanCacheInvalidate' is required but not available.")
+  }
+  binding.scanCacheInvalidate(filePath)
+}
+
+export function scanCacheStats(): { size: number } {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheStats) {
+    throw new Error("FATAL: Native binding 'scanCacheStats' is required but not available.")
+  }
+  return binding.scanCacheStats() as { size: number }
 }

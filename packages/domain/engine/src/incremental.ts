@@ -45,6 +45,48 @@ function areClassSetsEqual(a: string[], b: string[]): boolean {
   return true
 }
 
+export interface WorkspaceDiff {
+  addedClasses: string[]
+  removedClasses: string[]
+  changedFiles: string[]
+  unchangedFiles: number
+}
+
+/**
+ * Diff dua ScanWorkspaceResult menggunakan Rust computeIncrementalDiff.
+ *
+ * Lebih efisien dari JS Set diff untuk workspace besar — Rust pakai HashMap
+ * untuk O(n) compare, tanpa alokasi intermediate Set di JS.
+ *
+ * @example
+ * const diff = diffWorkspaceResults(prevScan, currScan)
+ * if (diff.addedClasses.length > 0) recompileCSS()
+ */
+export function diffWorkspaceResults(
+  previous: ScanWorkspaceResult,
+  current: ScanWorkspaceResult
+): WorkspaceDiff {
+  const native = getNativeEngineBinding()
+  if (!native?.computeIncrementalDiff) {
+    throw new Error("FATAL: Native binding 'computeIncrementalDiff' is required but not available.")
+  }
+
+  const result = native.computeIncrementalDiff(
+    JSON.stringify(previous.files),
+    JSON.stringify(current.files)
+  ) as WorkspaceDiff | null
+
+  if (!result) {
+    return { addedClasses: [], removedClasses: [], changedFiles: [], unchangedFiles: 0 }
+  }
+
+  log.debug(
+    `native diff workspace: +${result.addedClasses.length} classes, -${result.removedClasses.length} classes, ${result.changedFiles.length} files changed`
+  )
+
+  return result
+}
+
 /**
  * Apply an incremental file-change event to an existing scan result.
  *

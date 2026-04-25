@@ -6,7 +6,15 @@
  */
 
 import path from "node:path"
-import { cachePriorityNative, cacheReadNative, cacheWriteNative } from "./native-bridge"
+import {
+  cachePriorityNative,
+  cacheReadNative,
+  cacheWriteNative,
+  scanCacheGet,
+  scanCachePut,
+  scanCacheInvalidate,
+  scanCacheStats,
+} from "./native-bridge"
 
 function defaultCachePath(rootDir: string, cacheDir?: string): string {
   const dir = cacheDir
@@ -120,6 +128,28 @@ export interface CacheStats {
   mostUsedClasses: Array<{ class: string; count: number }>
 }
 
+/**
+ * Rust in-memory cache — hot path untuk per-file lookup saat scan.
+ * Jauh lebih cepat dari disk JSON cache untuk file yang baru saja di-scan.
+ */
+export const hotCache = {
+  get: scanCacheGet,
+  put: scanCachePut,
+  invalidate: scanCacheInvalidate,
+} as const
+
+/**
+ * Stats dari Rust in-memory cache (DashMap).
+ * `size` = jumlah entry saat ini di cache.
+ */
+export function getHotCacheStats(): { size: number } {
+  return scanCacheStats()
+}
+
+/**
+ * Compute disk cache stats dari entries (diperlukan untuk mostUsedClasses).
+ * Native scanCacheStats hanya return size — detail stats tetap dari disk cache entries.
+ */
 export function computeCacheStats(entries: NativeCacheEntry[]): CacheStats {
   if (entries.length === 0) {
     return { totalEntries: 0, totalClasses: 0, totalSizeBytes: 0, avgClassesPerEntry: 0, mostUsedClasses: [] }

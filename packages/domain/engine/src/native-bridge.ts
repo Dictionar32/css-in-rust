@@ -79,6 +79,13 @@ interface NativeEngineBinding {
     className: string; usageScore: number; sizeScore: number
     impactScore: number; usageCount: number; sizeBytes: number
   }>
+  analyzeClassUsage?: (
+    classes: string[], scanResultJson: string, css: string
+  ) => Array<{
+    className: string; usageCount: number; filesJson: string
+    bundleSizeBytes: number; isDeadCode: boolean
+  }>
+  extractAllClasses?: (css: string) => string[]
   analyzeRouteClassDistribution?: (routeFilesJson: string, scanResultJson: string) => Array<{
     route: string; classes: string[]; exclusiveClasses: string[]; classCount: number
   }>
@@ -229,4 +236,41 @@ export function processFileChange(
     )
   }
   return result
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Route-level CSS analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RouteClassMap {
+  route: string
+  classes: string[]
+  exclusiveClasses: string[]
+  classCount: number
+}
+
+/**
+ * Analisis distribusi classes per route — untuk CSS code splitting.
+ *
+ * @param routeFiles - map { route: filePath[] } menentukan file mana ke route mana
+ * @param scanResult - hasil scan workspace
+ *
+ * @example
+ * const routes = analyzeRouteClassDistribution(
+ *   { "/": ["src/app/page.tsx"], "/about": ["src/app/about/page.tsx"] },
+ *   scanResult
+ * )
+ */
+export function analyzeRouteClassDistribution(
+  routeFiles: Record<string, string[]>,
+  scanResult: { files: Array<{ file: string; classes: string[] }> }
+): RouteClassMap[] {
+  const native = getNativeEngineBinding()
+  if (!native?.analyzeRouteClassDistribution) {
+    throw new Error("FATAL: Native binding 'analyzeRouteClassDistribution' is required but not available.")
+  }
+  return native.analyzeRouteClassDistribution(
+    JSON.stringify(routeFiles),
+    JSON.stringify(scanResult)
+  ) as RouteClassMap[]
 }

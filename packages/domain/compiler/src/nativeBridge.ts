@@ -80,6 +80,7 @@ export interface NativeBridge {
     totalSourceClasses: number
   }
   processTailwindCssLightning?: (css: string) => { css: string; size_bytes: number; resolved_classes: string[]; unknown_classes: string[] }
+  processTailwindCssWithTargets?: (css: string, targets: string | null) => { css: string; size_bytes: number }
 }
 
 export interface NativeTransformResult {

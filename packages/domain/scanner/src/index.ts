@@ -503,3 +503,4 @@ export async function scanWorkspaceAsync(
     return scanWorkspace(rootDir, normalizedOptions)
   }
 }
+export { extractClassesNative, batchExtractClassesNative } from "./native-bridge"

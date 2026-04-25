@@ -311,7 +311,7 @@ const collectSafelistFromSource = async (configPath: string): Promise<string[]> 
   }
 
   // Intersect dengan native extracted tokens untuk validasi
-  return allTokens.filter((t) => safelistSet.has(t))
+  return allTokens.filter((t: string) => safelistSet.has(t))
 }
 
 const loadTailwindConfig = async (

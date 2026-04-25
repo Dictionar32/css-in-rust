@@ -158,3 +158,21 @@ export function runCssPipelineSync(classes: string[]): CssPipelineResult {
     optimized: hasLightning,
   }
 }
+/**
+ * Minify dan vendor-prefix CSS dengan explicit browser targets.
+ *
+ * Gunakan ini untuk output yang perlu support browser spesifik
+ * (misal: Chrome 80+, Firefox 80+, Safari 14.1+).
+ * Default: gunakan `processTailwindCssLightning` tanpa explicit targets.
+ *
+ * @example
+ * const css = processTailwindCssWithTargets(rawCss, "chrome80,firefox80,safari14.1")
+ */
+export function processTailwindCssWithTargets(css: string, targets?: string): string {
+  const native = getNativeBridge()
+  if (!native?.processTailwindCssWithTargets) {
+    throw new Error("FATAL: Native binding 'processTailwindCssWithTargets' is required but not available.")
+  }
+  const result = native.processTailwindCssWithTargets(css, targets ?? null) as { css: string } | null
+  return (result?.css ?? css).trim()
+}
