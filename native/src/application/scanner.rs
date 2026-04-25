@@ -385,3 +385,168 @@ pub fn check_against_safelist(classes: Vec<String>, safelist: Vec<String>) -> Sa
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Result dari scan sub-component names
+#[napi(object)]
+pub struct SubComponentScanResult {
+    /// Semua nama sub-component yang ditemukan di codebase
+    pub names: Vec<String>,
+    /// Generated TypeScript declaration content
+    pub dts_content: String,
+    /// Jumlah file yang di-scan
+    pub files_scanned: u32,
+}
+
+/// Scan workspace untuk semua sub-component names yang dipakai,
+/// lalu generate TypeScript declaration file untuk type inference otomatis.
+///
+/// Output .d.ts berisi module augmentation yang membuat TypeScript
+/// tahu nama sub-component tanpa user perlu declare manual.
+#[napi]
+pub fn generate_sub_component_types(
+    root: String,
+    output_path: Option<String>,
+) -> napi::Result<SubComponentScanResult> {
+    use std::collections::HashSet;
+    use regex::Regex;
+
+    let root_path = std::path::Path::new(&root);
+    if !root_path.exists() {
+        return Err(napi::Error::from_reason(format!("Root path does not exist: {}", root)));
+    }
+
+    // Patterns untuk detect sub-component registration
+    let register_re = Regex::new(
+        r#"registerSubComponent\s*\(\s*\{[^}]*name\s*:\s*["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    // Pattern untuk detect .withSub<"name1" | "name2">()
+    let with_sub_re = Regex::new(
+        r#"\.withSub\s*<\s*([^>]+)\s*>"#
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    // Pattern untuk extract string literals dari union types
+    let literal_re = Regex::new(
+        r#"["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let extensions = ["ts", "tsx", "js", "jsx", "mjs"];
+    let ignore_dirs = ["node_modules", ".next", "dist", "out", ".turbo"];
+
+    let mut all_names: HashSet<String> = HashSet::new();
+    let mut files_scanned = 0u32;
+
+    // Walk directory
+    fn walk(
+        dir: &std::path::Path,
+        extensions: &[&str],
+        ignore_dirs: &[&str],
+        register_re: &Regex,
+        with_sub_re: &Regex,
+        literal_re: &Regex,
+        names: &mut HashSet<String>,
+        count: &mut u32,
+    ) {
+        let Ok(entries) = std::fs::read_dir(dir) else { return };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let dir_name = path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
+                if !ignore_dirs.contains(&dir_name) {
+                    walk(&path, extensions, ignore_dirs, register_re, with_sub_re, literal_re, names, count);
+                }
+                continue;
+            }
+            let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+            if !extensions.contains(&ext) { continue; }
+
+            let Ok(source) = std::fs::read_to_string(&path) else { continue };
+            *count += 1;
+
+            // Extract dari registerSubComponent({ name: "..." })
+            for cap in register_re.captures_iter(&source) {
+                if let Some(name) = cap.get(1) {
+                    names.insert(name.as_str().to_string());
+                }
+            }
+
+            // Extract dari .withSub<"icon" | "badge">()
+            for cap in with_sub_re.captures_iter(&source) {
+                if let Some(union_str) = cap.get(1) {
+                    for lit in literal_re.captures_iter(union_str.as_str()) {
+                        if let Some(name) = lit.get(1) {
+                            names.insert(name.as_str().to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    walk(
+        root_path,
+        &extensions,
+        &ignore_dirs,
+        &register_re,
+        &with_sub_re,
+        &literal_re,
+        &mut all_names,
+        &mut files_scanned,
+    );
+
+    let mut sorted_names: Vec<String> = all_names.into_iter().collect();
+    sorted_names.sort();
+
+    // Generate TypeScript declaration
+    let dts_content = generate_dts(&sorted_names);
+
+    // Write to file jika output_path diberikan
+    if let Some(path) = &output_path {
+        if let Err(e) = std::fs::write(path, &dts_content) {
+            return Err(napi::Error::from_reason(format!("Failed to write .d.ts: {}", e)));
+        }
+    }
+
+    Ok(SubComponentScanResult {
+        names: sorted_names,
+        dts_content,
+        files_scanned,
+    })
+}
+
+fn generate_dts(names: &[String]) -> String {
+    if names.is_empty() {
+        return String::from(
+            "// tailwind-styled-v4 — no sub-components detected\n\
+             // Run: npx tw generate-types to regenerate\n"
+        );
+    }
+
+    let union_type = names
+        .iter()
+        .map(|n| format!("\"{}\"", n))
+        .collect::<Vec<_>>()
+        .join(" | ");
+
+    format!(
+        "// AUTO-GENERATED by tailwind-styled-v4 (Rust)\n\
+         // DO NOT EDIT — Run: npx tw generate-types to regenerate\n\
+         // Detected sub-components: {count}\n\
+         \n\
+         import type {{ TwStyledComponent, ComponentConfig }} from \"tailwind-styled-v4\"\n\
+         \n\
+         declare module \"tailwind-styled-v4\" {{\n\
+         \n\
+         /**\n\
+          * Sub-component names yang terdeteksi di codebase.\n\
+          * Generated otomatis oleh Rust scanner.\n\
+          */\n\
+         export type DetectedSubComponents = {union_type}\n\
+         \n\
+         }}\n",
+        count = names.len(),
+        union_type = union_type,
+    )
+}

@@ -1,7 +1,9 @@
 mod tests {
     use crate::domain::transform::{
-        build_metadata_json, parse_subcomponent_blocks, TRANSFORM_MARKER,
+        build_metadata_json, parse_subcomponent_blocks, transform_source, SubComponent,
+        TRANSFORM_MARKER,
     };
+    use crate::domain::transform_components::render_compound_component;
     use crate::*;
     use std::ffi::{CStr, CString};
 
@@ -46,11 +48,44 @@ mod tests {
     }
 
     #[test]
+    fn parse_subcomponent_blocks_extracts_bracket_blocks() {
+        let t = "flex h-12 w-full [icon] { flex h-4 w-4 } [text] { font-medium }";
+        let (stripped, subs) = parse_subcomponent_blocks(t, "Button");
+        assert_eq!(subs.len(), 2);
+        assert_eq!(subs[0].name, "icon");
+        assert_eq!(subs[0].classes, "flex h-4 w-4");
+        assert_eq!(subs[1].name, "text");
+        assert!(!stripped.contains("[icon]"));
+        assert!(stripped.contains("flex h-12 w-full"));
+        assert!(!stripped.contains("h-4"));
+    }
+
+    #[test]
     fn parse_subcomponent_blocks_scoped_class_is_deterministic() {
         let t = "bg-blue-500\n  icon { mr-2 }";
         let (_, s1) = parse_subcomponent_blocks(t, "Button");
         let (_, s2) = parse_subcomponent_blocks(t, "Button");
         assert_eq!(s1[0].scoped_class, s2[0].scoped_class);
+    }
+
+    #[test]
+    fn render_compound_component_uses_raw_subcomponent_classes() {
+        let rendered = render_compound_component(
+            "button",
+            "flex h-12 w-full",
+            "_Tw_Button",
+            &[SubComponent {
+                name: "icon".to_string(),
+                tag: "span".to_string(),
+                classes: "flex h-4 w-4".to_string(),
+                scoped_class: "Button_icon_deadbe".to_string(),
+            }],
+            "Button",
+        );
+
+        assert!(rendered.contains("\"flex h-12 w-full\""));
+        assert!(rendered.contains("\"flex h-4 w-4\""));
+        assert!(!rendered.contains("\"Button_icon_deadbe\""));
     }
 
     #[test]
@@ -106,6 +141,7 @@ mod tests {
 // ═════════════════════════════════════════════════════════════════════════════
 
 mod new_module_tests {
+    use crate::application::engine::{compute_incremental_diff, hash_file_content};
     use crate::domain::animation::classes_to_css;
     use crate::*;
 
@@ -403,75 +439,66 @@ const Card = tw.div`rounded-lg`"#;
     #[test]
     fn compile_css_resolves_display_classes() {
         let r = compile_css(
-            vec![
-                "flex".to_string(),
-                "block".to_string(),
-                "hidden".to_string(),
-            ],
+            ".flex{display:flex}.block{display:block}.hidden{display:none}".to_string(),
             None,
         );
-        assert!(r.css.contains("@apply flex"));
-        assert!(r.css.contains("@apply block"));
-        assert!(r.css.contains("@apply hidden"));
-        assert!(r.css.contains("@tailwind utilities"));
-        assert_eq!(r.resolved_classes.len(), 3);
+        assert!(r.css.contains("display:flex"));
+        assert!(r.css.contains("display:block"));
+        assert!(r.css.contains("display:none"));
+        assert_eq!(r.resolved_classes.len(), 0);
         assert_eq!(r.unknown_classes.len(), 0);
     }
 
     #[test]
     fn compile_css_resolves_color_classes() {
         let r = compile_css(
-            vec![
-                "bg-blue-500".to_string(),
-                "text-white".to_string(),
-                "border-red-600".to_string(),
-            ],
+            ".btn{background-color:#3b82f6;color:#fff;border-color:#dc2626}".to_string(),
             None,
         );
-        assert!(r.css.contains("@apply bg-blue-500"), "bg-blue-500");
-        assert!(r.css.contains("@apply text-white"), "text-white");
-        assert!(r.css.contains("@apply border-red-600"), "border-red-600");
+        assert!(r.css.contains("background-color:#3b82f6"), "background-color");
+        assert!(r.css.contains("color:#fff") || r.css.contains("color:#ffffff"), "color");
+        assert!(r.css.contains("border-color:#dc2626"), "border-color");
     }
 
     #[test]
     fn compile_css_handles_hover_variant() {
-        let r = compile_css(vec!["hover:bg-blue-600".to_string()], None);
-        assert_eq!(r.resolved_classes.len(), 1);
-        assert!(
-            r.css.contains("@apply hover:bg-blue-600"),
-            "hover:bg-blue-600"
-        );
+        let r = compile_css(".btn:hover{background-color:#2563eb}".to_string(), None);
+        assert_eq!(r.resolved_classes.len(), 0);
+        assert!(r.css.contains(":hover"), "hover selector should remain");
+        assert!(r.css.contains("background-color:#2563eb"), "hover background color");
     }
 
     #[test]
     fn compile_css_handles_responsive_variant() {
-        let r = compile_css(vec!["md:flex".to_string()], None);
-        assert_eq!(r.resolved_classes.len(), 1);
-        assert!(r.css.contains("@apply md:flex"));
+        let r = compile_css("@media (min-width:768px){.md-flex{display:flex}}".to_string(), None);
+        assert_eq!(r.resolved_classes.len(), 0);
+        assert!(r.css.contains("@media"), "media query should remain");
+        assert!(r.css.contains("display:flex"));
     }
 
     #[test]
     fn compile_css_handles_arbitrary_values() {
         let r = compile_css(
-            vec!["bg-[#3b82f6]".to_string(), "w-[200px]".to_string()],
+            ".box{background:#3b82f6;width:200px}".to_string(),
             None,
         );
-        assert!(r.css.contains("@apply bg-[#3b82f6]"), "arbitrary bg color");
-        assert!(r.css.contains("@apply w-[200px]"), "arbitrary width");
+        assert!(r.css.contains("#3b82f6"), "arbitrary bg color");
+        assert!(r.css.contains("width:200px"), "arbitrary width");
         assert_eq!(r.unknown_classes.len(), 0);
     }
 
     #[test]
     fn compile_css_unknown_classes_get_apply_fallback() {
-        let r = compile_css(vec!["totally-made-up-class".to_string()], None);
+        let r = compile_css("totally-made-up-class".to_string(), None);
         assert_eq!(r.unknown_classes.len(), 0);
-        assert!(r.css.contains("@apply"));
+        assert_eq!(r.css, "totally-made-up-class");
     }
 
     #[test]
     fn compile_css_custom_prefix() {
-        let r = compile_css(vec!["flex".to_string()], Some("#app ".to_string()));
-        assert!(r.css.contains("#app flex"), "should use custom prefix");
+        let r = compile_css("#app .flex{display:flex}".to_string(), Some("#app ".to_string()));
+        assert!(r.css.contains("#app"), "raw CSS prefix should remain");
+        assert!(r.css.contains("display:flex"));
     }
 }
 

@@ -27,7 +27,14 @@ export interface ComponentConfig {
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
   containerName?: string
+  /** Sub-component definitions — keys di-infer otomatis oleh TypeScript */
+  sub?: Record<string, string>
 }
+
+// Infer sub-component names dari config object { sub: { icon: "...", footer: "..." } }
+// TypeScript infer literal key types dari object literal secara sempurna.
+type InferSubFromConfig<C extends ComponentConfig> =
+  C extends { sub: Record<infer K extends string, string> } ? K : never
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
@@ -64,28 +71,92 @@ export type SubComponentMap = Record<string, unknown>
 
 // ── Tw Object ────────────────────────────────────────────────────────────────
 // ── Tw Styled Component ──────────────────────────────────────────────────────
-export interface TwStyledComponent<Config extends ComponentConfig = ComponentConfig> {
+// Sub-component accessor — typed untuk registered sub-components
+export type TwSubComponentAccessor = React.FC<{ children?: React.ReactNode; className?: string }>
+
+// Sub-component props yang bisa di-extend user
+// ── Template Literal Sub-Component Inference ─────────────────────────────────
+// Extract sub-component names dari template literal: [icon] { ... }
+type TrimLeft<S extends string> =
+  S extends ` ${infer R}` | `
+${infer R}` | `	${infer R}` | `
+${infer R}`
+    ? TrimLeft<R>
+    : S
+
+type TrimRight<S extends string> =
+  S extends `${infer L} ` | `${infer L}
+` | `${infer L}	` | `${infer L}
+`
+    ? TrimRight<L>
+    : S
+
+type Trim<S extends string> = TrimLeft<TrimRight<S>>
+
+// Recursively extract sub-component names dari template string.
+// Mendukung dua syntax:
+//   - Bracket:    `[name] { ... }`
+//   - No-bracket: `name { ... }`
+type ExtractSubNames<T extends string> =
+  T extends `${string}[${infer Name}]${string}{${string}}${infer Rest}`
+    ? Trim<Name> | ExtractSubNames<Rest>
+    : T extends `${string}\n${infer Name}{${string}}${infer Rest}`
+    ? (Trim<Name> extends "" ? never : Trim<Name>) | ExtractSubNames<Rest>
+    : never
+
+// ── DetectedSubComponents — di-generate oleh `npx tw generate-types`
+// Fallback ke string kalau belum di-generate
+export type DetectedSubComponents = string
+
+export interface TwSubComponentProps {
+  children?: React.ReactNode
+  className?: string
+}
+
+// Helper: kalau S = string (belum di-narrow karena TypeScript tidak bisa
+// infer nama dari multiline template literal), fallback ke loose index signature.
+// Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid.
+// Gunakan .withSub<"icon" | "footer">() untuk opt-in ke strict mode manual.
+type SubComponentKeys<S extends string> =
+  string extends S
+    ? { [key: string]: TwSubComponentAccessor }  // loose — TypeScript gagal infer
+    : { [K in S]: TwSubComponentAccessor }        // strict — hanya nama terdaftar
+
+// TwStyledComponent dengan generic Sub untuk nama sub-component
+// S = union of sub-component names — di-infer otomatis dari [name] patterns
+// di template literal via ExtractSubNames, atau di-declare manual via .withSub<>()
+export type TwStyledComponent<
+  Config extends ComponentConfig = ComponentConfig,
+  S extends string = string
+> = {
   (props: StyledComponentProps & InferVariantProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
-    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S>
     (config: {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config>
+    }): TwStyledComponent<Config, S>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config>
-  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config>>
-  [key: string]:
-    | ((strings: TemplateStringsArray) => TwStyledComponent<Config>)
-    | ((config: Partial<Config>) => TwStyledComponent<Config>)
-    | ((props: StyledComponentProps) => unknown)
-    | ((opts: AnimateOptions) => Promise<TwStyledComponent<Config>>)
-    | string
-    | undefined
-}
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S>
+  /**
+   * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
+   *
+   * @example
+   * export const Button = tw.button`
+   *   flex h-12 ...
+   *   icon { flex h-4 }
+   * `.withSub<"icon" | "footer">()
+   *
+   * Button.icon   // ✅ autocomplete
+   * Button.footer // ✅ autocomplete
+   * Button.xyz    // ❌ TypeScript error
+   */
+  withSub<NewS extends string>(): TwStyledComponent<Config, NewS>
+  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>
+} & SubComponentKeys<S>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
 export interface TwSubComponent<P = unknown> {
@@ -94,8 +165,13 @@ export interface TwSubComponent<P = unknown> {
 }
 
 export interface TwTemplateFactory<Config extends ComponentConfig = ComponentConfig> {
-  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config>
-  <C extends ComponentConfig>(config: C): TwStyledComponent<C>
+  // Template literal — TypeScript infer sub-component names dari [name] { ... }
+  // Catatan: infer hanya works pada template TANPA expression (no ${}).
+  // Untuk template kompleks gunakan config object syntax: tw.button({ base: "...", sub: { icon: "..." } })
+  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>>
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string>
+  // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
+  <C extends ComponentConfig>(config: C): TwStyledComponent<C, InferSubFromConfig<C>>
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────

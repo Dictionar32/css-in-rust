@@ -4,7 +4,7 @@
  * Export telemetry data to console for development.
  */
 
-import type { BuildMetrics, AggregatedStats } from "./metrics"
+import type { BuildMetrics, AggregatedStats } from "../metrics"
 
 export function exportToConsole(metrics: BuildMetrics, stats: AggregatedStats): void {
   const { duration, stages, cache, output, success } = metrics

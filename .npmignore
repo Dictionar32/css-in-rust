@@ -83,3 +83,7 @@ RELEASE.md
 ANNOUNCEMENT.md
 CHANGELOG.md
 CONTRIBUTING.md
+
+dist/*.map
+dist/*.js.map
+dist/*.mjs.map

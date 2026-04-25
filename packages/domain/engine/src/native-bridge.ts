@@ -39,47 +39,47 @@ interface NativeEngineBinding {
     content: string | null
   ) => { added: string[]; removed: string[] } | null
   // Batch 3 additions
-  parseCssRulesNative?: (css: string) => Array<{
+  parseCssRules?: (css: string) => Array<{
     className: string; property: string; value: string
     isImportant: boolean; variants: string[]; specificity: number
   }>
-  batchSplitClassesNative?: (classes: string[]) => Array<{
+  batchSplitClasses?: (classes: string[]) => Array<{
     variantKey: string; base: string; variants: string[]
     isArbitrary: boolean; hasModifier: boolean; modifier?: string
   }>
-  detectClassConflictsNative?: (usagesJson: string) => {
+  detectClassConflicts?: (usagesJson: string) => {
     conflicts: Array<{ group: string; variantKey: string; classes: string[]; message: string }>
     conflictedClassNames: string[]
   }
-  classifyKnownClassesNative?: (classes: string[], safelist: string[], customUtilities: string[]) => Array<{
+  classifyKnownClasses?: (classes: string[], safelist: string[], customUtilities: string[]) => Array<{
     className: string; isKnown: boolean; variantKey: string; baseClass: string
     utilityPrefix: string; isArbitrary: boolean
   }>
-  diffClassListsNative?: (previous: string[], current: string[]) => {
+  diffClassLists?: (previous: string[], current: string[]) => {
     added: string[]; removed: string[]; unchanged: string[]; hasChanges: boolean
   }
   // Batch 4
-  parseCssToRulesNative?: (css: string, prefix?: string | null) => Array<{
+  parseCssToRules?: (css: string, prefix?: string | null) => Array<{
     className: string; property: string; value: string; important: boolean
     variants: string[]; pseudoClasses: string[]; mediaQuery: string | null
     specificity: number; layer: string | null
   }>
-  calculateBundleContributionsNative?: (classes: string[], css: string) => Array<{
+  calculateBundleContributions?: (classes: string[], css: string) => Array<{
     className: string; sizeBytes: number; variantChains: string[]
     dependencies: string[]; inCss: boolean
   }>
-  detectDeadCodeNative?: (scanResultJson: string, css: string) => {
+  detectDeadCode?: (scanResultJson: string, css: string) => {
     deadInCss: string[]; deadInSource: string[]; liveClasses: string[]
     totalCssClasses: number; totalSourceClasses: number
   }
-  calculateImpactScoresNative?: (
+  calculateImpactScores?: (
     classes: string[], scanResultJson: string, css: string,
     usageWeight: number, sizeWeight: number
   ) => Array<{
     className: string; usageScore: number; sizeScore: number
     impactScore: number; usageCount: number; sizeBytes: number
   }>
-  analyzeRouteClassDistributionNative?: (routeFilesJson: string, scanResultJson: string) => Array<{
+  analyzeRouteClassDistribution?: (routeFilesJson: string, scanResultJson: string) => Array<{
     route: string; classes: string[]; exclusiveClasses: string[]; classCount: number
   }>
 }

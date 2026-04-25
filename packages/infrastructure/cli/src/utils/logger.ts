@@ -25,47 +25,36 @@ export interface CreateCliLoggerOptions {
 }
 
 export function createCliLogger(options: CreateCliLoggerOptions = {}): CliLogger {
-  function emit(level: CliLogLevel, prefix: string, message: string): void {
+  function emit(level: CliLogLevel, icon: string, colorize: (s: string) => string, message: string): void {
     options.onEvent?.({ level, message })
     if (options.silent) return
 
-    const colorizedPrefix =
-      level === "ok"
-        ? pc.green(prefix)
-        : level === "warn"
-          ? pc.yellow(prefix)
-          : level === "dry"
-            ? pc.cyan(prefix)
-            : level === "skip"
-              ? pc.dim(prefix)
-              : pc.blue(prefix)
+    const line = `    ${colorize(icon)} ${message}`
 
     if (options.output) {
-      options.output.writeText(`${colorizedPrefix}${message}`, {
-        stderr: options.useStderr,
-      })
+      options.output.writeText(line, { stderr: options.useStderr })
       return
     }
 
     const writeLine = options.useStderr ? console.error : console.log
-    writeLine(`${prefix}${message}`)
+    writeLine(line)
   }
 
   return {
     ok(message: string) {
-      emit("ok", "  [ok] ", message)
+      emit("ok", "✓", pc.green, pc.dim(message))
     },
     skip(message: string) {
-      emit("skip", "  [skip] ", message)
+      emit("skip", "–", pc.dim, pc.dim(message))
     },
     warn(message: string) {
-      emit("warn", "  [warn] ", message)
+      emit("warn", "⚠", pc.yellow, message)
     },
     info(message: string) {
-      emit("info", "       ", message)
+      emit("info", "→", pc.cyan, pc.dim(message))
     },
     dry(message: string) {
-      emit("dry", "  [dry-run] ", message)
+      emit("dry", "○", pc.cyan, pc.dim(`[dry] ${message}`))
     },
   }
 }

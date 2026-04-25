@@ -43,9 +43,10 @@ export type {
   TelemetryConfig,
   StageContext,
   TelemetryEvent,
-  JsonExportOptions,
-  PrometheusMetric,
 } from "./metrics"
+
+export type { JsonExportOptions } from "./exporters/json"
+export type { PrometheusMetric } from "./exporters/prometheus"
 
 export {
   DEFAULT_TELEMETRY_CONFIG,

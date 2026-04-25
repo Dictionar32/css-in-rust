@@ -155,9 +155,10 @@ export async function asyncWithRetry<T, E = Error>(
     }
   }
 
+  const finalResult = await asyncWithLogging<T, E>(namespace, fn, { onStart: false, onError: true, label: attemptLabel })
   return {
     ok: false,
-    error: (await asyncWithLogging(namespace, fn, { onStart: false, onError: true, label: attemptLabel })).error as E,
+    error: finalResult.ok ? (new Error("Unexpected success after retries") as E) : finalResult.error,
     durationMs: 0,
   }
 }

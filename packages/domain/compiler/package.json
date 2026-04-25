@@ -13,11 +13,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./internal": {
       "types": "./dist/internal.d.ts",
-      "import": "./dist/internal.js"
+      "import": "./dist/internal.js",
+      "require": "./dist/internal.cjs"
     }
   },
   "files": [
@@ -54,5 +56,6 @@
     "pack:check": "node ../../scripts/check-pack-artifacts.mjs packages/domain/compiler",
     "test": "node --test tests/*.test.mjs",
     "test:watch": "node --test --watch tests/*.test.mjs"
-  }
+  },
+  "main": "./dist/index.cjs"
 }

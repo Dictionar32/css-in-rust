@@ -26,24 +26,58 @@ import { parseNextAdapterOptions } from "./schemas"
 const require = createRequire(import.meta.url)
 
 interface TailwindStyledLoaderOptions {
+  /** @deprecated — handled by engine internally */
   mode?: "zero-runtime"
+  /** @deprecated — handled by engine internally */
   autoClientBoundary?: boolean
+  /** @deprecated — handled by engine internally */
   addDataAttr?: boolean
+  /** @deprecated — handled by engine internally */
   hoist?: boolean
+  /** @deprecated — handled by engine internally */
   routeCss?: boolean
+  /** @deprecated — handled by engine internally */
   incremental?: boolean
   verbose?: boolean
   preserveImports?: boolean
+  safelistPath?: string
 }
 
-export interface TailwindStyledNextOptions
-  extends Pick<
-    TailwindStyledLoaderOptions,
-    "mode" | "autoClientBoundary" | "addDataAttr" | "hoist" | "routeCss" | "incremental" | "verbose"
-  > {
+export interface TailwindStyledNextOptions {
+  /** @deprecated — handled by engine internally */
+  mode?: "zero-runtime"
+  /** @deprecated — handled by engine internally */
+  autoClientBoundary?: boolean
+  /** @deprecated — handled by engine internally */
+  addDataAttr?: boolean
+  /** @deprecated — handled by engine internally */
+  hoist?: boolean
+  /** @deprecated — handled by engine internally */
+  routeCss?: boolean
+  /** @deprecated — handled by engine internally */
+  incremental?: boolean
+  /** Show detailed loader output */
+  verbose?: boolean
+  /** Path to generated safelist CSS file. Default: <cwd>/__tw_safelist.css */
+  safelistPath?: string
   include?: RegExp
   exclude?: RegExp
 }
+
+import type { NextConfig } from "next"
+
+// Derive webpack types directly from Next.js — always in sync with installed version
+type NextWebpackFn = NonNullable<NextConfig["webpack"]>
+type NextWebpackConfig = Parameters<NextWebpackFn>[0]
+type NextWebpackOptions = Parameters<NextWebpackFn>[1]
+
+// Derive turbopack rule types from NextConfig
+type TurboRules = NonNullable<NonNullable<NextConfig["turbopack"]>["rules"]>
+type TurbopackLoaderRule = TurboRules[string]
+
+// Derive webpack module rule type for safe iteration
+type ModuleRule = NonNullable<NonNullable<NextWebpackConfig["module"]>["rules"]>[number]
+type RuleUseEntry = { loader?: string; options?: unknown }
 
 interface NextWebpackUseEntry {
   loader: string
@@ -57,37 +91,6 @@ interface NextWebpackRule {
   use?: NextWebpackUseEntry[]
 }
 
-interface NextWebpackConfig {
-  module?: {
-    rules?: NextWebpackRule[]
-  }
-  [key: string]: unknown
-}
-
-interface NextWebpackOptions {
-  buildId: string
-  dev: boolean
-  isServer: boolean
-  nextRuntime?: "nodejs" | "edge"
-  defaultLoaders: { babel: unknown }
-  webpack: unknown
-}
-
-interface NextConfigWithTurbopack {
-  webpack?:
-    | ((
-        config: NextWebpackConfig,
-        options: NextWebpackOptions
-      ) => NextWebpackConfig | Promise<NextWebpackConfig>)
-    | null
-    | undefined
-  turbopack?: Record<string, unknown>
-  [key: string]: unknown
-}
-
-interface TurbopackLoaderRule {
-  loaders: Array<{ loader: string; options: TailwindStyledLoaderOptions }>
-}
 
 const resolveRuntimeDir = (): string => getDirnameFromUrl(import.meta.url)
 
@@ -132,31 +135,53 @@ function checkNextVersion(): void {
 const DEFAULT_INCLUDE = /\.[jt]sx?$/
 const DEFAULT_EXCLUDE = /node_modules/
 
+/**
+ * Next.js App Router entry-point files yang TIDAK boleh diproses oleh TW loader.
+ *
+ * Mengapa: file-file ini adalah RSC boundary points yang dikelola Next.js secara khusus.
+ * Jika loader menginjeksi TRANSFORM_MARKER atau memodifikasi source-nya—bahkan ketika
+ * `changed: false`—Next.js/React Compiler kehilangan sinyal bahwa file adalah pure RSC,
+ * sehingga locale injection dari Accept-Language header (Next.js 16+) tidak konsisten
+ * antara SSR pass (server: lang="id") dan hydration pass (client: lang="en").
+ *
+ * File yang dikecualikan: layout, page, loading, error, not-found, template, default
+ * semuanya adalah Next.js segment conventions yang tidak boleh disentuh loader pihak ketiga.
+ */
+const NEXT_RSC_ENTRIES =
+  /(?:^|[\\/])(?:layout|page|loading|error|not-found|template|default)\.[jt]sx?$/
+
+/**
+ * Gabungkan user-supplied exclude dengan NEXT_RSC_ENTRIES.
+ * Menggunakan non-capturing group agar tidak interferensi dengan capture group lain.
+ */
+const buildExcludePattern = (userExclude?: RegExp): RegExp => {
+  if (!userExclude) return new RegExp(`(?:${DEFAULT_EXCLUDE.source})|(?:${NEXT_RSC_ENTRIES.source})`)
+  return new RegExp(`(?:${userExclude.source})|(?:${NEXT_RSC_ENTRIES.source})`)
+}
+
 const createLoaderOptions = (options: TailwindStyledNextOptions): Readonly<TailwindStyledLoaderOptions> => {
+  // Deprecated options — still passed for loader backward compat but engine ignores them
   const opts: TailwindStyledLoaderOptions = {
-    mode: options.mode ?? "zero-runtime",
-    autoClientBoundary: options.autoClientBoundary ?? true,
+    mode: "zero-runtime",              // only supported mode
+    autoClientBoundary: true,          // always on (engine handles it)
     preserveImports: true,
   }
-  if (options.addDataAttr !== undefined) opts.addDataAttr = options.addDataAttr
-  if (options.hoist !== undefined) opts.hoist = options.hoist
-  if (options.routeCss !== undefined) opts.routeCss = options.routeCss
-  if (options.incremental !== undefined) opts.incremental = options.incremental
   if (options.verbose !== undefined) opts.verbose = options.verbose
+  opts.safelistPath = options.safelistPath ?? path.join(process.cwd(), "__tw_safelist.css")
   return Object.freeze(opts)
 }
 
 const buildTurbopackRules = (
   loaderPath: string,
   loaderOptions: TailwindStyledLoaderOptions
-): Record<string, TurbopackLoaderRule> => {
+): TurboRules => {
   const extensions = ["js", "jsx", "ts", "tsx", "mjs", "cjs"]
   return Object.fromEntries(
     extensions.map((ext) => [
       `*.${ext}`,
       { loaders: [{ loader: loaderPath, options: loaderOptions }] },
     ])
-  ) as Record<string, TurbopackLoaderRule>
+  ) as TurboRules
 }
 
 const normalizeLoaderPath = (loaderPath: string): string => path.resolve(loaderPath)
@@ -171,10 +196,10 @@ const applyWebpackRule = (
   const normalizedLoaderPath = normalizeLoaderPath(loaderPath)
 
   const alreadyRegistered = rules.some(
-    (rule) =>
+    (rule: ModuleRule) =>
       Array.isArray(rule?.use) &&
-      rule.use.some(
-        (entry) =>
+      (rule.use as RuleUseEntry[]).some(
+        (entry: RuleUseEntry) =>
           typeof entry.loader === "string" &&
           normalizeLoaderPath(entry.loader) === normalizedLoaderPath
       )
@@ -184,7 +209,9 @@ const applyWebpackRule = (
 
   const tailwindStyledRule: NextWebpackRule = {
     test: options.include ?? DEFAULT_INCLUDE,
-    exclude: options.exclude ?? DEFAULT_EXCLUDE,
+    // Selalu kecualikan Next.js RSC entry files (layout, page, dll) bahkan jika
+    // user menyuplai exclude pattern sendiri — lihat buildExcludePattern.
+    exclude: buildExcludePattern(options.exclude),
     enforce: "pre",
     use: [{ loader: loaderPath, options: loaderOptions }],
   }
@@ -208,21 +235,23 @@ const applyWebpackRule = (
     "@tailwind-styled/preset",
   ]
 
-  const configAny = config as any
+  type ExternalsArray = Extract<NonNullable<NextWebpackConfig["externals"]>, readonly unknown[]>
+  type ExternalItem = ExternalsArray[number]
 
-  if (!configAny.externals) {
-    configAny.externals = []
+  if (!config.externals) {
+    config.externals = []
   }
 
-const ext = configAny.externals
+  const ext = config.externals
   if (Array.isArray(ext)) {
     externalPackages.forEach((pkg) => {
-      const found = ext.find((e: any) => 
+      const found = (ext as ExternalItem[]).find((e: ExternalItem) =>
         (typeof e === "string" && e.includes(pkg)) ||
-        (typeof e === "object" && e !== null && Object.keys(e).some((k) => k.includes(pkg)))
+        (typeof e === "object" && e !== null && !Array.isArray(e) &&
+          Object.keys(e as object).some((k) => k.includes(pkg)))
       )
       if (!found) {
-        ext.push(pkg)
+        (ext as string[]).push(pkg)
       }
     })
   }
@@ -231,10 +260,10 @@ const ext = configAny.externals
 }
 
 const mergeTurbopackRules = (
-  existingRules: Record<string, unknown>,
-  nextRules: Record<string, TurbopackLoaderRule>
-): Record<string, unknown> => {
-  const merged = { ...existingRules }
+  existingRules: TurboRules,
+  nextRules: TurboRules
+): TurboRules => {
+  const merged: TurboRules = { ...existingRules }
 
   for (const [pattern, incomingRule] of Object.entries(nextRules)) {
     const current = merged[pattern]
@@ -246,10 +275,11 @@ const mergeTurbopackRules = (
     if (typeof current === "object" && current !== null && "loaders" in current) {
       const typedCurrent = current as { loaders?: unknown }
       if (Array.isArray(typedCurrent.loaders)) {
+        const incomingLoaders = (incomingRule as { loaders?: unknown[] }).loaders ?? []
         merged[pattern] = {
-          ...(current as Record<string, unknown>),
-          loaders: [...typedCurrent.loaders, ...incomingRule.loaders],
-        }
+          ...(current as TurbopackLoaderRule),
+          loaders: [...typedCurrent.loaders, ...incomingLoaders],
+        } as TurbopackLoaderRule
         console.warn(
           `[tailwind-styled] Turbopack rule '${pattern}' already exists. Appending tailwind-styled loader.`
         )
@@ -272,7 +302,7 @@ export function withTailwindStyled(options: TailwindStyledNextOptions = {}) {
   const webpackLoaderPath = resolveLoaderPath("webpackLoader")
   const turbopackLoaderPath = resolveLoaderPath("turbopackLoader")
 
-return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTurbopack {
+return function wrap(nextConfig: NextConfig = {}): NextConfig {
     const previousWebpack = nextConfig.webpack
     const loaderOptions = createLoaderOptions(normalizedOptions)
 
@@ -281,8 +311,8 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
       webpack(
         config: NextWebpackConfig,
         webpackOptions: NextWebpackOptions
-      ): NextConfigWithTurbopack | Promise<NextConfigWithTurbopack> {
-        const apply = (resolvedConfig: NextConfigWithTurbopack) => {
+      ): ReturnType<NextWebpackFn> {
+        const apply = (resolvedConfig: NextWebpackConfig) => {
           const finalConfig = applyWebpackRule(resolvedConfig, normalizedOptions, webpackLoaderPath)
           if (!finalConfig.externals) {
             finalConfig.externals = []
@@ -315,7 +345,7 @@ return function wrap(nextConfig: NextConfigWithTurbopack = {}): NextConfigWithTu
       turbopack: {
         ...(nextConfig.turbopack ?? {}),
         rules: mergeTurbopackRules(
-          (nextConfig.turbopack?.rules as Record<string, unknown>) ?? {},
+          (nextConfig.turbopack?.rules ?? {}) as TurboRules,
           buildTurbopackRules(turbopackLoaderPath, loaderOptions)
         ),
       },

@@ -6,6 +6,7 @@ import { Worker } from "node:worker_threads"
 import { createLogger } from "@tailwind-styled/shared"
 import { filePriority, type NativeCacheEntry, readCache, writeCache } from "./cache-native"
 import { hashContentNative, isRustCacheAvailable } from "./native-bridge"
+import { scanWorkspaceParallel } from "./parallel-scanner"
 import {
   parseScannerWorkerMessage,
   parseScanWorkspaceOptions,
@@ -475,15 +476,27 @@ export async function scanWorkspaceAsync(
   options: ScanWorkspaceOptions = {}
 ): Promise<ScanWorkspaceResult> {
   const normalizedOptions = parseScanWorkspaceOptions(options)
-  if (process.env.TWS_DISABLE_SCANNER_WORKER === "1") {
-    return scanWorkspace(rootDir, normalizedOptions)
+
+  // Large workspaces: use native parallel scanner (multiple workers + Rust rayon)
+  try {
+    return await scanWorkspaceParallel(rootDir, {
+      extensions: normalizedOptions.includeExtensions,
+      ignoreDirs: normalizedOptions.ignoreDirectories,
+    }) as ScanWorkspaceResult
+  } catch (parallelError) {
+    log.debug(
+      `parallel scan failed, retrying with single worker: ${
+        parallelError instanceof Error ? parallelError.message : String(parallelError)
+      }`
+    )
   }
 
+  // Fallback: single worker thread (still native)
   try {
     return await scanWorkspaceInWorker(rootDir, normalizedOptions)
   } catch (error) {
     log.debug(
-      `worker scan failed, falling back to sync scanner: ${
+      `worker scan failed, retrying with sync native scanner: ${
         error instanceof Error ? error.message : String(error)
       }`
     )

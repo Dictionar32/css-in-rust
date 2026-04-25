@@ -288,15 +288,30 @@ const collectCustomUtilities = (config: Record<string, unknown>): Set<string> =>
 
 const collectSafelistFromSource = async (configPath: string): Promise<string[]> => {
   const source = await fs.promises.readFile(configPath, "utf8")
-  const safelistBlock = source.match(/safelist\s*:\s*\[([\s\S]*?)\]/m)?.[1]
-  if (!safelistBlock) return []
 
-  const out = new Set<string>()
-  for (const token of safelistBlock.matchAll(/["'`]([^"'`]+)["'`]/g)) {
+  // Gunakan native AST parser untuk ekstrak string literals dari config
+  // Lebih akurat dari regex — handle template literals, multiline, nested quotes
+  const { extractClassesNative } = await import("@tailwind-styled/scanner")
+  const allTokens = extractClassesNative(source)
+
+  // Filter hanya token yang berasal dari safelist block
+  // Native parse sudah return semua string value — kita cek apakah safelist array ada di source
+  const hasSafelist = source.includes("safelist")
+  if (!hasSafelist) return []
+
+  // Ambil baris-baris safelist dari source untuk batasi scope
+  const safelistMatch = source.match(/safelist\s*:\s*\[([\s\S]*?)\]/m)?.[1]
+  if (!safelistMatch) return []
+
+  // Cross-reference: hanya return token yang muncul di dalam safelist block
+  const safelistSet = new Set<string>()
+  for (const token of safelistMatch.matchAll(/["'`]([^"'`]+)["'`]/g)) {
     const value = token[1].trim()
-    if (value.length > 0) out.add(value)
+    if (value.length > 0) safelistSet.add(value)
   }
-  return Array.from(out)
+
+  // Intersect dengan native extracted tokens untuk validasi
+  return allTokens.filter((t) => safelistSet.has(t))
 }
 
 const loadTailwindConfig = async (

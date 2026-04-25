@@ -11,7 +11,8 @@ export default defineConfig({
     plugins: "src/plugins.ts",
     preset: "src/preset.ts",
     theme: "src/theme.ts",
-    vite: "src/vite.ts"
+    vite: "src/vite.ts",
+    native: "src/native.ts"
   },
   format: ["cjs", "esm"],
   dts: true,
@@ -28,6 +29,12 @@ export default defineConfig({
     "@tailwind-styled/runtime-css",
     "@tailwind-styled/theme",
     "@tailwind-styled/vite",
+    "@tailwind-styled/shared",
+    "@tailwind-styled/scanner",
+    "@tailwind-styled/analyzer",
+    "@tailwind-styled/engine",
+    "@tailwind-styled/syntax",
+    "@tailwind-styled/atomic",
     "react",
     "react-dom",
     "tailwind-merge",

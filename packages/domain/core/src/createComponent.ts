@@ -1,4 +1,5 @@
-import type { AnimateOptions } from "@tailwind-styled/animate"
+// AnimateOptions loaded dynamically to avoid bundling @tailwind-styled/animate
+type AnimateOptions = { from: string; to: string; duration?: number; easing?: string; delay?: number; fill?: string; iterations?: number | "infinite"; direction?: string; name?: string }
 import React from "react"
 
 import { processContainer } from "./containerQuery"
@@ -7,6 +8,88 @@ import { processState } from "./stateEngine"
 import type { ComponentConfig, TwStyledComponent } from "./types"
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
+
+// ── Sub-component auto-registration ──────────────────────────────────────────
+
+/**
+ * Extract sub-component blocks dari template → Map<name, classes>
+ * Mendukung dua syntax:
+ *   - Bracket:    `[name] { classes }`
+ *   - No-bracket: `name { classes }`
+ */
+function parseSubComponentBlocks(template: string): Map<string, string> {
+  const map = new Map<string, string>()
+  // Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = classes
+  const re = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(template)) !== null) {
+    const name = (m[1] ?? m[2])!
+    const classes = m[3]!.trim().replace(/\s+/g, " ")
+    if (classes) map.set(name, classes)
+  }
+  return map
+}
+
+/**
+ * Strip semua sub-component blocks (bracket dan no-bracket) dari template string
+ * sehingga twMerge hanya menerima base classes (outer scope).
+ */
+function extractBaseClasses(template: string): string {
+  return template
+    .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+/**
+ * Buat sub-component React FC dengan classes-nya sendiri.
+ * className prop di-merge ke belakang agar bisa di-override dari luar.
+ */
+function createSubComponentAccessor(
+  parentDisplayName: string,
+  name: string,
+  classes: string
+): React.FC<{ children?: React.ReactNode; className?: string }> {
+  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+    children,
+    className,
+  }) =>
+    React.createElement(
+      "span",
+      { className: className ? `${classes} ${className}` : classes },
+      children
+    )
+  SubComponent.displayName = `${parentDisplayName}[${name}]`
+  return SubComponent
+}
+
+/** Register semua sub-components ke component object.
+ * Sumber: (1) config.sub object — prioritas utama, TypeScript infer keys-nya.
+ *         (2) parseSubComponentBlocks dari template string — fallback untuk template literal syntax.
+ */
+function registerSubComponents<P extends object>(
+  component: TwStyledComponent<P>,
+  template: string,
+  configSub?: Record<string, string>
+): void {
+  const displayName = component.displayName ?? "tw"
+  const map = component as unknown as Record<string, unknown>
+
+  // Priority 1: config.sub object — explicit, fully typed
+  if (configSub) {
+    for (const [name, classes] of Object.entries(configSub)) {
+      map[name] = createSubComponentAccessor(displayName, name, classes.trim().replace(/\s+/g, " "))
+    }
+  }
+
+  // Priority 2: template block parsing — untuk template literal syntax
+  const blocks = parseSubComponentBlocks(template)
+  for (const [name, classes] of blocks) {
+    if (!(name in map)) {
+      map[name] = createSubComponentAccessor(displayName, name, classes)
+    }
+  }
+}
 
 type RuntimeProps = Record<string, unknown> & { className?: string }
 
@@ -65,10 +148,10 @@ function carryOverSubComponents<P extends object>(
   target: TwStyledComponent<P>,
   source: TwStyledComponent<P>
 ): void {
-  const INTERNAL_KEYS = new Set(["extend", "withVariants", "animate", "displayName"])
+  const INTERNAL_KEYS = new Set(["extend", "withVariants", "animate", "withSub", "displayName"])
   for (const key of Object.keys(source)) {
     if (!INTERNAL_KEYS.has(key)) {
-      ;(target as Record<string, unknown>)[key] = (source as Record<string, unknown>)[key]
+      ;(target as unknown as Record<string, unknown>)[key] = (source as unknown as Record<string, unknown>)[key]
     }
   }
 }
@@ -114,13 +197,23 @@ function attachExtend<P extends object>(
   ): TwStyledComponent<P> {
     // Template literal path
     if (Array.isArray(stringsOrConfig) && "raw" in stringsOrConfig) {
-      const extra = (stringsOrConfig as TemplateStringsArray).raw.join("").trim().replace(/\s+/g, " ")
-      const merged = twMerge(base, extra)
+      const rawExtra = (stringsOrConfig as TemplateStringsArray).raw.join("").trim().replace(/\s+/g, " ")
+      // Strip sub-blocks from both sides before merging base classes
+      const merged = twMerge(extractBaseClasses(base), extractBaseClasses(rawExtra))
       const extended = createComponent<P>(
         originalTag,
         typeof config === "string" ? merged : { ...config, base: merged }
       )
+      // Carry over parent sub-components first, then apply overrides from extend template
       carryOverSubComponents(extended, component)
+      const extendSubBlocks = parseSubComponentBlocks(rawExtra)
+      if (extendSubBlocks.size > 0) {
+        const extComp = extended as unknown as Record<string, unknown>
+        const displayName = extended.displayName ?? "tw"
+        for (const [subName, subClasses] of extendSubBlocks) {
+          extComp[subName] = createSubComponentAccessor(displayName, subName, subClasses)
+        }
+      }
       return extended
     }
 
@@ -132,7 +225,7 @@ function attachExtend<P extends object>(
       compoundVariants?: ComponentConfig["compoundVariants"]
     }
     const extraClasses = extCfg.classes ?? ""
-    const merged = twMerge(base, extraClasses)
+    const merged = twMerge(extractBaseClasses(base), extraClasses)
     const existing = typeof config === "object" ? config : {}
     const extended = createComponent<P>(originalTag, {
       ...existing,
@@ -170,21 +263,19 @@ function attachExtend<P extends object>(
     })
   }
 
-  component.animate = async (opts: AnimateOptions) => {
-    try {
-      const { animate } =
-        require("@tailwind-styled/animate") as typeof import("@tailwind-styled/animate")
-      const animationClass = await animate(opts)
-      const merged = twMerge(base, animationClass)
-      return createComponent<P>(
-        originalTag,
-        typeof config === "string" ? merged : { ...config, base: merged }
-      )
-    } catch {
-      console.warn("[tailwind-styled-v4] .animate() requires @tailwind-styled/animate")
-      return component
-    }
+  // .animate() dipindah ke tailwind-styled-v4/animate agar tidak bundle @tailwind-styled/animate
+  // ke dalam main browser bundle (animate butuh Rust native binding → Node.js only)
+  component.animate = async (_opts: AnimateOptions) => {
+    console.warn(
+      "[tailwind-styled-v4] .animate() tidak tersedia di main bundle.\n" +
+      "Gunakan: import { animate } from \"tailwind-styled-v4/animate\""
+    )
+    return component
   }
+
+  // .withSub<"icon" | "badge">() — declare sub-component names untuk TypeScript
+  // Runtime: no-op, hanya untuk type inference
+  component.withSub = (() => component) as TwStyledComponent<P>["withSub"]
 
   return component
 }
@@ -201,6 +292,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
   const stateConfig = typeof config === "string" ? undefined : config.state
   const containerConfig = typeof config === "string" ? undefined : config.container
   const containerName = typeof config === "string" ? undefined : config.containerName
+  const configSub = typeof config === "string" ? undefined : config.sub
 
   const stateResult = stateConfig
     ? processState(typeof tag === "string" ? tag : "component", stateConfig)
@@ -224,13 +316,15 @@ export function createComponent<P extends object = Record<string, unknown>>(
       return React.createElement(tag, {
         ref,
         ...filterProps(rest),
-        className: twMerge(base, engineClasses, runtimeClassName),
+        className: twMerge(extractBaseClasses(base), engineClasses, runtimeClassName),
       })
     })
 
     const component = baseComponent as unknown as TwStyledComponent<P>
     component.displayName = `tw.${tagLabel}`
-    return attachExtend<P>(component, tag, base, config)
+    const result = attachExtend<P>(component, tag, base, config)
+    registerSubComponents(result, base, configSub)
+    return wrapWithSubProxy(result, tagLabel)
   }
 
   const baseComponent = React.forwardRef<unknown, RuntimeProps>((props, ref) => {
@@ -242,11 +336,48 @@ export function createComponent<P extends object = Record<string, unknown>>(
     return React.createElement(tag, {
       ref,
       ...filterProps(rest),
-      className: twMerge(base, variantClasses, compoundClasses, engineClasses, runtimeClassName),
+      className: twMerge(extractBaseClasses(base), variantClasses, compoundClasses, engineClasses, runtimeClassName),
     })
   })
 
   const component = baseComponent as unknown as TwStyledComponent<P>
   component.displayName = `tw.${tagLabel}`
-  return attachExtend<P>(component, tag, base, config)
+  const result = attachExtend<P>(component, tag, base, config)
+  registerSubComponents(result, base, configSub)
+  return wrapWithSubProxy(result, tagLabel)
+}
+
+// ── Sub-component fallback proxy ──────────────────────────────────────────────
+/**
+ * Wrap component dengan Proxy sehingga akses ke sub-component yang tidak
+ * terdefinisi (misal Button.footer) tidak mengembalikan undefined dan crash,
+ * tapi fallback ke <span> passthrough yang render children-nya saja.
+ */
+const SKIP_PROXY_KEYS = new Set([
+  "extend", "withVariants", "animate", "withSub",
+  "displayName", "$$typeof", "render", "prototype",
+  "__esModule", "then",
+])
+
+function wrapWithSubProxy<P extends object>(
+  component: TwStyledComponent<P>,
+  tagLabel: string
+): TwStyledComponent<P> {
+  return new Proxy(component, {
+    get(target, prop: string | symbol) {
+      const value = (target as unknown as Record<string | symbol, unknown>)[prop]
+      // Jika sudah ada (sub-component terdefinisi, method, dll) → pakai langsung
+      if (value !== undefined) return value
+      // Skip known internal / React symbols
+      if (typeof prop === "symbol") return value
+      if (SKIP_PROXY_KEYS.has(prop as string)) return value
+      // Fallback: buat passthrough <span> untuk sub-component yang tidak terdefinisi
+      const Fallback: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+        children,
+        className,
+      }) => React.createElement("span", { className }, children)
+      Fallback.displayName = `tw.${tagLabel}.${prop as string}(fallback)`
+      return Fallback
+    },
+  })
 }

@@ -220,11 +220,11 @@ pub fn analyze_rsc(source: String, _filename: String) -> RscAnalysis {
             patterns.push("dynamic-import".to_string());
         }
 
-        // Interactive Tailwind variants
+        // Interactive Tailwind variants — CSS only, NOT a reason for "use client"
+        // hover:, focus:, active:, dll dikompilasi ke CSS class, tidak butuh client JS
         if RE_INTERACTIVE.is_match(&source) {
             patterns.push("tw:interactive-variants".to_string());
-            reasons.push("uses interactive Tailwind variants (hover:, focus:, etc.)".to_string());
-            confidence = confidence.max(60);
+            // Sengaja TIDAK ditambahkan ke reasons — tidak perlu client boundary
         }
     }
 

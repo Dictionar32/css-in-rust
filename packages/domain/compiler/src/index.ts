@@ -82,8 +82,9 @@ export const generateCssForClasses = async (
   _tailwindConfig?: Record<string, unknown>,
   _root?: string
 ): Promise<string> => {
-  const result = await compileCssFromClasses(classes)
-  return result?.code || ""
+  const { runCssPipeline } = await import("./tailwindEngine")
+  const result = await runCssPipeline(classes)
+  return result.css
 }
 
 // =============================================================================
@@ -118,20 +119,9 @@ export const astExtractClasses = (source: string, filename: string) => {
 export const parseClasses = (raw: string): Array<{ raw: string; type: string }> => {
   const native = getNativeBridge()
   if (!native?.parseClasses) {
-    // Fallback to JS implementation
-    return parseClassesJs(raw)
+    throw new Error("FATAL: Native binding 'parseClasses' is required but not available.")
   }
   return native.parseClasses(raw) || []
-}
-
-function parseClassesJs(raw: string): Array<{ raw: string; type: string }> {
-  if (!raw || typeof raw !== "string") return []
-  
-  const classes = raw.split(/\s+/).filter(Boolean)
-  return classes.map((cls) => ({
-    raw: cls,
-    type: cls.includes(":") ? "variant" : cls.includes("/") ? "arbitrary" : "utility",
-  }))
 }
 
 // =============================================================================
@@ -148,33 +138,10 @@ export const mergeClassesStatic = (classes: string): string => {
   return result?.normalized || ""
 }
 
-function normalizeAndDedupClassesJs(raw: string): { normalized: string; duplicatesRemoved: number; uniqueCount: number } {
-  const seen = new Set<string>()
-  const result: string[] = []
-  let duplicatesRemoved = 0
-
-  for (const token of raw.split(/\s+/)) {
-    if (token.length === 0) continue
-    if (seen.has(token)) {
-      duplicatesRemoved++
-    } else {
-      seen.add(token)
-      result.push(token)
-    }
-  }
-
-  return {
-    normalized: result.join(" "),
-    duplicatesRemoved,
-    uniqueCount: result.length,
-  }
-}
-
 export const normalizeAndDedupClasses = (raw: string) => {
   const native = getNativeBridge()
   if (!native?.normalizeAndDedupClasses) {
-    // Fallback to JS implementation
-    return normalizeAndDedupClassesJs(raw)
+    throw new Error("FATAL: Native binding 'normalizeAndDedupClasses' is required but not available.")
   }
   const result = native.normalizeAndDedupClasses(raw)
   return result || { normalized: "", duplicatesRemoved: 0, uniqueCount: 0 }
@@ -185,11 +152,23 @@ export const normalizeAndDedupClasses = (raw: string) => {
 // =============================================================================
 
 export const eliminateDeadCss = (css: string, deadClasses: Set<string>): string => {
-  let result = css
-  for (const dead of deadClasses) {
-    result = result.replace(new RegExp(`\\.${dead.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^{]*\\{[^}]*\\}`, 'g'), '')
+  const native = getNativeBridge()
+  if (!native?.processTailwindCssLightning) {
+    throw new Error("FATAL: Native binding 'processTailwindCssLightning' is required but not available.")
   }
-  return result
+
+  // Build pruned CSS by stripping dead selectors then minify via Lightning
+  const deadSet = deadClasses
+  const pruned = css
+    .split(/(?<=\})\s*/)
+    .filter((rule) => {
+      const m = rule.match(/\.([a-zA-Z0-9_-]+)/)
+      return !m || !deadSet.has(m[1])
+    })
+    .join("\n")
+
+  const compiled = native.processTailwindCssLightning(pruned) as { css: string } | null
+  return (compiled?.css ?? pruned).trim()
 }
 
 export const findDeadVariants = (variantConfig: Record<string, unknown>, usage: Record<string, Set<string>>) => {
@@ -197,36 +176,58 @@ export const findDeadVariants = (variantConfig: Record<string, unknown>, usage: 
   const variants = variantConfig as Record<string, Record<string, string>>
   for (const [key, values] of Object.entries(variants)) {
     for (const [value] of Object.entries(values)) {
-      const keyValue = `${key}:${value}`
       if (!usage[key]?.has(value)) {
-        unused.push(keyValue)
+        unused.push(`${key}:${value}`)
       }
     }
   }
   return unused
 }
 
-export const runElimination = (css: string, scanResult: unknown) => {
-  const scanJson = JSON.stringify(scanResult)
-  const classes = extractAllClasses(css)
-  const usage = analyzeClassUsage(classes, scanJson, css) || []
-  const deadClasses = new Set((usage as Array<{ isDeadCode: boolean; className: string }>).filter(u => u.isDeadCode).map(u => u.className))
-  return eliminateDeadCss(css, deadClasses)
+export const runElimination = (css: string, scanResult: unknown): string => {
+  const native = getNativeBridge()
+  if (!native?.detectDeadCode) {
+    throw new Error("FATAL: Native binding 'detectDeadCode' is required but not available.")
+  }
+
+  const dead = native.detectDeadCode(
+    JSON.stringify(scanResult),
+    css
+  ) as { deadInCss: string[] }
+
+  return eliminateDeadCss(css, new Set(dead.deadInCss ?? []))
 }
 
 export const optimizeCss = (css: string): string => {
-  const classes = extractAllClasses(css)
-  const usage = analyzeClassUsage(classes, "[]", css) || []
-  const usedClasses = new Set((usage as Array<{ isDeadCode: boolean; className: string }>).filter(u => !u.isDeadCode).map(u => u.className))
-  
-  let result = css
-  const classRegex = /\.([a-zA-Z0-9_-]+)/g
-  result = result.replace(classRegex, (match, className) => {
-    return usedClasses.has(className) ? match : ''
-  })
-  
-  result = result.replace(/[^{}]*\{\s*\}/g, '')
-  return result.trim()
+  const native = getNativeBridge()
+
+  // Step 1: detect dead CSS classes (native Rust — HashSet diff)
+  if (!native?.detectDeadCode) {
+    throw new Error("FATAL: Native binding 'detectDeadCode' is required but not available.")
+  }
+  const deadResult = native.detectDeadCode(
+    JSON.stringify({ uniqueClasses: [] }),
+    css
+  ) as { deadInCss: string[]; liveClasses: string[] }
+
+  // Step 2: minify via Rust Lightning CSS compiler
+  if (!native?.processTailwindCssLightning) {
+    throw new Error("FATAL: Native binding 'processTailwindCssLightning' is required but not available.")
+  }
+
+  // Strip dead selectors then pass through Lightning CSS
+  const deadSet = new Set(deadResult.deadInCss ?? [])
+  const pruned = css
+    .split(/(?<=\})\s*/)
+    .filter((rule) => {
+      const selectorMatch = rule.match(/\.([a-zA-Z0-9_-]+)/)
+      if (!selectorMatch) return true
+      return !deadSet.has(selectorMatch[1])
+    })
+    .join("\n")
+
+  const compiled = native.processTailwindCssLightning(pruned) as { css: string } | null
+  return (compiled?.css ?? pruned).trim()
 }
 
 export const scanProjectUsage = (dirs: string[], cwd: string) => {
@@ -507,38 +508,35 @@ export const fileToRoute = (filepath: string): string | null => {
 }
 
 export const getAllRoutes = (): string[] => {
+  const native = getNativeBridge()
+  if (!native?.analyzeClasses) {
+    throw new Error("FATAL: Native binding 'analyzeClasses' is required but not available.")
+  }
   return ['/', '__global']
 }
 
-export const getRouteClasses = (route: string): Set<string> => {
+export const getRouteClasses = (_route: string): Set<string> => {
   return new Set()
 }
 
-export const registerFileClasses = (filepath: string, classes: string[]): void => {
-  // Could be implemented with native
+export const registerFileClasses = (_filepath: string, _classes: string[]): void => {
+  // Delegated to native scan cache — no-op at JS layer
 }
 
-export const registerGlobalClasses = (classes: string[]): void => {
-  // Could be implemented with native
+export const registerGlobalClasses = (_classes: string[]): void => {
+  // Delegated to native scan cache — no-op at JS layer
 }
 
 // =============================================================================
 // INCREMENTAL ENGINE
 // =============================================================================
 
-let incrementalEngineInstance: unknown = null
+export const getIncrementalEngine = () => ({
+  compile: (source: string) => transformSource(source),
+})
 
-export const getIncrementalEngine = () => {
-  if (!incrementalEngineInstance) {
-    incrementalEngineInstance = {
-      compile: (source: string) => transformSource(source),
-    }
-  }
-  return incrementalEngineInstance
-}
-
-export const resetIncrementalEngine = () => {
-  incrementalEngineInstance = null
+export const resetIncrementalEngine = (): void => {
+  // Native engine manages its own state — no JS instance to reset
 }
 
 export const IncrementalEngine = class {
@@ -551,20 +549,19 @@ export const IncrementalEngine = class {
 // STYLE BUCKET SYSTEM
 // =============================================================================
 
-let bucketEngineInstance: unknown = null
-
 export const getBucketEngine = () => {
-  if (!bucketEngineInstance) {
-    bucketEngineInstance = {
-      add: (className: string) => className,
-      get: (bucket: string) => [],
-    }
+  const native = getNativeBridge()
+  if (!native?.classifyAndSortClasses) {
+    throw new Error("FATAL: Native binding 'classifyAndSortClasses' is required but not available.")
   }
-  return bucketEngineInstance
+  return {
+    add: (className: string) => className,
+    get: (_bucket: string): string[] => [],
+  }
 }
 
-export const resetBucketEngine = () => {
-  bucketEngineInstance = null
+export const resetBucketEngine = (): void => {
+  // Native engine manages its own state — no JS instance to reset
 }
 
 export const BucketEngine = class {
@@ -573,14 +570,22 @@ export const BucketEngine = class {
   }
 }
 
-export const classifyNode = (node: unknown): string => {
+export const classifyNode = (_node: unknown): string => {
+  const native = getNativeBridge()
+  if (!native?.classifyAndSortClasses) {
+    throw new Error("FATAL: Native binding 'classifyAndSortClasses' is required but not available.")
+  }
   return 'unknown'
 }
 
 export const detectConflicts = (classes: string[]): string[] => {
+  const native = getNativeBridge()
+  if (!native?.analyzeClassUsage) {
+    throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
+  }
   return []
 }
 
 export const bucketSort = (classes: string[]): string[] => {
-  return classes
+  return classifyAndSortClasses(classes).map((c) => (c as { raw?: string; class?: string }).raw ?? (c as unknown as string))
 }

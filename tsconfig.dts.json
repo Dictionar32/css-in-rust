@@ -1,7 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": ".",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "noUncheckedSideEffectImports": false,
+    "skipLibCheck": true,
+    "isolatedModules": false,
     "paths": {
       "@tailwind-styled/shared": [
         "./packages/domain/shared/src/index.ts"

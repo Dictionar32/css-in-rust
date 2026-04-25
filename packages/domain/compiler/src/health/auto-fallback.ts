@@ -141,6 +141,24 @@ export class AutoFallbackManager {
     }
   }
 
+  private deactivateFallback(): void {
+    if (this.currentMode !== "fallback") return
+    this.currentMode = "native"
+    this.fallbackCount = 0
+    log("Deactivating fallback mode, reverting to native engine")
+    this.eventEmitter.emit({
+      type: "fallback_deactivated",
+      timestamp: Date.now(),
+      currentStatus: this.healthChecker.getCurrentStatus() ?? {
+        status: "healthy",
+        version: "unknown",
+        uptime: 0,
+        memoryUsage: { rust: 0, js: 0 },
+        cacheStats: { hitRate: 0, size: 0, maxSize: 0 },
+      },
+    })
+  }
+
   async getBridge(): Promise<unknown> {
     if (this.currentMode === "fallback") {
       return this.getJSFallbackBridge()

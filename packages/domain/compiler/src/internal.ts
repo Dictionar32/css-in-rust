@@ -131,3 +131,6 @@ export {
 export { type NativeBridge, type NativeTransformResult, type ComponentMetadata, type NativeRscResult, type LoaderOutput }
 
 export type CssCompileResult = NativeTransformResult
+
+// CSS pipeline — Tailwind → LightningCSS
+export { runCssPipeline, runCssPipelineSync, generateRawCss, type CssPipelineResult } from "./tailwindEngine"

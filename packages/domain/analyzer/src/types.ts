@@ -92,3 +92,16 @@ export interface TailwindConfigCacheEntry {
   readonly size: number
   readonly config: LoadedTailwindConfig
 }
+
+export interface NativeAnalyzerBinding {
+  analyzeClasses(filesJson: string, cwd: string, flags: number): unknown
+  compileCss?: (classes: string[], prefix: string | null) => unknown
+}
+
+export interface NativeCssCompilerBinding extends NativeAnalyzerBinding {
+  compileCss(classes: string[], prefix: string | null): unknown
+  parseCssRules?(css: string): Array<{
+    className: string; property: string; value: string
+    isImportant: boolean; variants: string[]; specificity: number
+  }>
+}

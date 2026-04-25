@@ -5,6 +5,8 @@ import { registerWhyCommand } from "./commands/whyCommand"
 import { createCompletionProvider } from "./providers/completionProvider"
 import { createHoverProvider } from "./providers/hoverProvider"
 import { registerInlineDecorationProvider } from "./providers/inlineDecorationProvider"
+import { registerDiagnosticSuppressor } from "./providers/diagnosticSuppressor"
+import { registerWorkspaceSettingsProvider } from "./providers/workspaceSettingsProvider"
 import { EngineService } from "./services/engineService"
 
 const SUPPORTED_LANGUAGES = [
@@ -51,7 +53,9 @@ export function activate(context: vscode.ExtensionContext) {
         '"',
         "'",
         " ",
-        ":"
+        ":",
+        "`",  // tagged template literal tw`...` / tw.el`...`
+        "\n"  // newline di dalam template literal
       )
     )
   }
@@ -61,6 +65,17 @@ export function activate(context: vscode.ExtensionContext) {
     const disposable = registerInlineDecorationProvider(context, engineService)
     context.subscriptions.push(disposable)
   }
+
+  // ── Subcomponent block false-positive suppressor ───────────────────────────
+  // Intercept cssConflict diagnostics dari tailwindcss-intellisense yang
+  // salah flag kelas di [icon] { ... } vs base classes sebagai conflict.
+  context.subscriptions.push(registerDiagnosticSuppressor(context))
+
+  // ── Workspace settings: inject tailwindCSS.experimental.classRegex ────────
+  // Ini adalah fix root cause: beritahu tailwindcss-intellisense bahwa tiap
+  // subcomponent block adalah scope kelas yang terpisah → tidak ada cross-block
+  // conflict detection sama sekali.
+  context.subscriptions.push(registerWorkspaceSettingsProvider(context))
 
   // Auto-scan workspace saat extension aktif jika scan cache belum ada
   autoScanIfNeeded(workspacePath)

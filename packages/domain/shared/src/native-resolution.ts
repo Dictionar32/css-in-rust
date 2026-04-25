@@ -113,16 +113,7 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     tried.push(`env:${envPath} (not found)`)
   }
 
-  // 2. Skip jika disabled
-  if (
-    process.env.TWS_NO_NATIVE === "1" ||
-    process.env.TWS_NO_RUST === "1" ||
-    process.env.TWS_DISABLE_NATIVE === "1"
-  ) {
-    return { path: null, source: "not-found", platform, tried: ["disabled by env"] }
-  }
-
-  // 3. Prebuilt binary dari platform-specific npm package
+  // 2. Prebuilt binary dari platform-specific npm package
   const prebuiltPkgs = PLATFORM_MAP[platform] ?? []
   for (const pkg of prebuiltPkgs) {
     try {
@@ -136,7 +127,7 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     }
   }
 
-  // 4. Local build candidates
+  // 3. Local build candidates
   const cwd = process.cwd()
   const base = runtimeDir ?? cwd
   const localCandidates = [
@@ -172,7 +163,6 @@ export function formatNativeNotFoundError(result: NativeResolutionResult): strin
     `  1. Build locally:     npm run build:rust`,
     `  2. Install prebuilt:  npm install @tailwind-styled/native-${result.platform}`,
     `  3. Override path:     TW_NATIVE_PATH=/path/to/parser.node`,
-    `  4. Disable native:    TWS_DISABLE_NATIVE=1 (slower, JS fallback)`,
   ]
   return lines.join("\n")
 }

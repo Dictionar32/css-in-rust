@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@source "__tw_safelist.css";
 :root {
   --background: #f5f7fb;
   --foreground: #111827;

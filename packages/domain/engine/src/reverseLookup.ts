@@ -39,131 +39,28 @@ export class ReverseLookup {
       return cached
     }
 
-    // Gunakan Rust native parser jika tersedia (regex lebih cepat, no GC)
-    try {
-      const native = (() => { try { return getNativeEngineBinding() } catch { return null } })()
-      if (native?.parseCssRulesNative) {
-        const raw = native.parseCssRulesNative(css) as Array<{
-          className: string; property: string; value: string
-          isImportant: boolean; variants: string[]; specificity: number
-        }>
-        const rules: ParsedRule[] = (raw ?? []).map((r) => ({
-          className: r.className,
-          property: r.property,
-          value: r.value,
-          specificity: r.specificity,
-          source: { file: "", line: 0, column: 0 },
-          isImportant: r.isImportant,
-          variants: r.variants,
-          isOverride: false,
-        }))
-        this.pruneCache()
-        this.parsedCache.set(css, rules)
-        return rules
-      }
-    } catch { /* fallback to JS */ }
-
-    const rules: ParsedRule[] = []
-    const classMap = new Map<string, Map<string, ParsedRule>>()
-
-    const selectorRegex = /\.([a-zA-Z_][a-zA-Z0-9_-]*)/g
-    const propertyRegex = /([a-zA-Z-]+)\s*:\s*([^;]+)/g
-    const importantRegex = /!important\s*;?\s*$/
-
-    const lines = css.split("\n")
-    const columnState = { offset: 0 }
-
-    for (const [i, line] of lines.entries()) {
-      const _lineStart = columnState.offset
-      const lineEnd = columnState.offset + line.length + 1
-
-      // Use for...of + matchAll instead of while loop with let match
-      for (const match of line.matchAll(selectorRegex)) {
-        const className = match[1]
-        const selectorStart = match.index
-        const lineColumn = selectorStart + 1
-
-        if (!classMap.has(className)) {
-          classMap.set(className, new Map())
-        }
-
-        const braceMatch = css.indexOf("{", lineEnd - 1)
-        if (braceMatch !== -1) {
-          const closingBraceMatch = this.findClosingBrace(css, braceMatch)
-          const ruleContent = css.substring(braceMatch + 1, closingBraceMatch)
-
-          const variants: string[] = []
-          const variantMatch = className.match(/^(.+?)(?::([a-zA-Z0-9_-]+))?$/)
-          if (variantMatch?.[2]) {
-            variants.push(variantMatch[2])
-          }
-
-          const specificity = this.calculateSpecificity(className)
-          const source: SourceLocation = {
-            file: "inline",
-            line: i + 1,
-            column: lineColumn,
-          }
-
-          // Use for...of + matchAll instead of while loop with let propMatch
-          for (const propMatch of ruleContent.matchAll(propertyRegex)) {
-            const property = propMatch[1].trim()
-            const rawValue = propMatch[2].trim()
-            const isImportant = importantRegex.test(rawValue)
-            const value = isImportant ? rawValue.replace(importantRegex, "").trim() : rawValue
-
-            const rule: ParsedRule = {
-              className,
-              property,
-              value,
-              specificity,
-              source,
-              isImportant,
-              variants,
-              isOverride: false,
-            }
-
-            rules.push(rule)
-
-            const classRules = classMap.get(className)!
-            const existingProp = classRules.get(property)
-            if (existingProp) {
-              rule.isOverride = true
-            }
-            classRules.set(property, rule)
-          }
-        }
-
-      }
-
-      columnState.offset = lineEnd
+    const native = getNativeEngineBinding()
+    if (!native?.parseCssRules) {
+      throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
     }
 
-    // Evict oldest entry if cache is full
+    const raw = native.parseCssRules(css) as Array<{
+      className: string; property: string; value: string
+      isImportant: boolean; variants: string[]; specificity: number
+    }>
+    const rules: ParsedRule[] = (raw ?? []).map((r) => ({
+      className: r.className,
+      property: r.property,
+      value: r.value,
+      specificity: r.specificity,
+      source: { file: "", line: 0, column: 0 },
+      isImportant: r.isImportant,
+      variants: r.variants,
+      isOverride: false,
+    }))
     this.pruneCache()
-
     this.parsedCache.set(css, rules)
     return rules
-  }
-
-  private findClosingBrace(css: string, start: number): number {
-    let depth = 1
-    for (let pos = start + 1; pos < css.length; pos++) {
-      const char = css[pos]
-      if (char === "{") depth++
-      else if (char === "}") {
-        depth--
-        if (depth === 0) return pos
-      }
-    }
-    return css.length
-  }
-
-  private calculateSpecificity(className: string): number {
-    const pseudoClasses = className.match(/:[a-zA-Z-]+/g) || []
-    const attributes = className.match(/\[[^\]]+\]/g) || []
-    const pseudoElements = className.match(/::[a-zA-Z-]+/g) || []
-    return 1 + pseudoClasses.length * 10 + attributes.length * 10 + pseudoElements.length * 100
   }
 
   fromCSS(cssProperty: string, cssValue: string, css: string): ReverseLookupResult[] {

@@ -70,6 +70,13 @@ interface NativeScannerBinding {
     cachedLastSeenMs: number,
     nowMs: number
   ) => number
+  batchExtractClasses?: (filePaths: string[]) => Array<{
+    file: string
+    classes: string[]
+    content_hash: string
+    ok: boolean
+    error?: string | null
+  }>
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -274,4 +281,18 @@ export function cachePriorityNative(
     )
   }
   return result
+}
+
+export function batchExtractClassesNative(filePaths: string[]): Array<{
+  file: string
+  classes: string[]
+  content_hash: string
+  ok: boolean
+  error?: string | null
+}> {
+  const binding = scannerGetBinding()
+  if (!binding.batchExtractClasses) {
+    throw new Error("FATAL: Native binding 'batchExtractClasses' is required but not available.")
+  }
+  return binding.batchExtractClasses(filePaths) ?? []
 }

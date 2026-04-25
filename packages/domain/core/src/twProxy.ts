@@ -3,12 +3,13 @@
  *
  * API:
  *   tw.div`p-4 bg-zinc-900`
+ *   tw.button`px-4 [icon] { h-4 w-4 }`   ← sub-components inline
  *   tw.button({ base: "px-4", variants: { size: { sm: "text-sm" } } })
  *   tw(Link)`underline text-blue-400`
  *   tw.server.div`p-4`   ← server-only, compiler enforced + runtime dev warning
  */
 
-import type React from "react"
+import React from "react"
 import { createComponent } from "./createComponent"
 import type {
   ComponentConfig,
@@ -27,19 +28,55 @@ export type { TwComponentFactory, TwObject, TwServerObject, TwTagFactory }
 // Template parser
 // ─────────────────────────────────────────────────────────────────────────────
 
-function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): string {
-  return strings.raw
-    .reduce((acc, str, i) => {
-      const expr = exprs[i]
-      const exprStr = typeof expr === "function" ? "" : (expr ?? "")
-      return acc + str + String(exprStr)
-    }, "")
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim()
+interface ParsedTemplate {
+  /** Base classes — tanpa sub-component blocks */
+  base: string
+  /** Sub-component map: { icon: "h-4 w-4 ...", badge: "px-2 ..." } */
+  subs: Record<string, string>
+  /** Ada sub-component atau tidak */
+  hasSubs: boolean
+}
+
+// Matches both `[name] { ... }` (bracket) and `name { ... }` (no-bracket) sub-component blocks.
+// Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = classes inside braces.
+const SUB_RE = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
+const COMMENT_RE = /\/\/[^\n]*/g
+
+function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
+  const raw = strings.raw.reduce((acc, str, i) => {
+    const expr = exprs[i]
+    const exprStr = typeof expr === "function" ? "" : (expr ?? "")
+    return acc + str + String(exprStr)
+  }, "")
+
+  const subs: Record<string, string> = {}
+  let base = raw
+
+  // Extract dan hapus semua sub-component blocks dari base (bracket dan no-bracket)
+  let match: RegExpExecArray | null
+  SUB_RE.lastIndex = 0
+  while ((match = SUB_RE.exec(raw)) !== null) {
+    const name = match[1] ?? match[2]
+    const inner = match[3]
+      .replace(COMMENT_RE, "")           // strip //comments
+      .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
+      .replace(/\s+/g, " ").trim()
+
+    subs[name] = inner
+    base = base.replace(match[0], "")
+  }
+
+  // Clean base: strip comments, normalize whitespace
+  const cleanBase = base
+    .replace(COMMENT_RE, "")
+    .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
+    .replace(/\s+/g, " ").trim()
+
+  return {
+    base: cleanBase,
+    subs,
+    hasSubs: Object.keys(subs).length > 0,
+  }
 }
 
 type RuntimeTagFactory = ((
@@ -57,6 +94,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
     stringsOrConfig: TemplateStringsArray | ComponentConfig,
     ...exprs: unknown[]
   ): TwStyledComponent<Record<string, unknown>> => {
+    // Object config path
     if (
       !Array.isArray(stringsOrConfig) &&
       typeof stringsOrConfig === "object" &&
@@ -65,8 +103,32 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
     ) {
       return createComponent(tag, stringsOrConfig as ComponentConfig)
     }
-    const classes = parseTemplate(stringsOrConfig as TemplateStringsArray, exprs)
-    return createComponent(tag, classes)
+
+    // Template literal path
+    const parsed = parseTemplate(stringsOrConfig as TemplateStringsArray, exprs)
+
+    // Buat component dari base classes
+    const component = createComponent(tag, parsed.base)
+
+    // Attach sub-components sebagai React.FC dari classes yang di-extract
+    if (parsed.hasSubs) {
+      for (const [name, classes] of Object.entries(parsed.subs)) {
+        // Setiap sub-component adalah styled span/div dengan classesnya
+        const SubComp = React.forwardRef<
+          HTMLSpanElement,
+          { children?: React.ReactNode; className?: string }
+        >(({ children, className }, ref) =>
+          React.createElement("span", {
+            ref,
+            className: className ? `${classes} ${className}` : classes,
+          }, children)
+        )
+        SubComp.displayName = `tw.${typeof tag === "string" ? tag : "component"}.${name}`;
+        ;(component as unknown as Record<string, unknown>)[name] = SubComp
+      }
+    }
+
+    return component
   }) as RuntimeTagFactory
 }
 
@@ -75,110 +137,23 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HTML_TAGS = [
-  "div",
-  "section",
-  "article",
-  "aside",
-  "header",
-  "footer",
-  "main",
-  "nav",
-  "figure",
-  "figcaption",
-  "details",
-  "summary",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "h5",
-  "h6",
-  "p",
-  "span",
-  "strong",
-  "em",
-  "b",
-  "i",
-  "s",
-  "u",
-  "small",
-  "mark",
-  "abbr",
-  "cite",
-  "code",
-  "kbd",
-  "samp",
-  "var",
-  "time",
-  "address",
-  "blockquote",
-  "q",
-  "del",
-  "ins",
-  "sub",
-  "sup",
-  "ul",
-  "ol",
-  "li",
-  "dl",
-  "dt",
-  "dd",
-  "table",
-  "thead",
-  "tbody",
-  "tfoot",
-  "tr",
-  "th",
-  "td",
-  "caption",
-  "colgroup",
-  "col",
-  "img",
-  "picture",
-  "video",
-  "audio",
-  "source",
-  "track",
-  "canvas",
-  "svg",
-  "path",
-  "circle",
-  "rect",
-  "line",
-  "polyline",
-  "polygon",
-  "g",
-  "defs",
-  "use",
-  "symbol",
-  "form",
-  "input",
-  "textarea",
-  "select",
-  "option",
-  "optgroup",
-  "button",
-  "label",
-  "fieldset",
-  "legend",
-  "output",
-  "progress",
-  "meter",
-  "datalist",
-  "a",
-  "area",
-  "map",
-  "iframe",
-  "embed",
-  "object",
-  "pre",
-  "hr",
-  "br",
-  "wbr",
-  "dialog",
-  "menu",
-  "template",
-  "slot",
+  "div", "section", "article", "aside", "header", "footer", "main", "nav",
+  "figure", "figcaption", "details", "summary",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "p", "span", "strong", "em", "b", "i", "s", "u", "small", "mark",
+  "abbr", "cite", "code", "kbd", "samp", "var", "time", "address",
+  "blockquote", "q", "del", "ins", "sub", "sup",
+  "ul", "ol", "li", "dl", "dt", "dd",
+  "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption",
+  "colgroup", "col",
+  "img", "picture", "video", "audio", "source", "track",
+  "canvas", "svg", "path", "circle", "rect", "line",
+  "polyline", "polygon", "g", "defs", "use", "symbol",
+  "form", "input", "textarea", "select", "option", "optgroup",
+  "button", "label", "fieldset", "legend", "output",
+  "progress", "meter", "datalist",
+  "a", "area", "map", "iframe", "embed", "object",
+  "pre", "hr", "br", "wbr", "dialog", "menu", "template", "slot",
 ] as const
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -206,8 +181,6 @@ function makeServerTag(tag: React.ElementType): RuntimeTagFactory {
   return baseFactory
 }
 
-// Build server namespace — explicit type annotation so DTS bundler doesn't
-// flatten it to Readonly<{}> (which happens with Object.freeze)
 const serverFactories: Record<string, RuntimeTagFactory> = {}
 for (const tag of HTML_TAGS) {
   serverFactories[tag] = makeServerTag(tag as React.ElementType)
@@ -228,7 +201,6 @@ function twCallable(component: React.ComponentType<unknown>) {
   return makeTag(component)
 }
 
-// Explicit type annotation — TypeScript uses TwObject, DTS bundler inlines it correctly
 export const tw: TwObject = Object.assign(twCallable, tagFactories, {
   server,
 }) as unknown as TwObject

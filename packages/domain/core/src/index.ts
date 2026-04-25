@@ -35,25 +35,11 @@ export {
 } from "./liveTokenEngine"
 export type { MergeOptions } from "./merge"
 export { createTwMerge, mergeWithRules, twMerge } from "./merge"
-// ── Native Rust Bindings ───────────────────────────────────────────────────────
-export {
-  resetNativeBinding,
-  getNativeBinding,
-  compileTheme,
-  extractCssVars,
-  parseCssRules,
-  parseCssToRules,
-  detectDeadCode,
-  classifyKnownClasses,
-  detectClassConflicts,
-  extractThemeFromCSS,
-  splitClassList,
-  parseClassToken,
-  parseTailwindClasses,
-  type ParsedClass,
-  type ParsedClassModifier,
-  type ThemeConfig,
-} from "./native"
+// ── Native Rust Bindings ─────────────────────────────────────────────────────
+// NOTE: Native functions are Node.js-only (require Rust .node binding).
+// Import from "tailwind-styled-v4/native" instead of the main bundle.
+// This prevents fs/node built-ins from leaking into browser bundles.
+export type { ParsedClass, ParsedClassModifier, ThemeConfig } from "./native"
 export type { SubComponentEntry, SubComponentProps } from "./registry"
 // ── Sub-Component Registry ───────────────────────────────────────────────────
 export {

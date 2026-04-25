@@ -5,7 +5,7 @@ export function patchNextConfigImpl(src: string): string | null {
   const hasCjs = src.includes("module.exports")
 
   if (hasExport) {
-    const withImport = `import { withTailwindStyled } from "@tailwind-styled/next"\n${src}`
+    const withImport = `import { withTailwindStyled } from "tailwind-styled-v4/next"\n${src}`
 
     const patterns = [
       /export default\s+([\w]+);?\s*$/m,
@@ -24,7 +24,7 @@ export function patchNextConfigImpl(src: string): string | null {
 
   if (hasCjs) {
     const result =
-      `const { withTailwindStyled } = require("@tailwind-styled/next")\n` +
+      `const { withTailwindStyled } = require("tailwind-styled-v4/next")\n` +
       src.replace(
         /module\.exports\s*=\s*(.+)/s,
         (_match, expr) => `module.exports = withTailwindStyled()(${expr.trim()})`
@@ -40,12 +40,12 @@ export function patchViteConfigImpl(src: string): string | null {
 
   const patched = hasLegacyImport
     ? src
-        .replace(/from\s+['"]tailwind-styled-v4\/vite['"]/g, 'from "@tailwind-styled/vite"')
+        .replace(/from\s+['"]tailwind-styled-v4\/vite['"]/g, 'from "tailwind-styled-v4/vite"')
         .replace(/\btailwindStyled\(/g, "tailwindStyledPlugin(")
     : src.replace(/\btailwindStyled\(/g, "tailwindStyledPlugin(")
 
   const alreadyConfigured =
-    patched.includes("@tailwind-styled/vite") && patched.includes("tailwindStyledPlugin(")
+    patched.includes("tailwind-styled-v4/vite") && patched.includes("tailwindStyledPlugin(")
   if (alreadyConfigured) return patched === src ? null : patched
 
   const viteImportMatch = patched.match(/(import .+ from ['"]vite['"][^\n]*\n)/)
@@ -53,14 +53,14 @@ export function patchViteConfigImpl(src: string): string | null {
   const insertAfter = (reactImportMatch ?? viteImportMatch)?.[1]
 
   const result = (() => {
-    if (!patched.includes("@tailwind-styled/vite") && insertAfter) {
+    if (!patched.includes("tailwind-styled-v4/vite") && insertAfter) {
       return patched.replace(
         insertAfter,
-        `${insertAfter}import { tailwindStyledPlugin } from "@tailwind-styled/vite"\n`
+        `${insertAfter}import { tailwindStyledPlugin } from "tailwind-styled-v4/vite"\n`
       )
     }
-    if (!patched.includes("@tailwind-styled/vite")) {
-      return `import { tailwindStyledPlugin } from "@tailwind-styled/vite"\n${patched}`
+    if (!patched.includes("tailwind-styled-v4/vite")) {
+      return `import { tailwindStyledPlugin } from "tailwind-styled-v4/vite"\n${patched}`
     }
     return patched
   })()
@@ -69,21 +69,21 @@ export function patchViteConfigImpl(src: string): string | null {
 }
 
 export function patchRspackConfigImpl(src: string): string | null {
-  const hasModernImport = src.includes("@tailwind-styled/rspack")
+  const hasModernImport = src.includes("tailwind-styled-v4/rspack")
   const hasLegacyImport = src.includes("tailwind-styled-v4/rspack")
 
   const withLegacyFix = hasLegacyImport
-    ? src.replace(/from\s+['"]tailwind-styled-v4\/rspack['"]/g, 'from "@tailwind-styled/rspack"')
+    ? src.replace(/from\s+['"]tailwind-styled-v4\/rspack['"]/g, 'from "tailwind-styled-v4/rspack"')
     : src
 
   const patched = withLegacyFix.replace(/\btailwindStyled\(/g, "tailwindStyledRspackPlugin(")
 
   const alreadyConfigured =
-    patched.includes("@tailwind-styled/rspack") && patched.includes("tailwindStyledRspackPlugin(")
+    patched.includes("tailwind-styled-v4/rspack") && patched.includes("tailwindStyledRspackPlugin(")
   if (alreadyConfigured) return patched === src ? null : patched
 
   const result = (() => {
-    if (!patched.includes("@tailwind-styled/rspack") && !hasModernImport) {
+    if (!patched.includes("tailwind-styled-v4/rspack") && !hasModernImport) {
       const lines = patched.split("\n")
       const lastImportIdx = lines.reduce((maxIdx, line, idx) => {
         return line.trimStart().startsWith("import ") ? idx : maxIdx
@@ -91,7 +91,7 @@ export function patchRspackConfigImpl(src: string): string | null {
       lines.splice(
         lastImportIdx + 1,
         0,
-        'import { tailwindStyledRspackPlugin } from "@tailwind-styled/rspack"'
+        'import { tailwindStyledRspackPlugin } from "tailwind-styled-v4/rspack"'
       )
       return lines.join("\n")
     }
@@ -117,11 +117,60 @@ export function patchRspackConfigImpl(src: string): string | null {
   return finalResult === src ? null : finalResult
 }
 
-export function patchTailwindCssImpl(src: string): string | null {
+/**
+ * Hitung path relatif dari cssFilePath ke `.next/tailwind-styled-safelist.css`.
+ * Contoh:
+ *   cssFile = "src/app/globals.css" → "../../.next/tailwind-styled-safelist.css"
+ *   cssFile = "src/globals.css"     → "../.next/tailwind-styled-safelist.css"
+ */
+export function computeSafelistSourcePath(cssFilePath: string, cwd: string): string {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require("node:path") as typeof import("node:path")
+    const cssAbs = nodePath.resolve(cwd, cssFilePath)
+    const cssDir = nodePath.dirname(cssAbs)
+    // Per-file safelist dir — Turbopack writes one CSS file per component here
+    const safelistAbs = nodePath.resolve(cwd, ".next", "tw-classes")
+    const rel = nodePath.relative(cssDir, safelistAbs).replace(/\\/g, "/")
+    const relPath = rel.startsWith(".") ? rel : `./${rel}`
+    return `${relPath}/**`
+  } catch {
+    const depth = cssFilePath.split("/").length - 1
+    const ups = Array(depth).fill("..").join("/")
+    return `${ups}/.next/tw-classes/**`
+  }
+}
+
+export function patchTailwindCssImpl(
+  src: string,
+  bundler?: "next" | "vite" | "rspack",
+  cssFilePath?: string,
+  cwd?: string
+): string | null {
   const hasTailwindImport =
     src.includes('@import "tailwindcss"') || src.includes("@import 'tailwindcss'")
-  if (hasTailwindImport) return null
-  return `@import "tailwindcss";\n\n${src}`
+
+  const hasSafelistSource = src.includes("tailwind-styled-safelist.css")
+  const needsSafelistSource = bundler === "next" && !hasSafelistSource
+
+  const safelistRelPath =
+    needsSafelistSource && cssFilePath && cwd
+      ? computeSafelistSourcePath(cssFilePath, cwd)
+      : "../.next/tailwind-styled-safelist.css"
+
+  const safelistSource = `@source "${safelistRelPath}";`
+
+  if (hasTailwindImport) {
+    if (!needsSafelistSource) return null
+    const patched = src.replace(
+      /(@import\s+['"]tailwindcss['"];?)/,
+      `$1\n${safelistSource}`
+    )
+    return patched === src ? null : patched
+  }
+
+  const base = `@import "tailwindcss";\n${needsSafelistSource ? `${safelistSource}\n` : ""}\n${src}`
+  return base
 }
 
 export function patchTsConfigImpl(src: string): string | null {

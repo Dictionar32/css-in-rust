@@ -119,8 +119,11 @@ export function resetBatchedCss(): void {
     _state.rafHandle = null
   }
 
-  if (_state.styleEl && document.head.contains(_state.styleEl)) {
+  // Guard: document tidak tersedia di SSR / Node test environment
+  if (typeof document !== "undefined" && _state.styleEl && document.head.contains(_state.styleEl)) {
     document.head.removeChild(_state.styleEl)
+    _state.styleEl = null
+  } else {
     _state.styleEl = null
   }
 }

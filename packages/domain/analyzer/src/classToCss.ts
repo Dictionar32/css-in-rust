@@ -39,20 +39,18 @@ const normalizeClassToCssOptions = (
   return { prefix, strict }
 }
 
-const mergeDeclarationMap = (target: Map<string, string>, css: string): void => {
-  for (const ruleMatch of css.matchAll(/\{([^}]*)\}/g)) {
-    const body = ruleMatch[1]
-    for (const raw of body.split(";")) {
-      const declaration = raw.trim()
-      if (declaration.length === 0) continue
-      const colonIndex = declaration.indexOf(":")
-      if (colonIndex <= 0) continue
-      const property = declaration.slice(0, colonIndex).trim()
-      const value = declaration.slice(colonIndex + 1).trim()
-      if (property.length === 0 || value.length === 0) continue
-      if (target.has(property)) target.delete(property)
-      target.set(property, value)
-    }
+const mergeDeclarationMap = (
+  target: Map<string, string>,
+  css: string,
+  binding: { parseCssRules?: (css: string) => Array<{ property: string; value: string; isImportant: boolean }> }
+): void => {
+  if (!binding.parseCssRules) {
+    throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
+  }
+  const rules = binding.parseCssRules(css)
+  for (const rule of rules) {
+    if (target.has(rule.property)) target.delete(rule.property)
+    target.set(rule.property, rule.isImportant ? `${rule.value} !important` : rule.value)
   }
 }
 
@@ -124,7 +122,7 @@ export const classToCss = async (
 
   const declarationMap = new Map<string, string>()
   for (const result of results) {
-    mergeDeclarationMap(declarationMap, result.css)
+    mergeDeclarationMap(declarationMap, result.css, binding)
   }
 
   const uniqueUnknown = Array.from(new Set(unknownClasses))

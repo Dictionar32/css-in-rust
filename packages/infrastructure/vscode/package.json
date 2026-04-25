@@ -38,6 +38,10 @@
       {
         "command": "tailwind-styled.doctor",
         "title": "Tailwind Styled: Run Doctor"
+      },
+      {
+        "command": "tailwind-styled.injectClassRegex",
+        "title": "Tailwind Styled: Fix cssConflict (inject classRegex)"
       }
     ],
     "configuration": {

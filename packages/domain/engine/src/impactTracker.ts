@@ -1,11 +1,6 @@
-import type { ScanFileResult, ScanWorkspaceResult } from "@tailwind-styled/scanner"
+import type { ScanWorkspaceResult } from "@tailwind-styled/scanner"
+import { getNativeEngineBinding } from "./native-bridge"
 import { type BundleAnalysisResult, BundleAnalyzer } from "./bundleAnalyzer"
-
-type ImpactScanFile = ScanFileResult & {
-  variants?: string[]
-  lineNumbers?: number[]
-  columnNumbers?: number[]
-}
 
 export interface ImpactReport {
   className: string
@@ -26,30 +21,23 @@ export interface ComponentImpact {
   variant?: string
 }
 
+interface NativeImpactScore {
+  className: string
+  usageScore: number
+  sizeScore: number
+  impactScore: number
+  usageCount: number
+  sizeBytes: number
+}
+
 export class ImpactTracker {
   private bundleAnalyzer: BundleAnalyzer
   private criticalPatterns = [
-    "fixed",
-    "absolute",
-    "sticky",
-    "z-50",
-    "z-index",
-    "top-0",
-    "right-0",
-    "bottom-0",
-    "left-0",
-    "w-full",
-    "h-full",
-    "min-h-screen",
-    "flex",
-    "grid",
-    "block",
-    "inline",
-    "hidden",
-    "visible",
-    "opacity",
-    "pointer-events",
-    "cursor",
+    "fixed", "absolute", "sticky", "z-50", "z-index",
+    "top-0", "right-0", "bottom-0", "left-0",
+    "w-full", "h-full", "min-h-screen",
+    "flex", "grid", "block", "inline", "hidden",
+    "visible", "opacity", "pointer-events", "cursor",
   ]
 
   constructor() {
@@ -57,12 +45,8 @@ export class ImpactTracker {
   }
 
   /**
-   * Analisis impact sebuah class menggunakan BundleAnalyzer untuk dapat
-   * data akurat tentang bundle size contribution.
-   *
-   * @param className - Tailwind class yang ingin dianalisis
-   * @param scanResult - Hasil scan workspace
-   * @param css - CSS string dari build output (opsional — jika tidak ada, gunakan estimasi)
+   * Analisis impact sebuah class.
+   * Menggunakan native calculateImpactScores untuk akurasi bundle size.
    */
   analyzeWithBundle(
     className: string,
@@ -71,54 +55,67 @@ export class ImpactTracker {
   ): ImpactReport {
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
 
-    let bundleAnalysis: BundleAnalysisResult | null = null
-    try {
-      if (scanResult && css) {
-        bundleAnalysis = this.bundleAnalyzer.analyzeClass(normalizedClass, scanResult, css)
-      }
-    } catch {
-      // BundleAnalyzer bisa throw jika css kosong atau class tidak dikenali
-      // Graceful fallback ke calculateImpact tanpa bundle data
+    const native = getNativeEngineBinding()
+    if (!native?.calculateImpactScores) {
+      throw new Error("FATAL: Native binding 'calculateImpactScores' is required but not available.")
     }
 
-    const resolvedBundleAnalysis =
-      bundleAnalysis ??
-      (() => {
-        // Buat BundleAnalysisResult minimal dari scan data saja
-        const usedIn = (scanResult?.files ?? []).filter((f) =>
-          f.classes?.includes(normalizedClass)
-        )
-        return {
-          className: normalizedClass,
-          totalUsage: usedIn.length,
-          files: usedIn.map((f) => ({
-            file: f.file,
-            line: 1,
-            column: 1,
-          })),
-          bundleSizeBytes: 0,
-          variantChains: [],
-          isDeadCode: usedIn.length === 0,
-          dependencies: [],
-        } satisfies BundleAnalysisResult
-      })()
+    const scores = native.calculateImpactScores(
+      [normalizedClass],
+      JSON.stringify(scanResult),
+      css,
+      0.6,
+      0.4
+    ) as NativeImpactScore[]
 
-    return this.calculateImpact(normalizedClass, resolvedBundleAnalysis, scanResult)
+    const score = scores[0]
+
+    const bundleAnalysis: BundleAnalysisResult = {
+      className: normalizedClass,
+      totalUsage: score?.usageCount ?? 0,
+      files: [],
+      bundleSizeBytes: score?.sizeBytes ?? 0,
+      variantChains: [],
+      isDeadCode: (score?.usageCount ?? 0) === 0,
+      dependencies: [],
+    }
+
+    return this.calculateImpact(normalizedClass, bundleAnalysis, scanResult, score)
   }
 
   /**
-   * Analisis semua class dalam workspace sekaligus.
+   * Analisis semua class dalam workspace sekaligus via native batch call.
    */
   analyzeAll(scanResult: ScanWorkspaceResult, css = ""): Map<string, ImpactReport> {
-    const results = new Map<string, ImpactReport>()
+    const native = getNativeEngineBinding()
+    if (!native?.calculateImpactScores) {
+      throw new Error("FATAL: Native binding 'calculateImpactScores' is required but not available.")
+    }
+
     const classes = scanResult?.uniqueClasses ?? []
+    const scores = native.calculateImpactScores(
+      classes,
+      JSON.stringify(scanResult),
+      css,
+      0.6,
+      0.4
+    ) as NativeImpactScore[]
+
+    const scoreMap = new Map(scores.map((s) => [s.className, s]))
+    const results = new Map<string, ImpactReport>()
 
     for (const cls of classes) {
-      try {
-        results.set(cls, this.analyzeWithBundle(cls, scanResult, css))
-      } catch {
-        // skip class yang gagal dianalisis
+      const score = scoreMap.get(cls)
+      const bundleAnalysis: BundleAnalysisResult = {
+        className: cls,
+        totalUsage: score?.usageCount ?? 0,
+        files: [],
+        bundleSizeBytes: score?.sizeBytes ?? 0,
+        variantChains: [],
+        isDeadCode: (score?.usageCount ?? 0) === 0,
+        dependencies: [],
       }
+      results.set(cls, this.calculateImpact(cls, bundleAnalysis, scanResult, score))
     }
 
     return results
@@ -127,22 +124,16 @@ export class ImpactTracker {
   calculateImpact(
     className: string,
     bundleAnalysis: BundleAnalysisResult,
-    scanResult: ScanWorkspaceResult | null | undefined
+    scanResult: ScanWorkspaceResult | null | undefined,
+    nativeScore?: NativeImpactScore
   ): ImpactReport {
-    if (!className || className.trim() === "") {
-      return this.createEmptyReport(className)
-    }
-
-    if (!bundleAnalysis) {
-      return this.createEmptyReport(className)
-    }
+    if (!className || className.trim() === "") return this.createEmptyReport(className)
+    if (!bundleAnalysis) return this.createEmptyReport(className)
 
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    const affectedComponents = this.findAffectedComponents(normalizedClass, scanResult)
-
-    const directUsage = affectedComponents.filter((c) => c.usageType === "direct").length
-    const indirectUsage = affectedComponents.filter((c) => c.usageType !== "direct").length
-    const totalComponents = affectedComponents.length
+    const totalComponents = nativeScore?.usageCount ?? bundleAnalysis.totalUsage ?? 0
+    const directUsage = totalComponents
+    const indirectUsage = 0
 
     const bundleSizeBytes = bundleAnalysis.bundleSizeBytes || 0
     const estimatedSavings = this.calculateSavings(bundleSizeBytes, totalComponents)
@@ -164,113 +155,63 @@ export class ImpactTracker {
     return impactReport
   }
 
+  /**
+   * findAffectedComponents — delegated to native calculateImpactScores.
+   * Returns simplified ComponentImpact[] from native usageCount.
+   */
   findAffectedComponents(
     className: string,
     scanResult: ScanWorkspaceResult | null | undefined
   ): ComponentImpact[] {
-    const components: ComponentImpact[] = []
+    if (!className || !scanResult) return []
 
-    if (!className || className.trim() === "") {
-      return components
-    }
-
-    if (!scanResult || !Array.isArray(scanResult.files)) {
-      return components
+    const native = getNativeEngineBinding()
+    if (!native?.calculateImpactScores) {
+      throw new Error("FATAL: Native binding 'calculateImpactScores' is required but not available.")
     }
 
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    const classParts = normalizedClass.split(":")
 
-    for (const file of scanResult.files as ImpactScanFile[]) {
-      if (!file || !file.file) continue
+    // Native scan to find which files contain the class
+    const scores = native.calculateImpactScores(
+      [normalizedClass],
+      JSON.stringify(scanResult),
+      "",
+      1.0,
+      0.0
+    ) as NativeImpactScore[]
 
-      const filePath = file.file
-      const classes = file.classes || []
-      const variants = file.variants || []
+    if (!scores[0]?.usageCount) return []
 
-      for (const [i, fileClass] of classes.entries()) {
-        if (!fileClass) continue
-
-        const normalizedFileClass = fileClass.startsWith(".") ? fileClass.slice(1) : fileClass
-
-        if (normalizedFileClass === normalizedClass) {
-          components.push({
-            file: filePath,
-            line: file.lineNumbers?.[i] || 1,
-            column: file.columnNumbers?.[i] || 1,
-            usageType: "direct",
-          })
-        } else if (normalizedFileClass.includes(normalizedClass)) {
-          const variant = classParts.length > 1 ? classParts[0] : undefined
-          components.push({
-            file: filePath,
-            line: file.lineNumbers?.[i] || 1,
-            column: file.columnNumbers?.[i] || 1,
-            usageType: "variant",
-            variant,
-          })
-        }
-      }
-
-      for (const [i, variant] of variants.entries()) {
-        if (!variant) continue
-
-        if (variant.includes(normalizedClass)) {
-          const baseClass = variant.split(":").pop()
-          if (baseClass === normalizedClass) {
-            components.push({
-              file: filePath,
-              line: file.lineNumbers?.[i] || 1,
-              column: file.columnNumbers?.[i] || 1,
-              usageType: "variant",
-              variant: variant.split(":")[0],
-            })
-          }
-        }
-      }
+    // Map file-level data from scanResult
+    const components: ComponentImpact[] = []
+    for (const file of scanResult.files) {
+      if (!file.classes?.includes(normalizedClass)) continue
+      components.push({
+        file: file.file,
+        line: 1,
+        column: 1,
+        usageType: "direct",
+      })
     }
 
     return components
   }
 
   calculateRisk(className: string, impact: ImpactReport): "low" | "medium" | "high" {
-    if (!className || className.trim() === "") {
-      return "low"
-    }
-
-    if (!impact) {
-      return "low"
-    }
-
+    if (!className?.trim() || !impact) return "low"
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-
-    if (impact.totalComponents > 10) {
-      return "high"
-    }
-
-    if (this.isCriticalClass(normalizedClass)) {
-      return "high"
-    }
-
-    if (impact.totalComponents >= 5 && impact.totalComponents <= 10) {
-      return "medium"
-    }
-
+    if (impact.totalComponents > 10) return "high"
+    if (this.isCriticalClass(normalizedClass)) return "high"
+    if (impact.totalComponents >= 5) return "medium"
     return "low"
   }
 
   generateSuggestions(className: string, impact: ImpactReport): string[] {
-    const suggestions: string[] = []
-
-    if (!className || className.trim() === "") {
-      return suggestions
-    }
-
-    if (!impact) {
-      return suggestions
-    }
+    if (!className?.trim() || !impact) return []
 
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
+    const suggestions: string[] = []
 
     if (impact.riskLevel === "high") {
       if (impact.totalComponents > 10) {
@@ -278,38 +219,30 @@ export class ImpactTracker {
           `This class is used in ${impact.totalComponents} components. Consider creating a utility component instead.`
         )
       }
-
       if (this.isCriticalClass(normalizedClass)) {
-        suggestions.push(
-          "This is a critical positioning/display class. Review all usages before removal."
-        )
+        suggestions.push("This is a critical positioning/display class. Review all usages before removal.")
       }
-
       suggestions.push("Manual code review recommended before removing this class.")
     } else if (impact.riskLevel === "medium") {
       suggestions.push(
         `This class is used in ${impact.totalComponents} components. Test each component after removal.`
       )
-
       if (impact.indirectUsage > 0) {
         suggestions.push("Check for indirect usages via variants before removing.")
       }
     } else {
-      if (impact.totalComponents > 0) {
-        suggestions.push("Low risk: class is used in fewer than 5 components.")
-      } else {
-        suggestions.push("This class appears to be unused. Consider removing it.")
-      }
+      suggestions.push(
+        impact.totalComponents > 0
+          ? "Low risk: class is used in fewer than 5 components."
+          : "This class appears to be unused. Consider removing it."
+      )
     }
 
     if (impact.estimatedSavings > 0) {
       suggestions.push(`Estimated bundle size savings: ~${impact.estimatedSavings} bytes.`)
     }
-
     if (impact.bundleSizeBytes > 100) {
-      suggestions.push(
-        "This class has significant CSS bundle contribution. Removal will improve load times."
-      )
+      suggestions.push("This class has significant CSS bundle contribution. Removal will improve load times.")
     }
 
     return suggestions
@@ -323,15 +256,12 @@ export class ImpactTracker {
   }
 
   private calculateSavings(bundleSize: number, componentCount: number): number {
-    const baseSavings = bundleSize
-    const componentOverhead = componentCount * 50
-    return Math.max(0, baseSavings - componentOverhead)
+    return Math.max(0, bundleSize - componentCount * 50)
   }
 
   private createEmptyReport(className: string): ImpactReport {
-    const normalizedClass = className?.startsWith(".") ? className.slice(1) : className || ""
     return {
-      className: normalizedClass,
+      className: className?.startsWith(".") ? className.slice(1) : className || "",
       totalComponents: 0,
       directUsage: 0,
       indirectUsage: 0,

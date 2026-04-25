@@ -4,7 +4,7 @@
  * Export telemetry data to JSON file for CI/CD.
  */
 
-import type { BuildMetrics, AggregatedStats } from "./metrics"
+import type { BuildMetrics, AggregatedStats } from "../metrics"
 
 export interface JsonExportOptions {
   pretty?: boolean

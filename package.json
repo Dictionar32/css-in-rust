@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0",
+  "version": "5.0.6-canary.0.0.25",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -187,11 +187,11 @@
     }
   },
   "scripts": {
-    "build": "npm run build:packages && tsup --config tsup.config.ts && npm run example:build",
+    "build": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts && tsup --config tsup.dts.config.ts && npm run example:build",
     "build:packages": "turbo run build --continue",
-    "build:rust": "cd native && npx @napi-rs/cli build --release",
-    "build:dev": "npm run build:packages && tsup --config tsup.config.ts --sourcemap --watch",
-    "build:release": "npm run build:packages && tsup --config tsup.config.ts --no-sourcemap && npm run example:build",
+    "build:rust": "cd native && napi build --release",
+    "build:dev": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --sourcemap --watch",
+    "build:release": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --no-sourcemap && tsup --config tsup.dts.config.ts && npm run example:build",
     "verify:builds": "npm run build && cd examples/next-js-app && npm install --ignore-scripts && npx tsc --noEmit || echo \"[verify:builds] example typecheck done\"",
     "clean": "rm -rf dist && turbo run clean --continue",
     "dev": "tsup --config tsup.config.ts --watch",
@@ -208,7 +208,7 @@
     "version:sync": "tsx scripts/version-sync.ts",
     "schemas:generate": "tsx scripts/generate-json-schemas.ts",
     "schemas:check": "tsx scripts/generate-json-schemas.ts --check",
-    "build:fast": "npm run build:packages && tsup --config tsup.config.ts",
+    "build:fast": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts && tsup --config tsup.dts.config.ts",
     "validate": "tsx scripts/validate/final-report.ts",
     "validate:json": "tsx scripts/validate/final-report.ts --json",
     "health:summary": "npx tsx scripts/validate/health-summary.ts",
@@ -230,10 +230,11 @@
     "validate:canary:ci": "node scripts/validate-canary.mjs shared compiler engine scanner core",
     "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ \u2014 run npm run generate:schemas and commit\" && exit 1)",
     "test:smoke:fallback": "TWS_DISABLE_NATIVE=1 node --test tests/smoke/*.test.mjs",
-    "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --webpack",
+    "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --turbopack",
     "example:dev": "cd examples/next-js-app && npm install --ignore-scripts && npx next dev",
     "example:typecheck": "cd examples/next-js-app && npx tsc --noEmit",
     "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'"
+
   },
   "peerDependencies": {
     "react": ">=18",
@@ -249,6 +250,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
+    "@napi-rs/cli": "^3.6.2",
     "@types/node": "^20.19.39",
     "@types/react": "^19",
     "dependency-cruiser": "^17.3.10",
@@ -258,19 +260,21 @@
     "tsx": "^4.21.0",
     "turbo": "^2.9.3",
     "typescript": "^6.0.2",
+    "vite": "^8.0.8",
     "vue": "^3.5.30"
   },
   "optionalDependencies": {
-    "@tailwind-styled/native-linux-x64-gnu":   "5.0.6-canary.0.0",
+    "@tailwind-styled/native-darwin-arm64": "5.0.6-canary.0.0",
+    "@tailwind-styled/native-darwin-x64": "5.0.6-canary.0.0",
     "@tailwind-styled/native-linux-arm64-gnu": "5.0.6-canary.0.0",
-    "@tailwind-styled/native-darwin-x64":      "5.0.6-canary.0.0",
-    "@tailwind-styled/native-darwin-arm64":    "5.0.6-canary.0.0",
-    "@tailwind-styled/native-win32-x64-msvc":  "5.0.6-canary.0.0",
+    "@tailwind-styled/native-linux-x64-gnu": "5.0.6-canary.0.0",
+    "@tailwind-styled/native-win32-x64-msvc": "5.0.6-canary.0.0",
     "oxc-minify": "^0.120.0",
     "oxc-parser": "^0.120.0",
     "oxc-transform": "^0.120.0"
   },
   "dependencies": {
+    "tailwind-merge": "^3.5.0",
     "@clack/prompts": "^1.1.0",
     "ts-pattern": "^5.9.0"
   }

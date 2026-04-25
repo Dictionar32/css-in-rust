@@ -142,19 +142,53 @@ function Alert({ type, children }) {
 }
 ```
 
-### 6. Sub-components (Inline)
+### 6. Sub-components
+
+Ada **dua cara** mendefinisikan sub-components:
+
+#### A. Config Object — Direkomendasikan (Autocomplete + Type Safe)
 
 ```tsx
-// Semua dalam satu definition — tapi TIDAK mewarisi style base
-const Card = tw.div`
-  flex flex-col p-4 rounded-xl
-  header { font-bold text-lg }
-  body { text-gray-600 }
-  footer { border-t pt-4 }
-`
-// Usage: <Card.header>Title</Card.header>
-// CATATAN: Sub-components TIDAK mewarisi style base secara otomatis
+const Card = tw.div({
+  base: "flex flex-col p-4 rounded-xl bg-white shadow",
+  sub: {
+    header: "font-bold text-lg border-b pb-2",
+    body:   "text-gray-600 py-2",
+    footer: "border-t pt-2 text-sm text-gray-400",
+  },
+})
+
+// TypeScript infer keys dari object literal → autocomplete penuh
+<Card>
+  <Card.header>Judul</Card.header>    // ✅ autocomplete
+  <Card.body>Konten</Card.body>       // ✅ autocomplete
+  <Card.footer>Footer</Card.footer>   // ✅ autocomplete
+  <Card.xyz>?</Card.xyz>              // ❌ TypeScript error
+</Card>
 ```
+
+#### B. Template Literal Inline — Ringkas (tanpa autocomplete)
+
+```tsx
+const Card = tw.div`
+  flex flex-col p-4 rounded-xl bg-white shadow
+  [header] { font-bold text-lg border-b pb-2 }
+  [body]   { text-gray-600 py-2 }
+  [footer] { border-t pt-2 text-sm text-gray-400 }
+`
+
+// Runtime benar, tapi TypeScript tidak bisa infer nama dari multiline template —
+// ini limitasi TypeScript, bukan bug library. Gunakan config object untuk type safety.
+<Card>
+  <Card.header>Judul</Card.header>
+  <Card.body>Konten</Card.body>
+  <Card.footer>Footer</Card.footer>
+</Card>
+```
+
+> Sub-components **tidak mewarisi** style base. Untuk mewarisi, pakai `.extend()` (lihat Pattern B di bawah).
+
+> **Sub-component tidak terdefinisi** tidak akan crash — library otomatis fallback ke `<span>` passthrough. Tapi tetap gunakan config object untuk catch typo di TypeScript.
 
 ### 7. State Engine — Zero-JS State Management
 
@@ -202,9 +236,19 @@ const tokens = liveToken({
 ### 10. tw.server — RSC-only Components
 
 ```tsx
-const Avatar = tw.server`rounded-full object-cover`
-// Hanya render di server (Next.js App Router)
-// Auto-inject 'use client' kalo diperlukan
+// tw.server adalah namespace terpisah — pakai tw.server.tagname
+const Avatar = tw.server.img`rounded-full object-cover`
+const Hero   = tw.server.section`py-24 text-center`
+
+// Bisa pakai sub-components juga
+const Card = tw.server.div`
+  p-4 rounded-xl shadow
+  [header] { font-bold text-lg }
+  [body]   { text-gray-600 }
+`
+
+// Di browser (dev): otomatis log warning kalau ter-render di client
+// Di production: silent, tidak ada overhead
 ```
 
 ### 11. Component Wrapping — tw(ExistingComponent)
@@ -219,34 +263,66 @@ const IconButton = Button.extend`p-2 rounded-full`
 
 ---
 
-### Pattern untuk "4 Anak yang Mewarisi Style Base"
+### Pattern Sub-components
 
-Karena sub-components TIDAK mewarisi style base, gunakan salah satu pattern ini:
+**Pattern A: Config Object — Direkomendasikan (autocomplete + type safe)**
 
-**Pattern A: Base Variable**
 ```tsx
-const base = "flex flex-col p-4 rounded-xl"
-const Card = tw.div`${base} bg-white shadow`
-const CardHeader = tw.div`${base} font-bold`
-const CardBody = tw.div`${base} text-gray-600`
-const CardFooter = tw.div`${base} border-t`
+const Card = tw.div({
+  base: "flex flex-col p-4 rounded-xl bg-white shadow",
+  sub: {
+    header: "font-bold text-lg border-b pb-2",
+    body:   "text-gray-600 py-2",
+    footer: "border-t pt-2 text-sm",
+  },
+})
+// TypeScript infer: Card.header, Card.body, Card.footer ✅ autocomplete
+// Card.xyz → TypeScript error ✅
 ```
 
-**Pattern B: .extend()**
+**Pattern A2: Inline Template `[name] { }` — Ringkas (tanpa autocomplete)**
+
+```tsx
+const Card = tw.div`
+  flex flex-col p-4 rounded-xl bg-white shadow
+  [header] { font-bold text-lg border-b pb-2 }
+  [body]   { text-gray-600 py-2 }
+  [footer] { border-t pt-2 text-sm }
+`
+// Runtime benar — TypeScript tidak bisa infer nama dari multiline template literal
+```
+
+**Pattern B: `.extend()` — Sub-components Mewarisi Style Base**
+
+Pakai ini kalau sub-components butuh semua style dari parent:
+
 ```tsx
 const Card = tw.div`flex flex-col p-4 bg-white shadow`
-const CardHeader = Card.extend`font-bold text-lg`
-const CardBody = Card.extend`text-gray-600`
-const CardFooter = Card.extend`border-t pt-4`
+const CardHeader = Card.extend`font-bold text-lg border-b`
+const CardBody   = Card.extend`text-gray-600`
+const CardFooter = Card.extend`border-t pt-4 text-sm`
 ```
 
 **Pattern C: tw() Wrapper**
+
+Mirip `.extend()` tapi untuk wrapping komponen yang sudah ada:
+
+```tsx
+const Card = tw.div`flex flex-col p-4 bg-white shadow`
+const CardHeader = tw(Card)`font-bold text-lg`
+const CardBody   = tw(Card)`text-gray-600`
+const CardFooter = tw(Card)`border-t pt-4`
+```
+
+**Pattern D: Base Variable**
+
+Kalau butuh share classes ke komponen yang benar-benar independen:
+
 ```tsx
 const base = "flex flex-col p-4 rounded-xl"
-const Card = tw.div`${base} bg-white shadow`
-const CardHeader = tw(Card)`font-bold text-lg`
-const CardBody = tw(Card)`text-gray-600`
-const CardFooter = tw(Card)`border-t pt-4`
+const Card       = tw.div`${base} bg-white shadow`
+const CardHeader = tw.div`${base} font-bold`
+const CardBody   = tw.div`${base} text-gray-600`
 ```
 
 ---
