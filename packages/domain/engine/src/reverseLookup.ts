@@ -26,18 +26,35 @@ interface ParsedRule {
   isOverride: boolean
 }
 
+function normaliseNativeResults(
+  raw: Array<{
+    property: string
+    value: string
+    usedInClasses: Array<{ className: string; specificity: number; isOverride: boolean; variants: string[] }>
+  }>
+): ReverseLookupResult[] {
+  return raw.map((r) => ({
+    property: r.property,
+    value: r.value,
+    usedInClasses: r.usedInClasses.map((u) => ({
+      className: u.className,
+      source: { file: "", line: 0, column: 0 } as SourceLocation,
+      specificity: u.specificity,
+      isOverride: u.isOverride,
+      variants: u.variants,
+    })),
+  }))
+}
+
 export class ReverseLookup {
   private parsedCache: Map<string, ParsedRule[]> = new Map()
-  private static readonly MAX_CACHE_SIZE = 1000
-  /** Jumlah karakter total yang disimpan di cache (approx) */
+  private static readonly MAX_CACHE_SIZE = 1_000
   private cacheSizeBytes = 0
-  private static readonly MAX_CACHE_BYTES = 10 * 1024 * 1024 // 10MB
+  private static readonly MAX_CACHE_BYTES = 10 * 1024 * 1024
 
   private parseCSS(css: string): ParsedRule[] {
     const cached = this.parsedCache.get(css)
-    if (cached) {
-      return cached
-    }
+    if (cached) return cached
 
     const native = getNativeEngineBinding()
     if (!native?.parseCssRules) {
@@ -53,7 +70,7 @@ export class ReverseLookup {
       property: r.property,
       value: r.value,
       specificity: r.specificity,
-      source: { file: "", line: 0, column: 0 },
+      source: { file: "", line: 0, column: 0 } as SourceLocation,
       isImportant: r.isImportant,
       variants: r.variants,
       isOverride: false,
@@ -64,8 +81,11 @@ export class ReverseLookup {
   }
 
   fromCSS(cssProperty: string, cssValue: string, css: string): ReverseLookupResult[] {
-    if (!css || !cssProperty) {
-      return []
+    if (!css || !cssProperty) return []
+
+    const native = getNativeEngineBinding()
+    if (native?.reverseLookupFromCss) {
+      return normaliseNativeResults(native.reverseLookupFromCss(css, cssProperty, cssValue))
     }
 
     const rules = this.parseCSS(css)
@@ -74,146 +94,100 @@ export class ReverseLookup {
     const usages: ClassUsage[] = []
 
     for (const rule of rules) {
-      if (rule.property.toLowerCase() !== normalizedProperty) {
-        continue
-      }
-
-      const ruleValueLower = rule.value.toLowerCase().trim()
-      if (ruleValueLower !== normalizedValue && !ruleValueLower.includes(normalizedValue)) {
-        continue
-      }
-
+      if (rule.property.toLowerCase() !== normalizedProperty) continue
+      const v = rule.value.toLowerCase().trim()
+      if (v !== normalizedValue && !v.includes(normalizedValue)) continue
       usages.push({
-        className: rule.className,
-        source: rule.source,
-        specificity: rule.specificity,
-        isOverride: rule.isOverride || false,
-        variants: rule.variants,
+        className: rule.className, source: rule.source,
+        specificity: rule.specificity, isOverride: rule.isOverride, variants: rule.variants,
       })
     }
-
-    if (usages.length === 0) {
-      return []
-    }
-
-    return [{ property: normalizedProperty, value: cssValue, usedInClasses: usages }]
-  }
-
-  fromBundle(className: string, css: string): RuleIR[] {
-    if (!css || !className) {
-      return []
-    }
-
-    const rules = this.parseCSS(css)
-    const results: RuleIR[] = []
-
-    for (const rule of rules) {
-      if (rule.className === className || rule.className.startsWith(`${className}:`)) {
-        const ruleIR: RuleIR = {
-          id: { value: results.length },
-          selector: { value: 0 },
-          variantChain: { value: 0 },
-          property: { value: 0 },
-          value: { value: 0 },
-          origin: 2,
-          importance: rule.isImportant ? 1 : 0,
-          layer: null,
-          layerOrder: 0,
-          specificity: rule.specificity,
-          condition: null,
-          conditionResult: 0,
-          insertionOrder: results.length,
-          fingerprint: "",
-          source: rule.source,
-        }
-        results.push(ruleIR)
-      }
-    }
-
-    return results
-  }
-
-  findDependents(className: string, css: string): string[] {
-    if (!css || !className) {
-      return []
-    }
-
-    const rules = this.parseCSS(css)
-    const dependents = new Set<string>()
-
-    const classParts = className.split(":")
-    const baseClass = classParts[0]
-
-    for (const rule of rules) {
-      const ruleBaseClass = rule.className.split(":")[0]
-
-      if (ruleBaseClass === baseClass && rule.className !== className) {
-        dependents.add(rule.className)
-      }
-
-      if (rule.className.includes(baseClass) && rule.className !== className) {
-        const isVariant = rule.className.includes(":")
-        if (isVariant && !rule.className.startsWith(`${className}:`)) {
-          dependents.add(rule.className)
-        }
-      }
-    }
-
-    return Array.from(dependents)
+    return usages.length === 0
+      ? []
+      : [{ property: normalizedProperty, value: cssValue, usedInClasses: usages }]
   }
 
   findByProperty(property: string, css: string): ReverseLookupResult[] {
-    if (!css || !property) {
-      return []
+    if (!css || !property) return []
+
+    const native = getNativeEngineBinding()
+    if (native?.reverseLookupByProperty) {
+      return normaliseNativeResults(native.reverseLookupByProperty(css, property))
     }
 
     const rules = this.parseCSS(css)
     const normalizedProperty = property.toLowerCase()
-
     const valueMap = new Map<string, ClassUsage[]>()
 
     for (const rule of rules) {
-      if (rule.property.toLowerCase() !== normalizedProperty) {
-        continue
+      if (rule.property.toLowerCase() !== normalizedProperty) continue
+      const entry: ClassUsage = {
+        className: rule.className, source: rule.source,
+        specificity: rule.specificity, isOverride: rule.isOverride, variants: rule.variants,
       }
+      const bucket = valueMap.get(rule.value)
+      if (bucket) bucket.push(entry)
+      else valueMap.set(rule.value, [entry])
+    }
+    return Array.from(valueMap.entries()).map(([value, usedInClasses]) => ({
+      property: normalizedProperty, value, usedInClasses,
+    }))
+  }
 
-      const classUsage: ClassUsage = {
-        className: rule.className,
-        source: rule.source,
-        specificity: rule.specificity,
-        isOverride: rule.isOverride || false,
-        variants: rule.variants,
-      }
+  findDependents(className: string, css: string): string[] {
+    if (!css || !className) return []
 
-      let usages = valueMap.get(rule.value)
-      if (!usages) {
-        usages = []
-        valueMap.set(rule.value, usages)
-      }
-      usages.push(classUsage)
+    const native = getNativeEngineBinding()
+    if (native?.reverseLookupFindDependents) {
+      return native.reverseLookupFindDependents(css, className)
     }
 
-    const results: ReverseLookupResult[] = []
-    for (const [value, usedInClasses] of valueMap) {
-      results.push({ property: normalizedProperty, value, usedInClasses })
-    }
+    const rules = this.parseCSS(css)
+    const dependents = new Set<string>()
+    const baseClass = className.split(":")[0]
 
+    for (const rule of rules) {
+      const ruleBase = rule.className.split(":")[0]
+      if (ruleBase === baseClass && rule.className !== className) dependents.add(rule.className)
+      if (rule.className.includes(baseClass) && rule.className !== className) {
+        const isVariant = rule.className.includes(":")
+        if (isVariant && !rule.className.startsWith(`${className}:`)) dependents.add(rule.className)
+      }
+    }
+    return Array.from(dependents)
+  }
+
+  fromBundle(className: string, css: string): RuleIR[] {
+    if (!css || !className) return []
+    const rules = this.parseCSS(css)
+    const results: RuleIR[] = []
+    for (const rule of rules) {
+      if (rule.className === className || rule.className.startsWith(`${className}:`)) {
+        results.push({
+          id: { value: results.length }, selector: { value: 0 },
+          variantChain: { value: 0 }, property: { value: 0 }, value: { value: 0 },
+          origin: 2, importance: rule.isImportant ? 1 : 0, layer: null, layerOrder: 0,
+          specificity: rule.specificity, condition: null, conditionResult: 0,
+          insertionOrder: results.length, fingerprint: "", source: rule.source,
+        })
+      }
+    }
     return results
   }
 
-  /**
-   * Kosongkan seluruh parsed cache.
-   * Panggil ini saat CSS berubah (watch mode) atau saat memory pressure.
-   */
   clearCache(): void {
+    const native = getNativeEngineBinding()
+    native?.reverseLookupClearCache?.()
     this.parsedCache.clear()
     this.cacheSizeBytes = 0
   }
 
-  /**
-   * Hapus entri cache lama sampai di bawah threshold.
-   * Dipakai oleh parseCSS secara internal.
-   */
+  get cacheSize(): number {
+    const native = getNativeEngineBinding()
+    const nativeSize = native?.reverseLookupCacheSize?.() ?? 0
+    return nativeSize + this.parsedCache.size
+  }
+
   private pruneCache(): void {
     while (
       (this.parsedCache.size >= ReverseLookup.MAX_CACHE_SIZE ||
@@ -224,14 +198,8 @@ export class ReverseLookup {
       if (firstKey === undefined) break
       const removed = this.parsedCache.get(firstKey)
       this.parsedCache.delete(firstKey)
-      // Approximate bytes freed
       this.cacheSizeBytes -= firstKey.length + (removed?.length ?? 0) * 100
       if (this.cacheSizeBytes < 0) this.cacheSizeBytes = 0
     }
-  }
-
-  /** Cache size untuk observability/diagnostics */
-  get cacheSize(): number {
-    return this.parsedCache.size
   }
 }

@@ -34,7 +34,20 @@ function normalizeScan(
   }
 }
 
-export function collectClassCounts(scan: ScanWorkspaceResult): Map<string, number> {
+export async function collectClassCounts(scan: ScanWorkspaceResult): Promise<Map<string, number>> {
+  // ── Native path: Rust HashMap aggregation ─────────────────────────────────
+  const native = await requireNativeBinding()
+  if (native?.collectClassCounts) {
+    const filesJson = JSON.stringify(
+      scan.files.map((f) => ({ file: f.file ?? "", classes: f.classes }))
+    )
+    const result = native.collectClassCounts(filesJson) as Array<{ name: string; count: number }>
+    const counts = new Map<string, number>()
+    for (const entry of result) counts.set(entry.name, entry.count)
+    return counts
+  }
+
+  // ── JS fallback ───────────────────────────────────────────────────────────
   const counts = new Map<string, number>()
   for (const file of scan.files) {
     for (const className of file.classes) {
@@ -53,26 +66,32 @@ function buildClassUsage(counts: Map<string, number>): ClassUsage[] {
     })
 }
 
-export function buildDistribution(usages: ClassUsage[]): Record<string, number> {
-  const distribution = {
-    "1": 0,
-    "2-3": 0,
-    "4-7": 0,
-    "8+": 0,
-  }
-
-  for (const usage of usages) {
-    if (usage.count === 1) {
-      distribution["1"] += 1
-    } else if (usage.count <= 3) {
-      distribution["2-3"] += 1
-    } else if (usage.count <= 7) {
-      distribution["4-7"] += 1
-    } else {
-      distribution["8+"] += 1
+export async function buildDistribution(
+  usages: ClassUsage[],
+  native?: Awaited<ReturnType<typeof requireNativeBinding>>
+): Promise<Record<string, number>> {
+  // ── Native path: Rust bucket computation ──────────────────────────────────
+  const binding = native ?? (await requireNativeBinding())
+  if (binding?.buildDistribution) {
+    const result = binding.buildDistribution(
+      JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count })))
+    ) as { once: number; few: number; moderate: number; frequent: number }
+    return {
+      "1": result.once,
+      "2-3": result.few,
+      "4-7": result.moderate,
+      "8+": result.frequent,
     }
   }
 
+  // ── JS fallback ───────────────────────────────────────────────────────────
+  const distribution: Record<string, number> = { "1": 0, "2-3": 0, "4-7": 0, "8+": 0 }
+  for (const usage of usages) {
+    if (usage.count === 1) distribution["1"] += 1
+    else if (usage.count <= 3) distribution["2-3"] += 1
+    else if (usage.count <= 7) distribution["4-7"] += 1
+    else distribution["8+"] += 1
+  }
   return distribution
 }
 
@@ -141,7 +160,7 @@ export async function analyzeWorkspace(
     }
   })()
 
-  const counts = collectClassCounts(normalizedScan)
+  const counts = await collectClassCounts(normalizedScan)
   const baseAll = buildClassUsage(counts)
 
   // 3. Semantic report - const dengan IIFE async
@@ -196,7 +215,7 @@ export async function analyzeWorkspace(
       top,
       frequent,
       unique,
-      distribution: buildDistribution(all),
+      distribution: await buildDistribution(all, binding),
     },
     safelist: all.map((usage) => usage.name),
     ...(semanticReport ? { semantic: semanticReport } : {}),

@@ -5,6 +5,8 @@ export class RuleId {
   }
 }
 
+import { getNativeEngineBinding } from "./native-bridge"
+
 export class SelectorId {
   constructor(public readonly value: number) {}
   toString() {
@@ -194,12 +196,28 @@ export interface SourceLocation {
   column: number
 }
 
-export function createFingerprint(parts: string[]): string {
+/** @internal JS fallback — only used when native binding is unavailable */
+function createFingerprintFallback(parts: string[]): string {
   const hash = parts.reduce(
     (acc, part) => part.split("").reduce((h, char) => ((h << 5) - h + char.charCodeAt(0)) & h, acc),
     0
   )
   return Math.abs(hash).toString(36)
+}
+
+/**
+ * Generate a short fingerprint string from a list of ordered parts.
+ *
+ * Hot path — called on every class conflict check and IR node creation.
+ * Delegates to Rust `create_fingerprint()` (FNV-1a, base-36 output) when the
+ * native binding is available; falls back to the pure-JS djb2 variant otherwise.
+ */
+export function createFingerprint(parts: string[]): string {
+  const native = getNativeEngineBinding()
+  if (native?.createFingerprint) {
+    return native.createFingerprint(parts)
+  }
+  return createFingerprintFallback(parts)
 }
 
 // compareCascadeOrder removed — cascade sort is now handled by Rust resolve_cascade().

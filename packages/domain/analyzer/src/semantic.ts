@@ -9,6 +9,7 @@ import type {
   LoadedTailwindConfig,
   TailwindConfigCacheEntry,
 } from "./types"
+import { getNativeBinding } from "./binding"
 import { debugLog, formatErrorMessage, isRecord, pathExists } from "./utils"
 
 
@@ -153,12 +154,28 @@ export const resolveConflictGroup = (base: string): string | null => {
   return null
 }
 
-const detectConflicts = (
+const detectConflicts = async (
   usages: ClassUsage[]
-): {
+): Promise<{
   conflicts: ClassConflict[]
   conflictedClassNames: Set<string>
-} => {
+}> => {
+  // ── Native path: Rust HashSet conflict detection ──────────────────────────
+  const native = await getNativeBinding()
+  if (native?.detectClassConflicts) {
+    const result = native.detectClassConflicts(JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count }))))
+    return {
+      conflicts: result.conflicts.map((c) => ({
+        className: c.group,
+        variants: c.variantKey.length > 0 ? c.variantKey.split(":") : [],
+        classes: c.classes,
+        message: c.message,
+      })),
+      conflictedClassNames: new Set(result.conflictedClassNames),
+    }
+  }
+
+  // ── JS fallback ───────────────────────────────────────────────────────────
   const buckets = new Map<string, { variantKey: string; group: string; classes: Set<string> }>()
 
   for (const usage of usages) {
@@ -167,11 +184,7 @@ const detectConflicts = (
     if (!group) continue
 
     const key = `${variantKey}::${group}`
-    const bucket = buckets.get(key) ?? {
-      variantKey,
-      group,
-      classes: new Set<string>(),
-    }
+    const bucket = buckets.get(key) ?? { variantKey, group, classes: new Set<string>() }
     bucket.classes.add(usage.name)
     buckets.set(key, bucket)
   }
@@ -183,7 +196,6 @@ const detectConflicts = (
     if (bucket.classes.size <= 1) continue
     const classes = Array.from(bucket.classes).sort()
     for (const className of classes) conflictedClassNames.add(className)
-
     const variantLabel = bucket.variantKey.length > 0 ? bucket.variantKey : "base"
     conflicts.push({
       className: bucket.group,
@@ -194,8 +206,7 @@ const detectConflicts = (
   }
 
   conflicts.sort((left, right) => {
-    if (right.classes.length !== left.classes.length)
-      return right.classes.length - left.classes.length
+    if (right.classes.length !== left.classes.length) return right.classes.length - left.classes.length
     return left.className.localeCompare(right.className)
   })
 
@@ -465,7 +476,7 @@ export const buildSemanticReport = async (
     .filter((usage) => !isKnownTailwindClass(usage.name, safelist, customUtilities))
     .map((usage) => ({ ...usage, isUnused: true }))
 
-  const { conflicts } = detectConflicts(usages)
+  const { conflicts } = await detectConflicts(usages)
 
   return {
     unusedClasses,

@@ -102,6 +102,22 @@ export interface BucketedClass {
   sortOrder: number
 }
 
+/**
+ * Compute usage frequency distribution for a list of class usages.
+ *
+ * Replaces `buildDistribution(usages: ClassUsage[])` in `analyzeWorkspace.ts`.
+ *
+ * Input JSON: `[{ "name": "bg-red-500", "count": 3 }, ...]`
+ * Output: `{ once, few, moderate, frequent }` — bucket counts.
+ *
+ * Bucket semantics (same as JS original):
+ *   once     = count === 1
+ *   few      = count 2–3
+ *   moderate = count 4–7
+ *   frequent = count 8+
+ */
+export declare function buildDistribution(usagesJson: string): ClassDistribution
+
 export interface BundleContribution {
   className: string
   sizeBytes: number
@@ -202,6 +218,17 @@ export interface ClassDiffResult {
   hasChanges: boolean
 }
 
+export interface ClassDistribution {
+  /** Classes that appear exactly once */
+  once: number
+  /** Classes that appear 2–3 times */
+  few: number
+  /** Classes that appear 4–7 times */
+  moderate: number
+  /** Classes that appear 8+ times */
+  frequent: number
+}
+
 export interface ClassExtractResult {
   classes: Array<string>
   componentNames: Array<string>
@@ -234,6 +261,23 @@ export interface ClassToken {
   raw: string
   type: string
 }
+
+export interface ClassUsageResult {
+  className: string
+  specificity: number
+  isOverride: boolean
+  variants: Array<string>
+}
+
+/**
+ * Aggregate class counts from a list of (file, classes[]) scan entries.
+ *
+ * Replaces `collectClassCounts(scan: ScanWorkspaceResult)` in `analyzeWorkspace.ts`.
+ *
+ * Input JSON: `[{ "file": "...", "classes": ["cls1", "cls2"] }, ...]`
+ * Output JSON: `[{ "name": "cls1", "count": 3 }, ...]` sorted by count desc, name asc.
+ */
+export declare function collectClassCounts(filesJson: string): Array<ClassCount>
 
 /** Compile a from/to animation into @keyframes + animation CSS. */
 export declare function compileAnimation(from: string, to: string, name?: string | undefined | null, durationMs?: number | undefined | null, easing?: string | undefined | null, delayMs?: number | undefined | null, fill?: string | undefined | null, iterations?: string | undefined | null, direction?: string | undefined | null): CompiledAnimation
@@ -321,6 +365,21 @@ export interface ConflictDetectionResult {
   conflictedClassNames: Array<string>
 }
 
+/**
+ * Generate a short fingerprint string from a list of parts.
+ *
+ * Replaces `createFingerprint(parts: string[])` in `engine/src/ir.ts`.
+ *
+ * Algorithm: FNV-1a variant over all bytes of all parts (separated by `\x00`).
+ * Returns a base-36 string, e.g. `"1k7z3p"`.
+ *
+ * Why faster than JS:
+ * - No string → char array overhead
+ * - No `reduce()` closure allocations per character
+ * - Math.abs not needed — u64 wrapping is always non-negative
+ */
+export declare function createFingerprint(parts: Array<string>): string
+
 export interface CssCompileResult {
   css: string
   sizeBytes: number
@@ -344,6 +403,13 @@ export interface CssRuleLookup {
   isImportant: boolean
   variants: Array<string>
   specificity: number
+}
+
+export interface CssThemeVar {
+  /** Variable name without leading `--`, e.g. `color-primary` */
+  key: string
+  /** Raw value from CSS, e.g. `#3b82f6` or `var(--color-base)` */
+  value: string
 }
 
 export interface DeadCodeResult {
@@ -413,6 +479,16 @@ export declare function extractComponentUsage(source: string): Array<ComponentPr
  * Returns a list of `--var-name` strings found.
  */
 export declare function extractCssVars(source: string): Array<string>
+
+/**
+ * Parse `@theme { --key: value; }` blocks from a CSS string.
+ *
+ * Returns all key-value pairs found inside `@theme` blocks.
+ * Handles multiple `@theme` blocks and strips leading `--`.
+ *
+ * Menggantikan JS regex di `themeReader.ts extractThemeFromCSS()`.
+ */
+export declare function extractThemeFromCss(css: string): Array<CssThemeVar>
 
 export interface FileChangeDiff {
   added: Array<string>
@@ -621,6 +697,19 @@ export declare function processTailwindCssLightning(css: string): CssCompileResu
 export declare function processTailwindCssWithTargets(css: string, targets?: string | undefined | null): CssCompileResult
 
 /**
+ * Resolve CSS cascade for a set of rules.
+ *
+ * Input JSON: `Array<{ id, property, origin, importance, layerOrder, specificity,
+ *              conditionResult, insertionOrder }>`
+ *
+ * Output JSON: `{ resolutions: Array<{ id, propertyId, winnerId, loserIds,
+ *               stage, finalDecision, causes }> }`
+ *
+ * Cascade priority: origin → layerOrder → importance → specificity → insertionOrder
+ */
+export declare function resolveCascade(rulesJson: string): string
+
+/**
  * Simple variant resolution - no compound variants support
  * Faster for simple use cases
  */
@@ -631,6 +720,51 @@ export declare function resolveSimpleVariants(base: string | undefined | null, v
  * This is the hot path - executed thousands of times per build.
  */
 export declare function resolveVariants(configJson: string, propsJson: string): VariantResult
+
+/**
+ * Find all classes that set `property` to any value — grouped by value.
+ *
+ * Replaces `ReverseLookup.findByProperty()` in `reverseLookup.ts`.
+ */
+export declare function reverseLookupByProperty(css: string, property: string): Array<ReverseLookupResult>
+
+/**
+ * Current number of CSS strings in the cache.
+ *
+ * Useful for observability / diagnostics in devtools.
+ */
+export declare function reverseLookupCacheSize(): number
+
+/**
+ * Evict all entries from the CSS rule cache.
+ *
+ * Call from JS when the CSS bundle changes (watch mode / HMR).
+ * Replaces `ReverseLookup.clearCache()` in `reverseLookup.ts`.
+ */
+export declare function reverseLookupClearCache(): void
+
+/**
+ * Find all classes that share a base name with `class_name` (variant dependents).
+ *
+ * Replaces `ReverseLookup.findDependents()` in `reverseLookup.ts`.
+ */
+export declare function reverseLookupFindDependents(css: string, className: string): Array<string>
+
+/**
+ * Find all CSS classes that produce `property: value`.
+ *
+ * Replaces `ReverseLookup.fromCSS()` in `reverseLookup.ts`.
+ *
+ * Returns `[]` when no match. Uses DashMap cache — subsequent calls with the
+ * same CSS string are O(n_rules) filter only, no re-parse.
+ */
+export declare function reverseLookupFromCss(css: string, cssProperty: string, cssValue: string): Array<ReverseLookupResult>
+
+export interface ReverseLookupResult {
+  property: string
+  value: string
+  usedInClasses: Array<ClassUsageResult>
+}
 
 export interface RouteClassMap {
   /** Route path (e.g. "/dashboard", "/api/users") */

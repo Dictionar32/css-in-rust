@@ -104,6 +104,20 @@ interface NativeEngineBinding {
    *   finalDecision: string, causes: Array<{ type: string, [key: string]: unknown }> }> }
    */
   resolveCascade?: (rulesJson: string) => string
+  /** FNV-1a fingerprint over ordered string parts — replaces createFingerprint() in ir.ts */
+  createFingerprint?: (parts: string[]) => string
+  /** DashMap-backed CSS reverse lookup — replaces ReverseLookup class */
+  reverseLookupFromCss?: (css: string, property: string, value: string) => Array<{
+    property: string; value: string
+    usedInClasses: Array<{ className: string; specificity: number; isOverride: boolean; variants: string[] }>
+  }>
+  reverseLookupByProperty?: (css: string, property: string) => Array<{
+    property: string; value: string
+    usedInClasses: Array<{ className: string; specificity: number; isOverride: boolean; variants: string[] }>
+  }>
+  reverseLookupFindDependents?: (css: string, className: string) => string[]
+  reverseLookupClearCache?: () => void
+  reverseLookupCacheSize?: () => number
 }
 
 const isValidEngineBinding = (module: unknown): module is NativeEngineBinding => {
