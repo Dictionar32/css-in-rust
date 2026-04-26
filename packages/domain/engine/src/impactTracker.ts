@@ -32,13 +32,6 @@ interface NativeImpactScore {
 
 export class ImpactTracker {
   private bundleAnalyzer: BundleAnalyzer
-  private criticalPatterns = [
-    "fixed", "absolute", "sticky", "z-50", "z-index",
-    "top-0", "right-0", "bottom-0", "left-0",
-    "w-full", "h-full", "min-h-screen",
-    "flex", "grid", "block", "inline", "hidden",
-    "visible", "opacity", "pointer-events", "cursor",
-  ]
 
   constructor() {
     this.bundleAnalyzer = new BundleAnalyzer()
@@ -134,25 +127,36 @@ export class ImpactTracker {
     const totalComponents = nativeScore?.usageCount ?? bundleAnalysis.totalUsage ?? 0
     const directUsage = totalComponents
     const indirectUsage = 0
-
     const bundleSizeBytes = bundleAnalysis.bundleSizeBytes || 0
-    const estimatedSavings = this.calculateSavings(bundleSizeBytes, totalComponents)
 
-    const impactReport: ImpactReport = {
-      className: normalizedClass,
-      totalComponents,
-      directUsage,
-      indirectUsage,
-      bundleSizeBytes,
-      estimatedSavings,
-      riskLevel: "low",
-      suggestions: [],
+    // Delegate risk + savings + suggestions to Rust
+    const native = getNativeEngineBinding()
+    if (native?.calculateImpact) {
+      const impactJson = JSON.stringify({
+        className: normalizedClass,
+        totalComponents,
+        indirectUsage,
+        bundleSizeBytes,
+      })
+      const result = JSON.parse(native.calculateImpact(impactJson)) as {
+        riskLevel: "low" | "medium" | "high"
+        estimatedSavings: number
+        suggestions: string[]
+      }
+      return {
+        className: normalizedClass,
+        totalComponents,
+        directUsage,
+        indirectUsage,
+        bundleSizeBytes,
+        estimatedSavings: result.estimatedSavings,
+        riskLevel: result.riskLevel,
+        suggestions: result.suggestions,
+      }
     }
 
-    impactReport.riskLevel = this.calculateRisk(normalizedClass, impactReport)
-    impactReport.suggestions = this.generateSuggestions(normalizedClass, impactReport)
-
-    return impactReport
+    // Should not reach here in native-only mode
+    throw new Error("FATAL: Native binding 'calculateImpact' is required but not available.")
   }
 
   /**
@@ -196,67 +200,6 @@ export class ImpactTracker {
     }
 
     return components
-  }
-
-  calculateRisk(className: string, impact: ImpactReport): "low" | "medium" | "high" {
-    if (!className?.trim() || !impact) return "low"
-    const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    if (impact.totalComponents > 10) return "high"
-    if (this.isCriticalClass(normalizedClass)) return "high"
-    if (impact.totalComponents >= 5) return "medium"
-    return "low"
-  }
-
-  generateSuggestions(className: string, impact: ImpactReport): string[] {
-    if (!className?.trim() || !impact) return []
-
-    const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    const suggestions: string[] = []
-
-    if (impact.riskLevel === "high") {
-      if (impact.totalComponents > 10) {
-        suggestions.push(
-          `This class is used in ${impact.totalComponents} components. Consider creating a utility component instead.`
-        )
-      }
-      if (this.isCriticalClass(normalizedClass)) {
-        suggestions.push("This is a critical positioning/display class. Review all usages before removal.")
-      }
-      suggestions.push("Manual code review recommended before removing this class.")
-    } else if (impact.riskLevel === "medium") {
-      suggestions.push(
-        `This class is used in ${impact.totalComponents} components. Test each component after removal.`
-      )
-      if (impact.indirectUsage > 0) {
-        suggestions.push("Check for indirect usages via variants before removing.")
-      }
-    } else {
-      suggestions.push(
-        impact.totalComponents > 0
-          ? "Low risk: class is used in fewer than 5 components."
-          : "This class appears to be unused. Consider removing it."
-      )
-    }
-
-    if (impact.estimatedSavings > 0) {
-      suggestions.push(`Estimated bundle size savings: ~${impact.estimatedSavings} bytes.`)
-    }
-    if (impact.bundleSizeBytes > 100) {
-      suggestions.push("This class has significant CSS bundle contribution. Removal will improve load times.")
-    }
-
-    return suggestions
-  }
-
-  private isCriticalClass(className: string): boolean {
-    const normalized = className.startsWith(".") ? className.slice(1) : className
-    return this.criticalPatterns.some(
-      (pattern) => normalized === pattern || normalized.startsWith(`${pattern}:`)
-    )
-  }
-
-  private calculateSavings(bundleSize: number, componentCount: number): number {
-    return Math.max(0, bundleSize - componentCount * 50)
   }
 
   private createEmptyReport(className: string): ImpactReport {

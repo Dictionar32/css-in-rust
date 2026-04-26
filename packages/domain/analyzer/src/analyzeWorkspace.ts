@@ -35,25 +35,16 @@ function normalizeScan(
 }
 
 export async function collectClassCounts(scan: ScanWorkspaceResult): Promise<Map<string, number>> {
-  // ── Native path: Rust HashMap aggregation ─────────────────────────────────
   const native = await requireNativeBinding()
-  if (native?.collectClassCounts) {
-    const filesJson = JSON.stringify(
-      scan.files.map((f) => ({ file: f.file ?? "", classes: f.classes }))
-    )
-    const result = native.collectClassCounts(filesJson) as Array<{ name: string; count: number }>
-    const counts = new Map<string, number>()
-    for (const entry of result) counts.set(entry.name, entry.count)
-    return counts
+  if (!native?.collectClassCounts) {
+    throw new Error("FATAL: Native binding 'collectClassCounts' is required but not available.")
   }
-
-  // ── JS fallback ───────────────────────────────────────────────────────────
+  const filesJson = JSON.stringify(
+    scan.files.map((f) => ({ file: f.file ?? "", classes: f.classes }))
+  )
+  const result = native.collectClassCounts(filesJson) as Array<{ name: string; count: number }>
   const counts = new Map<string, number>()
-  for (const file of scan.files) {
-    for (const className of file.classes) {
-      counts.set(className, (counts.get(className) ?? 0) + 1)
-    }
-  }
+  for (const entry of result) counts.set(entry.name, entry.count)
   return counts
 }
 
@@ -70,29 +61,19 @@ export async function buildDistribution(
   usages: ClassUsage[],
   native?: Awaited<ReturnType<typeof requireNativeBinding>>
 ): Promise<Record<string, number>> {
-  // ── Native path: Rust bucket computation ──────────────────────────────────
   const binding = native ?? (await requireNativeBinding())
-  if (binding?.buildDistribution) {
-    const result = binding.buildDistribution(
-      JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count })))
-    ) as { once: number; few: number; moderate: number; frequent: number }
-    return {
-      "1": result.once,
-      "2-3": result.few,
-      "4-7": result.moderate,
-      "8+": result.frequent,
-    }
+  if (!binding?.buildDistribution) {
+    throw new Error("FATAL: Native binding 'buildDistribution' is required but not available.")
   }
-
-  // ── JS fallback ───────────────────────────────────────────────────────────
-  const distribution: Record<string, number> = { "1": 0, "2-3": 0, "4-7": 0, "8+": 0 }
-  for (const usage of usages) {
-    if (usage.count === 1) distribution["1"] += 1
-    else if (usage.count <= 3) distribution["2-3"] += 1
-    else if (usage.count <= 7) distribution["4-7"] += 1
-    else distribution["8+"] += 1
+  const result = binding.buildDistribution(
+    JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count })))
+  ) as { once: number; few: number; moderate: number; frequent: number }
+  return {
+    "1": result.once,
+    "2-3": result.few,
+    "4-7": result.moderate,
+    "8+": result.frequent,
   }
-  return distribution
 }
 
 /**

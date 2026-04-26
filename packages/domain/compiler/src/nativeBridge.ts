@@ -81,6 +81,16 @@ export interface NativeBridge {
   }
   processTailwindCssLightning?: (css: string) => { css: string; size_bytes: number; resolved_classes: string[]; unknown_classes: string[] }
   processTailwindCssWithTargets?: (css: string, targets: string | null) => { css: string; size_bytes: number }
+  // Atomic CSS (atomic.rs)
+  parseAtomicClass?: (twClass: string) => string | null
+  generateAtomicCss?: (rulesJson: string) => string
+  toAtomicClasses?: (twClasses: string) => string
+  clearAtomicRegistry?: () => void
+  atomicRegistrySize?: () => number
+  // Impact analysis (impact_analysis.rs)
+  calculateImpact?: (impactJson: string) => string
+  calculateRisk?: (className: string, totalComponents: number) => string
+  calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
 }
 
 export interface NativeTransformResult {

@@ -29,11 +29,16 @@ mod watcher_tests;
 // Core exports from various modules
 pub use application::analyzer::{analyze_classes, build_distribution, collect_class_counts};
 pub use application::ast_extract::ast_extract_classes;
+pub use application::atomic::{
+    atomic_registry_size, clear_atomic_registry, generate_atomic_css, parse_atomic_class,
+    to_atomic_classes,
+};
 pub use application::cache_resolver::{
     reverse_lookup_by_property, reverse_lookup_cache_size, reverse_lookup_clear_cache,
     reverse_lookup_find_dependents, reverse_lookup_from_css,
 };
 pub use application::cascade_resolver::resolve_cascade;
+pub use application::impact_analysis::{calculate_impact, calculate_risk, calculate_savings};
 pub use application::css_analysis::{
     analyze_route_class_distribution, calculate_bundle_contributions, detect_dead_code,
     parse_css_to_rules,

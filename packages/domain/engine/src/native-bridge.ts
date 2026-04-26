@@ -118,6 +118,10 @@ interface NativeEngineBinding {
   reverseLookupFindDependents?: (css: string, className: string) => string[]
   reverseLookupClearCache?: () => void
   reverseLookupCacheSize?: () => number
+  // Impact analysis (impact_analysis.rs)
+  calculateImpact?: (impactJson: string) => string
+  calculateRisk?: (className: string, totalComponents: number) => string
+  calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
 }
 
 const isValidEngineBinding = (module: unknown): module is NativeEngineBinding => {
