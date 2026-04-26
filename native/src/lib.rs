@@ -28,6 +28,10 @@ mod watcher_tests;
 
 // Core exports from various modules
 pub use application::analyzer::{analyze_classes, build_distribution, collect_class_counts};
+pub use application::animate_utils::{
+    animation_cache_key, keyframes_cache_key, normalize_iterations, normalize_number,
+    split_animate_classes, stable_keyframes_entries,
+};
 pub use application::ast_extract::ast_extract_classes;
 pub use application::atomic::{
     atomic_registry_size, clear_atomic_registry, generate_atomic_css, parse_atomic_class,
@@ -38,12 +42,19 @@ pub use application::cache_resolver::{
     reverse_lookup_find_dependents, reverse_lookup_from_css,
 };
 pub use application::cascade_resolver::resolve_cascade;
-pub use application::impact_analysis::{calculate_impact, calculate_risk, calculate_savings};
 pub use application::css_analysis::{
-    analyze_route_class_distribution, calculate_bundle_contributions, detect_dead_code,
-    parse_css_to_rules,
+    analyze_route_class_distribution, calculate_bundle_contributions, calculate_impact_scores,
+    detect_dead_code, parse_css_to_rules,
 };
-pub use application::engine::create_fingerprint;
+pub use application::engine::{
+    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
+};
+pub use application::hashing::{hash_content, scan_file_native, scan_files_batch};
+pub use application::impact_analysis::{calculate_impact, calculate_risk, calculate_savings};
+pub use application::impact_scorer::{
+    compute_impact_metadata, generate_suggestions, is_critical_class,
+    calculate_risk as scorer_calculate_risk, calculate_savings as scorer_calculate_savings,
+};
 pub use application::insights::{
     diff_class_lists, extract_component_usage, normalize_and_dedup_classes,
 };
@@ -52,8 +63,8 @@ pub use application::optimization::{
     merge_css_declarations,
 };
 pub use application::scanner::{
-    batch_extract_classes, check_against_safelist, extract_classes_from_source, scan_file,
-    scan_workspace,
+    batch_extract_classes, check_against_safelist, extract_classes_from_source,
+    generate_sub_component_types, scan_file, scan_workspace,
 };
 
 // Domain exports

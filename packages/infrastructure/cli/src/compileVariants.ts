@@ -18,6 +18,7 @@ import path from "node:path"
 import { glob } from "node:fs/promises"
 import { createCliOutput } from "./utils/output"
 import { createCliLogger } from "./utils/logger"
+import { getNativeBridge } from "@tailwind-styled/compiler/internal"
 import pc from "picocolors"
 
 interface CvConfig {
@@ -271,7 +272,24 @@ export async function runCompileVariantsCli(rawArgs: string[]): Promise<void> {
   let totalCombinations = 0
 
   for (const config of allConfigs) {
-    const table = compileVariantTableJS(config)
+    let table: VariantTableResult
+
+    // ── Native path: Rust cartesian product (10–100x faster for large configs)
+    const native = getNativeBridge()
+    if (native?.compileVariantTable) {
+      const result = native.compileVariantTable(JSON.stringify(config))
+      table = {
+        id: result.id,
+        tableJson: result.tableJson,
+        keys: result.keys,
+        defaultKey: result.defaultKey,
+        combinations: result.combinations,
+      }
+    } else {
+      // ── JS fallback
+      table = compileVariantTableJS(config)
+    }
+
     tables.push(table)
     totalCombinations += table.combinations
     logger.ok(`${config.componentId} — ${table.combinations} kombinasi`)

@@ -283,3 +283,87 @@ export const CompiledThemeSchema = z.object({
 })
 
 export type CompiledTheme = z.infer<typeof CompiledThemeSchema>
+// ============================================
+// Native ID Registry — wraps Rust id_registry_*
+// Falls back to pure-JS IdGenerator when native not available
+// ============================================
+
+type NativeIdRegistry = {
+  idRegistryCreate: () => number
+  idRegistryGenerate: (handle: number, name: string) => number
+  idRegistryLookup: (handle: number, name: string) => number
+  idRegistryReset: (handle: number) => void
+  idRegistryDestroy: (handle: number) => void
+  idRegistryNext: (handle: number) => number
+  idRegistrySnapshot: (handle: number) => string
+}
+
+let _nativeRegistry: NativeIdRegistry | null | undefined = undefined
+
+function getNativeRegistry(): NativeIdRegistry | null {
+  if (_nativeRegistry !== undefined) return _nativeRegistry
+  try {
+    if (typeof require === "function") {
+      const candidates = [
+        "../../native/tailwind_styled_parser.node",
+        "../native/tailwind_styled_parser.node",
+      ]
+      for (const c of candidates) {
+        try {
+          const mod = require(c) as Record<string, unknown>
+          if (typeof mod?.idRegistryCreate === "function") {
+            return (_nativeRegistry = mod as unknown as NativeIdRegistry)
+          }
+        } catch { /* continue */ }
+      }
+    }
+  } catch { /* ignore */ }
+  return (_nativeRegistry = null)
+}
+
+export class NativeIdGenerator {
+  private handle: number
+  private native: NativeIdRegistry
+
+  constructor(native: NativeIdRegistry) {
+    this.native = native
+    this.handle = native.idRegistryCreate()
+  }
+
+  generate(name: string): number {
+    return this.native.idRegistryGenerate(this.handle, name)
+  }
+
+  lookup(name: string): number {
+    return this.native.idRegistryLookup(this.handle, name)
+  }
+
+  get nextId(): number {
+    return this.native.idRegistryNext(this.handle)
+  }
+
+  reset(): void {
+    this.native.idRegistryReset(this.handle)
+  }
+
+  snapshot(): Record<string, number> {
+    return JSON.parse(this.native.idRegistrySnapshot(this.handle)) as Record<string, number>
+  }
+
+  destroy(): void {
+    this.native.idRegistryDestroy(this.handle)
+  }
+}
+
+/**
+ * Create an ID generator — native Rust atomic counter when available,
+ * JS IdGenerator object as fallback.
+ *
+ * Native: O(1) atomic fetch_add, zero GC pressure.
+ * JS fallback: plain object field increment.
+ */
+export function createIdGeneratorNative(): NativeIdGenerator | IdGenerator {
+  const native = getNativeRegistry()
+  if (native) return new NativeIdGenerator(native)
+  return createIdGenerator()
+}

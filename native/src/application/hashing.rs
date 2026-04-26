@@ -10,8 +10,7 @@
 //!   Sekarang satu call: Rust baca + extract + hash sekaligus.
 
 use napi_derive::napi;
-use napi::bindgen_prelude::*;
-use once_cell::sync::Lazy;
+
 use serde::{Deserialize, Serialize};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -136,7 +135,7 @@ pub fn scan_file_native(file_path: String) -> Option<NativeScanFileResult> {
     };
 
     let hash = md5_hex(&source, None);
-    let classes = extract_classes_from_source(&source);
+    let classes = extract_classes_from_source(source.clone());
 
     // Dedup preserving order (same as JS `Array.from(new Set(...))`)
     let mut seen = std::collections::HashSet::new();
@@ -169,7 +168,7 @@ pub fn scan_files_batch(file_paths: Vec<String>) -> Vec<NativeScanFileResult> {
             match std::fs::read_to_string(path) {
                 Ok(source) => {
                     let hash = md5_hex(&source, None);
-                    let classes = extract_classes_from_source(&source);
+                    let classes = extract_classes_from_source(source.clone());
                     let mut seen = std::collections::HashSet::new();
                     let unique: Vec<String> = classes
                         .into_iter()
