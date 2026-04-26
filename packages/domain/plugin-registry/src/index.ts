@@ -3,6 +3,35 @@ import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
+// ── Native bridge (lazy-loaded to avoid circular deps) ──────────────────────
+type NativePluginRegistry = {
+  pluginSearch: (pluginsJson: string, query: string) => string
+  pluginValidateName: (name: string) => boolean
+  pluginVerifyIntegrity: (content: string, expectedIntegrity: string) => boolean
+  pluginSemverHasUpdate: (current: string, latest: string) => boolean
+  pluginCheckAllUpdates: (installedJson: string, registryJson: string) => string
+}
+let _native: NativePluginRegistry | null | undefined = undefined
+function getNative(): NativePluginRegistry | null {
+  if (_native !== undefined) return _native
+  try {
+    const candidates = [
+      "../../native/tailwind_styled_parser.node",
+      "../native/tailwind_styled_parser.node",
+    ]
+    for (const c of candidates) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const mod = require(c) as Record<string, unknown>
+        if (typeof mod?.pluginSearch === "function") {
+          return (_native = mod as unknown as NativePluginRegistry)
+        }
+      } catch { /* continue */ }
+    }
+  } catch { /* ignore */ }
+  return (_native = null)
+}
+
 const PLUGIN_NAME_REGEX = /^(@[a-z0-9-]+\/)?[a-z0-9-]+(@[0-9]+\.[0-9]+\.[0-9]+)?$/
 
 export interface PluginInfo {
@@ -135,16 +164,17 @@ export class PluginRegistry {
   }
 
   search(query: string): PluginInfo[] {
+    const native = getNative()
+    if (native) {
+      return JSON.parse(native.pluginSearch(JSON.stringify(this.plugins), query)) as PluginInfo[]
+    }
     const q = query.trim().toLowerCase()
     if (!q) return [...this.plugins]
-
-    return this.plugins.filter((plugin) => {
-      return (
-        plugin.name.toLowerCase().includes(q) ||
-        plugin.description.toLowerCase().includes(q) ||
-        plugin.tags.some((tag) => tag.toLowerCase().includes(q))
-      )
-    })
+    return this.plugins.filter((plugin) =>
+      plugin.name.toLowerCase().includes(q) ||
+      plugin.description.toLowerCase().includes(q) ||
+      plugin.tags.some((tag) => tag.toLowerCase().includes(q))
+    )
   }
 
   getAll(): PluginInfo[] {
@@ -159,7 +189,12 @@ export class PluginRegistry {
   install(pluginName: string, options: InstallOptions = {}): InstallResult {
     const npmBin = options.npmBin ?? process.env.TW_PLUGIN_NPM_BIN ?? "npm"
 
-    if (!PLUGIN_NAME_REGEX.test(pluginName)) {
+    const native = getNative()
+    const isValidName = native
+      ? native.pluginValidateName(pluginName)
+      : PLUGIN_NAME_REGEX.test(pluginName)
+
+    if (!isValidName) {
       throw new PluginRegistryError({
         code: "INVALID_PLUGIN_NAME",
         message: `Nama plugin tidak valid: '${pluginName}'.`,
@@ -276,10 +311,14 @@ export class PluginRegistry {
       const pkgPath = join(process.cwd(), "node_modules", pluginName, "package.json")
       if (!existsSync(pkgPath)) return { ok: false, reason: "plugin not installed" }
       const content = readFileSync(pkgPath, "utf8")
-      const hash = `sha256-${createHash("sha256").update(content).digest("base64")}`
-      return hash === plugin.integrity
-        ? { ok: true }
-        : { ok: false, reason: `Integrity mismatch: expected ${plugin.integrity}` }
+      const native = getNative()
+      const ok = native
+        ? native.pluginVerifyIntegrity(content, plugin.integrity!)
+        : (() => {
+            const hash = `sha256-${createHash("sha256").update(content).digest("base64")}`
+            return hash === plugin.integrity
+          })()
+      return ok ? { ok: true } : { ok: false, reason: `Integrity mismatch: expected ${plugin.integrity}` }
     } catch (e: unknown) {
       return {
         ok: false,
@@ -301,15 +340,16 @@ export class PluginRegistry {
       if (!existsSync(pkgPath)) return { hasUpdate: false, error: "plugin not installed" }
       const current = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "0.0.0"
       const latest = plugin.version
-      const parseV = (v: string) =>
-        v
-          .replace(/[^0-9.]/g, "")
-          .split(".")
-          .map(Number)
-      const [ca, cb, cc] = parseV(current)
-      const [la, lb, lc] = parseV(latest)
-      const hasUpdate = la > ca || (la === ca && lb > cb) || (la === ca && lb === cb && lc > cc)
-      return { hasUpdate, current, latest }
+      const native = getNative()
+      const hasUpdate = native
+        ? native.pluginSemverHasUpdate(current as string, latest)
+        : (() => {
+            const parseV = (v: string) => v.replace(/[^0-9.]/g, "").split(".").map(Number)
+            const [ca, cb, cc] = parseV(current as string)
+            const [la, lb, lc] = parseV(latest)
+            return la > ca || (la === ca && lb > cb) || (la === ca && lb === cb && lc > cc)
+          })()
+      return { hasUpdate, current: current as string, latest }
     } catch (e: unknown) {
       return {
         hasUpdate: false,

@@ -13,5 +13,6 @@ pub mod impact_analysis;
 pub mod impact_scorer;
 pub mod insights;
 pub mod optimization;
+pub mod plugin_registry;
 pub mod scanner;
 pub mod services;

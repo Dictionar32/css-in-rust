@@ -15,11 +15,47 @@
 
 import fs from "node:fs"
 import path from "node:path"
-import { glob } from "node:fs/promises"
 import { createCliOutput } from "./utils/output"
 import { createCliLogger } from "./utils/logger"
 import { getNativeBridge } from "@tailwind-styled/compiler/internal"
 import pc from "picocolors"
+
+async function* globFiles(
+  cwd: string,
+  exts: string[],
+  ignore: string[]
+): AsyncIterable<string> {
+  function walk(dir: string): string[] {
+    const results: string[] = []
+    let entries: fs.Dirent[]
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return results }
+    for (const e of entries) {
+      const fullPath = path.join(dir, e.name)
+      const rel = path.relative(cwd, fullPath)
+      if (ignore.some((i) => rel.includes(i) || e.name.includes(i))) continue
+      if (e.isDirectory()) results.push(...walk(fullPath))
+      else if (exts.some((x) => e.name.endsWith(x))) results.push(fullPath)
+    }
+    return results
+  }
+  for (const f of walk(cwd)) yield f
+}
+
+/** Recursive file walker — replaces glob dependency */
+function walkFiles(dir: string, exts: string[], ignore: string[]): string[] {
+  const results: string[] = []
+  const entries = fs.readdirSync(dir, { withFileTypes: true })
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+    if (ignore.some((i) => entry.name.includes(i))) continue
+    if (entry.isDirectory()) {
+      results.push(...walkFiles(fullPath, exts, ignore))
+    } else if (exts.some((ext) => entry.name.endsWith(ext))) {
+      results.push(fullPath)
+    }
+  }
+  return results
+}
 
 interface CvConfig {
   componentId: string
@@ -214,11 +250,7 @@ export async function runCompileVariantsCli(rawArgs: string[]): Promise<void> {
   let fileCount = 0
 
   try {
-    for await (const file of glob("**/*.{tsx,ts,jsx,js}", {
-      cwd,
-      exclude: (f) => ignores.some((i) => f.includes(i)),
-    })) {
-      const fullPath = path.join(cwd, file)
+    for await (const fullPath of globFiles(cwd, extensions, ignores)) {
       try {
         const source = fs.readFileSync(fullPath, "utf-8")
         if (!source.includes("cv(")) continue
@@ -233,26 +265,7 @@ export async function runCompileVariantsCli(rawArgs: string[]): Promise<void> {
       }
     }
   } catch {
-    // glob fallback — Node.js < 22
-    const { execSync } = await import("node:child_process")
-    const files = execSync(`find . -name "*.tsx" -o -name "*.ts" | grep -v node_modules | grep -v .next`, {
-      cwd,
-      encoding: "utf-8",
-    }).trim().split("\n").filter(Boolean)
-
-    for (const file of files) {
-      try {
-        const source = fs.readFileSync(path.join(cwd, file), "utf-8")
-        if (!source.includes("cv(")) continue
-        const configs = extractCvConfigs(source, file)
-        if (configs.length > 0) {
-          allConfigs.push(...configs)
-          fileCount++
-        }
-      } catch {
-        // skip
-      }
-    }
+    // ignore walk errors
   }
 
   spinner.stop(`Scanned — ${fileCount} files dengan cv()`)
