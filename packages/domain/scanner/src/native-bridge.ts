@@ -81,6 +81,13 @@ interface NativeScannerBinding {
   scanCachePut?: (filePath: string, contentHash: string, classes: string[], mtimeMs: number, size: number) => void
   scanCacheInvalidate?: (filePath: string) => void
   scanCacheStats?: () => { size: number }
+  scanFile?: (filePath: string) => {
+    file: string
+    classes: string[]
+    hash: string
+    ok: boolean
+    error?: string | null
+  }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -341,4 +348,17 @@ export function scanCacheStats(): { size: number } {
     throw new Error("FATAL: Native binding 'scanCacheStats' is required but not available.")
   }
   return binding.scanCacheStats() as { size: number }
+}
+export function scanFileNative(filePath: string): {
+  file: string
+  classes: string[]
+  hash: string
+  ok: boolean
+  error?: string | null
+} {
+  const binding = scannerGetBinding()
+  if (!binding.scanFile) {
+    throw new Error("FATAL: Native binding 'scanFile' is required but not available.")
+  }
+  return binding.scanFile(filePath)
 }

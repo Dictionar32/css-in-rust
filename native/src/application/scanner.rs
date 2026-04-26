@@ -550,3 +550,84 @@ fn generate_dts(names: &[String]) -> String {
         union_type = union_type,
     )
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// scan_file — atomic file read + class extraction + hash in one native call
+//
+// Replaces JS pattern:
+//   const source = fs.readFileSync(filePath, "utf8")   ← JS I/O
+//   const hash = hashContentNative(source)              ← Rust
+//   const classes = scanSource(source)                  ← Rust
+//
+// Now: single native call, zero JS file I/O.
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[napi(object)]
+pub struct ScanFileResult {
+    pub file: String,
+    pub classes: Vec<String>,
+    pub hash: String,
+    pub ok: bool,
+    pub error: Option<String>,
+}
+
+/// Read a file and extract Tailwind classes + content hash in one native call.
+///
+/// JS equivalent:
+///   const source = fs.readFileSync(filePath, "utf8")
+///   const hash = hashContentNative(source)
+///   return { file: filePath, classes: scanSource(source), hash }
+///
+/// Eliminates the JS file read round-trip.
+#[napi]
+pub fn scan_file(file_path: String) -> ScanFileResult {
+    let content = match std::fs::read_to_string(&file_path) {
+        Ok(c) => c,
+        Err(e) => {
+            return ScanFileResult {
+                file: file_path,
+                classes: vec![],
+                hash: String::new(),
+                ok: false,
+                error: Some(e.to_string()),
+            }
+        }
+    };
+
+    let hash = short_hash(&content);
+    let classes = extract_tw_classes_from_source(&content);
+
+    ScanFileResult {
+        file: file_path,
+        classes,
+        hash,
+        ok: true,
+        error: None,
+    }
+}
+
+#[cfg(test)]
+mod scan_file_tests {
+    use super::*;
+    use std::io::Write;
+
+    #[test]
+    fn test_scan_file_not_found() {
+        let result = scan_file("/nonexistent/path/file.tsx".to_string());
+        assert!(!result.ok);
+        assert!(result.error.is_some());
+        assert!(result.classes.is_empty());
+    }
+
+    #[test]
+    fn test_scan_file_ok() {
+        let mut tmpfile = tempfile::NamedTempFile::new().unwrap();
+        writeln!(tmpfile, r#"<div className="p-4 flex text-lg">hello</div>"#).unwrap();
+        let path = tmpfile.path().to_string_lossy().to_string();
+
+        let result = scan_file(path);
+        assert!(result.ok);
+        assert!(!result.hash.is_empty());
+        assert!(result.classes.contains(&"p-4".to_string()));
+        assert!(result.classes.contains(&"flex".to_string()));
+    }
+}

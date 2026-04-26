@@ -18,7 +18,11 @@ export interface AtomicRule {
   modifier?: string
 }
 
-function getNative() {
+type AtomicNativeBridge = Required<Pick<ReturnType<typeof getNativeBridge>,
+  "parseAtomicClass" | "generateAtomicCss" | "toAtomicClasses" | "clearAtomicRegistry" | "atomicRegistrySize"
+>>
+
+function getNative(): AtomicNativeBridge {
   const native = getNativeBridge()
   if (
     !native?.parseAtomicClass ||
@@ -30,7 +34,7 @@ function getNative() {
       "Build the native Rust module: npm run build:rust"
     )
   }
-  return native
+  return native as AtomicNativeBridge
 }
 
 /**

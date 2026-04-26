@@ -12,10 +12,14 @@ import {
   CascadeResolver,
   parseCssToIr,
   trace,
+  type VariantTrace,
+  type RuleTrace,
+  type ConflictTrace,
+  type FinalStyleProperty,
 } from "@tailwind-styled/engine/internal"
 import { scanWorkspace } from "@tailwind-styled/scanner"
 import { TwError, wrapUnknownError } from "@tailwind-styled/shared"
-import type { SourceLocation } from "@tailwind-styled/engine/internal"
+import type { TraceResult as EngineTraceResult } from "@tailwind-styled/engine/internal"
 
 export interface TraceResult {
   class: string
@@ -126,42 +130,45 @@ export async function traceClass(className: string, options?: TraceOptions): Pro
   const engineResult = trace(className, resolver)
 
   // Convert engine types to plain TraceResult
-  return {
+  const result: EngineTraceResult = {
     class: safeToString(engineResult.class),
     definedAt: {
       file: safeToString(engineResult.definedAt.file),
       line: Number(engineResult.definedAt.line) || 0,
       column: Number(engineResult.definedAt.column) || 0,
     },
-    variants: engineResult.variants.map((v) => ({
+    variants: engineResult.variants.map((v: VariantTrace) => ({
       name: safeToString(v.name),
       value: safeToString(v.value),
       source: {
-        file: safeToString((v.source as SourceLocation)?.file ?? ""),
-        line: Number((v.source as SourceLocation)?.line ?? 0),
+        file: safeToString(v.source?.file ?? ""),
+        line: Number(v.source?.line ?? 0),
+        column: Number(v.source?.column ?? 0),
       },
     })),
-    rules: engineResult.rules.map((r) => ({
+    rules: engineResult.rules.map((r: RuleTrace) => ({
       property: safeToString(r.property),
       value: safeToString(r.value),
       applied: Boolean(r.applied),
       reason: r.reason ? safeToString(r.reason) : null,
       source: {
-        file: safeToString((r.source as SourceLocation)?.file ?? ""),
-        line: Number((r.source as SourceLocation)?.line ?? 0),
+        file: safeToString(r.source?.file ?? ""),
+        line: Number(r.source?.line ?? 0),
+        column: Number(r.source?.column ?? 0),
       },
       specificity: Number(r.specificity ?? 0),
     })),
-    conflicts: engineResult.conflicts.map((c) => ({
+    conflicts: engineResult.conflicts.map((c: ConflictTrace) => ({
       property: safeToString(c.property),
       winner: safeToString(c.winner),
       loser: safeToString(c.loser),
       stage: safeToString(c.stage),
       causes: (c.causes ?? []).map(safeToString),
     })),
-    finalStyle: engineResult.finalStyle.map((f) => ({
+    finalStyle: engineResult.finalStyle.map((f: FinalStyleProperty) => ({
       property: safeToString(f.property),
       value: safeToString(f.value),
     })),
   }
+  return result as unknown as TraceResult
 }

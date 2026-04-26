@@ -52,7 +52,8 @@ pub use application::optimization::{
     merge_css_declarations,
 };
 pub use application::scanner::{
-    batch_extract_classes, check_against_safelist, extract_classes_from_source, scan_workspace,
+    batch_extract_classes, check_against_safelist, extract_classes_from_source, scan_file,
+    scan_workspace,
 };
 
 // Domain exports
