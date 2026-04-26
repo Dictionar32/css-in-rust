@@ -1,3 +1,13 @@
+/**
+ * tailwind-styled-v4 — CSS → IR converter
+ *
+ * Native handles: CSS parsing, class extraction, variant splitting, specificity.
+ * JS handles: ID generation, layer detection, RuleIR assembly.
+ *
+ * Removed from JS: parseSelector, calculateSpecificity
+ * (native parseCssRules already returns className/variants/specificity).
+ */
+
 import { getNativeEngineBinding } from "./native-bridge"
 import {
   ConditionId,
@@ -20,26 +30,9 @@ export interface ParseCssToIrOptions {
   prefix?: string
 }
 
-interface ParsedSelector {
-  className: string
-  variants: string[]
-  pseudoClasses: string[]
-  mediaQuery: string | null
-}
-
-interface ParsedRule {
-  selector: ParsedSelector
-  property: string
-  value: string
-  important: boolean
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// ID Generator - Factory Pattern (no let!)
-// ─────────────────────────────────────────────────────────────────────────
-// ID Generator — Factory Pattern (isolated state, no race condition)
-// Setiap call ke parseCssToIr() membuat instance fresh via createIdGenerator()
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ID Generator — Factory Pattern
+// ─────────────────────────────────────────────────────────────────────────────
 
 function createIdGenerator() {
   const state = {
@@ -79,7 +72,6 @@ function createIdGenerator() {
   }
 }
 
-// Module-level singleton untuk backward compat (single-threaded use cases)
 const _defaultIdGen = createIdGenerator()
 const generateRuleId = (): RuleId => _defaultIdGen.generateRuleId()
 const generateSelectorId = (): SelectorId => _defaultIdGen.generateSelectorId()
@@ -89,6 +81,10 @@ const generateLayerId = (): LayerId => _defaultIdGen.generateLayerId()
 const generateConditionId = (): ConditionId => _defaultIdGen.generateConditionId()
 const getNextInsertionOrder = (): number => _defaultIdGen.getNextInsertionOrder()
 const resetIdGenerator = (): void => _defaultIdGen.reset()
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Layer detection (JS — simple string check, not hot path)
+// ─────────────────────────────────────────────────────────────────────────────
 
 const layerMap: Map<string, LayerId> = new Map()
 const layerOrderMap: Map<string, number> = new Map()
@@ -100,117 +96,64 @@ const LAYER_ORDER: Record<string, number> = {
   tailwind: 3,
 }
 
-function getOrCreateLayerId(layerName: string): LayerId | null {
+function getOrCreateLayerId(layerName: string): LayerId {
   const existing = layerMap.get(layerName)
   if (existing) return existing
 
-  const order = LAYER_ORDER[layerName] ?? 4
   const layerId = generateLayerId()
   layerMap.set(layerName, layerId)
-  layerOrderMap.set(layerName, order)
+  layerOrderMap.set(layerName, LAYER_ORDER[layerName] ?? 4)
   return layerId
 }
 
-function calculateSpecificity(selector: ParsedSelector): number {
-  const classCount = selector.className.split(":").length * 10
-  const pseudoCount = selector.pseudoClasses.length * 10
-  const mediaCount = selector.mediaQuery ? 1000 : 0
-  return classCount + pseudoCount + mediaCount
-}
-
-function parseSelector(selectorText: string): ParsedSelector {
-  const mediaMatch = selectorText.match(/^@media[^{]+\{(.+)$/)
-  const mediaQuery = mediaMatch ? mediaMatch[0] : null
-  const baseClassRaw = mediaMatch ? mediaMatch[1].trim() : selectorText
-  const baseClassNoDot = baseClassRaw.startsWith(".") ? baseClassRaw.slice(1) : baseClassRaw
-  const escapedColon = /\\:/g
-  const baseClassClean = baseClassNoDot.replace(escapedColon, "\x00")
-  // biome-ignore lint/suspicious/noControlCharactersInRegex: null byte used as temporary placeholder
-  const baseClass = baseClassClean.split(":")[0].replace(/\x00/g, ":")
-
-  const parts = baseClassClean.split(":")
-  const variants: string[] = []
-  const pseudoClasses: string[] = []
-
-  const variantRegex =
-    /^(hover|focus|active|visited|checked|disabled|required|optional|first|last|odd|even|before|after|placeholder|file|selection|backdrop|group|peer)/i
-  const pseudoRegex = /^:([a-zA-Z-]+)$/
-
-  for (const [index, part] of parts.entries()) {
-    if (index === 0) continue
-    if (variantRegex.test(part)) {
-      variants.push(part)
-    } else if (pseudoRegex.test(`:${part}`)) {
-      pseudoClasses.push(`:${part}`)
-    } else {
-      variants.push(part)
-    }
-  }
-
-  return { className: baseClass, variants, pseudoClasses, mediaQuery }
-}
-
-function parseRules(css: string): ParsedRule[] {
-  const native = getNativeEngineBinding()
-  if (!native?.parseCssRules) {
-    throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
-  }
-
-  const raw = native.parseCssRules(css)
-  return raw.map((r) => ({
-    selector: parseSelector(`.${r.className}`),
-    property: r.property,
-    value: r.value,
-    important: r.isImportant,
-  }))
-}
-
-function detectLayerFromSelector(className: string): string | null {
-  const layerPrefixes = ["tw-", "tailwind-"]
-
-  for (const prefix of layerPrefixes) {
-    if (className.startsWith(prefix)) {
-      return "tailwind"
-    }
-  }
-
+function detectLayerFromClassName(className: string): string | null {
+  if (className.startsWith("tw-") || className.startsWith("tailwind-")) return "tailwind"
   return null
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// parseCssToIr — native parse + JS IR assembly
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function parseCssToIr(
   css: string,
   options: ParseCssToIrOptions = {}
 ): { rules: RuleIR[]; classToRuleIds: Map<string, RuleId[]> } {
   resetIdGenerator()
-
   layerMap.clear()
   layerOrderMap.clear()
 
+  const native = getNativeEngineBinding()
+  if (!native?.parseCssRules) {
+    throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
+  }
+
   const prefix = options.prefix ?? ""
   const rules: RuleIR[] = []
-  const classToRuleIds: Map<string, RuleId[]> = new Map()
+  const classToRuleIds = new Map<string, RuleId[]>()
 
-  const parsedRules = parseRules(css)
+  // Native returns: { className, property, value, isImportant, variants, specificity }
+  const parsed = native.parseCssRules(css)
 
-  for (const parsedRule of parsedRules) {
-    const className = prefix + parsedRule.selector.className
-    const specificity = calculateSpecificity(parsedRule.selector)
+  for (const r of parsed) {
+    const className = prefix + r.className
+    const hasVariants = r.variants.length > 0
 
-    const layerName = detectLayerFromSelector(className)
+    const layerName = detectLayerFromClassName(className)
     const layer = layerName ? getOrCreateLayerId(layerName) : null
     const layerOrder = layerName ? (layerOrderMap.get(layerName) ?? 4) : 4
 
     const selectorId = generateSelectorId()
-    const propertyId = generatePropertyId(parsedRule.property)
-    const valueId = generateValueId(parsedRule.value)
+    const propertyId = generatePropertyId(r.property)
+    const valueId = generateValueId(r.value)
 
-    const hasMediaQuery = parsedRule.selector.mediaQuery
-    const conditionId = hasMediaQuery ? generateConditionId() : null
-    const conditionResult = hasMediaQuery ? ConditionResult.Unknown : ConditionResult.Unknown
-
-    const fingerprint = createFingerprint([className, parsedRule.property, parsedRule.value])
+    // Media query variants produce an unknown condition
+    const hasMedia = r.variants.some((v) => v.startsWith("@") || v === "dark" || v === "print")
+    const conditionId = hasMedia ? generateConditionId() : null
+    const conditionResult = hasMedia ? ConditionResult.Unknown : ConditionResult.Unknown
 
     const ruleId = generateRuleId()
+    const fingerprint = createFingerprint([className, r.property, r.value])
 
     const rule: RuleIR = {
       id: ruleId,
@@ -219,26 +162,22 @@ export function parseCssToIr(
       property: propertyId,
       value: valueId,
       origin: Origin.AuthorNormal,
-      importance: parsedRule.important ? Importance.Important : Importance.Normal,
+      importance: r.isImportant ? Importance.Important : Importance.Normal,
       layer,
       layerOrder,
-      specificity,
+      specificity: r.specificity, // from native — no JS recalculation
       condition: conditionId,
       conditionResult,
       insertionOrder: getNextInsertionOrder(),
       fingerprint,
-      source: {
-        file: "",
-        line: 1,
-        column: 1,
-      },
+      source: { file: "", line: 1, column: 1 },
     }
 
     rules.push(rule)
 
-    const existingRuleIds = classToRuleIds.get(className) || []
-    existingRuleIds.push(ruleId)
-    classToRuleIds.set(className, existingRuleIds)
+    const existing = classToRuleIds.get(className) ?? []
+    existing.push(ruleId)
+    classToRuleIds.set(className, existing)
   }
 
   return { rules, classToRuleIds }

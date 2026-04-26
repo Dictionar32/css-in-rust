@@ -202,21 +202,7 @@ export function createFingerprint(parts: string[]): string {
   return Math.abs(hash).toString(36)
 }
 
-export function compareCascadeOrder(a: RuleIR, b: RuleIR): number {
-  if (a.origin !== b.origin) {
-    return a.origin - b.origin
-  }
-  if (a.layerOrder !== b.layerOrder) {
-    return a.layerOrder - b.layerOrder
-  }
-  if (a.importance !== b.importance) {
-    return b.importance - a.importance
-  }
-  if (a.specificity !== b.specificity) {
-    return b.specificity - a.specificity
-  }
-  return a.insertionOrder - b.insertionOrder
-}
+// compareCascadeOrder removed — cascade sort is now handled by Rust resolve_cascade().
 
 export function createResolutionReason(
   causes: ResolutionCause[],

@@ -55,11 +55,6 @@ export function metricsToPrometheus(
   lines.push(`tw_output_class_count ${metrics.output.classCount}`)
 
   lines.push("")
-  lines.push("# HELP tw_fallback_total Total fallback events")
-  lines.push("# TYPE tw_fallback_total counter")
-  lines.push(`tw_fallback_total ${stats.totalFallbacks}`)
-
-  lines.push("")
   lines.push("# HELP tw_build_duration_avg_ms Average build duration")
   lines.push("# TYPE tw_build_duration_avg_ms gauge")
   lines.push(`tw_build_duration_avg_ms ${stats.avgDuration.toFixed(2)}`)

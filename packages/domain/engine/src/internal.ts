@@ -23,7 +23,6 @@ export {
   ConditionId,
   type ConditionIR,
   ConditionResult,
-  compareCascadeOrder,
   createFingerprint,
   createResolutionReason,
   type FinalComputedStyleIR,

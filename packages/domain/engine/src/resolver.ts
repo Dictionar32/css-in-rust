@@ -1,304 +1,249 @@
+/**
+ * tailwind-styled-v4 — Cascade Resolver
+ *
+ * JS layer: state management (rule collection, class registration).
+ * Rust layer: cascade algorithm (sort, compare, resolve winner/loser).
+ *
+ * Moved to native: compareCascade, resolveProperty, buildResolutionReason,
+ * determineCascadeStage — all pure computation, zero browser API.
+ *
+ * Rust #[napi] fn: resolve_cascade(rules_json: String) -> String
+ */
+
 import {
   CascadeResolutionId,
   type CascadeResolutionIR,
-  CascadeStage,
-  ConditionResult,
   type PropertyBucketIR,
   type PropertyId,
   type ResolutionCause,
-  type ResolutionReason,
   type RuleId,
   type RuleIR,
   type StyleGraphIR,
 } from "./ir"
+import { getNativeEngineBinding } from "./native-bridge"
 
-// ─────────────────────────────────────────────────────────────────────────
-// ID Generator - Factory Pattern (no let!)
-// ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Types for native resolve_cascade I/O
+// ─────────────────────────────────────────────────────────────────────────────
 
-const resolutionIdState = {
-  counter: 0,
+interface NativeRuleInput {
+  id: number
+  property: number
+  origin: number
+  importance: number
+  layerOrder: number
+  specificity: number
+  conditionResult: number
+  insertionOrder: number
 }
 
-const generateResolutionId = (): CascadeResolutionId => {
-  const id = new CascadeResolutionId(resolutionIdState.counter++)
-  return id
+interface NativeCascadeResolution {
+  id: number
+  propertyId: number
+  winnerId: number
+  loserIds: number[]
+  stage: number
+  finalDecision: string
+  causes: ResolutionCause[]
 }
 
-const _resetResolutionIdGenerator = (): void => {
-  resolutionIdState.counter = 0
+interface NativeCascadeResult {
+  resolutions: NativeCascadeResolution[]
 }
 
-export function compareCascade(a: RuleIR, b: RuleIR): number {
-  const originDiff = b.origin - a.origin
-  if (originDiff !== 0) return originDiff
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const layerDiff = b.layerOrder - a.layerOrder
-  if (layerDiff !== 0) return layerDiff
-
-  const importanceDiff = b.importance - a.importance
-  if (importanceDiff !== 0) return importanceDiff
-
-  const specificityDiff = b.specificity - a.specificity
-  if (specificityDiff !== 0) return specificityDiff
-
-  return b.insertionOrder - a.insertionOrder
-}
-
-export function buildResolutionReason(winner: RuleIR, loser: RuleIR): ResolutionReason {
-  const causes: ResolutionCause[] = []
-
-  if (winner.origin !== loser.origin) {
-    causes.push({
-      type: "LowerOrigin",
-      winnerOrigin: winner.origin,
-      loserOrigin: loser.origin,
-    })
-  }
-
-  if (winner.layerOrder !== loser.layerOrder) {
-    causes.push({
-      type: "LowerLayer",
-      winnerLayer: winner.layer?.toString() ?? "none",
-      loserLayer: loser.layer?.toString() ?? "none",
-    })
-  }
-
-  if (winner.importance !== loser.importance) {
-    causes.push({ type: "LowerImportance" })
-  }
-
-  if (winner.specificity !== loser.specificity) {
-    causes.push({
-      type: "LowerSpecificity",
-      delta: winner.specificity - loser.specificity,
-    })
-  }
-
-  if (winner.insertionOrder !== loser.insertionOrder) {
-    causes.push({
-      type: "EarlierOrder",
-      delta: winner.insertionOrder - loser.insertionOrder,
-    })
-  }
-
-  if (winner.conditionResult === ConditionResult.Inactive) {
-    causes.push({ type: "InactiveCondition", condition: "..." })
-  }
-
-  const finalDecision = causes
-    .map((c) => {
-      switch (c.type) {
-        case "LowerOrigin":
-          return `lower origin (${c.loserOrigin} < ${c.winnerOrigin})`
-        case "LowerLayer":
-          return `lower layer (${c.loserLayer} < ${c.winnerLayer})`
-        case "LowerImportance":
-          return "lower importance"
-        case "LowerSpecificity":
-          return `lower specificity (${c.delta})`
-        case "EarlierOrder":
-          return `earlier order (${c.delta})`
-        case "InactiveCondition":
-          return "inactive condition"
-      }
-    })
-    .join(", ")
-
-  return { causes, finalDecision }
-}
-
-export function determineCascadeStage(winner: RuleIR, loser: RuleIR | undefined): CascadeStage {
-  if (!loser) return CascadeStage.Order
-
-  if (winner.origin !== loser.origin) return CascadeStage.Origin
-  if (winner.layerOrder !== loser.layerOrder) return CascadeStage.Layer
-  if (winner.importance !== loser.importance) return CascadeStage.Importance
-  if (winner.specificity !== loser.specificity) return CascadeStage.Specificity
-  return CascadeStage.Order
-}
-
-export function resolveProperty(rules: RuleIR[]): CascadeResolutionIR {
-  const activeRules = rules.filter((r) => r.conditionResult !== ConditionResult.Inactive)
-
-  if (activeRules.length === 0) {
-    throw new Error("No active rules for property")
-  }
-
-  activeRules.sort(compareCascade)
-
-  const winner = activeRules[0]
-  const losers = activeRules.slice(1)
-
-  const _resolutionReasons = losers.map((loser) => ({
-    loser,
-    reason: buildResolutionReason(winner, loser),
-  }))
-
-  const stage = determineCascadeStage(winner, losers[0])
-
+function toNativeInput(rule: RuleIR): NativeRuleInput {
   return {
-    id: generateResolutionId(),
-    property: winner.property,
-    winner: winner.id,
-    losers: losers.map((r) => r.id),
-    reason: buildResolutionReason(winner, losers[0]),
-    stage,
+    id: rule.id.value,
+    property: rule.property.value,
+    origin: rule.origin,
+    importance: rule.importance,
+    layerOrder: rule.layerOrder,
+    specificity: rule.specificity,
+    conditionResult: rule.conditionResult,
+    insertionOrder: rule.insertionOrder,
   }
 }
 
-// biome-ignore lint: kept for documentation
-interface RuleWithProperty {
-  rule: RuleIR
-  propertyId: PropertyId
+function callResolveCascade(rules: RuleIR[]): NativeCascadeResult {
+  const native = getNativeEngineBinding()
+  if (!native.resolveCascade) {
+    throw new Error(
+      "FATAL: Native binding 'resolveCascade' is required but not available.\n" +
+      "This function requires native Rust bindings.\n\n" +
+      "Resolution steps:\n" +
+      "1. Build the native Rust module: npm run build:rust"
+    )
+  }
+  const json = JSON.stringify(rules.map(toNativeInput))
+  return JSON.parse(native.resolveCascade(json)) as NativeCascadeResult
 }
+
+function buildResolutionsMap(
+  nativeResult: NativeCascadeResult,
+  rules: RuleIR[],
+  styleGraph: StyleGraphIR
+): Map<PropertyId, CascadeResolutionIR> {
+  // Build propertyValue → PropertyId instance lookup
+  const propertyIdMap = new Map<number, PropertyId>()
+  for (const rule of rules) {
+    if (!propertyIdMap.has(rule.property.value)) {
+      propertyIdMap.set(rule.property.value, rule.property)
+    }
+  }
+
+  const resolvedProperties = new Map<PropertyId, CascadeResolutionIR>()
+
+  for (const res of nativeResult.resolutions) {
+    const propertyId = propertyIdMap.get(res.propertyId)
+    if (!propertyId) continue
+
+    const winner: RuleId = { value: res.winnerId }
+    const losers: RuleId[] = res.loserIds.map((v) => ({ value: v }))
+
+    // Update style graph
+    const existing = styleGraph.ruleConflicts.get(winner) ?? []
+    styleGraph.ruleConflicts.set(winner, [...existing, ...losers.filter((l) => !existing.some((e) => e.value === l.value))])
+
+    resolvedProperties.set(propertyId, {
+      id: new CascadeResolutionId(res.id),
+      property: propertyId,
+      winner,
+      losers,
+      reason: { causes: res.causes, finalDecision: res.finalDecision },
+      stage: res.stage,
+    })
+  }
+
+  return resolvedProperties
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CascadeResolver — JS state manager, Rust resolver
+// ─────────────────────────────────────────────────────────────────────────────
 
 export class CascadeResolver {
-  private propertyBuckets: Map<PropertyId, PropertyBucketIR> = new Map()
-  private rules: Map<RuleId, RuleIR> = new Map()
-  private styleGraph: StyleGraphIR = {
-    ruleConflicts: new Map(),
-  }
-  private resolutions: Map<number, CascadeResolutionIR> = new Map()
-  private classRules: Map<string, RuleId[]> = new Map()
+  private readonly rules: Map<RuleId, RuleIR> = new Map()
+  private readonly classRules: Map<string, RuleId[]> = new Map()
+  private readonly styleGraph: StyleGraphIR = { ruleConflicts: new Map() }
 
   addRule(rule: RuleIR): void {
     this.rules.set(rule.id, rule)
-    const property = rule.property
-    const existingBucket = this.propertyBuckets.get(property)
-
-    if (!existingBucket) {
-      this.propertyBuckets.set(property, {
-        property,
-        rules: [rule.id],
-      })
-    } else {
-      this.propertyBuckets.set(property, {
-        ...existingBucket,
-        rules: [...existingBucket.rules, rule.id],
-      })
-    }
   }
 
   addRules(rules: RuleIR[]): void {
-    for (const rule of rules) {
-      this.addRule(rule)
-    }
-  }
-
-  resolveProperty(property: PropertyId): CascadeResolutionIR | null {
-    const bucket = this.propertyBuckets.get(property)
-    if (!bucket || bucket.rules.length === 0) {
-      return null
-    }
-
-    const rules = bucket.rules
-      .map((id) => this.rules.get(id))
-      .filter((r): r is RuleIR => r !== undefined)
-
-    if (rules.length === 0) {
-      return null
-    }
-
-    const resolution = resolveProperty(rules)
-    this.resolutions.set(resolution.id.value, resolution)
-
-    this.addConflictEdge(resolution.winner, resolution.losers)
-
-    return resolution
-  }
-
-  resolveAllProperties(): Map<PropertyId, CascadeResolutionIR> {
-    const resolutions = new Map<PropertyId, CascadeResolutionIR>()
-
-    for (const [property, _bucket] of this.propertyBuckets) {
-      const resolution = this.resolveProperty(property)
-      if (resolution) {
-        resolutions.set(property, resolution)
-      }
-    }
-
-    return resolutions
-  }
-
-  resolveForClass(classRuleIds: RuleId[]): Map<PropertyId, CascadeResolutionIR> {
-    const classRules: RuleIR[] = []
-
-    for (const ruleId of classRuleIds) {
-      const rule = this.rules.get(ruleId)
-      if (rule) {
-        classRules.push(rule)
-      }
-    }
-
-    const propertyMap = new Map<PropertyId, RuleIR[]>()
-
-    for (const rule of classRules) {
-      const existing = propertyMap.get(rule.property) || []
-      existing.push(rule)
-      propertyMap.set(rule.property, existing)
-    }
-
-    const resolutions = new Map<PropertyId, CascadeResolutionIR>()
-
-    for (const [property, rules] of propertyMap) {
-      if (rules.length > 0) {
-        const resolution = resolveProperty(rules)
-        this.resolutions.set(resolution.id.value, resolution)
-        resolutions.set(property, resolution)
-        this.addConflictEdge(resolution.winner, resolution.losers)
-      }
-    }
-
-    return resolutions
-  }
-
-  getStyleGraph(): StyleGraphIR {
-    return this.styleGraph
-  }
-
-  getRule(ruleId: RuleId): RuleIR | undefined {
-    return this.rules.get(ruleId)
-  }
-
-  getBucket(property: PropertyId): PropertyBucketIR | undefined {
-    return this.propertyBuckets.get(property)
-  }
-
-  getAllBuckets(): Map<PropertyId, PropertyBucketIR> {
-    return this.propertyBuckets
-  }
-
-  getResolution(id: CascadeResolutionId): CascadeResolutionIR | undefined {
-    return this.resolutions.get(id.value)
+    for (const rule of rules) this.addRule(rule)
   }
 
   registerClass(className: string, ruleIds: RuleId[]): void {
     this.classRules.set(className, ruleIds)
   }
 
+  getRule(ruleId: RuleId): RuleIR | undefined {
+    return this.rules.get(ruleId)
+  }
+
   getClassRules(className: string): RuleId[] | undefined {
     return this.classRules.get(className)
   }
 
+  getStyleGraph(): StyleGraphIR {
+    return this.styleGraph
+  }
+
+  /**
+   * Resolve cascade for a specific class.
+   * Delegates sort + winner selection to Rust.
+   */
   resolveByClassName(
     className: string
   ): { resolvedProperties: Map<PropertyId, CascadeResolutionIR> } | null {
     const ruleIds = this.classRules.get(className)
-    if (!ruleIds) {
-      return null
-    }
+    if (!ruleIds || ruleIds.length === 0) return null
 
-    const resolutions = this.resolveForClass(ruleIds)
-    return { resolvedProperties: resolutions }
+    const classRules = ruleIds
+      .map((id) => this.rules.get(id))
+      .filter((r): r is RuleIR => r !== undefined)
+
+    if (classRules.length === 0) return null
+
+    const nativeResult = callResolveCascade(classRules)
+    return { resolvedProperties: buildResolutionsMap(nativeResult, classRules, this.styleGraph) }
   }
 
-  private addConflictEdge(winner: RuleId, losers: readonly RuleId[]): void {
-    for (const loser of losers) {
-      const existing = this.styleGraph.ruleConflicts.get(winner) || []
-      if (!existing.includes(loser)) {
-        this.styleGraph.ruleConflicts.set(winner, [...existing, loser])
+  /**
+   * Resolve cascade for all rules.
+   * Delegates sort + winner selection to Rust.
+   */
+  resolveAllProperties(): Map<PropertyId, CascadeResolutionIR> {
+    const allRules = Array.from(this.rules.values())
+    if (allRules.length === 0) return new Map()
+
+    const nativeResult = callResolveCascade(allRules)
+    return buildResolutionsMap(nativeResult, allRules, this.styleGraph)
+  }
+
+  /**
+   * Resolve cascade for a specific set of rule IDs.
+   */
+  resolveForClass(classRuleIds: RuleId[]): Map<PropertyId, CascadeResolutionIR> {
+    const classRules = classRuleIds
+      .map((id) => this.rules.get(id))
+      .filter((r): r is RuleIR => r !== undefined)
+
+    if (classRules.length === 0) return new Map()
+
+    const nativeResult = callResolveCascade(classRules)
+    return buildResolutionsMap(nativeResult, classRules, this.styleGraph)
+  }
+
+  /**
+   * Resolve cascade for a single property bucket.
+   */
+  resolveProperty(property: PropertyId): CascadeResolutionIR | null {
+    const bucketRuleIds = Array.from(this.rules.values())
+      .filter((r) => r.property.value === property.value)
+
+    if (bucketRuleIds.length === 0) return null
+
+    const nativeResult = callResolveCascade(bucketRuleIds)
+    const resolved = buildResolutionsMap(nativeResult, bucketRuleIds, this.styleGraph)
+    return resolved.get(property) ?? null
+  }
+
+  // ── Legacy accessors (kept for API compatibility) ─────────────────────────
+
+  getBucket(property: PropertyId): PropertyBucketIR | undefined {
+    const rules = Array.from(this.rules.values())
+      .filter((r) => r.property.value === property.value)
+    if (rules.length === 0) return undefined
+    return { property, rules: rules.map((r) => r.id) }
+  }
+
+  getAllBuckets(): Map<PropertyId, PropertyBucketIR> {
+    const buckets = new Map<PropertyId, PropertyBucketIR>()
+    const propertyIdMap = new Map<number, PropertyId>()
+
+    for (const rule of this.rules.values()) {
+      if (!propertyIdMap.has(rule.property.value)) {
+        propertyIdMap.set(rule.property.value, rule.property)
       }
     }
+
+    for (const [, propertyId] of propertyIdMap) {
+      const rules = Array.from(this.rules.values())
+        .filter((r) => r.property.value === propertyId.value)
+      buckets.set(propertyId, { property: propertyId, rules: rules.map((r) => r.id) })
+    }
+
+    return buckets
+  }
+
+  getResolution(_id: CascadeResolutionId): CascadeResolutionIR | undefined {
+    // Resolutions are not cached — re-resolve on demand
+    return undefined
   }
 }

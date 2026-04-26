@@ -29,6 +29,7 @@ mod watcher_tests;
 // Core exports from various modules
 pub use application::analyzer::analyze_classes;
 pub use application::ast_extract::ast_extract_classes;
+pub use application::cascade_resolver::resolve_cascade;
 pub use application::css_analysis::{
     analyze_route_class_distribution, calculate_bundle_contributions, detect_dead_code,
     parse_css_to_rules,

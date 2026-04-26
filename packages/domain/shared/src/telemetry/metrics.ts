@@ -58,14 +58,12 @@ export interface AggregatedStats {
   readonly avgCacheHitRate: number
   readonly avgCssSize: number
   readonly avgClassCount: number
-  readonly totalFallbacks: number
 }
 
 export interface HealthEventMetrics {
   readonly totalHealthy: number
   readonly totalDegraded: number
   readonly totalUnhealthy: number
-  readonly totalFallbacks: number
   readonly totalRecoveries: number
   readonly lastHealthyTime?: number
   readonly lastUnhealthyTime?: number
@@ -97,7 +95,7 @@ export interface StageContext {
 }
 
 export interface TelemetryEvent {
-  readonly type: "build_start" | "build_end" | "stage_start" | "stage_end" | "health_change" | "fallback" | "error"
+  readonly type: "build_start" | "build_end" | "stage_start" | "stage_end" | "health_change" | "error"
   readonly timestamp: number
   readonly data: Record<string, unknown>
 }

@@ -1,5 +1,6 @@
 pub mod analyzer;
 pub mod ast_extract;
+pub mod cascade_resolver;
 pub mod css_analysis;
 pub mod engine;
 pub mod insights;

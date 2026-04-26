@@ -89,6 +89,21 @@ interface NativeEngineBinding {
   analyzeRouteClassDistribution?: (routeFilesJson: string, scanResultJson: string) => Array<{
     route: string; classes: string[]; exclusiveClasses: string[]; classCount: number
   }>
+  /**
+   * Resolve CSS cascade for a set of rules — pure Rust computation.
+   *
+   * Rust #[napi] signature:
+   *   pub fn resolve_cascade(rules_json: String) -> String
+   *
+   * Input JSON: Array<{ id: number, property: number, origin: number,
+   *   importance: number, layerOrder: number, specificity: number,
+   *   conditionResult: number, insertionOrder: number }>
+   *
+   * Output JSON: { resolutions: Array<{ id: number, propertyId: number,
+   *   winnerId: number, loserIds: number[], stage: number,
+   *   finalDecision: string, causes: Array<{ type: string, [key: string]: unknown }> }> }
+   */
+  resolveCascade?: (rulesJson: string) => string
 }
 
 const isValidEngineBinding = (module: unknown): module is NativeEngineBinding => {
