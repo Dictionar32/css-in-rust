@@ -72,4 +72,10 @@ export interface NativeAnimateBinding {
     unknownClasses: string[]
     sizeBytes: number
   } | null
+  /**
+   * Split a class list string into individual class tokens.
+   * Menggantikan `splitClasses()` di `registry.ts`.
+   * Native: `split_whitespace()` tanpa RegExp overhead.
+   */
+  splitAnimateClasses?: (classList: string) => string[]
 }

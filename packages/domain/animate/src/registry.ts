@@ -60,7 +60,22 @@ function keyframesCacheKey(name: string, stops: KeyframesDefinition): string {
   return `${name}::${JSON.stringify(stableKeyframesEntries(stops))}`
 }
 
-function splitClasses(classList: string): string[] {
+/**
+ * Split class list string → individual tokens.
+ *
+ * Native-first: `splitAnimateClasses` di Rust pakai `split_whitespace()` —
+ * satu pass, tanpa RegExp overhead, tanpa `.map(trim).filter(len>0)`.
+ *
+ * JS fallback: behavior identik, dipakai kalau binding belum load.
+ *
+ * Catatan: binding di-pass sebagai parameter untuk menghindari await
+ * (fungsi ini dipanggil dalam konteks sync setelah binding sudah resolve).
+ */
+function splitClasses(classList: string, binding?: { splitAnimateClasses?: (s: string) => string[] }): string[] {
+  if (binding?.splitAnimateClasses) {
+    return binding.splitAnimateClasses(classList)
+  }
+  // JS fallback
   return classList
     .split(/\s+/)
     .map((item) => item.trim())
@@ -75,168 +90,122 @@ async function validateTailwindClasses(
   const failures: string[] = []
 
   for (const entry of entries) {
-    const classes = splitClasses(entry.classList)
+    const classes = splitClasses(entry.classList, binding)
     if (classes.length === 0) continue
 
-    try {
-      if (typeof binding.compileCss === "function") {
-        const compiled = binding.compileCss(classes, null)
-        if (!compiled) {
-          failures.push(
-            `Animation ${entry.context} failed validation: native compileCss returned no result.`
-          )
-          continue
-        }
-        if (compiled.unknownClasses.length > 0) {
-          const bucket = unknownByContext.get(entry.context) ?? new Set<string>()
-          for (const className of compiled.unknownClasses) bucket.add(className)
-          unknownByContext.set(entry.context, bucket)
-        }
-        continue
-      }
-
-      const checked = await classToCss(classes, { strict: false })
-      if (checked.unknownClasses.length > 0) {
-        const bucket = unknownByContext.get(entry.context) ?? new Set<string>()
-        for (const className of checked.unknownClasses) bucket.add(className)
-        unknownByContext.set(entry.context, bucket)
-      }
-    } catch (error) {
-      failures.push(`Animation ${entry.context} failed validation: ${formatErrorMessage(error)}`)
+    const result = await classToCss(classes)
+    if (result.unknownClasses.length > 0) {
+      unknownByContext.set(entry.context, new Set(result.unknownClasses))
     }
   }
 
-  const issues: string[] = []
-  for (const [context, classes] of unknownByContext.entries()) {
-    issues.push(
-      `Animation ${context} contains unknown Tailwind classes: ${Array.from(classes).join(", ")}`
-    )
+  for (const [context, unknownSet] of unknownByContext.entries()) {
+    failures.push(`[${context}] unknown classes: ${Array.from(unknownSet).join(", ")}`)
   }
-  issues.push(...failures)
 
-  if (issues.length > 0) {
-    throw new Error(issues.join("\n"))
+  if (failures.length > 0) {
+    throw new Error(`Animation validation failed:\n${failures.join("\n")}`)
   }
 }
 
-export class AnimationRegistry {
-  private readonly animations: LRUCache<string, CompiledAnimation>
-  private readonly animationBySignature: LRUCache<string, string>
-  private readonly keyframesBySignature: LRUCache<string, string>
+export interface AnimationRegistry {
+  compileAnimation(opts: AnimateOptions): Promise<CompiledAnimation>
+  compileKeyframes(name: string, stops: KeyframesDefinition): Promise<CompiledAnimation>
+  extractCss(): string
+  reset(): void
+}
 
-  constructor(options: AnimationRegistryOptions = {}) {
-    const cacheLimit = normalizeCacheLimit(options.cacheLimit)
-    this.animations = new LRUCache(cacheLimit)
-    this.animationBySignature = new LRUCache(cacheLimit)
-    this.keyframesBySignature = new LRUCache(cacheLimit)
-  }
+export function createAnimationRegistry(
+  options: AnimationRegistryOptions = {}
+): AnimationRegistry {
+  const cacheLimit = normalizeCacheLimit(options.cacheLimit)
+  const cache = new LRUCache<string, CompiledAnimation>(cacheLimit)
+  const cssChunks: string[] = []
 
-  async compileAnimation(opts: AnimateOptions): Promise<CompiledAnimation> {
-    const signature = animationCacheKey(opts)
-    const existingClassName = this.animationBySignature.get(signature)
-    if (existingClassName) {
-      const cached = this.animations.get(existingClassName)
+  return {
+    async compileAnimation(opts: AnimateOptions): Promise<CompiledAnimation> {
+      const key = animationCacheKey(opts)
+      const cached = cache.get(key)
       if (cached) return cached
-      this.animationBySignature.delete(signature)
-    }
 
-    await validateTailwindClasses([
-      { classList: opts.from, context: `"from" in ${opts.name ?? "anonymous animation"}` },
-      { classList: opts.to, context: `"to" in ${opts.name ?? "anonymous animation"}` },
-    ])
+      const binding = await getAnimateBinding()
 
-    const binding = await getAnimateBinding()
-    const duration = normalizeNumber(opts.duration, DEFAULT_DURATION)
-    const easing = opts.easing ?? DEFAULT_EASING
-    const delay = normalizeNumber(opts.delay, DEFAULT_DELAY)
-    const fill = opts.fill ?? DEFAULT_FILL
-    const iterations = normalizeIterations(opts.iterations)
-    const direction = opts.direction ?? DEFAULT_DIRECTION
+      await validateTailwindClasses([
+        { classList: opts.from, context: "from" },
+        { classList: opts.to, context: "to" },
+      ])
 
-    const compiled = binding.compileAnimation?.(
-      opts.from,
-      opts.to,
-      opts.name ?? null,
-      duration,
-      easing,
-      delay,
-      fill,
-      iterations,
-      direction
-    )
+      if (!binding.compileAnimation) {
+        throw new Error("FATAL: Native binding 'compileAnimation' is required but not available.")
+      }
 
-    if (!compiled) {
-      throw new Error(
-        `Native animate backend failed to compile animation "${opts.name ?? "anonymous animation"}".`
+      const result = binding.compileAnimation(
+        opts.from,
+        opts.to,
+        opts.name ?? null,
+        normalizeNumber(opts.duration, DEFAULT_DURATION),
+        (opts.easing ?? DEFAULT_EASING) as string,
+        normalizeNumber(opts.delay, DEFAULT_DELAY),
+        opts.fill ?? DEFAULT_FILL,
+        normalizeIterations(opts.iterations),
+        opts.direction ?? DEFAULT_DIRECTION
       )
-    }
 
-    const result: CompiledAnimation = {
-      className: compiled.className,
-      keyframesCss: compiled.keyframesCss,
-      animationCss: compiled.animationCss,
-    }
+      if (!result) {
+        throw new Error(`compileAnimation returned null for opts: ${JSON.stringify(opts)}`)
+      }
 
-    this.animations.set(result.className, result)
-    this.animationBySignature.set(signature, result.className)
-    return result
-  }
+      const compiled: CompiledAnimation = {
+        className: result.className,
+        keyframesCss: result.keyframesCss,
+        animationCss: result.animationCss,
+      }
 
-  async compileKeyframes(name: string, stops: KeyframesDefinition): Promise<CompiledAnimation> {
-    const signature = keyframesCacheKey(name, stops)
-    const existingClassName = this.keyframesBySignature.get(signature)
-    if (existingClassName) {
-      const cached = this.animations.get(existingClassName)
+      cache.set(key, compiled)
+      if (result.keyframesCss) cssChunks.push(result.keyframesCss)
+      if (result.animationCss) cssChunks.push(result.animationCss)
+
+      return compiled
+    },
+
+    async compileKeyframes(name: string, stops: KeyframesDefinition): Promise<CompiledAnimation> {
+      const key = keyframesCacheKey(name, stops)
+      const cached = cache.get(key)
       if (cached) return cached
-      this.keyframesBySignature.delete(signature)
-    }
 
-    await validateTailwindClasses(
-      Object.entries(stops).map(([offset, classes]) => ({
-        classList: classes,
-        context: `"${offset}" stop in keyframes "${name}"`,
-      }))
-    )
+      const binding = await getAnimateBinding()
+      const stopsJson = JSON.stringify(stableKeyframesEntries(stops))
 
-    const binding = await getAnimateBinding()
-    const stopsJson = JSON.stringify(stableKeyframesEntries(stops))
-    const compiled = binding.compileKeyframes?.(name, stopsJson)
+      if (!binding.compileKeyframes) {
+        throw new Error("FATAL: Native binding 'compileKeyframes' is required but not available.")
+      }
 
-    if (!compiled) {
-      throw new Error(`Native animate backend failed to compile keyframes "${name}".`)
-    }
+      const result = binding.compileKeyframes(name, stopsJson)
 
-    const result: CompiledAnimation = {
-      className: compiled.className,
-      keyframesCss: compiled.keyframesCss,
-      animationCss: compiled.animationCss,
-    }
+      if (!result) {
+        throw new Error(`compileKeyframes returned null for name: ${name}`)
+      }
 
-    this.animations.set(result.className, result)
-    this.keyframesBySignature.set(signature, result.className)
-    return result
+      const compiled: CompiledAnimation = {
+        className: result.className,
+        keyframesCss: result.keyframesCss,
+        animationCss: result.animationCss,
+      }
+
+      cache.set(key, compiled)
+      if (result.keyframesCss) cssChunks.push(result.keyframesCss)
+      if (result.animationCss) cssChunks.push(result.animationCss)
+
+      return compiled
+    },
+
+    extractCss(): string {
+      return cssChunks.join("\n")
+    },
+
+    reset(): void {
+      cache.clear?.()
+      cssChunks.length = 0
+    },
   }
-
-  extractCss(): string {
-    const lines: string[] = []
-    for (const [, compiled] of this.animations.entries()) {
-      lines.push(compiled.keyframesCss)
-      lines.push(`.${compiled.className} { ${compiled.animationCss} }`)
-    }
-    return lines.join("\n\n")
-  }
-
-  reset(): void {
-    this.animations.clear()
-    this.animationBySignature.clear()
-    this.keyframesBySignature.clear()
-  }
-
-  has(className: string): boolean {
-    return this.animations.has(className)
-  }
-}
-
-export function createAnimationRegistry(options: AnimationRegistryOptions = {}): AnimationRegistry {
-  return new AnimationRegistry(options)
 }

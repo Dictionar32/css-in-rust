@@ -251,3 +251,21 @@ export function createResolutionReason(
     finalDecision,
   }
 }
+
+/*
+/**
+ * Jumlah ID generator registry yang aktif di native layer.
+ * Dipakai untuk debugging memory leak atau registry leak di dev mode.
+ *
+ * Returns 0 jika native tidak tersedia.
+ *\/
+export function getActiveIdRegistryCount(): number {
+  const native = getNativeEngineBinding()
+  return native?.idRegistryActiveCount?.() ?? 0
+}
+*/
+
+export function getActiveIdRegistryCount(): number {
+  const native = getNativeEngineBinding()
+  return native?.idRegistryActiveCount?.() ?? 0
+}

@@ -89,6 +89,19 @@ interface NativeScannerBinding {
     error?: string | null
   }
   collectFiles?: (root: string, extensions: string[] | null, ignoreDirs: string[] | null) => string[]
+  scanFilesBatch?: (filePaths: string[]) => Array<{
+    file: string
+    classes: string[]
+    hash: string
+  }>
+  generateSubComponentTypes?: (
+    root: string,
+    outputPath: string | null
+  ) => {
+    components: Array<{ name: string; classes: string[] }>
+    outputPath: string | null
+    totalFiles: number
+  }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -377,4 +390,66 @@ export function collectFilesNative(
   const binding = scannerGetBinding()
   if (!binding.collectFiles) return null
   return binding.collectFiles(root, extensions, ignoreDirs)
+}
+/**
+ * Batch scan + hash banyak file sekaligus dalam satu NAPI call.
+ *
+ * Menggantikan loop `scanFileNative()` per file di worker thread.
+ * Rust: `par_iter()` via rayon — semua file diproses paralel di thread pool Rust,
+ * tanpa overhead spawn JS worker untuk setiap chunk.
+ *
+ * Kapan pakai ini vs `batchExtractClassesNative`:
+ * - `scanFilesBatch`       → butuh {file, classes, hash} — scan + hash sekaligus
+ * - `batchExtractClasses`  → hanya butuh {file, classes, content_hash, ok, error}
+ *
+ * Returns: array dengan panjang sama dengan input. File yang gagal dibaca
+ * dikembalikan dengan classes:[] dan hash:"".
+ */
+export function scanFilesBatchNative(filePaths: string[]): Array<{
+  file: string
+  classes: string[]
+  hash: string
+}> {
+  const binding = scannerGetBinding()
+  if (!binding.scanFilesBatch) {
+    // Fallback: panggil scanFile satu per satu
+    return filePaths.map((fp) => {
+      try {
+        const r = binding.scanFile?.(fp)
+        return r
+          ? { file: r.file, classes: r.classes, hash: r.hash ?? "" }
+          : { file: fp, classes: [], hash: "" }
+      } catch {
+        return { file: fp, classes: [], hash: "" }
+      }
+    })
+  }
+  return binding.scanFilesBatch(filePaths)
+}
+ 
+/**
+ * Scan workspace rekursif dan generate TypeScript type declarations
+ * untuk setiap sub-component yang ditemukan.
+ *
+ * Menggantikan operasi scan manual + string codegen di JS.
+ * Rust: walkdir + regex class extraction + type codegen dalam satu pass.
+ *
+ * @param root       Direktori root workspace
+ * @param outputPath Path output file .d.ts (opsional — kalau null, hanya return result)
+ */
+export function generateSubComponentTypesNative(
+  root: string,
+  outputPath?: string
+): {
+  components: Array<{ name: string; classes: string[] }>
+  outputPath: string | null
+  totalFiles: number
+} | null {
+  const binding = scannerGetBinding()
+  if (!binding.generateSubComponentTypes) return null
+  return binding.generateSubComponentTypes(root, outputPath ?? null) as {
+    components: Array<{ name: string; classes: string[] }>
+    outputPath: string | null
+    totalFiles: number
+  }
 }

@@ -128,6 +128,29 @@ interface NativeEngineBinding {
   reverseLookupCacheSize?: () => number
   // Impact analysis (impact_analysis.rs)
   calculateImpact?: (impactJson: string) => string
+
+  isCriticalClass?: (className: string) => boolean
+  generateSuggestions?: (className: string, impactJson: string) => string[]
+  computeImpactMetadata?: (className: string, impactJson: string) => string
+  idRegistryActiveCount?: () => number
+
+/*
+  // Impact scorer granular (impact_scorer.rs)
+  // Dipakai oleh ImpactTracker sebagai alternatif calculateImpact yang lebih granular.
+  isCriticalClass?: (className: string) => boolean
+  generateSuggestions?: (className: string, impactJson: string) => string[]
+  /**
+   * Compute risk + savings + suggestions dalam satu call.
+   * Menggantikan 3 call terpisah: calculateRisk + calculateSavings + generateSuggestions.
+   * Input: {className, totalComponents, indirectUsage, bundleSizeBytes}
+   * Output JSON: {riskLevel, estimatedSavings, suggestions}
+   *\/
+  computeImpactMetadata?: (className: string, impactJson: string) => string
+ 
+  // ID Registry diagnostics (id_registry.rs)
+  idRegistryActiveCount?: () => number
+*/
+
   calculateRisk?: (className: string, totalComponents: number) => string
   calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
   // Class utilities (class_utils.rs) — menggantikan cn() di cx.ts
@@ -322,4 +345,27 @@ export function analyzeRouteClassDistribution(
     JSON.stringify(routeFiles),
     JSON.stringify(scanResult)
   ) as RouteClassMap[]
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+ 
+/*
+// ─────────────────────────────────────────────────────────────────────────────
+// ID Registry diagnostics
+// ─────────────────────────────────────────────────────────────────────────────
+ 
+/**
+ * Jumlah ID registry yang aktif saat ini.
+ * Berguna untuk diagnostics dan memory leak detection di development.
+ *
+ * @example
+ * console.log(`Active registries: ${getIdRegistryActiveCount()}`)
+ *\/
+export function getIdRegistryActiveCount(): number {
+  return getNativeEngineBinding().idRegistryActiveCount?.() ?? 0
+}
+*/
+
+export function getIdRegistryActiveCount(): number {
+  return getNativeEngineBinding().idRegistryActiveCount?.() ?? 0
 }
