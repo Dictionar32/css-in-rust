@@ -27,6 +27,7 @@
  */
 
 import type { ContainerConfig } from "./types"
+import { getNativeBinding } from "./native"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Breakpoint map — matches Tailwind defaults
@@ -132,7 +133,21 @@ const LAYOUT_MAP: Record<string, string> = {
   "justify-end": "justify-content:flex-end",
 }
 
+/**
+ * Konversi layout class string → inline CSS declarations.
+ *
+ * Native-first: Rust static lookup table (zero alloc) + split_whitespace.
+ * JS fallback: LAYOUT_MAP object lookup + split(/\s+/).
+ */
 function layoutClassesToCss(classes: string): string {
+  try {
+    const native = getNativeBinding()
+    if (native?.layoutClassesToCss) {
+      return native.layoutClassesToCss(classes)
+    }
+  } catch { /* fallback */ }
+
+  // JS fallback
   const decls: string[] = []
   for (const cls of classes.trim().split(/\s+/)) {
     if (LAYOUT_MAP[cls]) decls.push(LAYOUT_MAP[cls])
@@ -244,12 +259,32 @@ export function processContainer(
   return { containerClass: id, hasContainer: true }
 }
 
+/**
+ * Generate @container CSS rules dari breakpoint config.
+ *
+ * Native-first: Rust string building tanpa intermediate allocations.
+ * JS fallback: `buildContainerRules()` loop.
+ */
 export function generateContainerCss(
   tag: string,
   container: ContainerConfig,
   containerName?: string
 ): string {
   const id = hashContainer(tag, container, containerName)
+
+  // Native-first: pass breakpoints ke Rust — satu NAPI call generate semua rules
+  try {
+    const native = getNativeBinding()
+    if (native?.buildContainerRules) {
+      const breakpoints = Object.entries(container).map(([key, value]) => ({
+        key,
+        classes: typeof value === "string" ? value : value.classes,
+      }))
+      return native.buildContainerRules(id, breakpoints, containerName ?? null)
+    }
+  } catch { /* fallback */ }
+
+  // JS fallback
   return buildContainerRules(id, container, containerName)
 }
 

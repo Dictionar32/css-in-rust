@@ -48,6 +48,7 @@ pub use application::css_analysis::{
     normalize_class_input, declaration_map_to_string, DeclarationEntry,
 };
 pub use application::class_utils::resolve_class_names;
+pub use application::container_query::{layout_classes_to_css, build_container_rules, ContainerBreakpoint};
 pub use application::engine::{
    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
 };

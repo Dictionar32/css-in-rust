@@ -17,4 +17,5 @@ pub mod plugin_registry;
 pub mod scanner;
 pub mod incremental;
 pub mod class_utils;
+pub mod container_query;
 pub mod services;

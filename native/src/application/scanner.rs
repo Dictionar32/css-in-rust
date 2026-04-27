@@ -710,3 +710,116 @@ mod scan_file_tests {
         assert!(result.classes.contains(&"flex".to_string()));
     }
 }
+#[cfg(test)]
+mod collect_files_tests {
+    use super::*;
+    use std::fs;
+    use tempfile::TempDir;
+
+    fn make_tree(root: &TempDir, paths: &[&str]) {
+        for p in paths {
+            let full = root.path().join(p);
+            if let Some(parent) = full.parent() {
+                fs::create_dir_all(parent).unwrap();
+            }
+            fs::write(&full, "").unwrap();
+        }
+    }
+
+    #[test]
+    fn test_collect_files_basic() {
+        let dir = TempDir::new().unwrap();
+        make_tree(&dir, &["src/index.ts", "src/App.tsx", "src/styles.css"]);
+        let root = dir.path().to_string_lossy().to_string();
+
+        let result = collect_files(root, None, None);
+
+        // .css tidak termasuk default extensions
+        assert!(result.iter().any(|f| f.ends_with("index.ts")));
+        assert!(result.iter().any(|f| f.ends_with("App.tsx")));
+        assert!(!result.iter().any(|f| f.ends_with(".css")));
+    }
+
+    #[test]
+    fn test_collect_files_ignores_node_modules() {
+        let dir = TempDir::new().unwrap();
+        make_tree(&dir, &[
+            "src/index.ts",
+            "node_modules/react/index.js",
+            "node_modules/react/jsx.ts",
+        ]);
+        let root = dir.path().to_string_lossy().to_string();
+
+        let result = collect_files(root, None, None);
+
+        assert!(result.iter().any(|f| f.ends_with("index.ts")));
+        // node_modules harus diabaikan
+        assert!(!result.iter().any(|f| f.contains("node_modules")));
+    }
+
+    #[test]
+    fn test_collect_files_custom_extensions() {
+        let dir = TempDir::new().unwrap();
+        make_tree(&dir, &["styles/main.css", "styles/theme.scss", "src/app.ts"]);
+        let root = dir.path().to_string_lossy().to_string();
+
+        let result = collect_files(
+            root,
+            Some(vec![".css".to_string(), ".scss".to_string()]),
+            None,
+        );
+
+        assert!(result.iter().any(|f| f.ends_with("main.css")));
+        assert!(result.iter().any(|f| f.ends_with("theme.scss")));
+        assert!(!result.iter().any(|f| f.ends_with(".ts")));
+    }
+
+    #[test]
+    fn test_collect_files_custom_ignore_dirs() {
+        let dir = TempDir::new().unwrap();
+        make_tree(&dir, &[
+            "src/index.ts",
+            "dist/bundle.js",
+            ".next/server.ts",
+        ]);
+        let root = dir.path().to_string_lossy().to_string();
+
+        let result = collect_files(
+            root,
+            Some(vec![".ts".to_string(), ".js".to_string()]),
+            Some(vec!["dist".to_string(), ".next".to_string()]),
+        );
+
+        assert!(result.iter().any(|f| f.ends_with("index.ts")));
+        assert!(!result.iter().any(|f| f.contains("dist")));
+        assert!(!result.iter().any(|f| f.contains(".next")));
+    }
+
+    #[test]
+    fn test_collect_files_nonexistent_root() {
+        let result = collect_files("/nonexistent/path/xyz".to_string(), None, None);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_collect_files_empty_dir() {
+        let dir = TempDir::new().unwrap();
+        let root = dir.path().to_string_lossy().to_string();
+        let result = collect_files(root, None, None);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_collect_files_nested() {
+        let dir = TempDir::new().unwrap();
+        make_tree(&dir, &[
+            "a/b/c/deep.tsx",
+            "a/b/mid.ts",
+            "root.ts",
+        ]);
+        let root = dir.path().to_string_lossy().to_string();
+
+        let result = collect_files(root, None, None);
+        assert_eq!(result.len(), 3);
+    }
+}

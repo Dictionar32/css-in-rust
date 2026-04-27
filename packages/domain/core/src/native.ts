@@ -86,6 +86,14 @@ interface NativeBinding {
   resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
   /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
   resolveClassNames?: (inputs: string[]) => string
+  /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */
+  layoutClassesToCss?: (classes: string) => string
+  /** Menggantikan buildContainerRules() — generate @container CSS rules. (container_query.rs) */
+  buildContainerRules?: (
+    id: string,
+    breakpoints: Array<{ key: string; classes: string }>,
+    containerName: string | null
+  ) => string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

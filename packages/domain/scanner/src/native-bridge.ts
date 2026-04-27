@@ -102,6 +102,24 @@ interface NativeScannerBinding {
     outputPath: string | null
     totalFiles: number
   }
+  /** Batch-check file existence + stale age. Menggantikan pruneStaleEntries() */
+  pruneStaleEntries?: (
+    entries: Array<{ file: string; lastSeenMs: number }>,
+    maxAgeMs: number | null,
+    checkExists: boolean | null
+  ) => { keptIndices: number[]; removed: number }
+  /** Hitung class frequency stats dari disk cache. Menggantikan computeCacheStats() */
+  computeCacheStats?: (
+    filesClasses: string[][],
+    sizes: number[],
+    top: number | null
+  ) => {
+    totalEntries: number
+    totalClasses: number
+    totalSizeBytes: number
+    avgClassesPerEntryX100: number
+    mostUsedClasses: Array<{ class: string; count: number }>
+  }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -452,4 +470,49 @@ export function generateSubComponentTypesNative(
     outputPath: string | null
     totalFiles: number
   }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// pruneStaleEntries + computeCacheStats — native wrappers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Batch-check file existence + stale age menggunakan Rust syscalls.
+ * Returns `null` jika native tidak tersedia (JS fallback di caller).
+ *
+ * Menggantikan loop `existsSync()` di `pruneStaleEntries()` (cache-native.ts).
+ */
+export function pruneStaleEntriesNative(
+  entries: Array<{ file: string; lastSeenMs?: number }>,
+  maxAgeMs?: number,
+  checkExists?: boolean
+): { keptIndices: number[]; removed: number } | null {
+  const binding = scannerGetBinding()
+  if (!binding.pruneStaleEntries) return null
+  return binding.pruneStaleEntries(
+    entries.map((e) => ({ file: e.file, lastSeenMs: e.lastSeenMs ?? 0 })),
+    maxAgeMs ?? null,
+    checkExists ?? null
+  )
+}
+
+/**
+ * Hitung class frequency + stats dari disk cache entries menggunakan Rust.
+ * Returns `null` jika native tidak tersedia (JS fallback di caller).
+ *
+ * Menggantikan `computeCacheStats()` di `cache-native.ts`.
+ */
+export function computeCacheStatsNative(
+  filesClasses: string[][],
+  sizes: number[],
+  top?: number
+): {
+  totalEntries: number
+  totalClasses: number
+  totalSizeBytes: number
+  avgClassesPerEntryX100: number
+  mostUsedClasses: Array<{ class: string; count: number }>
+} | null {
+  const binding = scannerGetBinding()
+  if (!binding.computeCacheStats) return null
+  return binding.computeCacheStats(filesClasses, sizes, top ?? null)
 }
