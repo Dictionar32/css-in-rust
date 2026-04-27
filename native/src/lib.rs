@@ -47,6 +47,7 @@ pub use application::css_analysis::{
     detect_dead_code, parse_css_to_rules,
     normalize_class_input, declaration_map_to_string, DeclarationEntry,
 };
+pub use application::template_parser::parse_template;
 pub use application::class_utils::resolve_class_names;
 pub use application::container_query::{layout_classes_to_css, build_container_rules, ContainerBreakpoint};
 pub use application::engine::{
@@ -90,7 +91,10 @@ pub use domain::theme::*;
 pub use domain::transform::{
     has_tw_usage, is_already_transformed, normalise_classes, parse_classes,
 };
-pub use domain::variants::{resolve_simple_variants, resolve_variants};
+pub use domain::variants::{
+    resolve_simple_variants, resolve_variants,
+    validate_variant_config, build_variant_lookup_key,
+};
 
 // Infrastructure
 pub use infrastructure::cache_store::*;

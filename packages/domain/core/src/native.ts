@@ -84,6 +84,20 @@ interface NativeBinding {
   detectClassConflicts?: (classes: string) => { conflicts: Array<{ class1: string; class2: string; reason: string }>; conflictedClassNames: string[] }
   resolveVariants?: (configJson: string, propsJson: string) => { classes: string; resolvedCount: number }
   resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
+  /** Parse template literal yang sudah di-join. Menggantikan parseTemplate() di twProxy.ts */
+  parseTemplate?: (raw: string) => {
+    base: string
+    subsJson: string
+    hasSubs: boolean
+  }
+  /** Validate ComponentConfig — menggantikan validateVariantConfig() di cv.ts */
+  validateVariantConfig?: (configJson: string) => {
+    valid: boolean
+    errors: Array<{ errorType: string; key: string; value?: string; message: string }>
+    warnings: string[]
+  }
+  /** Build lookup key untuk generated registry — menggantikan key builder di lookupGenerated() */
+  buildVariantLookupKey?: (defaultVariantsJson: string, propsJson: string) => string
   /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
   resolveClassNames?: (inputs: string[]) => string
   /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */

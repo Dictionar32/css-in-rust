@@ -108,6 +108,7 @@ export function injectAnimationCss(
   styleEl.textContent = registry.extractCss()
 }
 
-export { AnimationRegistry, createAnimationRegistry } from "./registry"
+export type { AnimationRegistry } from "./registry"
+export { createAnimationRegistry } from "./registry"
 
 export const animations = createAnimationPresets(defaultRegistry)

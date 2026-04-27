@@ -146,6 +146,25 @@ export interface BucketedClass {
 }
 
 /**
+ * Generate `@container` CSS rules dari breakpoints.
+ *
+ * **Menggantikan** `buildContainerRules()` dan `generateContainerCss()`
+ * di `core/src/containerQuery.ts`.
+ *
+ * Output format identik dengan JS:
+ * ```css
+ * @container (min-width: 320px){.tw-cq-abc123{display:flex;flex-direction:column}}
+ * @container sidebar (min-width: 1024px){.tw-cq-abc123{display:grid}}
+ * ```
+ *
+ * # Arguments
+ * - `id`             — unique hash ID komponen (mis. "tw-cq-abc123")
+ * - `breakpoints`    — array {key, classes} — key bisa nama ("sm") atau raw px ("480px")
+ * - `container_name` — nama container opsional untuk `@container <name> (...)`
+ */
+export declare function buildContainerRules(id: string, breakpoints: Array<ContainerBreakpoint>, containerName?: string | undefined | null): string
+
+/**
  * Compute usage frequency distribution for a list of class usages.
  *
  * Replaces `buildDistribution(usages: ClassUsage[])` in `analyzeWorkspace.ts`.
@@ -160,6 +179,30 @@ export interface BucketedClass {
  *   frequent = count 8+
  */
 export declare function buildDistribution(usagesJson: string): ClassDistribution
+
+/**
+ * Build lookup key untuk `__generatedRegistry` — migrated dari `lookupGenerated()` di cv.ts.
+ *
+ * JS original:
+ * ```ts
+ * const key = Object.keys(merged)
+ *   .sort()
+ *   .filter((k) => k !== "className")
+ *   .map((k) => `${k}:${String(merged[k])}`)
+ *   .join("|")
+ * ```
+ *
+ * Rust version: satu allocation, zero intermediate arrays.
+ * Called setiap render jika komponen punya `componentId` — worth di-native.
+ *
+ * # Input
+ * - `default_variants_json`: JSON `Record<string, string>` dari defaultVariants
+ * - `props_json`: JSON `Record<string, string | number | boolean>` dari props
+ *
+ * # Output
+ * Key string seperti `"size:lg|variant:solid"`
+ */
+export declare function buildVariantLookupKey(defaultVariantsJson: string, propsJson: string): string
 
 export interface BundleContribution {
   className: string
@@ -193,6 +236,17 @@ export declare function cacheRead(cachePath: string): CacheReadResult
 export interface CacheReadResult {
   entries: Array<CacheEntry>
   version: number
+}
+
+/** Stats hasil komputasi disk cache. */
+export interface CacheStatsResult {
+  totalEntries: number
+  totalClasses: number
+  totalSizeBytes: number
+  /** Rata-rata jumlah class per entry (× 100 untuk 2 desimal tanpa float issue). */
+  avgClassesPerEntryX100: number
+  /** Top-10 class paling sering muncul lintas file. */
+  mostUsedClasses: Array<ClassFrequency>
 }
 
 /**
@@ -319,6 +373,11 @@ export interface ClassExtractResult {
   hasTwUsage: boolean
   hasUseClient: boolean
   imports: Array<string>
+}
+
+export interface ClassFrequency {
+  class: string
+  count: number
 }
 
 /**
@@ -470,6 +529,23 @@ export interface ComponentPropUsage {
 }
 
 /**
+ * Hitung stats dari disk cache entries — class frequency count + top-10 sort.
+ *
+ * **Menggantikan** `computeCacheStats()` di `scanner/cache-native.ts`.
+ *
+ * JS: `new Map<string,number>()` + manual count loop + `.sort()` + `.slice(0,10)`.
+ *     Untuk 5000 entries × 30 classes = 150,000 Map.set() calls di V8.
+ * Rust: `HashMap::with_capacity` + direct count + partial_sort via select_nth_unstable.
+ *       ~3× lebih cepat untuk workspace besar, tanpa GC pressure.
+ *
+ * # Arguments
+ * - `files_classes` — array per-file class lists (parallel ke `entries`)
+ * - `sizes`         — array size bytes per entry (harus sama panjang)
+ * - `top`           — berapa top classes yang dikembalikan (default 10)
+ */
+export declare function computeCacheStats(filesClasses: Array<Array<string>>, sizes: Array<number>, top?: number | undefined | null): CacheStatsResult
+
+/**
  * Compute full risk + suggestions in a single native call — avoids double JSON
  * serialization when called from `calculateImpact()` in JS.
  *
@@ -490,6 +566,14 @@ export declare function computeIncrementalDiff(previousJson: string, currentJson
 export interface ConflictDetectionResult {
   conflicts: Array<ClassConflict>
   conflictedClassNames: Array<string>
+}
+
+/** Satu breakpoint entry untuk `build_container_rules`. */
+export interface ContainerBreakpoint {
+  /** Key breakpoint (mis. "sm", "lg") atau raw minWidth (mis. "480px") */
+  key: string
+  /** Class string untuk breakpoint ini (mis. "flex-col text-sm") */
+  classes: string
 }
 
 /**
@@ -860,6 +944,27 @@ export interface KnownClassResult {
 }
 
 /**
+ * Konversi layout class string menjadi inline CSS declaration string.
+ *
+ * **Menggantikan** `layoutClassesToCss()` di `core/src/containerQuery.ts`.
+ *
+ * Handles:
+ * - Named layout classes (`flex`, `grid-cols-3`, dll) via static lookup
+ * - Arbitrary width: `w-[320px]` → `width:320px`
+ * - Arbitrary max-width: `max-w-[640px]` → `max-width:640px`
+ *
+ * # Examples
+ * ```
+ * layout_classes_to_css("flex flex-col items-center")
+ * // "display:flex;flex-direction:column;align-items:center"
+ *
+ * layout_classes_to_css("w-[320px] grid-cols-3")
+ * // "width:320px;grid-template-columns:repeat(3,minmax(0,1fr))"
+ * ```
+ */
+export declare function layoutClassesToCss(classes: string): string
+
+/**
  * Parse CSS rules dan merge declarations (last-write-wins).
  *
  * Menggantikan `mergeDeclarationMap` + `declarationMapToString` di classToCss.ts.
@@ -1014,6 +1119,50 @@ export interface ParsedCssRule {
   layer?: string
 }
 
+/** Hasil parsing template literal — identik dengan `ParsedTemplate` di twProxy.ts. */
+export interface ParsedTemplateResult {
+  /** Base classes (tanpa sub-component blocks, tanpa komentar, whitespace normal) */
+  base: string
+  /**
+   * Sub-component map sebagai JSON string: `{"icon":"h-4 w-4","badge":"px-2"}`
+   * Dikirim sebagai JSON agar compatible dengan semua NAPI version.
+   */
+  subsJson: string
+  /** Ada sub-component block atau tidak */
+  hasSubs: boolean
+}
+
+/**
+ * Parse template literal yang sudah di-join menjadi satu raw string.
+ *
+ * **Menggantikan** `parseTemplate()` di `core/src/twProxy.ts`.
+ *
+ * Caller (TS) harus join `strings.raw` dengan expressions sebelum memanggil ini:
+ * ```ts
+ * const raw = strings.raw.reduce((acc, str, i) => {
+ *   const expr = exprs[i]
+ *   return acc + str + String(typeof expr === "function" ? "" : (expr ?? ""))
+ * }, "")
+ * const result = native.parseTemplate(raw)
+ * ```
+ *
+ * # Output
+ * - `base`     — class string bersih tanpa blok dan tanpa komentar
+ * - `subs_json` — JSON `Record<string, string>` sub-components
+ * - `has_subs` — shortcut untuk `Object.keys(subs).length > 0`
+ *
+ * # Examples
+ * ```
+ * parse_template("p-4 [icon] { h-4 w-4 } flex")
+ * // base: "p-4 flex", subs_json: r#"{"icon":"h-4 w-4"}"#, has_subs: true
+ *
+ * parse_template("p-4 // comment
+flex")
+ * // base: "p-4 flex", subs_json: "{}", has_subs: false
+ * ```
+ */
+export declare function parseTemplate(raw: string): ParsedTemplateResult
+
 /**
  * Batch semver update check for all installed plugins.
  *
@@ -1103,6 +1252,35 @@ export declare function processTailwindCssWithTargets(css: string, targets?: str
  * Returns `"P{id}"` jika tidak ditemukan — identik dengan JS fallback.
  */
 export declare function propertyIdToString(id: number): string
+
+/** Hasil prune — entries yang lolos + jumlah yang dihapus. */
+export interface PruneResult {
+  /**
+   * Indices (0-based) dari entries yang LOLOS (tidak stale).
+   * JS menggunakan ini untuk filter array aslinya.
+   */
+  keptIndices: Array<number>
+  /** Jumlah entries yang dihapus. */
+  removed: number
+}
+
+/**
+ * Batch-check file existence + stale age — menggantikan loop JS yang
+ * memanggil `existsSync()` satu per satu di `pruneStaleEntries()`.
+ *
+ * **Menggantikan** `pruneStaleEntries()` di `scanner/cache-native.ts`.
+ *
+ * JS: `entries.filter(e => existsSync(e.file) && ...)` — satu syscall per file,
+ *     semuanya blocking di main thread.
+ * Rust: batch metadata check via `std::fs::metadata()` — bisa diparalelkan
+ *       dengan rayon jika entries > threshold.
+ *
+ * # Arguments
+ * - `entries`      — array entries yang akan di-check
+ * - `max_age_ms`   — threshold umur `lastSeenMs` (default 7 hari = 604_800_000)
+ * - `check_exists` — jika true, hapus entries yang file-nya sudah tidak ada
+ */
+export declare function pruneStaleEntries(entries: Array<StaleCheckEntry>, maxAgeMs?: number | undefined | null, checkExists?: boolean | undefined | null): PruneResult
 
 /**
  * Output `rebuildWorkspaceResult` — identik dengan `ScanWorkspaceResult` di TS.
@@ -1359,6 +1537,12 @@ export declare function splitAnimateClasses(classList: string): Array<string>
  */
 export declare function stableKeyframesEntries(stopsJson: string): Array<KeyframeEntry>
 
+/** Entry minimal untuk stale-check — hanya field yang dibutuhkan Rust. */
+export interface StaleCheckEntry {
+  file: string
+  lastSeenMs: number
+}
+
 /**
  * Mulai watch `root_dir` secara rekursif menggunakan `notify`.
  * Events dikumpulkan di queue internal — poll dengan `poll_watch_events()`.
@@ -1434,6 +1618,22 @@ export interface UpdateCheckResult {
 }
 
 /**
+ * Validate ComponentConfig — migrated dari `validateVariantConfig()` di cv.ts.
+ *
+ * Menggantikan pure-JS validation yang melakukan 3× Object.entries loops.
+ * Rust version: satu pass per section, zero GC pressure.
+ *
+ * **Input**: JSON string dari ComponentConfig (variants, defaultVariants, compoundVariants)
+ * **Output**: VariantValidationResult dengan errors + warnings
+ *
+ * # Example TS caller
+ * ```ts
+ * const result = native.validateVariantConfig(JSON.stringify(config))
+ * ```
+ */
+export declare function validateVariantConfig(configJson: string): VariantValidationResult
+
+/**
  * Resolve ValueId ke nama yang sudah terdaftar.
  *
  * **Menggantikan** `valueIdToString(id)` di `engine/src/ir.ts`.
@@ -1466,6 +1666,22 @@ export interface VariantTableResult {
   defaultKey: string
   /** Total combinations */
   combinations: number
+}
+
+/** Satu validation error (identik struktur dengan VariantValidationError di cv.ts) */
+export interface VariantValidationError {
+  /** "unknown_key" | "unknown_value" | "missing_default" | "compound_condition_missing" */
+  errorType: string
+  key: string
+  value?: string
+  message: string
+}
+
+/** Hasil validasi config (identik dengan VariantValidationResult di cv.ts) */
+export interface VariantValidationResult {
+  valid: boolean
+  errors: Array<VariantValidationError>
+  warnings: Array<string>
 }
 
 export interface WatchChangeEvent {

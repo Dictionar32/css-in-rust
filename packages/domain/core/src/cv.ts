@@ -37,12 +37,27 @@ function lookupGenerated(
   const table = __generatedRegistry[componentId]
   if (!table) return undefined
 
-  const merged = { ...defaultVariants, ...props }
-  const key = Object.keys(merged)
-    .sort()
-    .filter((k) => k !== "className")
-    .map((k) => `${k}:${String(merged[k])}`)
-    .join("|")
+  // Native-first: build key di Rust (satu allocation, zero intermediate arrays)
+  let key: string
+  try {
+    const binding = getNativeBinding()
+    if (binding?.buildVariantLookupKey) {
+      key = binding.buildVariantLookupKey(
+        JSON.stringify(defaultVariants ?? {}),
+        JSON.stringify(props)
+      )
+    } else {
+      throw new Error("no binding")
+    }
+  } catch {
+    // JS fallback — identik dengan sebelumnya
+    const merged = { ...defaultVariants, ...props }
+    key = Object.keys(merged)
+      .sort()
+      .filter((k) => k !== "className")
+      .map((k) => `${k}:${String(merged[k])}`)
+      .join("|")
+  }
 
   return table[key]
 }
@@ -135,6 +150,41 @@ export interface VariantValidationResult {
 }
 
 export function validateVariantConfig(config: ComponentConfig): VariantValidationResult {
+  // Native-first: satu JSON round-trip vs 3× Object.entries loops di JS
+  try {
+    const binding = getNativeBinding()
+    if (binding?.validateVariantConfig) {
+      const raw = binding.validateVariantConfig(JSON.stringify({
+        variants: config.variants ?? {},
+        defaultVariants: config.defaultVariants ?? {},
+        compoundVariants: (config.compoundVariants ?? []).map((cv) => {
+          // Flatten compound variant — Rust terima flat HashMap<String, String>
+          const { class: cls, className, ...conditions } = cv as Record<string, unknown>
+          const flat: Record<string, string> = {}
+          for (const [k, v] of Object.entries(conditions)) {
+            flat[k] = String(v)
+          }
+          if (cls) flat["class"] = String(cls)
+          if (className) flat["className"] = String(className)
+          return flat
+        }),
+      }))
+      return {
+        valid: raw.valid,
+        errors: raw.errors.map((e) => ({
+          type: e.errorType as VariantValidationError["type"],
+          key: e.key,
+          value: e.value,
+          message: e.message,
+        })),
+        warnings: raw.warnings,
+      }
+    }
+  } catch {
+    // fall through to JS
+  }
+
+  // JS fallback
   const errors: VariantValidationError[] = []
   const warnings: string[] = []
   const { variants = {}, defaultVariants = {}, compoundVariants = [] } = config
