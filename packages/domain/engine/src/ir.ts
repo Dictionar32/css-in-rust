@@ -5,6 +5,8 @@ export class RuleId {
   }
 }
 
+import { getNativeEngineBinding } from "./native-bridge"
+
 export class SelectorId {
   constructor(public readonly value: number) {}
   toString() {
@@ -69,23 +71,43 @@ export class CascadeResolutionId {
 }
 
 // Registry for property and value names
-const propertyNames = new Map<number, string>()
-const valueNames = new Map<number, string>()
+// Native-first: Rust DashMap (thread-safe, lock-free) menggantikan JS Map.
+// JS Maps di sini dibuat ulang tiap kali native tidak tersedia (fallback only).
+const _propertyNamesFallback = new Map<number, string>()
+const _valueNamesFallback = new Map<number, string>()
 
 export function registerPropertyName(id: PropertyId, name: string): void {
-  propertyNames.set(id.value, name)
+  const native = getNativeEngineBinding()
+  if (native?.registerPropertyName) {
+    native.registerPropertyName(id.value, name)
+    return
+  }
+  _propertyNamesFallback.set(id.value, name)
 }
 
 export function registerValueName(id: ValueId, name: string): void {
-  valueNames.set(id.value, name)
+  const native = getNativeEngineBinding()
+  if (native?.registerValueName) {
+    native.registerValueName(id.value, name)
+    return
+  }
+  _valueNamesFallback.set(id.value, name)
 }
 
 export function propertyIdToString(id: PropertyId): string {
-  return propertyNames.get(id.value) ?? `P${id.value}`
+  const native = getNativeEngineBinding()
+  if (native?.propertyIdToString) {
+    return native.propertyIdToString(id.value)
+  }
+  return _propertyNamesFallback.get(id.value) ?? `P${id.value}`
 }
 
 export function valueIdToString(id: ValueId): string {
-  return valueNames.get(id.value) ?? `V${id.value}`
+  const native = getNativeEngineBinding()
+  if (native?.valueIdToString) {
+    return native.valueIdToString(id.value)
+  }
+  return _valueNamesFallback.get(id.value) ?? `V${id.value}`
 }
 
 export enum Origin {
@@ -194,7 +216,8 @@ export interface SourceLocation {
   column: number
 }
 
-export function createFingerprint(parts: string[]): string {
+/** @internal JS fallback — only used when native binding is unavailable */
+function createFingerprintFallback(parts: string[]): string {
   const hash = parts.reduce(
     (acc, part) => part.split("").reduce((h, char) => ((h << 5) - h + char.charCodeAt(0)) & h, acc),
     0
@@ -202,21 +225,22 @@ export function createFingerprint(parts: string[]): string {
   return Math.abs(hash).toString(36)
 }
 
-export function compareCascadeOrder(a: RuleIR, b: RuleIR): number {
-  if (a.origin !== b.origin) {
-    return a.origin - b.origin
+/**
+ * Generate a short fingerprint string from a list of ordered parts.
+ *
+ * Hot path — called on every class conflict check and IR node creation.
+ * Delegates to Rust `create_fingerprint()` (FNV-1a, base-36 output) when the
+ * native binding is available; falls back to the pure-JS djb2 variant otherwise.
+ */
+export function createFingerprint(parts: string[]): string {
+  const native = getNativeEngineBinding()
+  if (native?.createFingerprint) {
+    return native.createFingerprint(parts)
   }
-  if (a.layerOrder !== b.layerOrder) {
-    return a.layerOrder - b.layerOrder
-  }
-  if (a.importance !== b.importance) {
-    return b.importance - a.importance
-  }
-  if (a.specificity !== b.specificity) {
-    return b.specificity - a.specificity
-  }
-  return a.insertionOrder - b.insertionOrder
+  return createFingerprintFallback(parts)
 }
+
+// compareCascadeOrder removed — cascade sort is now handled by Rust resolve_cascade().
 
 export function createResolutionReason(
   causes: ResolutionCause[],
@@ -226,4 +250,22 @@ export function createResolutionReason(
     causes: [...causes],
     finalDecision,
   }
+}
+
+/*
+/**
+ * Jumlah ID generator registry yang aktif di native layer.
+ * Dipakai untuk debugging memory leak atau registry leak di dev mode.
+ *
+ * Returns 0 jika native tidak tersedia.
+ *\/
+export function getActiveIdRegistryCount(): number {
+  const native = getNativeEngineBinding()
+  return native?.idRegistryActiveCount?.() ?? 0
+}
+*/
+
+export function getActiveIdRegistryCount(): number {
+  const native = getNativeEngineBinding()
+  return native?.idRegistryActiveCount?.() ?? 0
 }

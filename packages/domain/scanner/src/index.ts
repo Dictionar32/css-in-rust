@@ -291,12 +291,17 @@ export function isScannableFile(filePath: string, includeExtensions = DEFAULT_EX
 }
 
 export function scanFile(filePath: string): ScanFileResult {
-  const source = fs.readFileSync(filePath, "utf8")
-  const hash = hashContentNative(source) ?? undefined
+  const { scanFileNative } = require("./native-bridge")
+  const result = scanFileNative(filePath) as {
+    file: string; classes: string[]; hash: string; ok: boolean; error?: string | null
+  }
+  if (!result.ok) {
+    throw new Error(`scanFile failed for ${filePath}: ${result.error ?? "unknown error"}`)
+  }
   return {
-    file: filePath,
-    classes: scanSource(source),
-    ...(hash ? { hash } : {}),
+    file: result.file,
+    classes: result.classes,
+    ...(result.hash ? { hash: result.hash } : {}),
   }
 }
 
@@ -503,3 +508,4 @@ export async function scanWorkspaceAsync(
     return scanWorkspace(rootDir, normalizedOptions)
   }
 }
+export { extractClassesNative, batchExtractClassesNative } from "./native-bridge"

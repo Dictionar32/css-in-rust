@@ -524,3 +524,60 @@ pub fn analyze_route_class_distribution(
         })
         .collect()
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// String normalization helpers — migrated from classToCss.ts
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Satu entry deklarasi CSS untuk `declaration_map_to_string`.
+#[napi(object)]
+#[derive(Serialize, Deserialize)]
+pub struct DeclarationEntry {
+    pub property: String,
+    pub value: String,
+}
+
+/// Normalisasi class input string menjadi Vec<String>.
+///
+/// **Menggantikan** `normalizeClassInput()` di `analyzer/src/classToCss.ts`.
+///
+/// Dipanggil tiap class compilation — hot path. Rust split_whitespace
+/// jauh lebih cepat dari JS split(/\s+/) karena tidak butuh RegExp engine.
+///
+/// # Examples
+/// ```
+/// normalize_class_input("bg-red-500  p-4".into())
+/// // ["bg-red-500", "p-4"]
+/// ```
+#[napi]
+pub fn normalize_class_input(input: String) -> Vec<String> {
+    input
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
+}
+
+/// Serialize ordered declaration entries menjadi inline CSS string.
+///
+/// **Menggantikan** `declarationMapToString()` di `analyzer/src/classToCss.ts`.
+///
+/// Input adalah array ordered entries — urutan dipertahankan (last-write-wins
+/// dari merge sebelumnya sudah ditangani JS side).
+///
+/// # Examples
+/// ```
+/// declaration_map_to_string(vec![
+///     DeclarationEntry { property: "color".into(), value: "red".into() },
+///     DeclarationEntry { property: "padding".into(), value: "1rem".into() },
+/// ])
+/// // "color: red; padding: 1rem"
+/// ```
+#[napi]
+pub fn declaration_map_to_string(entries: Vec<DeclarationEntry>) -> String {
+    entries
+        .iter()
+        .map(|e| format!("{}: {}", e.property, e.value))
+        .collect::<Vec<_>>()
+        .join("; ")
+}

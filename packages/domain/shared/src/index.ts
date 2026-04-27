@@ -1,61 +1,10 @@
-const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
+import { createHash } from "node:crypto"
+import fs from "node:fs"
+import path from "node:path"
+import { fileURLToPath } from "node:url"
+import { createRequire } from "node:module"
 
-// ESM-safe require detection
-let nodeModuleRef: any = null
-function getNodeModuleRef() {
-  if (isBrowser) return null
-  if (nodeModuleRef !== null) return nodeModuleRef
-  try {
-    const test = typeof require === 'function' ? require('node:module') : null
-    nodeModuleRef = test
-    return test
-  } catch {
-    nodeModuleRef = null
-    return null
-  }
-}
-
-let _nodeCrypto: any = null
-let _nodeFs: any = null
-let _nodeModule: any = null
-let _nodePath: any = null
-let _nodeUrl: any = null
-
-function getNodeCrypto() {
-  if (isBrowser) throw new Error("node:crypto not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto")
-  return _nodeCrypto!
-}
-function getNodeFs() {
-  if (isBrowser) throw new Error("node:fs not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
-  return _nodeFs!
-}
-function getNodeModule() {
-  if (isBrowser) throw new Error("node:module not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeModule) _nodeModule = nodeRequire
-  return _nodeModule!
-}
-function getNodePath() {
-  if (isBrowser) throw new Error("node:path not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
-  return _nodePath!
-}
-function getNodeUrl() {
-  if (isBrowser) throw new Error("node:url not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url")
-  return _nodeUrl!
-}
+// Native-only: Node.js is always available. No browser fallback.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -219,14 +168,8 @@ export interface LoadNativeBindingResult<T> {
 }
 
 export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): LoadNativeBindingResult<T> {
-  if (isBrowser) {
-    return { binding: null, loadErrors: [{ path: "", message: "Native bindings not available in browser" }] }
-  }
-  
   const { runtimeDir, candidates, isValid } = options
   const loadErrors: Array<{ path: string; message: string }> = []
-  const path = getNodePath()
-  const fs = getNodeFs()
 
   for (const candidate of candidates) {
     const candidatePath = path.resolve(runtimeDir, candidate)
@@ -247,17 +190,10 @@ export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): Load
   return { binding: null, loadErrors }
 }
 
-function getRequire(): NodeRequire {
-  if (isBrowser) return (() => { throw new Error("require not available in browser") }) as unknown as NodeRequire
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return (() => { throw new Error("require not available") }) as unknown as NodeRequire
-  return nodeRequire.createRequire(import.meta.url)
-}
+const _require = createRequire(import.meta.url)
 
-const _require = getRequire()
-
-function requireNativeModule(path: string): unknown {
-  return _require(path)
+function requireNativeModule(p: string): unknown {
+  return _require(p)
 }
 
 export interface ResolveCandidatesOptions {
@@ -268,21 +204,13 @@ export interface ResolveCandidatesOptions {
 }
 
 export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions): string[] {
-  if (isBrowser) return []
-  
   const { runtimeDir, envVarNames = [], includeDefaultCandidates = true, enforceNodeExtensionForEnvPath = false } = options
   const candidates: string[] = []
-  const path = getNodePath()
-  const fs = getNodeFs()
 
   for (const envVar of envVarNames) {
     const envPath = process.env[envVar]
     if (envPath) {
-      if (enforceNodeExtensionForEnvPath && !envPath.endsWith(".node")) {
-        candidates.push(envPath + ".node")
-      } else {
-        candidates.push(envPath)
-      }
+      candidates.push(enforceNodeExtensionForEnvPath && !envPath.endsWith(".node") ? envPath + ".node" : envPath)
     }
   }
 
@@ -290,19 +218,13 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
 
   if (fs.existsSync(runtimeDir)) {
     try {
-      const entries = fs.readdirSync(runtimeDir)
-      for (const entry of entries) {
-        if (entry.endsWith(".node")) {
-          candidates.push(entry)
-        }
+      for (const entry of fs.readdirSync(runtimeDir)) {
+        if (entry.endsWith(".node")) candidates.push(entry)
       }
-    } catch {
-      // ignore read errors
-    }
+    } catch { /* ignore read errors */ }
   }
 
-  const platform = typeof process !== "undefined" ? process.platform : ""
-  const ext = platform === "win32" ? ".dll" : platform === "darwin" ? ".dylib" : ".so"
+  const ext = process.platform === "win32" ? ".dll" : process.platform === "darwin" ? ".dylib" : ".so"
   const defaultBindingName = `tailwind_styled_parser${ext}`
   candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
   candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
@@ -312,11 +234,9 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
 }
 
 export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string): string {
-  if (isBrowser) return ""
-  
-  if (dir) return getNodePath().resolve(dir)
+  if (dir) return path.resolve(dir)
   try {
-    return getNodeUrl().fileURLToPath(importMetaUrl)
+    return fileURLToPath(importMetaUrl)
   } catch {
     return process.cwd()
   }
@@ -327,17 +247,7 @@ export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function hashContent(content: string, algorithm: string = "md5", length?: number): string {
-  if (isBrowser) {
-    // Simple hash fallback for browser
-    let hash = 0
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash
-    }
-    return Math.abs(hash).toString(16).slice(0, length ?? 8)
-  }
-  const hash = getNodeCrypto().createHash(algorithm).update(content).digest("hex")
+  const hash = createHash(algorithm).update(content).digest("hex")
   return length ? hash.slice(0, length) : hash
 }
 

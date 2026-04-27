@@ -3,8 +3,12 @@ import { parseClassToCssOptions, parseNativeCssCompileResult } from "./schemas"
 import type { ClassToCssOptions, ClassToCssResult } from "./types"
 import { formatErrorMessage } from "./utils"
 
-export const normalizeClassInput = (input: string | string[]): string[] => {
+export const normalizeClassInput = (input: string | string[], _binding?: { normalizeClassInput?: (s: string) => string[] }): string[] => {
+  // Native-first: untuk single string, delegate ke Rust yang lebih cepat
   if (typeof input === "string") {
+    if (_binding?.normalizeClassInput) {
+      return _binding.normalizeClassInput(input)
+    }
     return input
       .split(/\s+/)
       .map((item) => item.trim())
@@ -54,10 +58,17 @@ const mergeDeclarationMap = (
   }
 }
 
-const declarationMapToString = (declarationMap: Map<string, string>): string => {
-  return Array.from(declarationMap.entries())
-    .map(([property, value]) => `${property}: ${value}`)
-    .join("; ")
+const declarationMapToString = (
+  declarationMap: Map<string, string>,
+  binding?: { declarationMapToString?: (entries: Array<{ property: string; value: string }>) => string }
+): string => {
+  // Native-first: serialize entries via Rust (satu allocation vs JS multiple)
+  const entries = Array.from(declarationMap.entries()).map(([property, value]) => ({ property, value }))
+  if (binding?.declarationMapToString) {
+    return binding.declarationMapToString(entries)
+  }
+  // JS fallback
+  return entries.map(({ property, value }) => `${property}: ${value}`).join("; ")
 }
 
 /**
@@ -69,7 +80,8 @@ export const classToCss = async (
   input: string | string[],
   options: ClassToCssOptions = {}
 ): Promise<ClassToCssResult> => {
-  const inputClasses = normalizeClassInput(input)
+  const binding = await requireNativeCssCompiler()
+  const inputClasses = normalizeClassInput(input, binding)
   const normalizedOptions = normalizeClassToCssOptions(options)
 
   if (inputClasses.length === 0) {
@@ -83,7 +95,6 @@ export const classToCss = async (
     }
   }
 
-  const binding = await requireNativeCssCompiler()
   const prefix = normalizedOptions.prefix
 
   const results = await Promise.all(
@@ -133,7 +144,7 @@ export const classToCss = async (
   return {
     inputClasses,
     css: cssChunks.filter((chunk) => chunk.length > 0).join("\n"),
-    declarations: declarationMapToString(declarationMap),
+    declarations: declarationMapToString(declarationMap, binding),
     resolvedClasses: Array.from(new Set(resolvedClasses)),
     unknownClasses: uniqueUnknown,
     sizeBytes,

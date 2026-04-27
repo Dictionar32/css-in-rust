@@ -58,6 +58,14 @@ interface NativeEngineBinding {
   diffClassLists?: (previous: string[], current: string[]) => {
     added: string[]; removed: string[]; unchanged: string[]; hasChanges: boolean
   }
+    // Incremental helpers (incremental.rs)
+  applyClassDiff?: (existing: string[], added: string[], removed: string[]) => string[]
+  areClassSetsEqual?: (a: string[], b: string[]) => boolean
+  rebuildWorkspaceResult?: (files: Array<{ file: string; classes: string[] }>) => {
+    files: Array<{ file: string; classes: string[] }>
+    totalFiles: number
+    uniqueClasses: string[]
+  }
   // Batch 4
   parseCssToRules?: (css: string, prefix?: string | null) => Array<{
     className: string; property: string; value: string; important: boolean
@@ -79,9 +87,80 @@ interface NativeEngineBinding {
     className: string; usageScore: number; sizeScore: number
     impactScore: number; usageCount: number; sizeBytes: number
   }>
+  analyzeClassUsage?: (
+    classes: string[], scanResultJson: string, css: string
+  ) => Array<{
+    className: string; usageCount: number; filesJson: string
+    bundleSizeBytes: number; isDeadCode: boolean
+  }>
+  extractAllClasses?: (css: string) => string[]
   analyzeRouteClassDistribution?: (routeFilesJson: string, scanResultJson: string) => Array<{
     route: string; classes: string[]; exclusiveClasses: string[]; classCount: number
   }>
+  /**
+   * Resolve CSS cascade for a set of rules — pure Rust computation.
+   *
+   * Rust #[napi] signature:
+   *   pub fn resolve_cascade(rules_json: String) -> String
+   *
+   * Input JSON: Array<{ id: number, property: number, origin: number,
+   *   importance: number, layerOrder: number, specificity: number,
+   *   conditionResult: number, insertionOrder: number }>
+   *
+   * Output JSON: { resolutions: Array<{ id: number, propertyId: number,
+   *   winnerId: number, loserIds: number[], stage: number,
+   *   finalDecision: string, causes: Array<{ type: string, [key: string]: unknown }> }> }
+   */
+  resolveCascade?: (rulesJson: string) => string
+  /** FNV-1a fingerprint over ordered string parts — replaces createFingerprint() in ir.ts */
+  createFingerprint?: (parts: string[]) => string
+  /** DashMap-backed CSS reverse lookup — replaces ReverseLookup class */
+  reverseLookupFromCss?: (css: string, property: string, value: string) => Array<{
+    property: string; value: string
+    usedInClasses: Array<{ className: string; specificity: number; isOverride: boolean; variants: string[] }>
+  }>
+  reverseLookupByProperty?: (css: string, property: string) => Array<{
+    property: string; value: string
+    usedInClasses: Array<{ className: string; specificity: number; isOverride: boolean; variants: string[] }>
+  }>
+  reverseLookupFindDependents?: (css: string, className: string) => string[]
+  reverseLookupClearCache?: () => void
+  reverseLookupCacheSize?: () => number
+  // Impact analysis (impact_analysis.rs)
+  calculateImpact?: (impactJson: string) => string
+
+  isCriticalClass?: (className: string) => boolean
+  generateSuggestions?: (className: string, impactJson: string) => string[]
+  computeImpactMetadata?: (className: string, impactJson: string) => string
+  idRegistryActiveCount?: () => number
+
+/*
+  // Impact scorer granular (impact_scorer.rs)
+  // Dipakai oleh ImpactTracker sebagai alternatif calculateImpact yang lebih granular.
+  isCriticalClass?: (className: string) => boolean
+  generateSuggestions?: (className: string, impactJson: string) => string[]
+  /**
+   * Compute risk + savings + suggestions dalam satu call.
+   * Menggantikan 3 call terpisah: calculateRisk + calculateSavings + generateSuggestions.
+   * Input: {className, totalComponents, indirectUsage, bundleSizeBytes}
+   * Output JSON: {riskLevel, estimatedSavings, suggestions}
+   *\/
+  computeImpactMetadata?: (className: string, impactJson: string) => string
+ 
+  // ID Registry diagnostics (id_registry.rs)
+  idRegistryActiveCount?: () => number
+*/
+
+  calculateRisk?: (className: string, totalComponents: number) => string
+  calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
+  // Class utilities (class_utils.rs) — menggantikan cn() di cx.ts
+  resolveClassNames?: (inputs: string[]) => string
+  // Property/Value name registry (domain/model.rs) — menggantikan in-memory Maps di ir.ts
+  registerPropertyName?: (id: number, name: string) => void
+  registerValueName?: (id: number, name: string) => void
+  propertyIdToString?: (id: number) => string
+  valueIdToString?: (id: number) => string
+  clearNameRegistries?: () => void
 }
 
 const isValidEngineBinding = (module: unknown): module is NativeEngineBinding => {
@@ -229,4 +308,64 @@ export function processFileChange(
     )
   }
   return result
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Route-level CSS analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface RouteClassMap {
+  route: string
+  classes: string[]
+  exclusiveClasses: string[]
+  classCount: number
+}
+
+/**
+ * Analisis distribusi classes per route — untuk CSS code splitting.
+ *
+ * @param routeFiles - map { route: filePath[] } menentukan file mana ke route mana
+ * @param scanResult - hasil scan workspace
+ *
+ * @example
+ * const routes = analyzeRouteClassDistribution(
+ *   { "/": ["src/app/page.tsx"], "/about": ["src/app/about/page.tsx"] },
+ *   scanResult
+ * )
+ */
+export function analyzeRouteClassDistribution(
+  routeFiles: Record<string, string[]>,
+  scanResult: { files: Array<{ file: string; classes: string[] }> }
+): RouteClassMap[] {
+  const native = getNativeEngineBinding()
+  if (!native?.analyzeRouteClassDistribution) {
+    throw new Error("FATAL: Native binding 'analyzeRouteClassDistribution' is required but not available.")
+  }
+  return native.analyzeRouteClassDistribution(
+    JSON.stringify(routeFiles),
+    JSON.stringify(scanResult)
+  ) as RouteClassMap[]
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+ 
+/*
+// ─────────────────────────────────────────────────────────────────────────────
+// ID Registry diagnostics
+// ─────────────────────────────────────────────────────────────────────────────
+ 
+/**
+ * Jumlah ID registry yang aktif saat ini.
+ * Berguna untuk diagnostics dan memory leak detection di development.
+ *
+ * @example
+ * console.log(`Active registries: ${getIdRegistryActiveCount()}`)
+ *\/
+export function getIdRegistryActiveCount(): number {
+  return getNativeEngineBinding().idRegistryActiveCount?.() ?? 0
+}
+*/
+
+export function getIdRegistryActiveCount(): number {
+  return getNativeEngineBinding().idRegistryActiveCount?.() ?? 0
 }

@@ -1,3 +1,13 @@
+/**
+ * tailwind-styled-v4 — Cascade Tracer
+ *
+ * Delegates cascade resolution to CascadeResolver (Rust-backed).
+ * JS layer: format trace output only.
+ *
+ * Removed from JS: resolvePropertyTraced, compareCascadeTraced,
+ * buildResolutionReasonTraced, determineCascadeStageTraced.
+ */
+
 import {
   CascadeResolutionId,
   type CascadeResolutionIR,
@@ -62,18 +72,36 @@ export function buildProvenanceChain(className: string): ProvenanceData {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting helpers (JS-only, pure display logic)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function formatCause(c: ResolutionCause): string {
+  switch (c.type) {
+    case "LowerOrigin":      return "lower origin"
+    case "LowerLayer":       return "lower layer"
+    case "LowerImportance":  return "lower importance"
+    case "LowerSpecificity": return `specificity ${c.delta}`
+    case "EarlierOrder":     return `earlier order ${c.delta}`
+    case "InactiveCondition": return "inactive condition"
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// trace — delegates resolution to Rust via CascadeResolver
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function trace(className: string, resolver: CascadeResolver): TraceResult {
   const provenance = buildProvenanceChain(className)
 
+  // Collect all rules for this class
   const classRuleIds = resolver.getClassRules(className)
   const allRules: RuleIR[] = []
 
   if (classRuleIds) {
     for (const ruleId of classRuleIds) {
       const rule = resolver.getRule(ruleId)
-      if (rule) {
-        allRules.push(rule)
-      }
+      if (rule) allRules.push(rule)
     }
   }
 
@@ -81,48 +109,45 @@ export function trace(className: string, resolver: CascadeResolver): TraceResult
     allRules.push(...rules)
   }
 
+  // Group rules by property (for trace display)
   const rulesByProperty = new Map<string, RuleIR[]>()
   for (const rule of allRules) {
     const propKey = rule.property.toString()
-    if (!rulesByProperty.has(propKey)) {
-      rulesByProperty.set(propKey, [])
-    }
-    rulesByProperty.get(propKey)!.push(rule)
+    const bucket = rulesByProperty.get(propKey) ?? []
+    bucket.push(rule)
+    rulesByProperty.set(propKey, bucket)
   }
+
+  // Resolve via Rust (through CascadeResolver)
+  const resolved = resolver.resolveByClassName(className)
 
   const ruleTraces: RuleTrace[] = []
   const conflictTraces: ConflictTrace[] = []
 
-  for (const [property, rules] of rulesByProperty) {
-    if (rules.length === 0) continue
+  if (resolved) {
+    for (const [propId, resolution] of resolved.resolvedProperties) {
+      const property = propId.toString()
+      const rules = rulesByProperty.get(property) ?? []
 
-    const resolution = (() => {
-      try {
-        return resolvePropertyTraced(rules)
-      } catch {
-        return null
-      }
-    })()
+      const winnerRule = rules.find((r) => r.id.value === resolution.winner.value)
 
-    if (!resolution) continue
-
-    const winnerRule = rules.find((r) => r.id.value === resolution.winner.value)
-    if (winnerRule) {
-      ruleTraces.push({
-        property: property,
-        value: winnerRule.value.toString(),
-        applied: true,
-        reason: null,
-        source: winnerRule.source,
-        specificity: winnerRule.specificity,
-      })
-    }
-
-    for (const loserId of resolution.losers) {
-      const loserRule = rules.find((r) => r.id.value === loserId.value)
-      if (loserRule) {
+      if (winnerRule) {
         ruleTraces.push({
-          property: property,
+          property,
+          value: winnerRule.value.toString(),
+          applied: true,
+          reason: null,
+          source: winnerRule.source,
+          specificity: winnerRule.specificity,
+        })
+      }
+
+      for (const loserId of resolution.losers) {
+        const loserRule = rules.find((r) => r.id.value === loserId.value)
+        if (!loserRule) continue
+
+        ruleTraces.push({
+          property,
           value: loserRule.value.toString(),
           applied: false,
           reason: resolution.reason.finalDecision,
@@ -131,28 +156,25 @@ export function trace(className: string, resolver: CascadeResolver): TraceResult
         })
 
         conflictTraces.push({
-          property: property,
+          property,
           winner: winnerRule?.value.toString() ?? "",
           loser: loserRule.value.toString(),
           stage: CascadeStage[resolution.stage],
-          causes: resolution.reason.causes.map((c) => formatCause(c)),
+          causes: resolution.reason.causes.map(formatCause),
         })
       }
     }
   }
 
-  const resolved = resolveByClassNameTraced(className, resolver)
+  // Build finalStyle from resolved properties
   const finalStyle: FinalStyleProperty[] = []
-
   if (resolved) {
     for (const [propId, resolution] of resolved.resolvedProperties) {
-      if (resolution) {
-        const winnerRule = allRules.find((r) => r.id.value === resolution.winner.value)
-        finalStyle.push({
-          property: propId.toString(),
-          value: winnerRule?.value.toString() ?? "",
-        })
-      }
+      const winnerRule = allRules.find((r) => r.id.value === resolution.winner.value)
+      finalStyle.push({
+        property: propId.toString(),
+        value: winnerRule?.value.toString() ?? "",
+      })
     }
   }
 
@@ -164,127 +186,4 @@ export function trace(className: string, resolver: CascadeResolver): TraceResult
     conflicts: conflictTraces,
     finalStyle,
   }
-}
-
-function formatCause(c: ResolutionCause): string {
-  switch (c.type) {
-    case "LowerOrigin":
-      return `lower origin`
-    case "LowerLayer":
-      return `lower layer`
-    case "LowerImportance":
-      return `lower importance`
-    case "LowerSpecificity":
-      return `specificity ${c.delta}`
-    case "EarlierOrder":
-      return `earlier order ${c.delta}`
-    case "InactiveCondition":
-      return `inactive condition`
-  }
-}
-
-function resolvePropertyTraced(rules: RuleIR[]): CascadeResolutionIR {
-  const activeRules = rules.filter((r) => r.conditionResult !== 1)
-
-  if (activeRules.length === 0) {
-    throw new Error("No active rules for property")
-  }
-
-  activeRules.sort(compareCascadeTraced)
-
-  const winner = activeRules[0]
-  const losers = activeRules.slice(1)
-
-  const stage = determineCascadeStageTraced(winner, losers[0])
-
-  return {
-    id: new CascadeResolutionId(0),
-    property: winner.property,
-    winner: winner.id,
-    losers: losers.map((r) => r.id),
-    reason: buildResolutionReasonTraced(winner, losers[0]),
-    stage,
-  }
-}
-
-function compareCascadeTraced(a: RuleIR, b: RuleIR): number {
-  const originDiff = b.origin - a.origin
-  if (originDiff !== 0) return originDiff
-
-  const layerDiff = b.layerOrder - a.layerOrder
-  if (layerDiff !== 0) return layerDiff
-
-  const importanceDiff = b.importance - a.importance
-  if (importanceDiff !== 0) return importanceDiff
-
-  const specificityDiff = b.specificity - a.specificity
-  if (specificityDiff !== 0) return specificityDiff
-
-  return b.insertionOrder - a.insertionOrder
-}
-
-function buildResolutionReasonTraced(
-  winner: RuleIR,
-  loser: RuleIR
-): { causes: readonly ResolutionCause[]; finalDecision: string } {
-  const causes: ResolutionCause[] = []
-
-  if (winner.origin !== loser.origin) {
-    causes.push({
-      type: "LowerOrigin",
-      winnerOrigin: winner.origin,
-      loserOrigin: loser.origin,
-    })
-  }
-
-  if (winner.layerOrder !== loser.layerOrder) {
-    causes.push({
-      type: "LowerLayer",
-      winnerLayer: winner.layer?.toString() ?? "none",
-      loserLayer: loser.layer?.toString() ?? "none",
-    })
-  }
-
-  if (winner.importance !== loser.importance) {
-    causes.push({ type: "LowerImportance" })
-  }
-
-  if (winner.specificity !== loser.specificity) {
-    causes.push({
-      type: "LowerSpecificity",
-      delta: winner.specificity - loser.specificity,
-    })
-  }
-
-  if (winner.insertionOrder !== loser.insertionOrder) {
-    causes.push({
-      type: "EarlierOrder",
-      delta: winner.insertionOrder - loser.insertionOrder,
-    })
-  }
-
-  if (winner.conditionResult === 1) {
-    causes.push({ type: "InactiveCondition", condition: "..." })
-  }
-
-  const finalDecision = causes.map((c) => formatCause(c)).join(", ")
-
-  return { causes, finalDecision }
-}
-
-function determineCascadeStageTraced(winner: RuleIR, loser: RuleIR | undefined): CascadeStage {
-  if (!loser) return CascadeStage.Order
-
-  if (winner.origin !== loser.origin) return CascadeStage.Origin
-  if (winner.layerOrder !== loser.layerOrder) return CascadeStage.Layer
-  if (winner.importance !== loser.importance) return CascadeStage.Importance
-  if (winner.specificity !== loser.specificity) return CascadeStage.Specificity
-  return CascadeStage.Order
-}
-
-function resolveByClassNameTraced(
-  className: string,
-  resolver: CascadeResolver
-): { resolvedProperties: Map<PropertyId, CascadeResolutionIR> } | null {
-  return resolver.resolveByClassName(className)
 }

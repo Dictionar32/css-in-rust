@@ -32,22 +32,11 @@ interface NativeImpactScore {
 
 export class ImpactTracker {
   private bundleAnalyzer: BundleAnalyzer
-  private criticalPatterns = [
-    "fixed", "absolute", "sticky", "z-50", "z-index",
-    "top-0", "right-0", "bottom-0", "left-0",
-    "w-full", "h-full", "min-h-screen",
-    "flex", "grid", "block", "inline", "hidden",
-    "visible", "opacity", "pointer-events", "cursor",
-  ]
 
   constructor() {
     this.bundleAnalyzer = new BundleAnalyzer()
   }
 
-  /**
-   * Analisis impact sebuah class.
-   * Menggunakan native calculateImpactScores untuk akurasi bundle size.
-   */
   analyzeWithBundle(
     className: string,
     scanResult: ScanWorkspaceResult,
@@ -83,9 +72,6 @@ export class ImpactTracker {
     return this.calculateImpact(normalizedClass, bundleAnalysis, scanResult, score)
   }
 
-  /**
-   * Analisis semua class dalam workspace sekaligus via native batch call.
-   */
   analyzeAll(scanResult: ScanWorkspaceResult, css = ""): Map<string, ImpactReport> {
     const native = getNativeEngineBinding()
     if (!native?.calculateImpactScores) {
@@ -134,31 +120,66 @@ export class ImpactTracker {
     const totalComponents = nativeScore?.usageCount ?? bundleAnalysis.totalUsage ?? 0
     const directUsage = totalComponents
     const indirectUsage = 0
-
     const bundleSizeBytes = bundleAnalysis.bundleSizeBytes || 0
-    const estimatedSavings = this.calculateSavings(bundleSizeBytes, totalComponents)
 
-    const impactReport: ImpactReport = {
-      className: normalizedClass,
-      totalComponents,
-      directUsage,
-      indirectUsage,
-      bundleSizeBytes,
-      estimatedSavings,
-      riskLevel: "low",
-      suggestions: [],
+    const native = getNativeEngineBinding()
+
+    // ── computeImpactMetadata — risk + savings + suggestions dalam satu call ──
+    // Menggantikan 3 call terpisah (calculateRisk, calculateSavings, generateSuggestions).
+    // Input: JSON dengan {className, totalComponents, indirectUsage, bundleSizeBytes}.
+    // Output: JSON dengan {riskLevel, estimatedSavings, suggestions}.
+    if (native?.computeImpactMetadata) {
+      const impactJson = JSON.stringify({
+        className: normalizedClass,
+        totalComponents,
+        indirectUsage,
+        bundleSizeBytes,
+      })
+      const result = JSON.parse(native.computeImpactMetadata(normalizedClass, impactJson)) as {
+        riskLevel: "low" | "medium" | "high"
+        estimatedSavings: number
+        suggestions: string[]
+      }
+      return {
+        className: normalizedClass,
+        totalComponents,
+        directUsage,
+        indirectUsage,
+        bundleSizeBytes,
+        estimatedSavings: result.estimatedSavings,
+        riskLevel: result.riskLevel,
+        suggestions: result.suggestions,
+      }
     }
 
-    impactReport.riskLevel = this.calculateRisk(normalizedClass, impactReport)
-    impactReport.suggestions = this.generateSuggestions(normalizedClass, impactReport)
+    // Fallback: calculateImpact (combined JSON — batch sebelumnya)
+    if (native?.calculateImpact) {
+      const impactJson = JSON.stringify({
+        className: normalizedClass,
+        totalComponents,
+        indirectUsage,
+        bundleSizeBytes,
+      })
+      const result = JSON.parse(native.calculateImpact(impactJson)) as {
+        riskLevel: "low" | "medium" | "high"
+        estimatedSavings: number
+        suggestions: string[]
+      }
+      return {
+        className: normalizedClass,
+        totalComponents,
+        directUsage,
+        indirectUsage,
+        bundleSizeBytes,
+        estimatedSavings: result.estimatedSavings,
+        riskLevel: result.riskLevel,
+        suggestions: result.suggestions,
+      }
+    }
 
-    return impactReport
+    throw new Error("FATAL: Native binding 'computeImpactMetadata' or 'calculateImpact' is required but not available.")
   }
 
-  /**
-   * findAffectedComponents — delegated to native calculateImpactScores.
-   * Returns simplified ComponentImpact[] from native usageCount.
-   */
   findAffectedComponents(
     className: string,
     scanResult: ScanWorkspaceResult | null | undefined
@@ -172,7 +193,6 @@ export class ImpactTracker {
 
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
 
-    // Native scan to find which files contain the class
     const scores = native.calculateImpactScores(
       [normalizedClass],
       JSON.stringify(scanResult),
@@ -183,7 +203,6 @@ export class ImpactTracker {
 
     if (!scores[0]?.usageCount) return []
 
-    // Map file-level data from scanResult
     const components: ComponentImpact[] = []
     for (const file of scanResult.files) {
       if (!file.classes?.includes(normalizedClass)) continue
@@ -198,65 +217,43 @@ export class ImpactTracker {
     return components
   }
 
-  calculateRisk(className: string, impact: ImpactReport): "low" | "medium" | "high" {
-    if (!className?.trim() || !impact) return "low"
-    const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    if (impact.totalComponents > 10) return "high"
-    if (this.isCriticalClass(normalizedClass)) return "high"
-    if (impact.totalComponents >= 5) return "medium"
-    return "low"
-  }
-
-  generateSuggestions(className: string, impact: ImpactReport): string[] {
-    if (!className?.trim() || !impact) return []
-
-    const normalizedClass = className.startsWith(".") ? className.slice(1) : className
-    const suggestions: string[] = []
-
-    if (impact.riskLevel === "high") {
-      if (impact.totalComponents > 10) {
-        suggestions.push(
-          `This class is used in ${impact.totalComponents} components. Consider creating a utility component instead.`
-        )
-      }
-      if (this.isCriticalClass(normalizedClass)) {
-        suggestions.push("This is a critical positioning/display class. Review all usages before removal.")
-      }
-      suggestions.push("Manual code review recommended before removing this class.")
-    } else if (impact.riskLevel === "medium") {
-      suggestions.push(
-        `This class is used in ${impact.totalComponents} components. Test each component after removal.`
-      )
-      if (impact.indirectUsage > 0) {
-        suggestions.push("Check for indirect usages via variants before removing.")
-      }
-    } else {
-      suggestions.push(
-        impact.totalComponents > 0
-          ? "Low risk: class is used in fewer than 5 components."
-          : "This class appears to be unused. Consider removing it."
-      )
+  /**
+   * Cek apakah sebuah class dianggap "critical" (tidak boleh dihapus).
+   *
+   * Native: Rust `is_critical_class()` — O(n) pattern match di CRITICAL_PATTERNS.
+   * Lebih cepat dari regex JS untuk daftar panjang karena no backtracking.
+   *
+   * @example
+   * tracker.isCriticalClass("sr-only")     // true
+   * tracker.isCriticalClass("hidden")      // true
+   * tracker.isCriticalClass("bg-red-500")  // false
+   */
+  isCriticalClass(className: string): boolean {
+    const native = getNativeEngineBinding()
+    if (native?.isCriticalClass) {
+      return native.isCriticalClass(className)
     }
-
-    if (impact.estimatedSavings > 0) {
-      suggestions.push(`Estimated bundle size savings: ~${impact.estimatedSavings} bytes.`)
-    }
-    if (impact.bundleSizeBytes > 100) {
-      suggestions.push("This class has significant CSS bundle contribution. Removal will improve load times.")
-    }
-
-    return suggestions
-  }
-
-  private isCriticalClass(className: string): boolean {
+    // JS fallback: cek pattern umum
+    const CRITICAL = ["sr-only", "hidden", "not-sr-only", "invisible", "collapse", "contents"]
     const normalized = className.startsWith(".") ? className.slice(1) : className
-    return this.criticalPatterns.some(
-      (pattern) => normalized === pattern || normalized.startsWith(`${pattern}:`)
-    )
+    return CRITICAL.includes(normalized)
   }
 
-  private calculateSavings(bundleSize: number, componentCount: number): number {
-    return Math.max(0, bundleSize - componentCount * 50)
+  /**
+   * Generate human-readable suggestions berdasarkan impact analysis.
+   *
+   * Native: `generate_suggestions()` di Rust — pattern matching di CRITICAL_PATTERNS
+   * + threshold-based risk categories.
+   *
+   * Biasanya dipanggil setelah `calculateImpact` yang sudah set riskLevel.
+   */
+  generateSuggestions(className: string, report: ImpactReport): string[] {
+    const native = getNativeEngineBinding()
+    if (native?.generateSuggestions) {
+      return native.generateSuggestions(className, JSON.stringify(report))
+    }
+    // JS fallback: suggestions sudah ada di report.suggestions dari calculateImpact
+    return report.suggestions
   }
 
   private createEmptyReport(className: string): ImpactReport {

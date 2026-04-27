@@ -4,6 +4,7 @@ import React from "react"
 
 import { processContainer } from "./containerQuery"
 import { twMerge } from "./merge"
+import { getNativeBinding } from "./native"
 import { processState } from "./stateEngine"
 import type { ComponentConfig, TwStyledComponent } from "./types"
 
@@ -115,14 +116,15 @@ function resolveVariants(
   props: Record<string, unknown>,
   defaults: Record<string, string>
 ): string {
-  const classes: string[] = []
-  for (const key in variants) {
-    const value = props[key] ?? defaults[key]
-    if (value !== undefined && variants[key][String(value)]) {
-      classes.push(variants[key][String(value)])
-    }
+  const binding = getNativeBinding()
+  if (!binding?.resolveSimpleVariants) {
+    throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
   }
-  return classes.join(" ")
+  const cleanProps: Record<string, string> = {}
+  for (const [k, v] of Object.entries(props)) {
+    if (v !== undefined && v !== null) cleanProps[k] = String(v)
+  }
+  return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
 }
 
 function resolveCompound(

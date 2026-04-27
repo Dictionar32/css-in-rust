@@ -77,6 +77,49 @@ interface NativeScannerBinding {
     ok: boolean
     error?: string | null
   }>
+  scanCacheGet?: (filePath: string, contentHash: string) => string[] | null
+  scanCachePut?: (filePath: string, contentHash: string, classes: string[], mtimeMs: number, size: number) => void
+  scanCacheInvalidate?: (filePath: string) => void
+  scanCacheStats?: () => { size: number }
+  scanFile?: (filePath: string) => {
+    file: string
+    classes: string[]
+    hash: string
+    ok: boolean
+    error?: string | null
+  }
+  collectFiles?: (root: string, extensions: string[] | null, ignoreDirs: string[] | null) => string[]
+  scanFilesBatch?: (filePaths: string[]) => Array<{
+    file: string
+    classes: string[]
+    hash: string
+  }>
+  generateSubComponentTypes?: (
+    root: string,
+    outputPath: string | null
+  ) => {
+    components: Array<{ name: string; classes: string[] }>
+    outputPath: string | null
+    totalFiles: number
+  }
+  /** Batch-check file existence + stale age. Menggantikan pruneStaleEntries() */
+  pruneStaleEntries?: (
+    entries: Array<{ file: string; lastSeenMs: number }>,
+    maxAgeMs: number | null,
+    checkExists: boolean | null
+  ) => { keptIndices: number[]; removed: number }
+  /** Hitung class frequency stats dari disk cache. Menggantikan computeCacheStats() */
+  computeCacheStats?: (
+    filesClasses: string[][],
+    sizes: number[],
+    top: number | null
+  ) => {
+    totalEntries: number
+    totalClasses: number
+    totalSizeBytes: number
+    avgClassesPerEntryX100: number
+    mostUsedClasses: Array<{ class: string; count: number }>
+  }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -295,4 +338,181 @@ export function batchExtractClassesNative(filePaths: string[]): Array<{
     throw new Error("FATAL: Native binding 'batchExtractClasses' is required but not available.")
   }
   return binding.batchExtractClasses(filePaths) ?? []
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// In-memory scan cache (Rust DashMap — zero disk I/O)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function scanCacheGet(filePath: string, contentHash: string): string[] | null {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheGet) {
+    throw new Error("FATAL: Native binding 'scanCacheGet' is required but not available.")
+  }
+  return binding.scanCacheGet(filePath, contentHash) ?? null
+}
+
+export function scanCachePut(
+  filePath: string,
+  contentHash: string,
+  classes: string[],
+  mtimeMs: number,
+  size: number
+): void {
+  const binding = scannerGetBinding()
+  if (!binding.scanCachePut) {
+    throw new Error("FATAL: Native binding 'scanCachePut' is required but not available.")
+  }
+  binding.scanCachePut(filePath, contentHash, classes, mtimeMs, size)
+}
+
+export function scanCacheInvalidate(filePath: string): void {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheInvalidate) {
+    throw new Error("FATAL: Native binding 'scanCacheInvalidate' is required but not available.")
+  }
+  binding.scanCacheInvalidate(filePath)
+}
+
+export function scanCacheStats(): { size: number } {
+  const binding = scannerGetBinding()
+  if (!binding.scanCacheStats) {
+    throw new Error("FATAL: Native binding 'scanCacheStats' is required but not available.")
+  }
+  return binding.scanCacheStats() as { size: number }
+}
+export function scanFileNative(filePath: string): {
+  file: string
+  classes: string[]
+  hash: string
+  ok: boolean
+  error?: string | null
+} {
+  const binding = scannerGetBinding()
+  if (!binding.scanFile) {
+    throw new Error("FATAL: Native binding 'scanFile' is required but not available.")
+  }
+  return binding.scanFile(filePath)
+}
+/**
+ * Native file walker — kumpulkan file paths rekursif tanpa baca konten.
+ *
+ * Menggantikan `collectFiles()` di `parallel-scanner.ts`.
+ * Returns null jika binding tidak tersedia (fallback ke JS).
+ */
+export function collectFilesNative(
+  root: string,
+  extensions: string[] | null,
+  ignoreDirs: string[] | null
+): string[] | null {
+  const binding = scannerGetBinding()
+  if (!binding.collectFiles) return null
+  return binding.collectFiles(root, extensions, ignoreDirs)
+}
+/**
+ * Batch scan + hash banyak file sekaligus dalam satu NAPI call.
+ *
+ * Menggantikan loop `scanFileNative()` per file di worker thread.
+ * Rust: `par_iter()` via rayon — semua file diproses paralel di thread pool Rust,
+ * tanpa overhead spawn JS worker untuk setiap chunk.
+ *
+ * Kapan pakai ini vs `batchExtractClassesNative`:
+ * - `scanFilesBatch`       → butuh {file, classes, hash} — scan + hash sekaligus
+ * - `batchExtractClasses`  → hanya butuh {file, classes, content_hash, ok, error}
+ *
+ * Returns: array dengan panjang sama dengan input. File yang gagal dibaca
+ * dikembalikan dengan classes:[] dan hash:"".
+ */
+export function scanFilesBatchNative(filePaths: string[]): Array<{
+  file: string
+  classes: string[]
+  hash: string
+}> {
+  const binding = scannerGetBinding()
+  if (!binding.scanFilesBatch) {
+    // Fallback: panggil scanFile satu per satu
+    return filePaths.map((fp) => {
+      try {
+        const r = binding.scanFile?.(fp)
+        return r
+          ? { file: r.file, classes: r.classes, hash: r.hash ?? "" }
+          : { file: fp, classes: [], hash: "" }
+      } catch {
+        return { file: fp, classes: [], hash: "" }
+      }
+    })
+  }
+  return binding.scanFilesBatch(filePaths)
+}
+ 
+/**
+ * Scan workspace rekursif dan generate TypeScript type declarations
+ * untuk setiap sub-component yang ditemukan.
+ *
+ * Menggantikan operasi scan manual + string codegen di JS.
+ * Rust: walkdir + regex class extraction + type codegen dalam satu pass.
+ *
+ * @param root       Direktori root workspace
+ * @param outputPath Path output file .d.ts (opsional — kalau null, hanya return result)
+ */
+export function generateSubComponentTypesNative(
+  root: string,
+  outputPath?: string
+): {
+  components: Array<{ name: string; classes: string[] }>
+  outputPath: string | null
+  totalFiles: number
+} | null {
+  const binding = scannerGetBinding()
+  if (!binding.generateSubComponentTypes) return null
+  return binding.generateSubComponentTypes(root, outputPath ?? null) as {
+    components: Array<{ name: string; classes: string[] }>
+    outputPath: string | null
+    totalFiles: number
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// pruneStaleEntries + computeCacheStats — native wrappers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Batch-check file existence + stale age menggunakan Rust syscalls.
+ * Returns `null` jika native tidak tersedia (JS fallback di caller).
+ *
+ * Menggantikan loop `existsSync()` di `pruneStaleEntries()` (cache-native.ts).
+ */
+export function pruneStaleEntriesNative(
+  entries: Array<{ file: string; lastSeenMs?: number }>,
+  maxAgeMs?: number,
+  checkExists?: boolean
+): { keptIndices: number[]; removed: number } | null {
+  const binding = scannerGetBinding()
+  if (!binding.pruneStaleEntries) return null
+  return binding.pruneStaleEntries(
+    entries.map((e) => ({ file: e.file, lastSeenMs: e.lastSeenMs ?? 0 })),
+    maxAgeMs ?? null,
+    checkExists ?? null
+  )
+}
+
+/**
+ * Hitung class frequency + stats dari disk cache entries menggunakan Rust.
+ * Returns `null` jika native tidak tersedia (JS fallback di caller).
+ *
+ * Menggantikan `computeCacheStats()` di `cache-native.ts`.
+ */
+export function computeCacheStatsNative(
+  filesClasses: string[][],
+  sizes: number[],
+  top?: number
+): {
+  totalEntries: number
+  totalClasses: number
+  totalSizeBytes: number
+  avgClassesPerEntryX100: number
+  mostUsedClasses: Array<{ class: string; count: number }>
+} | null {
+  const binding = scannerGetBinding()
+  if (!binding.computeCacheStats) return null
+  return binding.computeCacheStats(filesClasses, sizes, top ?? null)
 }

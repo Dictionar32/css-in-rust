@@ -69,6 +69,7 @@ interface NativeBinding {
   }>
   compileTheme?: (themeConfig: string) => { css: string; variables: Record<string, string> }
   extractCssVars?: (css: string) => Record<string, string>
+  extractThemeFromCss?: (css: string) => Array<{ key: string; value: string }>
   parseCssRules?: (css: string) => Array<{
     className: string
     property: string
@@ -81,6 +82,18 @@ interface NativeBinding {
   detectDeadCode?: (css: string, usedClasses: string[]) => string[]
   classifyKnownClasses?: (classes: string[]) => Array<{ className: string; category: string }>
   detectClassConflicts?: (classes: string) => { conflicts: Array<{ class1: string; class2: string; reason: string }>; conflictedClassNames: string[] }
+  resolveVariants?: (configJson: string, propsJson: string) => { classes: string; resolvedCount: number }
+  resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
+  /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
+  resolveClassNames?: (inputs: string[]) => string
+  /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */
+  layoutClassesToCss?: (classes: string) => string
+  /** Menggantikan buildContainerRules() — generate @container CSS rules. (container_query.rs) */
+  buildContainerRules?: (
+    id: string,
+    breakpoints: Array<{ key: string; classes: string }>,
+    containerName: string | null
+  ) => string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

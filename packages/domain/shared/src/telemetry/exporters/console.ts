@@ -23,10 +23,6 @@ export function exportToConsole(metrics: BuildMetrics, stats: AggregatedStats): 
   if (output.cssSize > 0) {
     console.log(`└─ Output: ${formatBytes(output.cssSize)} CSS, ${output.classCount} classes, ${output.fileCount} files`)
   }
-
-  if (stats.totalFallbacks > 0) {
-    console.log(`⚠️ Fallback count: ${stats.totalFallbacks}`)
-  }
 }
 
 export function logBuildStart(buildId: string): void {

@@ -96,6 +96,33 @@ export interface TailwindConfigCacheEntry {
 export interface NativeAnalyzerBinding {
   analyzeClasses(filesJson: string, cwd: string, flags: number): unknown
   compileCss?: (classes: string[], prefix: string | null) => unknown
+  /** Detect conflicting Tailwind utilities in a usage list. */
+  detectClassConflicts?(usagesJson: string): {
+    conflicts: Array<{ group: string; variantKey: string; classes: string[]; message: string }>
+    conflictedClassNames: string[]
+  }
+  /** Classify classes as known/unknown Tailwind utilities. */
+  classifyKnownClasses?(
+    classes: string[],
+    safelist: string[],
+    customUtilities: string[],
+  ): Array<{
+    className: string
+    isKnown: boolean
+    variantKey: string
+    baseClass: string
+    utilityPrefix: string
+    isArbitrary: boolean
+  }>
+  /** Aggregate class counts from scan files JSON. */
+  collectClassCounts?(filesJson: string): Array<{ name: string; count: number }>
+  /** Compute frequency distribution buckets for class usages. */
+  buildDistribution?(usagesJson: string): {
+    once: number
+    few: number
+    moderate: number
+    frequent: number
+  }
 }
 
 export interface NativeCssCompilerBinding extends NativeAnalyzerBinding {
@@ -104,4 +131,8 @@ export interface NativeCssCompilerBinding extends NativeAnalyzerBinding {
     className: string; property: string; value: string
     isImportant: boolean; variants: string[]; specificity: number
   }>
+  /** Normalisasi class input string → array tokens. Menggantikan normalizeClassInput() di classToCss.ts */
+  normalizeClassInput?(input: string): string[]
+  /** Serialize ordered declaration entries → inline CSS string. Menggantikan declarationMapToString() */
+  declarationMapToString?(entries: Array<{ property: string; value: string }>): string
 }

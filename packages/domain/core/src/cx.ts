@@ -14,6 +14,7 @@
  */
 
 import { twMerge } from "tailwind-merge"
+import { getNativeBinding } from "./native"
 
 type ClassValue = string | undefined | null | false | 0
 
@@ -21,11 +22,24 @@ type ClassValue = string | undefined | null | false | 0
  * cn — simple class name joiner (no conflict resolution).
  * Use when you know classes don't conflict.
  *
+ * Native-first: delegates ke Rust `resolve_class_names` yang filter+join
+ * dalam satu pass tanpa intermediate allocations.
+ * JS fallback: `filter(Boolean).join(" ").replace(/\s+/g, " ").trim()`
+ *
  * FIX #09: Previously named `cx`. Renamed to `cn` for clarity.
  *
  * @example cn("p-4", isActive && "opacity-100") → "p-4 opacity-100"
  */
 export function cn(...inputs: ClassValue[]): string {
+  try {
+    const native = getNativeBinding()
+    if (native?.resolveClassNames) {
+      const strings = inputs.filter(Boolean) as string[]
+      return native.resolveClassNames(strings)
+    }
+  } catch {
+    // Native binding not available — fall through to JS
+  }
   return inputs.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()
 }
 

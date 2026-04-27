@@ -23,7 +23,6 @@ export {
   ConditionId,
   type ConditionIR,
   ConditionResult,
-  compareCascadeOrder,
   createFingerprint,
   createResolutionReason,
   type FinalComputedStyleIR,
@@ -60,6 +59,16 @@ export {
   runTransformClasses,
 } from "./plugin-api"
 export { type ClassUsage, ReverseLookup, type ReverseLookupResult } from "./reverseLookup"
+export { CascadeResolver } from "./resolver"
+export { parseCssToIr } from "./cssToIr"
+export {
+  trace,
+  type TraceResult,
+  type VariantTrace,
+  type RuleTrace,
+  type ConflictTrace,
+  type FinalStyleProperty,
+} from "./trace"
 export type { WorkspaceWatcher } from "./watch"
 export { watchWorkspace as watchWorkspaceLegacy } from "./watch"
 export type { WatchCallback, WatchEvent, WatchEventKind, WatchHandle } from "./watch-native"

@@ -93,4 +93,40 @@ pub fn extract_css_vars(source: String) -> Vec<String> {
     vars
 }
 
+#[napi(object)]
+#[derive(Serialize, Deserialize, JsonSchema)]
+pub struct CssThemeVar {
+    /// Variable name without leading `--`, e.g. `color-primary`
+    pub key: String,
+    /// Raw value from CSS, e.g. `#3b82f6` or `var(--color-base)`
+    pub value: String,
+}
+
+/// Parse `@theme { --key: value; }` blocks from a CSS string.
+///
+/// Returns all key-value pairs found inside `@theme` blocks.
+/// Handles multiple `@theme` blocks and strips leading `--`.
+///
+/// Menggantikan JS regex di `themeReader.ts extractThemeFromCSS()`.
+#[napi]
+pub fn extract_theme_from_css(css: String) -> Vec<CssThemeVar> {
+    static RE_BLOCK: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"@theme\s*\{([\s\S]*?)\}").unwrap());
+    static RE_VAR_KV: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"--([a-zA-Z0-9_-]+)\s*:\s*([^;]+);").unwrap());
+
+    let mut result: Vec<CssThemeVar> = Vec::new();
+
+    for block_cap in RE_BLOCK.captures_iter(&css) {
+        let block = &block_cap[1];
+        for kv_cap in RE_VAR_KV.captures_iter(block) {
+            let key = kv_cap[1].trim().to_string();
+            let value = kv_cap[2].trim().to_string();
+            result.push(CssThemeVar { key, value });
+        }
+    }
+
+    result
+}
+
 // ═════════════════════════════════════════════════════════════════════════════

@@ -24,7 +24,6 @@ export class TelemetryCollector {
   private builds: Map<string, BuildContext> = new Map()
   private currentBuild: BuildContext | null = null
   private buildCount = 0
-  private fallbackCount = 0
   private errorCount = 0
 
   startBuild(buildId?: string): string {
@@ -136,10 +135,6 @@ export class TelemetryCollector {
     return metrics
   }
 
-  recordFallback(): void {
-    this.fallbackCount++
-  }
-
   recordError(error: string): void {
     this.errorCount++
     if (process.env.TWS_DEBUG === "1") {
@@ -177,7 +172,6 @@ export class TelemetryCollector {
       avgCacheHitRate: 0,
       avgCssSize: 0,
       avgClassCount: 0,
-      totalFallbacks: this.fallbackCount,
     }
   }
 
@@ -185,7 +179,6 @@ export class TelemetryCollector {
     this.builds.clear()
     this.currentBuild = null
     this.buildCount = 0
-    this.fallbackCount = 0
     this.errorCount = 0
   }
 

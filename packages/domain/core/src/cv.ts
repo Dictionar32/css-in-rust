@@ -12,6 +12,7 @@
 
 import { twMerge } from "tailwind-merge"
 import type { ComponentConfig, CvFn, InferVariantProps } from "./types"
+import { getNativeBinding } from "./native"
 
 // Registry untuk generated lookup tables
 // Diisi oleh cv.register() dari generated file
@@ -46,36 +47,46 @@ function lookupGenerated(
   return table[key]
 }
 
-// Pure JS fallback — compute on-the-fly
-function resolveVariantsJS<C extends ComponentConfig>(
+// Native Rust variant resolution — O(1) HashMap lookup, zero JS allocation
+function resolveVariantsNative<C extends ComponentConfig>(
   config: C,
   props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>>
 ): string {
   const { base = "", variants = {}, compoundVariants = [], defaultVariants = {} } = config
-  const classes: string[] = []
 
-  if (base) classes.push(...base.split(" ").filter(Boolean))
-
-  const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
-
-  for (const [key, variantMap] of Object.entries(variants)) {
-    const value = resolved[key]
-    if (value !== undefined && value !== null) {
-      const variantClass = (variantMap as Record<string, string>)[String(value)]
-      if (variantClass) classes.push(...variantClass.split(" ").filter(Boolean))
+  const binding = getNativeBinding()
+  if (binding?.resolveSimpleVariants) {
+    const cleanProps: Record<string, string> = {}
+    for (const [k, v] of Object.entries(props)) {
+      if (v !== undefined && v !== null && k !== "className") {
+        cleanProps[k] = String(v)
+      }
     }
+    let result = binding.resolveSimpleVariants(
+      base || null,
+      variants as Record<string, Record<string, string>>,
+      defaultVariants as Record<string, string>,
+      cleanProps
+    )
+
+    // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)
+    const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
+    const extra: string[] = []
+    for (const compound of compoundVariants) {
+      const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+      const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
+      if (matches) {
+        if (compoundClass) extra.push(String(compoundClass))
+        if (compoundClassName) extra.push(String(compoundClassName))
+      }
+    }
+
+    if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
+    return result
   }
 
-  for (const compound of compoundVariants) {
-    const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
-    const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
-    if (matches) {
-      if (compoundClass) classes.push(...String(compoundClass).split(" ").filter(Boolean))
-      if (compoundClassName) classes.push(...String(compoundClassName).split(" ").filter(Boolean))
-    }
-  }
-
-  return [...new Set(classes)].join(" ")
+  // binding not available — throw
+  throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
 }
 
 export function cv<C extends ComponentConfig>(config: C, componentId?: string): CvFn<C> {
@@ -100,10 +111,10 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
         props as Record<string, unknown>,
         config.defaultVariants as Record<string, string>
       )
-      result = generated ?? resolveVariantsJS(config, props)
+      result = generated ?? resolveVariantsNative(config, props)
     } else {
       // Mode 2: pure JS fallback
-      result = resolveVariantsJS(config, props)
+      result = resolveVariantsNative(config, props)
     }
 
     return props.className ? twMerge(result, props.className) : result

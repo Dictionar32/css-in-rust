@@ -148,6 +148,60 @@ pub fn process_file_change(
     FileChangeDiff { added, removed }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// createFingerprint — migrated from ir.ts
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Generate a short fingerprint string from a list of parts.
+///
+/// Replaces `createFingerprint(parts: string[])` in `engine/src/ir.ts`.
+///
+/// Algorithm: FNV-1a variant over all bytes of all parts (separated by `\x00`).
+/// Returns a base-36 string, e.g. `"1k7z3p"`.
+///
+/// Why faster than JS:
+/// - No string → char array overhead
+/// - No `reduce()` closure allocations per character
+/// - Math.abs not needed — u64 wrapping is always non-negative
+#[napi]
+pub fn create_fingerprint(parts: Vec<String>) -> String {
+    const FNV_OFFSET: u64 = 14_695_981_039_346_656_037;
+    const FNV_PRIME: u64 = 1_099_511_628_211;
+
+    let mut hash: u64 = FNV_OFFSET;
+    for (i, part) in parts.iter().enumerate() {
+        if i > 0 {
+            // Separator byte between parts
+            hash ^= 0x00;
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+        for byte in part.bytes() {
+            hash ^= byte as u64;
+            hash = hash.wrapping_mul(FNV_PRIME);
+        }
+    }
+
+    // Encode as base-36 for compact, URL-safe representation
+    if hash == 0 {
+        return "0".to_string();
+    }
+
+    let mut result = Vec::with_capacity(13);
+    let mut n = hash;
+    while n > 0 {
+        let digit = (n % 36) as u8;
+        let ch = if digit < 10 {
+            b'0' + digit
+        } else {
+            b'a' + digit - 10
+        };
+        result.push(ch);
+        n /= 36;
+    }
+    result.reverse();
+    String::from_utf8(result).unwrap_or_else(|_| "0".to_string())
+}
+
 fn parse_scan_entries(json: &str) -> Vec<FileScanEntry> {
     // Use regex for robust parsing of [{file, classes, hash}] arrays
     static RE_FILE: Lazy<Regex> = Lazy::new(|| Regex::new(r#""file"\s*:\s*"([^"]+)""#).unwrap());
@@ -219,3 +273,47 @@ fn parse_scan_entries(json: &str) -> Vec<FileScanEntry> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests — create_fingerprint
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod fingerprint_tests {
+    use super::create_fingerprint;
+
+    #[test]
+    fn test_empty_parts_produces_fnv_offset_string() {
+        let result = create_fingerprint(vec![]);
+        assert!(!result.is_empty(), "fingerprint of empty parts should not be empty");
+    }
+
+    #[test]
+    fn test_deterministic() {
+        let parts = vec!["bg-blue-500".to_string(), "text-white".to_string()];
+        let a = create_fingerprint(parts.clone());
+        let b = create_fingerprint(parts);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_order_matters() {
+        let a = create_fingerprint(vec!["foo".to_string(), "bar".to_string()]);
+        let b = create_fingerprint(vec!["bar".to_string(), "foo".to_string()]);
+        assert_ne!(a, b, "different order should produce different fingerprint");
+    }
+
+    #[test]
+    fn test_single_part() {
+        let r = create_fingerprint(vec!["bg-red-500".to_string()]);
+        assert!(!r.is_empty());
+        assert!(r.chars().all(|c| c.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn test_different_inputs_differ() {
+        let a = create_fingerprint(vec!["foo".to_string()]);
+        let b = create_fingerprint(vec!["bar".to_string()]);
+        assert_ne!(a, b);
+    }
+}
