@@ -1,16 +1,18 @@
 //! Hashing & File Scanning — migrated from:
-//!   - `shared/src/index.ts`  → `hashContent(content, algorithm, length)`
+//!   - `shared/src/hash.ts`   → `hashContent(content, algorithm, length)`
+//!   - `shared/src/hash.ts`   → `hashFile(filePath, algorithm, length)`  ← BARU
 //!   - `scanner/src/index.ts` → `scanFile(filePath)` (read + hash + extract in one call)
 //!
 //! Kenapa worth di-native:
 //! - `hashContent` dipanggil tiap file scan untuk change detection. Node crypto
 //!   overhead per-call ~0.2ms × ribuan file = significant. Rust MD5/FNV ~0.01ms.
+//! - `hash_file` menggantikan JS yang: fs.readFileSync → crypto.createHash → digest
+//!   Satu NAPI call vs tiga JS + C++ bridge calls.
 //! - `scan_file_native` eliminasi satu full JS↔Rust roundtrip per file:
 //!   sebelumnya JS baca file → call native extract → call native hash (3 steps).
 //!   Sekarang satu call: Rust baca + extract + hash sekaligus.
 
 use napi_derive::napi;
-
 use serde::{Deserialize, Serialize};
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,7 +22,7 @@ use serde::{Deserialize, Serialize};
 use crate::application::scanner::extract_classes_from_source;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FNV-1a (already in shared/utils — inlined here to avoid cross-module dep)
+// Internal hash implementations
 // ─────────────────────────────────────────────────────────────────────────────
 
 fn fnv1a_u64(s: &str) -> u64 {
@@ -52,16 +54,10 @@ fn md5_hex(content: &str, length: Option<u32>) -> String {
     }
 }
 
-// Simple SHA-256 without external dep — use a 2-round FNV composite as
-// "sha256-compatible" hex for the purposes of this project. Projects that
-// need cryptographic SHA-256 should use Node's built-in crypto directly.
-// For content-change detection (which is the only use-case here), FNV-128
-// (two FNV-64 runs with different offsets) provides equivalent collision
-// resistance.
+// Dua-pass FNV-128 sebagai sha256 compat untuk content-change detection.
+// Proyek ini hanya butuh collision resistance, bukan kriptografis.
 fn sha256_compat_hex(content: &str, length: Option<u32>) -> String {
-    // Two independent FNV-64 hashes → 128-bit output formatted as 32 hex chars
     let h1 = fnv1a_u64(content);
-    // Second pass with offset to get independent bits
     let h2 = {
         const OFFSET2: u64 = 0xcbf2_9ce4_8422_2325;
         const PRIME: u64 = 1_099_511_628_211;
@@ -79,6 +75,14 @@ fn sha256_compat_hex(content: &str, length: Option<u32>) -> String {
     }
 }
 
+fn dispatch_hash(content: &str, algorithm: Option<&str>, length: Option<u32>) -> String {
+    match algorithm.unwrap_or("md5") {
+        "fnv" => fnv1a_hex(content, length),
+        "sha256" => sha256_compat_hex(content, length),
+        _ => md5_hex(content, length), // "md5" + unknown fallback
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Output types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -92,41 +96,62 @@ pub struct NativeScanFileResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// NAPI exports
+// NAPI exports — Hash
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Hash content string with the given algorithm.
+/// Hash a content string dengan algoritma pilihan.
 ///
-/// Replaces `hashContent(content, algorithm, length)` in `shared/src/index.ts`.
+/// **Menggantikan** `hashContent(content, algorithm, length)` di `shared/src/hash.ts`.
 ///
-/// Supported algorithms: `"md5"` (default), `"sha256"`, `"fnv"`.
-/// `length` truncates the hex output (e.g. 8 for short hashes).
+/// Algoritma yang didukung: `"md5"` (default), `"sha256"`, `"fnv"`.
+/// `length` memotong output hex (mis. `8` untuk short hash cache key).
 ///
-/// Why faster: no Node.js `crypto.createHash` overhead per call.
-/// For `md5`: ~12x faster on short strings (no JS→C++ bridge overhead).
-/// For `fnv`: ~40x faster — pure integer math, no allocation.
+/// Kecepatan dibanding JS `crypto.createHash`:
+/// - `"md5"` : ~12x lebih cepat (no JS→C++ bridge overhead per call)
+/// - `"fnv"` : ~40x lebih cepat (pure integer math, zero allocation)
 #[napi]
 pub fn hash_content(
     content: String,
     #[napi(ts_arg_type = "\"md5\" | \"sha256\" | \"fnv\"")] algorithm: Option<String>,
     length: Option<u32>,
 ) -> String {
-    match algorithm.as_deref().unwrap_or("md5") {
-        "fnv" => fnv1a_hex(&content, length),
-        "sha256" => sha256_compat_hex(&content, length),
-        _ => md5_hex(&content, length), // "md5" + fallback
+    dispatch_hash(&content, algorithm.as_deref(), length)
+}
+
+/// Hash isi sebuah file — baca → hash dalam satu NAPI call.
+///
+/// **Menggantikan** `hashFile(filePath, algorithm, length)` di `shared/src/hash.ts`.
+///
+/// Returns `"00000000"` jika file tidak bisa dibaca (tidak ditemukan,
+/// permission denied, dll) — perilaku identik dengan JS fallback.
+///
+/// Lebih efisien dari JS karena:
+///   JS: `fs.readFileSync` (C++ bridge) → `crypto.createHash` (C++ bridge) → `.digest` (alloc)
+///   Rust: satu system call `read_to_string` → integer math hash → format string
+#[napi]
+pub fn hash_file(
+    file_path: String,
+    #[napi(ts_arg_type = "\"md5\" | \"sha256\" | \"fnv\"")] algorithm: Option<String>,
+    length: Option<u32>,
+) -> String {
+    match std::fs::read_to_string(&file_path) {
+        Ok(content) => dispatch_hash(&content, algorithm.as_deref(), length),
+        Err(_) => "00000000".to_string(),
     }
 }
 
-/// Read a file, extract Tailwind classes, and hash its content in one native call.
+// ─────────────────────────────────────────────────────────────────────────────
+// NAPI exports — Scan (sudah ada, tidak berubah)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Baca file, ekstrak Tailwind classes, dan hash kontennya dalam satu native call.
 ///
-/// Replaces the 3-step JS flow in `scanner/src/index.ts`:
+/// Menggantikan 3-step JS flow di `scanner/src/index.ts`:
 ///   1. `fs.readFileSync(filePath)`
-///   2. `scanSource(source)`       → native extract
+///   2. `scanSource(source)` → native extract
 ///   3. `hashContentNative(source)` → native hash
 ///
-/// Returns `null` on I/O error (file not found, permission denied).
-/// Eliminates one full JS↔Rust roundtrip per file on workspace scans.
+/// Returns `null` jika file tidak bisa dibaca.
 #[napi]
 pub fn scan_file_native(file_path: String) -> Option<NativeScanFileResult> {
     let source = match std::fs::read_to_string(&file_path) {
@@ -137,7 +162,6 @@ pub fn scan_file_native(file_path: String) -> Option<NativeScanFileResult> {
     let hash = md5_hex(&source, None);
     let classes = extract_classes_from_source(source.clone());
 
-    // Dedup preserving order (same as JS `Array.from(new Set(...))`)
     let mut seen = std::collections::HashSet::new();
     let unique: Vec<String> = classes
         .into_iter()
@@ -151,13 +175,12 @@ pub fn scan_file_native(file_path: String) -> Option<NativeScanFileResult> {
     })
 }
 
-/// Batch scan multiple files in parallel using rayon.
+/// Batch scan banyak file secara paralel menggunakan rayon.
 ///
-/// More efficient than calling `scan_file_native` per file from JS —
-/// eliminates N roundtrips, uses all CPU cores via rayon thread pool.
+/// Lebih efisien dari memanggil `scan_file_native` per file dari JS —
+/// eliminasi N roundtrips, pakai semua CPU core via rayon thread pool.
 ///
-/// Returns results in same order as input paths.
-/// Files that fail to read are returned with empty classes + empty hash.
+/// File yang gagal dibaca dikembalikan dengan classes kosong + hash kosong.
 #[napi]
 pub fn scan_files_batch(file_paths: Vec<String>) -> Vec<NativeScanFileResult> {
     use rayon::prelude::*;
@@ -198,6 +221,8 @@ pub fn scan_files_batch(file_paths: Vec<String>) -> Vec<NativeScanFileResult> {
 mod tests {
     use super::*;
 
+    // ── hash_content ─────────────────────────────────────────────────────────
+
     #[test]
     fn test_hash_content_md5_deterministic() {
         let a = hash_content("hello world".into(), Some("md5".into()), None);
@@ -207,7 +232,7 @@ mod tests {
     }
 
     #[test]
-    fn test_hash_content_md5_default() {
+    fn test_hash_content_md5_default_algorithm() {
         let r = hash_content("test".into(), None, None);
         assert_eq!(r.len(), 32);
         assert!(r.chars().all(|c| c.is_ascii_hexdigit()));
@@ -220,34 +245,75 @@ mod tests {
     }
 
     #[test]
-    fn test_hash_content_fnv() {
+    fn test_hash_content_fnv_length() {
         let r = hash_content("test".into(), Some("fnv".into()), None);
         assert_eq!(r.len(), 16);
         assert!(r.chars().all(|c| c.is_ascii_hexdigit()));
     }
 
     #[test]
-    fn test_hash_content_sha256() {
+    fn test_hash_content_sha256_compat_length() {
         let r = hash_content("test".into(), Some("sha256".into()), None);
         assert_eq!(r.len(), 32);
     }
 
     #[test]
-    fn test_hash_content_different_inputs_differ() {
+    fn test_hash_content_different_inputs_produce_different_hashes() {
         let a = hash_content("foo".into(), Some("md5".into()), None);
         let b = hash_content("bar".into(), Some("md5".into()), None);
         assert_ne!(a, b);
     }
 
     #[test]
-    fn test_hash_content_fnv_matches_create_fingerprint_style() {
-        let a = hash_content("bg-red-500".into(), Some("fnv".into()), Some(8));
-        let b = hash_content("bg-red-500".into(), Some("fnv".into()), Some(8));
-        assert_eq!(a, b);
+    fn test_hash_content_unknown_algorithm_falls_back_to_md5() {
+        let md5 = hash_content("hello".into(), Some("md5".into()), None);
+        let fallback = hash_content("hello".into(), Some("xxxx".into()), None);
+        assert_eq!(md5, fallback, "unknown algo should fall back to md5");
+    }
+
+    // ── hash_file ─────────────────────────────────────────────────────────────
+
+    #[test]
+    fn test_hash_file_nonexistent_returns_fallback() {
+        let r = hash_file("/nonexistent/path/that/does/not/exist.ts".into(), None, None);
+        assert_eq!(r, "00000000");
     }
 
     #[test]
-    fn test_scan_file_native_nonexistent() {
+    fn test_hash_file_existing_matches_hash_content() {
+        use std::io::Write;
+
+        let mut tmp = std::env::temp_dir();
+        tmp.push("tw_hashing_test_abc123.txt");
+        let content = "const x = 'bg-red-500 p-4'";
+        std::fs::write(&tmp, content).unwrap();
+
+        let file_hash = hash_file(tmp.to_str().unwrap().into(), Some("md5".into()), Some(8));
+        let content_hash = hash_content(content.into(), Some("md5".into()), Some(8));
+
+        std::fs::remove_file(&tmp).ok();
+        assert_eq!(file_hash, content_hash, "hash_file should match hash_content of same content");
+    }
+
+    #[test]
+    fn test_hash_file_deterministic() {
+        use std::io::Write;
+
+        let mut tmp = std::env::temp_dir();
+        tmp.push("tw_hashing_test_determ.txt");
+        std::fs::write(&tmp, "hello deterministic").unwrap();
+
+        let a = hash_file(tmp.to_str().unwrap().into(), None, None);
+        let b = hash_file(tmp.to_str().unwrap().into(), None, None);
+
+        std::fs::remove_file(&tmp).ok();
+        assert_eq!(a, b);
+    }
+
+    // ── scan_file_native ──────────────────────────────────────────────────────
+
+    #[test]
+    fn test_scan_file_native_nonexistent_returns_none() {
         let result = scan_file_native("/nonexistent/path/file.tsx".into());
         assert!(result.is_none());
     }

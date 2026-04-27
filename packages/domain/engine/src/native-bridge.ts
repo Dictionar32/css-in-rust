@@ -58,6 +58,14 @@ interface NativeEngineBinding {
   diffClassLists?: (previous: string[], current: string[]) => {
     added: string[]; removed: string[]; unchanged: string[]; hasChanges: boolean
   }
+    // Incremental helpers (incremental.rs)
+  applyClassDiff?: (existing: string[], added: string[], removed: string[]) => string[]
+  areClassSetsEqual?: (a: string[], b: string[]) => boolean
+  rebuildWorkspaceResult?: (files: Array<{ file: string; classes: string[] }>) => {
+    files: Array<{ file: string; classes: string[] }>
+    totalFiles: number
+    uniqueClasses: string[]
+  }
   // Batch 4
   parseCssToRules?: (css: string, prefix?: string | null) => Array<{
     className: string; property: string; value: string; important: boolean

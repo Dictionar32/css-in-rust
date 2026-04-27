@@ -47,9 +47,10 @@ pub use application::css_analysis::{
     detect_dead_code, parse_css_to_rules,
 };
 pub use application::engine::{
-    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
+   compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
 };
-pub use application::hashing::{hash_content, scan_file_native, scan_files_batch};
+pub use application::incremental::{apply_class_diff, are_class_sets_equal, rebuild_workspace_result};
+pub use application::hashing::{hash_content, hash_file, scan_file_native, scan_files_batch};
 pub use application::plugin_registry::{
     plugin_check_all_updates, plugin_search, plugin_semver_has_update, plugin_validate_name,
     plugin_verify_integrity,
