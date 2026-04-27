@@ -88,6 +88,7 @@ interface NativeScannerBinding {
     ok: boolean
     error?: string | null
   }
+  collectFiles?: (root: string, extensions: string[] | null, ignoreDirs: string[] | null) => string[]
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -361,4 +362,19 @@ export function scanFileNative(filePath: string): {
     throw new Error("FATAL: Native binding 'scanFile' is required but not available.")
   }
   return binding.scanFile(filePath)
+}
+/**
+ * Native file walker — kumpulkan file paths rekursif tanpa baca konten.
+ *
+ * Menggantikan `collectFiles()` di `parallel-scanner.ts`.
+ * Returns null jika binding tidak tersedia (fallback ke JS).
+ */
+export function collectFilesNative(
+  root: string,
+  extensions: string[] | null,
+  ignoreDirs: string[] | null
+): string[] | null {
+  const binding = scannerGetBinding()
+  if (!binding.collectFiles) return null
+  return binding.collectFiles(root, extensions, ignoreDirs)
 }

@@ -71,23 +71,43 @@ export class CascadeResolutionId {
 }
 
 // Registry for property and value names
-const propertyNames = new Map<number, string>()
-const valueNames = new Map<number, string>()
+// Native-first: Rust DashMap (thread-safe, lock-free) menggantikan JS Map.
+// JS Maps di sini dibuat ulang tiap kali native tidak tersedia (fallback only).
+const _propertyNamesFallback = new Map<number, string>()
+const _valueNamesFallback = new Map<number, string>()
 
 export function registerPropertyName(id: PropertyId, name: string): void {
-  propertyNames.set(id.value, name)
+  const native = getNativeEngineBinding()
+  if (native?.registerPropertyName) {
+    native.registerPropertyName(id.value, name)
+    return
+  }
+  _propertyNamesFallback.set(id.value, name)
 }
 
 export function registerValueName(id: ValueId, name: string): void {
-  valueNames.set(id.value, name)
+  const native = getNativeEngineBinding()
+  if (native?.registerValueName) {
+    native.registerValueName(id.value, name)
+    return
+  }
+  _valueNamesFallback.set(id.value, name)
 }
 
 export function propertyIdToString(id: PropertyId): string {
-  return propertyNames.get(id.value) ?? `P${id.value}`
+  const native = getNativeEngineBinding()
+  if (native?.propertyIdToString) {
+    return native.propertyIdToString(id.value)
+  }
+  return _propertyNamesFallback.get(id.value) ?? `P${id.value}`
 }
 
 export function valueIdToString(id: ValueId): string {
-  return valueNames.get(id.value) ?? `V${id.value}`
+  const native = getNativeEngineBinding()
+  if (native?.valueIdToString) {
+    return native.valueIdToString(id.value)
+  }
+  return _valueNamesFallback.get(id.value) ?? `V${id.value}`
 }
 
 export enum Origin {

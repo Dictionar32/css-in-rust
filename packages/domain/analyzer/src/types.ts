@@ -131,4 +131,8 @@ export interface NativeCssCompilerBinding extends NativeAnalyzerBinding {
     className: string; property: string; value: string
     isImportant: boolean; variants: string[]; specificity: number
   }>
+  /** Normalisasi class input string → array tokens. Menggantikan normalizeClassInput() di classToCss.ts */
+  normalizeClassInput?(input: string): string[]
+  /** Serialize ordered declaration entries → inline CSS string. Menggantikan declarationMapToString() */
+  declarationMapToString?(entries: Array<{ property: string; value: string }>): string
 }

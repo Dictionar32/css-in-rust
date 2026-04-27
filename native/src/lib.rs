@@ -45,7 +45,9 @@ pub use application::cascade_resolver::resolve_cascade;
 pub use application::css_analysis::{
     analyze_route_class_distribution, calculate_bundle_contributions, calculate_impact_scores,
     detect_dead_code, parse_css_to_rules,
+    normalize_class_input, declaration_map_to_string, DeclarationEntry,
 };
+pub use application::class_utils::resolve_class_names;
 pub use application::engine::{
    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
 };
@@ -70,6 +72,7 @@ pub use application::optimization::{
 pub use application::scanner::{
     batch_extract_classes, check_against_safelist, extract_classes_from_source,
     generate_sub_component_types, scan_file, scan_workspace,
+    collect_files,
 };
 
 // Domain exports
@@ -78,6 +81,10 @@ pub use domain::css_compiler::compile_css;
 pub use domain::css_compiler::compile_css_lightning;
 pub use domain::css_compiler::process_tailwind_css_lightning;
 pub use domain::css_compiler::process_tailwind_css_with_targets;
+pub use domain::model::{
+    register_property_name, register_value_name,
+    property_id_to_string, value_id_to_string, clear_name_registries,
+};
 pub use domain::theme::*;
 pub use domain::transform::{
     has_tw_usage, is_already_transformed, normalise_classes, parse_classes,

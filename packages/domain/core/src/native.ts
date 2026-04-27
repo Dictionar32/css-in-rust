@@ -84,6 +84,8 @@ interface NativeBinding {
   detectClassConflicts?: (classes: string) => { conflicts: Array<{ class1: string; class2: string; reason: string }>; conflictedClassNames: string[] }
   resolveVariants?: (configJson: string, propsJson: string) => { classes: string; resolvedCount: number }
   resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
+  /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
+  resolveClassNames?: (inputs: string[]) => string
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

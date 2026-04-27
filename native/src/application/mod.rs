@@ -15,5 +15,6 @@ pub mod insights;
 pub mod optimization;
 pub mod plugin_registry;
 pub mod scanner;
-pub mod incremental; 
+pub mod incremental;
+pub mod class_utils;
 pub mod services;

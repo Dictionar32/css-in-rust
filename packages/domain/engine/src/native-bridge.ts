@@ -130,6 +130,14 @@ interface NativeEngineBinding {
   calculateImpact?: (impactJson: string) => string
   calculateRisk?: (className: string, totalComponents: number) => string
   calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
+  // Class utilities (class_utils.rs) — menggantikan cn() di cx.ts
+  resolveClassNames?: (inputs: string[]) => string
+  // Property/Value name registry (domain/model.rs) — menggantikan in-memory Maps di ir.ts
+  registerPropertyName?: (id: number, name: string) => void
+  registerValueName?: (id: number, name: string) => void
+  propertyIdToString?: (id: number) => string
+  valueIdToString?: (id: number) => string
+  clearNameRegistries?: () => void
 }
 
 const isValidEngineBinding = (module: unknown): module is NativeEngineBinding => {
