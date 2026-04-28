@@ -501,6 +501,18 @@ export function pruneStaleEntriesNative(
  *
  * Menggantikan `computeCacheStats()` di `cache-native.ts`.
  */
+export function rebuildWorkspaceResultNative(
+  files: Array<{ file: string; classes: string[] }>
+): { files: typeof files; totalFiles: number; uniqueClasses: string[] } | null {
+  const binding = scannerBridgeLoader.get()
+  if (!binding?.rebuildWorkspaceResult) return null
+  try {
+    return binding.rebuildWorkspaceResult(files)
+  } catch {
+    return null
+  }
+}
+
 export function computeCacheStatsNative(
   filesClasses: string[][],
   sizes: number[],

@@ -27,7 +27,7 @@ mod scan_cache_tests;
 mod watcher_tests;
 
 // Core exports from various modules
-pub use application::analyzer::{analyze_classes, build_distribution, collect_class_counts};
+pub use application::analyzer::{analyze_classes, build_distribution, collect_class_counts, compute_class_stats};
 pub use application::animate_utils::{
     animation_cache_key, keyframes_cache_key, normalize_iterations, normalize_number,
     split_animate_classes, stable_keyframes_entries,
@@ -50,7 +50,7 @@ pub use application::css_analysis::{
 pub use application::template_parser::parse_template;
 pub use application::class_utils::resolve_class_names;
 pub use application::state_css::tw_classes_to_css;
-pub use application::tw_merge::{tw_merge, tw_merge_many};
+pub use application::tw_merge::{tw_merge, tw_merge_many, build_dependency_chain};
 pub use application::container_query::{layout_classes_to_css, build_container_rules, ContainerBreakpoint};
 pub use application::engine::{
    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
@@ -90,6 +90,7 @@ pub use domain::model::{
     property_id_to_string, value_id_to_string, clear_name_registries,
 };
 pub use domain::theme::*;
+pub use domain::transform_components::{parse_subcomponent_blocks_napi};
 pub use domain::transform::{
     has_tw_usage, is_already_transformed, normalise_classes, parse_classes,
 };

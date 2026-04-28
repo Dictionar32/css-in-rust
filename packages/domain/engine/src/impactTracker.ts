@@ -233,10 +233,8 @@ export class ImpactTracker {
     if (native?.isCriticalClass) {
       return native.isCriticalClass(className)
     }
-    // JS fallback: cek pattern umum
-    const CRITICAL = ["sr-only", "hidden", "not-sr-only", "invisible", "collapse", "contents"]
-    const normalized = className.startsWith(".") ? className.slice(1) : className
-    return CRITICAL.includes(normalized)
+    // Native required — no JS fallback (isCriticalClass di Rust sudah O(n) pattern match)
+    return false
   }
 
   /**
@@ -252,8 +250,8 @@ export class ImpactTracker {
     if (native?.generateSuggestions) {
       return native.generateSuggestions(className, JSON.stringify(report))
     }
-    // JS fallback: suggestions sudah ada di report.suggestions dari calculateImpact
-    return report.suggestions
+    // Native required — no JS fallback
+    return []
   }
 
   private createEmptyReport(className: string): ImpactReport {

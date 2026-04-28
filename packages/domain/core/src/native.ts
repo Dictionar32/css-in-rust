@@ -104,6 +104,15 @@ interface NativeBinding {
   twMerge?: (classString: string) => string
   /** variadic convenience wrapper untuk twMerge. (tw_merge.rs) */
   twMergeMany?: (classStrings: string[]) => string
+  /** Tailwind classes → semicolon-separated inline CSS declarations. (state_css.rs) */
+  twClassesToCss?: (classes: string) => string
+  /** Iterative CSS var() chain resolver. (theme.rs) */
+  resolveThemeValue?: (key: string, rawMapJson: string) => string
+  /** Parse sub-component block syntax from tw`` template. (tw_merge.rs) */
+  parseSubcomponentBlocksNapi?: (template: string, componentName: string) => {
+    baseClasses: string
+    subMapJson: string
+  }
   /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */
   layoutClassesToCss?: (classes: string) => string
   /** Menggantikan buildContainerRules() — generate @container CSS rules. (container_query.rs) */

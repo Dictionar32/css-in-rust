@@ -117,6 +117,12 @@ export interface NativeAnalyzerBinding {
   /** Aggregate class counts from scan files JSON. */
   collectClassCounts?(filesJson: string): Array<{ name: string; count: number }>
   /** Compute frequency distribution buckets for class usages. */
+  computeClassStats?(usagesJson: string, topLimit: number, frequentThreshold: number): {
+    totalClassOccurrences: number
+    topJson: string
+    frequentJson: string
+    uniqueJson: string
+  }
   buildDistribution?(usagesJson: string): {
     once: number
     few: number

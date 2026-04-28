@@ -280,3 +280,84 @@ mod distribution_tests {
         assert!(counts.is_empty());
     }
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// compute_class_stats — migrated from analyzeWorkspace.ts stats section
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Result dari compute_class_stats
+#[napi(object)]
+pub struct ClassStatsResult {
+    pub total_class_occurrences: u32,
+    /// JSON array ClassUsage[] — top N by count
+    pub top_json: String,
+    /// JSON array ClassUsage[] — count >= frequent_threshold, max top_limit items
+    pub frequent_json: String,
+    /// JSON array ClassUsage[] — count === 1
+    pub unique_json: String,
+}
+
+/// Menggantikan JS stats aggregation di analyzeWorkspace.ts:
+/// ```ts
+/// const top = all.slice(0, topLimit)
+/// const frequent = all.filter(u => u.count >= frequentThreshold).slice(0, topLimit)
+/// const unique = all.filter(u => u.count === 1)
+/// const totalClassOccurrences = all.reduce((sum, u) => sum + u.count, 0)
+/// ```
+///
+/// Input: JSON array ClassUsage[] sudah di-sort by count desc dari buildClassUsage()
+/// Output: ClassStatsResult dengan semua 4 nilai sekaligus (satu pass)
+#[napi]
+pub fn compute_class_stats(
+    usages_json: String,
+    top_limit: u32,
+    frequent_threshold: u32,
+) -> ClassStatsResult {
+    #[derive(serde::Deserialize)]
+    struct Usage {
+        count: u32,
+    }
+
+    let usages: Vec<serde_json::Value> = match serde_json::from_str(&usages_json) {
+        Ok(v) => v,
+        Err(_) => {
+            return ClassStatsResult {
+                total_class_occurrences: 0,
+                top_json: "[]".to_string(),
+                frequent_json: "[]".to_string(),
+                unique_json: "[]".to_string(),
+            }
+        }
+    };
+
+    let top_limit = top_limit as usize;
+    let frequent_threshold = frequent_threshold as u32;
+
+    let mut total: u32 = 0;
+    let mut top: Vec<&serde_json::Value> = Vec::with_capacity(top_limit);
+    let mut frequent: Vec<&serde_json::Value> = Vec::new();
+    let mut unique: Vec<&serde_json::Value> = Vec::new();
+
+    for usage in &usages {
+        let count = usage.get("count").and_then(|c| c.as_u64()).unwrap_or(0) as u32;
+        total = total.saturating_add(count);
+
+        if top.len() < top_limit {
+            top.push(usage);
+        }
+        if count >= frequent_threshold {
+            if frequent.len() < top_limit {
+                frequent.push(usage);
+            }
+        }
+        if count == 1 {
+            unique.push(usage);
+        }
+    }
+
+    ClassStatsResult {
+        total_class_occurrences: total,
+        top_json: serde_json::to_string(&top).unwrap_or_else(|_| "[]".to_string()),
+        frequent_json: serde_json::to_string(&frequent).unwrap_or_else(|_| "[]".to_string()),
+        unique_json: serde_json::to_string(&unique).unwrap_or_else(|_| "[]".to_string()),
+    }
+}

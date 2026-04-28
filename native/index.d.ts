@@ -165,6 +165,16 @@ export interface BucketedClass {
 export declare function buildContainerRules(id: string, breakpoints: Array<ContainerBreakpoint>, containerName?: string | undefined | null): string
 
 /**
+ * Build the variant dependency chain for a Tailwind class.
+ *
+ * `"md:hover:bg-red-500"` → `["md:", "md:hover:"]`
+ * `"bg-red-500"`          → `[]`  (no variant prefix)
+ *
+ * One-pass, zero regex, O(n) where n = number of variant segments.
+ */
+export declare function buildDependencyChain(className: string): Array<string>
+
+/**
  * Compute usage frequency distribution for a list of class usages.
  *
  * Replaces `buildDistribution(usages: ClassUsage[])` in `analyzeWorkspace.ts`.
@@ -1132,6 +1142,21 @@ export interface ParsedTemplateResult {
   hasSubs: boolean
 }
 
+export declare function parseSubcomponentBlocksNapi(template: string, componentName: string): SubcomponentParseResult
+
+/**
+ * Parse sub-component blocks dari template literal.
+ * Menggantikan JS regex parser di createComponent.ts.
+ *
+ * # Example
+ * ```ts
+ * const r = native.parseSubcomponentBlocksNapi("p-4 [icon] { h-4 w-4 } flex", "tw")
+ * // r.baseClasses = "p-4 flex"
+ * // r.subMapJson  = "{\"icon\":\"h-4 w-4\"}"
+ * ```
+ */
+export declare function parseSubcomponentBlocksNapi(template: string, componentName: string): SubcomponentParseResult
+
 /**
  * Parse template literal yang sudah di-join menjadi satu raw string.
  *
@@ -1361,6 +1386,14 @@ export declare function resolveClassNames(inputs: Array<string>): string
 export declare function resolveSimpleVariants(base: string | undefined | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>): string
 
 /**
+ * Resolve a CSS custom property chain like `var(--color-primary)` → concrete value.
+ *
+ * `raw_map` is a JSON object string: `{"key": "value", ...}` (the `theme.raw` dict).
+ * Cycles are broken after 32 hops. Returns empty string if key is not in the map.
+ */
+export declare function resolveThemeValue(key: string, rawMapJson: string): string
+
+/**
  * Resolve variants based on props - called from TypeScript cv() wrapper.
  * This is the hot path - executed thousands of times per build.
  */
@@ -1558,6 +1591,29 @@ export interface SubComponent {
   tag: string
   classes: string
   scopedClass: string
+}
+
+/**
+ * Parse sub-component blocks from a tw`` template string.
+ *
+ * Input:  `"flex gap-2 [icon] { w-4 h-4 } [label] { text-sm font-medium }"`
+ * Output: JSON object string `{"icon":"w-4 h-4","label":"text-sm font-medium"}`
+ *
+ * Returns both the base classes (blocks stripped) and sub-component map.
+ */
+export interface SubcomponentParseResult {
+  /** Base classes with all block syntax stripped */
+  baseClasses: string
+  /** JSON string: Record<name, classes> */
+  subMapJson: string
+}
+
+/** Result type untuk parse_subcomponent_blocks_napi */
+export interface SubcomponentParseResult {
+  /** Base template string dengan semua sub-component blocks dihapus */
+  baseClasses: string
+  /** JSON string dari HashMap<name, classes>: {"icon":"h-4 w-4","badge":"px-2"} */
+  subMapJson: string
 }
 
 /** Result dari scan sub-component names */

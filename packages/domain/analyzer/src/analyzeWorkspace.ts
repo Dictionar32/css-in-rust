@@ -175,11 +175,18 @@ export async function analyzeWorkspace(
     }
   })()
 
-  // 4. Statistics - semua const
-  const top = all.slice(0, topLimit)
-  const frequent = all.filter((usage) => usage.count >= frequentThreshold).slice(0, topLimit)
-  const unique = all.filter((usage) => usage.count === 1)
-  const totalClassOccurrences = all.reduce((sum, usage) => sum + usage.count, 0)
+  // 4. Statistics — native-first: satu pass Rust vs 4× JS iterations
+  const classStatsNative = binding?.computeClassStats?.(
+    JSON.stringify(all),
+    topLimit,
+    frequentThreshold
+  )
+  const top: typeof all = classStatsNative ? JSON.parse(classStatsNative.topJson) : all.slice(0, topLimit)
+  const frequent: typeof all = classStatsNative ? JSON.parse(classStatsNative.frequentJson) : all.filter((usage) => usage.count >= frequentThreshold).slice(0, topLimit)
+  const unique: typeof all = classStatsNative ? JSON.parse(classStatsNative.uniqueJson) : all.filter((usage) => usage.count === 1)
+  const totalClassOccurrences: number = classStatsNative
+    ? classStatsNative.totalClassOccurrences
+    : all.reduce((sum, usage) => sum + usage.count, 0)
 
   debugLog(
     `analyzeWorkspace completed in ${Date.now() - startedAtMs}ms ` +

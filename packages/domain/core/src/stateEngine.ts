@@ -17,6 +17,7 @@
  */
 
 import type { StateConfig } from "./types"
+import { getNativeBinding } from "./native"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Registry — tracks all state-enabled components
