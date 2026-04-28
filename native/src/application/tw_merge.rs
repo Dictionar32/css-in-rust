@@ -13,6 +13,8 @@
 use napi_derive::napi;
 use std::collections::HashMap;
 use smallvec::{smallvec, SmallVec};
+use crate::debug::tws_debug;
+use crate::debug::tws_debug;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conflict group resolution
