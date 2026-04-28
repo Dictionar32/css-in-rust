@@ -95,7 +95,7 @@ interface NativeEngineBinding {
   }>
   extractAllClasses?: (css: string) => string[]
   /** Build variant prefix dependency chain. e.g. "md:hover:bg-red" → ["md:", "md:hover:"] */
-  buildDependencyChain?: (className: string) => string[]
+  buildDependencyChain: (className: string) => string[]
   analyzeRouteClassDistribution?: (routeFilesJson: string, scanResultJson: string) => Array<{
     route: string; classes: string[]; exclusiveClasses: string[]; classCount: number
   }>

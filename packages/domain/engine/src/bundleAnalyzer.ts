@@ -43,12 +43,15 @@ export class BundleAnalyzer {
 
     const normalizedClass = className.startsWith(".") ? className.slice(1) : className
 
-    const native = getNativeEngineBinding()
-    if (!native.analyzeClassUsage) {
-      throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
-    }
+     const native = getNativeEngineBinding()
+     if (!native.analyzeClassUsage) {
+       throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
+     }
+     if (!native.buildDependencyChain) {
+       throw new Error("FATAL: Native binding 'buildDependencyChain' is required but not available.")
+     }
 
-    const results = native.analyzeClassUsage(
+     const results = native.analyzeClassUsage(
       [normalizedClass],
       JSON.stringify(scanResult),
       css
@@ -59,9 +62,7 @@ export class BundleAnalyzer {
       ? (JSON.parse(info.filesJson) as string[]).map((f) => ({ file: f, line: 1, column: 1 }))
       : []
 
-    const dependencies = native.buildDependencyChain
-      ? native.buildDependencyChain(normalizedClass)
-      : []
+    const dependencies = native.buildDependencyChain(normalizedClass)
 
     return {
       className: normalizedClass,
@@ -78,12 +79,15 @@ export class BundleAnalyzer {
     if (!scanResult) throw new Error("Scan result is required for analysis")
     if (typeof css !== "string") throw new Error("CSS string is required for analysis")
 
-    const native = getNativeEngineBinding()
-    if (!native.analyzeClassUsage) {
-      throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
-    }
+     const native = getNativeEngineBinding()
+     if (!native.analyzeClassUsage) {
+       throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
+     }
+     if (!native.buildDependencyChain) {
+       throw new Error("FATAL: Native binding 'buildDependencyChain' is required but not available.")
+     }
 
-    // Extract all CSS classes natively too
+     // Extract all CSS classes natively too
     const allClasses = Array.from(new Set([
       ...scanResult.uniqueClasses,
       ...(native.extractAllClasses ? (native.extractAllClasses(css) as string[]) : []),
