@@ -88,18 +88,18 @@ fn tw_to_css(class: &str) -> Option<&'static str> {
 /// Convert space-separated Tailwind classes → CSS declaration string.
 /// Merges multiple transform: values into one.
 pub(crate) fn classes_to_css(classes: &str) -> String {
-    let mut transforms: Vec<String> = Vec::new();
-    let mut others: Vec<String> = Vec::new();
+        let mut transforms: Vec<String> = Vec::new();
+        let mut others: Vec<String> = Vec::new();
 
-    for cls in classes.split_whitespace() {
-        if let Some(css) = tw_to_css(cls) {
-            if css.starts_with("transform:") {
-                transforms.push(css["transform:".len()..].trim().to_string());
-            } else {
-                others.push(css.to_string());
+        for cls in classes.split_whitespace() {
+            if let Some(css) = tw_to_css(cls) {
+                if let Some(rest) = css.strip_prefix("transform:") {
+                    transforms.push(rest.trim().to_string());
+                } else {
+                    others.push(css.to_string());
+                }
             }
         }
-    }
 
     let mut result = others;
     if !transforms.is_empty() {
@@ -118,6 +118,7 @@ pub struct CompiledAnimation {
 
 /// Compile a from/to animation into @keyframes + animation CSS.
 #[napi]
+#[allow(clippy::too_many_arguments)]
 pub fn compile_animation(
     from: String,
     to: String,

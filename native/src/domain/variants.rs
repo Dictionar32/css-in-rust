@@ -37,7 +37,7 @@ pub fn resolve_variants(config_json: String, props_json: String) -> VariantResul
     // Parse inputs
     let config: VariantConfig = match serde_json::from_str(&config_json) {
         Ok(c) => c,
-        Err(e) => {
+        Err(_) => {
             return VariantResult {
                 classes: String::new(),
                 resolved_count: 0u32,
@@ -45,10 +45,7 @@ pub fn resolve_variants(config_json: String, props_json: String) -> VariantResul
         }
     };
 
-    let props: HashMap<String, String> = match serde_json::from_str(&props_json) {
-        Ok(p) => p,
-        Err(_) => HashMap::new(),
-    };
+    let props: HashMap<String, String> = serde_json::from_str(&props_json).unwrap_or_default();
 
     // Start with base classes
     let mut classes: Vec<String> = config

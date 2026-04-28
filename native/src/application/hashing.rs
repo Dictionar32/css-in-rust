@@ -281,8 +281,6 @@ mod tests {
 
     #[test]
     fn test_hash_file_existing_matches_hash_content() {
-        use std::io::Write;
-
         let mut tmp = std::env::temp_dir();
         tmp.push("tw_hashing_test_abc123.txt");
         let content = "const x = 'bg-red-500 p-4'";
@@ -297,8 +295,6 @@ mod tests {
 
     #[test]
     fn test_hash_file_deterministic() {
-        use std::io::Write;
-
         let mut tmp = std::env::temp_dir();
         tmp.push("tw_hashing_test_determ.txt");
         std::fs::write(&tmp, "hello deterministic").unwrap();

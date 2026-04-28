@@ -9,7 +9,7 @@
 //!   overhead filter+join+trim di JS bertumpuk.
 //! - Rust version: satu pass iterator tanpa intermediate allocation.
 //!   JS: `inputs.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()`
-//!       = 3 allocations + RegExp per call.
+//!     = 3 allocations + RegExp per call.
 //!   Rust: satu `split_whitespace` pass + satu `join` = 1 allocation.
 //!
 //! Note: `cx()` (twMerge wrapper) tetap di JS karena tergantung tailwind-merge.

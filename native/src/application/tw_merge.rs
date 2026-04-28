@@ -294,8 +294,7 @@ fn conflict_group(base: &str) -> Option<String> {
     }
 
     // ── Text ──────────────────────────────────────────────────────────────
-    if base.starts_with("text-") {
-        let suffix = &base["text-".len()..];
+    if let Some(suffix) = base.strip_prefix("text-") {
         if is_text_size(suffix) {
             return Some("text-size".to_string());
         }
@@ -312,8 +311,7 @@ fn conflict_group(base: &str) -> Option<String> {
     }
 
     // ── Font ──────────────────────────────────────────────────────────────
-    if base.starts_with("font-") {
-        let suffix = &base["font-".len()..];
+    if let Some(suffix) = base.strip_prefix("font-") {
         // font-bold, font-semibold, etc. → weight
         let weight_names = [
             "thin",
@@ -343,8 +341,7 @@ fn conflict_group(base: &str) -> Option<String> {
     }
 
     // ── Border ────────────────────────────────────────────────────────────
-    if base.starts_with("border-") {
-        let suffix = &base["border-".len()..];
+    if let Some(suffix) = base.strip_prefix("border-") {
         // border-t, border-r, border-b, border-l, border-x, border-y, border-s, border-e + width
         let side_prefixes = ["t-", "r-", "b-", "l-", "x-", "y-", "s-", "e-"];
         if side_prefixes.iter().any(|p| suffix.starts_with(p)) {
@@ -513,8 +510,8 @@ fn conflict_group(base: &str) -> Option<String> {
     }
 
     // ── Backdrop ──────────────────────────────────────────────────────────
-    if base.starts_with("backdrop-") {
-        return Some(format!("backdrop-{}", &base["backdrop-".len()..].split('-').next().unwrap_or("x")));
+    if let Some(rest) = base.strip_prefix("backdrop-") {
+        return Some(format!("backdrop-{}", rest.split('-').next().unwrap_or("x")));
     }
 
     // ── Scroll ────────────────────────────────────────────────────────────
@@ -821,8 +818,6 @@ pub fn build_dependency_chain(class_name: String) -> Vec<String> {
 // Wraps the pub(crate) impl in transform_components.rs
 // ─────────────────────────────────────────────────────────────────────────────
 
-use napi::bindgen_prelude::Object;
-
 /// Parse sub-component blocks from a tw`` template string.
 ///
 /// Input:  `"flex gap-2 [icon] { w-4 h-4 } [label] { text-sm font-medium }"`
@@ -861,7 +856,7 @@ pub fn parse_subcomponent_blocks_napi(
     let sub_map_json = format!("{{{}}}", entries.join(","));
 
     SubcomponentParseResult {
-        base_classes: base.trim().split_whitespace().collect::<Vec<_>>().join(" "),
+        base_classes: base.split_whitespace().collect::<Vec<_>>().join(" "),
         sub_map_json,
     }
 }

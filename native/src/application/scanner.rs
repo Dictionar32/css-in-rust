@@ -134,7 +134,7 @@ pub fn scan_workspace(root: String, extensions: Option<Vec<String>>) -> napi::Re
             .iter()
             .map(|(path, content)| {
                 let classes = extract_classes_from_source(content.clone());
-                let hash = short_hash(&content);
+                let hash = short_hash(content);
                 ScannedFile {
                     file: path.clone(),
                     classes,
@@ -150,7 +150,7 @@ pub fn scan_workspace(root: String, extensions: Option<Vec<String>>) -> napi::Re
                 .par_iter()
                 .map(|(path, content)| {
                     let classes = extract_classes_from_source(content.clone());
-                    let hash = short_hash(&content);
+                    let hash = short_hash(content);
                     ScannedFile {
                         file: path.clone(),
                         classes,
@@ -437,6 +437,7 @@ pub fn generate_sub_component_types(
     let mut files_scanned = 0u32;
 
     // Walk directory
+    #[allow(clippy::too_many_arguments)]
     fn walk(
         dir: &std::path::Path,
         extensions: &[&str],

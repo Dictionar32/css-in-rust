@@ -34,7 +34,6 @@ static CRITICAL_PATTERNS: &[&str] = &[
 #[serde(rename_all = "camelCase")]
 struct ImpactReportInput {
     total_components: u32,
-    direct_usage: u32,
     indirect_usage: u32,
     bundle_size_bytes: u32,
     estimated_savings: u32,

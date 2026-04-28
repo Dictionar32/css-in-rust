@@ -104,7 +104,7 @@ pub fn layout_classes_to_css(classes: String) -> String {
     // Buffer untuk arbitrary values — harus hidup selama decls dipakai
     let mut arbitrary_buf: Vec<String> = Vec::new();
 
-    for token in classes.trim().split_whitespace() {
+    for token in classes.split_whitespace() {
         if let Some(decl) = layout_class_to_decl(token) {
             decls.push(decl);
         } else if token.starts_with("w-[") && token.ends_with(']') {

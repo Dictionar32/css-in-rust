@@ -372,11 +372,7 @@ pub fn classify_known_classes(
             let utility_prefix = if is_arbitrary {
                 "arbitrary".to_string()
             } else {
-                let normalized = if base.starts_with('-') {
-                    &base[1..]
-                } else {
-                    &base
-                };
+                let normalized = base.strip_prefix('-').unwrap_or(&base);
                 // Find prefix: everything before first '-' that has value after it
                 let prefix_end = normalized.find('-').map_or(normalized.len(), |i| i);
                 normalized[..prefix_end].to_string()

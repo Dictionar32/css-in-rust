@@ -287,6 +287,6 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
         assert_eq!(parsed["riskLevel"], "high");
         assert_eq!(parsed["estimatedSavings"], 150); // 200 - 1*50
-        assert!(parsed["suggestions"].as_array().unwrap().len() > 0);
+        assert!(!parsed["suggestions"].as_array().unwrap().is_empty());
     }
 }

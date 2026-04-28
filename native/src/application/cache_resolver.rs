@@ -47,7 +47,6 @@ struct CachedRule {
     class_name: String,
     property: String,
     value: String,
-    is_important: bool,
     variants: Vec<String>,
     specificity: u32,
 }
@@ -58,7 +57,6 @@ impl From<CssRuleLookup> for CachedRule {
             class_name: r.class_name,
             property: r.property,
             value: r.value,
-            is_important: r.is_important,
             variants: r.variants,
             specificity: r.specificity,
         }

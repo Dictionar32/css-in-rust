@@ -10,10 +10,9 @@
  * Tidak ada hardcoded CSS mapping di sini.
  *
  * Pipeline:
- *   classes[] → [JS: Tailwind compile()] → raw CSS string
- *            → [Rust: process_tailwind_css_lightning()] → final CSS
- */
-
+  *   classes[] → [JS: Tailwind compile()] → raw CSS string
+  *            → [Rust: process_tailwind_css_lightning()] → final CSS
+  */
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use lightningcss::targets::{Browsers, Targets};
 use napi_derive::napi;
@@ -91,7 +90,7 @@ fn optimise_with_targets(raw_css: &str, targets: Targets) -> Option<String> {
         return Some(String::new());
     }
     let mut sheet = StyleSheet::parse(raw_css, ParserOptions { ..Default::default() }).ok()?;
-    sheet.minify(MinifyOptions { targets: targets.clone(), ..Default::default() }).ok()?;
+    sheet.minify(MinifyOptions { targets, ..Default::default() }).ok()?;
     let out = sheet.to_css(PrinterOptions { minify: true, targets, ..Default::default() }).ok()?;
     Some(out.code)
 }

@@ -312,11 +312,6 @@ pub fn compute_class_stats(
     top_limit: u32,
     frequent_threshold: u32,
 ) -> ClassStatsResult {
-    #[derive(serde::Deserialize)]
-    struct Usage {
-        count: u32,
-    }
-
     let usages: Vec<serde_json::Value> = match serde_json::from_str(&usages_json) {
         Ok(v) => v,
         Err(_) => {
@@ -330,7 +325,6 @@ pub fn compute_class_stats(
     };
 
     let top_limit = top_limit as usize;
-    let frequent_threshold = frequent_threshold as u32;
 
     let mut total: u32 = 0;
     let mut top: Vec<&serde_json::Value> = Vec::with_capacity(top_limit);
@@ -344,11 +338,10 @@ pub fn compute_class_stats(
         if top.len() < top_limit {
             top.push(usage);
         }
-        if count >= frequent_threshold {
-            if frequent.len() < top_limit {
+        if count >= frequent_threshold
+            && frequent.len() < top_limit {
                 frequent.push(usage);
             }
-        }
         if count == 1 {
             unique.push(usage);
         }
