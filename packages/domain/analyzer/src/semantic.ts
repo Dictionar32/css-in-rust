@@ -280,21 +280,9 @@ const loadTailwindConfig = async (
       `(loaded=${loaded.loaded}, safelist=${loaded.safelist.size}, custom=${loaded.customUtilities.size})`
   )
 
-   return loaded
- }
+    return loaded
+  }
 
-/**
- * Known Tailwind utility prefixes for fallback classification.
- * Used by isKnownTailwindClass for JS fallback (native path uses classify_known_classes).
- */
-const KNOWN_UTILITY_PREFIXES = new Set([
-  "absolute","align","animate","arbitrary","aspect","backdrop","basis","bg","block","border","bottom","col","container","contents","cursor","dark","display","divide","fill","fixed","flex","float","font","from","gap","grid","grow","h","hidden","inset","inline","isolate","items","justify","left","leading","line","list","m","max-h","max-w","mb","min-h","min-w","ml","mr","mt","mx","my","object","opacity","order","origin","outline","overflow","overscroll","p","pb","pe","perspective","place","pl","pointer","position","pr","ps","pt","px","py","relative","right","ring","rotate","rounded","row","scale","shadow","shrink","size","skew","snap","space-x","space-y","sr","start","static","sticky","stroke","table","text","to","top","touch","tracking","transform","transition","translate","truncate","underline","via","visible","w","whitespace","z",
-])
-
-/**
- * @internal JS fallback only — native path uses `classify_known_classes` in Rust.
- * Kept for external usage via __internal (API compatibility).
- */
 export const utilityPrefix = (baseClass: string): string => {
   const normalized = baseClass.startsWith("-") ? baseClass.slice(1) : baseClass
   if (normalized.includes("[") && normalized.includes("]")) return "arbitrary"
@@ -313,22 +301,6 @@ export const utilityPrefix = (baseClass: string): string => {
   const hyphen = normalized.indexOf("-")
   if (hyphen < 0) return normalized
   return normalized.slice(0, hyphen)
-}
-
-/**
- * @internal JS fallback only — native path uses `classify_known_classes` in Rust.
- * Kept for external usage via __internal (API compatibility).
- */
-const isKnownTailwindClass = (
-  className: string,
-  safelist: Set<string>,
-  customUtilities: Set<string>
-): boolean => {
-  if (safelist.has(className) || customUtilities.has(className)) return true
-  const { base } = splitVariantAndBase(className)
-  if (customUtilities.has(base)) return true
-  const prefix = utilityPrefix(base)
-  return KNOWN_UTILITY_PREFIXES.has(prefix)
 }
 
 export const buildSemanticReport = async (
