@@ -1,4 +1,5 @@
 import { twMerge as twMergeOriginal } from "tailwind-merge"
+import { getNativeBinding } from "./native"
 
 import type { ThemeConfig } from "./themeReader"
 
@@ -15,9 +16,30 @@ function normalizeClassInput(classLists: Array<string | undefined | null | false
     .filter((v) => v.length > 0)
 }
 
+/**
+ * createTwMerge — returns a conflict-aware merge function.
+ * Native-first: uses Rust `tw_merge_many`; falls back to tailwind-merge JS.
+ *
+ * Note: `prefix` and `separator` options are only respected by the JS fallback path.
+ * Native Rust uses Tailwind v3/v4 defaults (no prefix, ":" separator).
+ */
 export function createTwMerge(_options: MergeOptions = {}) {
   return function twMerge(...classLists: Array<string | undefined | null | false>): string {
     const clean = normalizeClassInput(classLists)
+    if (clean.length === 0) return ""
+
+    try {
+      const native = getNativeBinding()
+      if (native?.twMergeMany) {
+        return native.twMergeMany(clean)
+      }
+      if (native?.twMerge) {
+        return native.twMerge(clean.join(" "))
+      }
+    } catch {
+      // Native binding not available — fall through to JS
+    }
+
     return twMergeOriginal(clean.join(" "))
   }
 }

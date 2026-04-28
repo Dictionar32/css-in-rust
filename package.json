@@ -30,10 +30,10 @@
     "radix",
     "headless-ui"
   ],
-  "homepage": "https://github.com/Dictionar32/tailwind-styled-v4",
+  "homepage": "https://github.com/Dictionar32/css-in-rust",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dictionar32/tailwind-styled-v4.git"
+    "url": "git+https://github.com/Dictionar32/css-in-rust.git"
   },
   "workspaces": [
     "packages/domain/*",
@@ -41,7 +41,7 @@
     "packages/presentation/*"
   ],
   "bugs": {
-    "url": "https://github.com/Dictionar32/tailwind-styled-v4/issues"
+    "url": "https://github.com/Dictionar32/css-in-rust/issues"
   },
   "readme": "README.md",
   "main": "dist/index.js",

@@ -113,6 +113,8 @@ export interface AnimationRegistry {
   compileKeyframes(name: string, stops: KeyframesDefinition): Promise<CompiledAnimation>
   extractCss(): string
   reset(): void
+  /** Check apakah className sudah terdaftar di registry */
+  has(className: string): boolean
 }
 
 export function createAnimationRegistry(
@@ -121,6 +123,7 @@ export function createAnimationRegistry(
   const cacheLimit = normalizeCacheLimit(options.cacheLimit)
   const cache = new LRUCache<string, CompiledAnimation>(cacheLimit)
   const cssChunks: string[] = []
+  const classNames = new Set<string>()
 
   return {
     async compileAnimation(opts: AnimateOptions): Promise<CompiledAnimation> {
@@ -206,6 +209,11 @@ export function createAnimationRegistry(
     reset(): void {
       cache.clear?.()
       cssChunks.length = 0
+      classNames.clear()
+    },
+
+    has(className: string): boolean {
+      return classNames.has(className)
     },
   }
 }

@@ -1609,6 +1609,41 @@ export interface TransformResult {
 
 export declare function transformSource(source: string, opts?: Record<string, string> | undefined | null): TransformResult
 
+/**
+ * Convert Tailwind utility classes → semicolon-separated inline CSS declarations.
+ *
+ * Mirrors `twClassesToCss()` from `stateEngine.ts`.
+ * Handles static lookup (TW_MAP) and common arbitrary values `[…]`.
+ *
+ * ```
+ * tw_classes_to_css("hidden opacity-50")      // "display:none;opacity:0.5"
+ * tw_classes_to_css("bg-[#f00] w-[200px]")   // "background-color:#f00;width:200px"
+ * tw_classes_to_css("unknown-class")           // ""
+ * ```
+ */
+export declare function twClassesToCss(classes: string): string
+
+/**
+ * Conflict-aware Tailwind class merger.
+ *
+ * Equivalent to `twMerge()` from the `tailwind-merge` JS package.
+ * Later classes win; conflicting utilities in the same group are deduplicated.
+ *
+ * ```
+ * tw_merge("p-4 p-8")          // → "p-8"
+ * tw_merge("bg-red-500 bg-blue-500")  // → "bg-blue-500"
+ * tw_merge("hover:p-4 hover:p-8")     // → "hover:p-8"
+ * tw_merge("p-4 hover:p-8")           // → "p-4 hover:p-8"  (different variant, no conflict)
+ * ```
+ */
+export declare function twMerge(classString: string): string
+
+/**
+ * Merge multiple class strings (variadic convenience wrapper).
+ * Joins all inputs with a space, then resolves conflicts.
+ */
+export declare function twMergeMany(classStrings: Array<string>): string
+
 export interface UpdateCheckResult {
   name: string
   hasUpdate: boolean

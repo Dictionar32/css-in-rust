@@ -100,6 +100,10 @@ interface NativeBinding {
   buildVariantLookupKey?: (defaultVariantsJson: string, propsJson: string) => string
   /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
   resolveClassNames?: (inputs: string[]) => string
+  /** conflict-aware Tailwind class merger — port of tailwind-merge. (tw_merge.rs) */
+  twMerge?: (classString: string) => string
+  /** variadic convenience wrapper untuk twMerge. (tw_merge.rs) */
+  twMergeMany?: (classStrings: string[]) => string
   /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */
   layoutClassesToCss?: (classes: string) => string
   /** Menggantikan buildContainerRules() — generate @container CSS rules. (container_query.rs) */

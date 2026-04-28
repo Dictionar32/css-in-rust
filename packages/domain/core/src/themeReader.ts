@@ -29,6 +29,13 @@ export function resolveThemeValue(
   theme: ThemeConfig,
   visited: Set<string> = new Set()
 ): string {
+  // Native-first: Rust iterative resolver (no JS recursion overhead)
+  const binding = getNativeBinding()
+  if (binding?.resolveThemeValue) {
+    return binding.resolveThemeValue(key, JSON.stringify(theme.raw))
+  }
+
+  // JS fallback
   const token = key.replace(/^--/, "")
   const raw = theme.raw[token]
   if (!raw) return ""

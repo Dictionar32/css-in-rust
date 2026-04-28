@@ -153,11 +153,24 @@ const TW_MAP: Record<string, string> = {
   "text-zinc-500": "color:rgb(113,113,122)",
 }
 
+/**
+ * Convert Tailwind utility classes → semicolon-separated inline CSS declarations.
+ * Native-first: delegates ke Rust `tw_classes_to_css` (state_css.rs).
+ * JS fallback: static TW_MAP lookup + arbitrary value parser.
+ * @internal — called by injectStateStyles()
+ */
 function twClassesToCss(classes: string): string {
+  try {
+    const native = getNativeBinding()
+    if (native?.twClassesToCss) return native.twClassesToCss(classes)
+  } catch {
+    // fall through to JS
+  }
+
+  // JS fallback
   const decls: string[] = []
   for (const cls of classes.trim().split(/\s+/)) {
     if (TW_MAP[cls]) decls.push(TW_MAP[cls])
-    // Arbitrary values: bg-[#f00] color-[red]
     else if (cls.includes("[") && cls.includes("]")) {
       const val = cls.match(/\[(.+)\]/)?.[1]
       if (!val) continue

@@ -14,6 +14,10 @@ import { debugLog, formatErrorMessage, isRecord, pathExists } from "./utils"
 
 
 const SUPPORTED_TAILWIND_CONFIG_EXTENSIONS = new Set([".ts", ".js", ".cjs", ".mjs"])
+/**
+ * @internal JS fallback only — native path uses `classify_known_classes` in Rust.
+ * Kept for the JS fallback in `buildSemanticReport`.
+ */
 const KNOWN_UTILITY_PREFIXES = new Set([
   "absolute",
   "align",
@@ -445,6 +449,10 @@ export const utilityPrefix = (baseClass: string): string => {
   return normalized.slice(0, hyphen)
 }
 
+/**
+ * @internal JS fallback only — native path uses `classify_known_classes` in Rust.
+ * Kept for the JS fallback branch in `buildSemanticReport`.
+ */
 const isKnownTailwindClass = (
   className: string,
   safelist: Set<string>,
@@ -472,9 +480,31 @@ export const buildSemanticReport = async (
     .sort()
     .map((className) => ({ name: className, count: 0, isUnused: true }))
 
-  const unknownClasses: ClassUsage[] = usages
-    .filter((usage) => !isKnownTailwindClass(usage.name, safelist, customUtilities))
-    .map((usage) => ({ ...usage, isUnused: true }))
+  // ── Unknown classes — native-first ─────────────────────────────────────
+  let unknownClasses: ClassUsage[]
+  const native = await getNativeBinding()
+  if (native?.classifyKnownClasses) {
+    // Rust handles safelist + customUtilities in a single pass
+    const classNames = usages.map((u) => u.name)
+    const results = native.classifyKnownClasses(
+      classNames,
+      Array.from(safelist),
+      Array.from(customUtilities)
+    )
+    const unknownSet = new Set(
+      results
+        .filter((r: { className: string; isKnown: boolean }) => !r.isKnown)
+        .map((r: { className: string; isKnown: boolean }) => r.className)
+    )
+    unknownClasses = usages
+      .filter((usage) => unknownSet.has(usage.name))
+      .map((usage) => ({ ...usage, isUnused: true }))
+  } else {
+    // JS fallback
+    unknownClasses = usages
+      .filter((usage) => !isKnownTailwindClass(usage.name, safelist, customUtilities))
+      .map((usage) => ({ ...usage, isUnused: true }))
+  }
 
   const { conflicts } = await detectConflicts(usages)
 

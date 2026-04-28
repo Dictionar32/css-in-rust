@@ -59,9 +59,11 @@ export class BundleAnalyzer {
       ? (JSON.parse(info.filesJson) as string[]).map((f) => ({ file: f, line: 1, column: 1 }))
       : []
 
-    const dependencies = normalizedClass.includes(":")
-      ? normalizedClass.split(":").slice(0, -1).map((_, i, parts) => parts.slice(0, i + 1).join(":"))
-      : []
+    const dependencies = native.buildDependencyChain
+      ? native.buildDependencyChain(normalizedClass)
+      : normalizedClass.includes(":")
+        ? normalizedClass.split(":").slice(0, -1).map((_, i, parts) => parts.slice(0, i + 1).join(":"))
+        : []
 
     return {
       className: normalizedClass,
@@ -100,9 +102,11 @@ export class BundleAnalyzer {
       const files: SourceLocation[] = (JSON.parse(info.filesJson) as string[]).map((f) => ({
         file: f, line: 1, column: 1,
       }))
-      const dependencies = info.className.includes(":")
-        ? info.className.split(":").slice(0, -1).map((_, i, parts) => parts.slice(0, i + 1).join(":"))
-        : []
+      const dependencies = native.buildDependencyChain
+        ? native.buildDependencyChain(info.className)
+        : info.className.includes(":")
+          ? info.className.split(":").slice(0, -1).map((_, i, parts) => parts.slice(0, i + 1).join(":"))
+          : []
 
       map.set(info.className, {
         className: info.className,
