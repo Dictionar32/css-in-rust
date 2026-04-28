@@ -31,12 +31,11 @@
    "peerDependencies": {
      "vue": ">=3.3.0"
    },
-   "devDependencies": {
-     "tailwind-merge": "^3.5.0",
-     "tsup": "^8.0.0",
-     "typescript": "^6",
-     "vue": "^3.4.0"
-   },
+    "devDependencies": {
+      "tsup": "^8.0.0",
+      "typescript": "^6",
+      "vue": "^3.4.0"
+    },
   "keywords": [
     "tailwind",
     "vue",

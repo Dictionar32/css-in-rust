@@ -177,27 +177,17 @@ export async function runPreflightCli(rawArgs: string[]): Promise<PreflightRepor
     const hasRspack = pkgHasDep(pkg, "@tailwind-styled/rspack") || pkgHasDep(pkg, "@rspack/core")
     const hasBundler = hasVite || hasNext || hasRspack
     const bundlerName = hasNext ? "Next.js" : hasVite ? "Vite" : hasRspack ? "Rspack" : "none"
-    check(
-      results,
-      "bundler",
-      "Bundler detected",
-      hasBundler,
-      hasBundler
-        ? `${bundlerName} detected OK`
-        : "No supported bundler (Vite/Next.js/Rspack) found",
-      "Install a bundler: npm install vite @vitejs/plugin-react OR npx create-next-app"
-    )
-
-    const hasMerge = pkgHasDep(pkg, "tailwind-merge")
-    check(
-      results,
-      "tailwind-merge",
-      "tailwind-merge installed",
-      hasMerge,
-      hasMerge ? "tailwind-merge found OK" : "Missing peer dep - run: npm install tailwind-merge",
-      "npm install tailwind-merge"
-    )
-  }
+     check(
+       results,
+       "bundler",
+       "Bundler detected",
+       hasBundler,
+       hasBundler
+         ? `${bundlerName} detected OK`
+         : "No supported bundler (Vite/Next.js/Rspack) found",
+       "Install a bundler: npm install vite @vitejs/plugin-react OR npx create-next-app"
+     )
+   }
 
   const twConfigFiles = ["tailwind.config.ts", "tailwind.config.js", "tailwind.config.mjs"]
   const twConfigChecks = await Promise.all(

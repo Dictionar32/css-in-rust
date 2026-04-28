@@ -129,10 +129,9 @@ File `package.json` adalah konfigurasi utama paket NPM Anda. Berikut contoh leng
   "engines": {
     "node": ">=20"
   },
-  "dependencies": {
-    "tailwind-merge": "^3",
-    "postcss": "^8"
-  },
+   "dependencies": {
+     "postcss": "^8"
+   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18"

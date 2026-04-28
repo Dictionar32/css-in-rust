@@ -110,7 +110,7 @@ import { cx, cxm } from "tailwind-styled-v4"
 // cx — simple join, no conflict resolution
 cx("p-4", isActive && "bg-blue-500", undefined, "rounded") // "p-4 bg-blue-500 rounded"
 
-// cxm — conflict-aware merge (wraps tailwind-merge)
+// cxm — conflict-aware merge (uses native Rust `tw_merge`)
 cxm("p-4 p-2", "bg-red-500 bg-blue-500") // "p-2 bg-blue-500"
 ```
 

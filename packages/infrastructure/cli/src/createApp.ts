@@ -232,7 +232,6 @@ async function createViteVueApp(context: CreateContext): Promise<void> {
         scripts: { dev: "vite", build: "vite build", preview: "vite preview" },
         dependencies: {
           vue: "^3.4.0",
-          "tailwind-merge": "^3.5.0",
           "tailwind-styled-v4/vue": "^5.0.0",
         },
         devDependencies: {
@@ -334,7 +333,7 @@ async function createViteSvelteApp(context: CreateContext): Promise<void> {
         private: true,
         type: "module",
         scripts: { dev: "vite", build: "vite build", preview: "vite preview" },
-        dependencies: { "tailwind-merge": "^3.5.0", "tailwind-styled-v4/svelte": "^5.0.0" },
+         dependencies: { "tailwind-styled-v4/svelte": "^5.0.0" },
         devDependencies: {
           svelte: "^5.0.0",
           "@sveltejs/vite-plugin-svelte": "^3.0.0",

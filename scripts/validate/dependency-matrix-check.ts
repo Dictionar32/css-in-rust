@@ -59,11 +59,10 @@ const curatedTargets = {
       typescript: "^5",
     },
   },
-  "packages/domain/core/package.json": {
-    dependencies: {
-      postcss: "^8",
-      "tailwind-merge": "^3",
-    },
+   "packages/domain/core/package.json": {
+     dependencies: {
+       postcss: "^8",
+     },
     peerDependencies: {
       react: ">=18",
       "react-dom": ">=18",
@@ -77,14 +76,13 @@ const curatedTargets = {
       tailwindcss: { optional: true },
     },
   },
-  "packages/domain/compiler/package.json": {
-    dependencies: {
-      "@tailwind-styled/plugin-api": workspaceRange,
-      "@tailwind-styled/shared": workspaceRange,
-      "@tailwind-styled/syntax": workspaceRange,
-      postcss: "^8",
-      "tailwind-merge": "^3",
-    },
+   "packages/domain/compiler/package.json": {
+     dependencies: {
+       "@tailwind-styled/plugin-api": workspaceRange,
+       "@tailwind-styled/shared": workspaceRange,
+       "@tailwind-styled/syntax": workspaceRange,
+       postcss: "^8",
+     },
     peerDependencies: {
       "@tailwindcss/postcss": "^4",
       tailwindcss: "^4",
@@ -100,18 +98,16 @@ const curatedTargets = {
       vite: ">=6.2.0",
     },
   },
-  "packages/presentation/vue/package.json": {
-    peerDependencies: {
-      "tailwind-merge": ">=2.0.0",
-      vue: ">=3.3.0",
-    },
-  },
-  "packages/presentation/svelte/package.json": {
-    peerDependencies: {
-      svelte: ">=4.0.0",
-      "tailwind-merge": ">=2.0.0",
-    },
-  },
+   "packages/presentation/vue/package.json": {
+     peerDependencies: {
+       vue: ">=3.3.0",
+     },
+   },
+   "packages/presentation/svelte/package.json": {
+     peerDependencies: {
+       svelte: ">=4.0.0",
+     },
+   },
   "packages/infrastructure/studio-desktop/package.json": {
     dependencies: {
       "electron-updater": "^6.0.0",

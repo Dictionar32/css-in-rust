@@ -85,7 +85,7 @@ const cls = cx(
 
 ## `cxm()` — Class Merger with Conflict Resolution
 
-Like `cx()` but uses `tailwind-merge` to resolve conflicting Tailwind classes.
+Like `cx()` but uses native Rust engine to resolve conflicting Tailwind classes.
 
 ```typescript
 import { cxm } from "tailwind-styled-v4"

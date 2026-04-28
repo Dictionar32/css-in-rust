@@ -128,19 +128,13 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
   output.writeText(pc.dim("  ─────────────────────────────────────"))
   output.writeText("")
 
-  output.writeText(pc.bold("  [1/4]") + pc.cyan("  packages"))
-  const [hasCorePkg, hasMergePkg] = await Promise.all([
-    alreadyInstalled(cwd, "tailwind-styled-v4"),
-    alreadyInstalled(cwd, "tailwind-merge"),
-  ])
+   output.writeText(pc.bold("  [1/4]") + pc.cyan("  packages"))
+   const hasCorePkg = await alreadyInstalled(cwd, "tailwind-styled-v4")
 
-  const toInstall = [
-    hasCorePkg ? null : "tailwind-styled-v4",
-    hasMergePkg ? null : "tailwind-merge",
-  ].filter(Boolean) as string[]
+   toInstall = hasCorePkg ? null : "tailwind-styled-v4"
 
-  if (toInstall.length > 0) await installPackages(cwd, pm, toInstall, false, setupFlags, logger)
-  else logger.skip("tailwind-styled-v4 + tailwind-merge sudah terpasang")
+   if (toInstall) await installPackages(cwd, pm, toInstall, false, setupFlags, logger)
+   else logger.skip("tailwind-styled-v4 sudah terpasang")
 
   output.writeText("\n" + pc.bold("  [2/4]") + pc.cyan("  bundler config"))
 

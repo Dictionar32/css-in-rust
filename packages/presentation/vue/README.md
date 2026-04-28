@@ -5,12 +5,14 @@ Vue 3 adapter for tailwind-styled — create type-safe styled components with va
 ## Installation
 
 ```bash
-npm install @tailwind-styled/vue vue tailwind-merge
+npm install @tailwind-styled/vue vue
 # or
-yarn add @tailwind-styled/vue vue tailwind-merge
+yarn add @tailwind-styled/vue vue
 # or
-pnpm add @tailwind-styled/vue vue tailwind-merge
+pnpm add @tailwind-styled/vue vue
 ```
+
+> **Note:** `@tailwind-styled/vue` requires a native Rust binding. Ensure you have built the native module: `npm run build:rust` at the monorepo root, or install a prebuilt binary from npm.
 
 ## Basic Usage
 
@@ -144,8 +146,16 @@ const Button = tw('button', {
 
 ## Troubleshooting
 
-### "twMerge is not a function"
-Make sure `tailwind-merge` is installed as a dependency.
+### "Native binding is required but not available"
+Ensure the native Rust module is built:
+```bash
+# From monorepo root
+npm run build:rust
+```
+Or reinstall the package to fetch prebuilt binaries:
+```bash
+npm install @tailwind-styled/vue --force
+```
 
 ### Variant not applied
 Make sure variant key in `variants` matches the props passed to component.

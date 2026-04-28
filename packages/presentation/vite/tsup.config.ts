@@ -5,21 +5,20 @@ export default defineConfig({
   format: ["cjs", "esm"],
   dts: true,
   clean: true,
-  external: [
-    // Framework & Node built-ins
-    "vite",
-    "path",
-    "@tailwind-styled/compiler",
-    "@tailwind-styled/engine",
-    "@tailwind-styled/scanner",
-    "@tailwind-styled/shared",
-    // Tailwind runtime & postcss — native .node bindings tidak bisa di-bundle
-    "tailwindcss",
-    "@tailwindcss/oxide",
-    "@tailwindcss/postcss",
-    "postcss",
-    "tailwind-merge",
-  ],
+   external: [
+     // Framework & Node built-ins
+     "vite",
+     "path",
+     "@tailwind-styled/compiler",
+     "@tailwind-styled/engine",
+     "@tailwind-styled/scanner",
+     "@tailwind-styled/shared",
+     // Tailwind runtime & postcss — native .node bindings tidak bisa di-bundle
+     "tailwindcss",
+     "@tailwindcss/oxide",
+     "@tailwindcss/postcss",
+     "postcss",
+   ],
   esbuildOptions(options) {
     // Skip platform-specific native bindings — tidak bisa di-bundle
     options.external = [...(options.external ?? []), "*.node"]

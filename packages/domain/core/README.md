@@ -146,10 +146,10 @@ export default {
 
 | Export | Description |
 |--------|-------------|
-| `tw` | Create styled components with template literals or object config |
-| `cx` | Conditional class merge (like clsx) |
-| `cv` | Headless class variants |
-| `cn` | Merge with tailwind-merge |
+ | `tw` | Create styled components with template literals or object config |
+ | `cx` | Conditional class merge (like clsx) |
+ | `cv` | Headless class variants |
+ | `cn` | Merge with tailwind-merge (now native) |
 
 ## Sub-exports
 

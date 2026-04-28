@@ -10,12 +10,11 @@ export default defineConfig({
   clean: true,
   target: "node20",
   platform: "node",
-  external: [
-    "typescript",
-    "tailwindcss",
-    "@tailwindcss/postcss",
-    "postcss",
-    "tailwind-merge",
-    "oxc-parser"
-  ]
+   external: [
+     "typescript",
+     "tailwindcss",
+     "@tailwindcss/postcss",
+     "postcss",
+     "oxc-parser"
+   ]
 })

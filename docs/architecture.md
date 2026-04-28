@@ -231,7 +231,6 @@ Runtime (Server Component):
 | core/twProxy         | Yes               | ~800B   |
 | core/cv              | Yes               | ~300B   |
 | core/cx              | Yes               | ~100B   |
-| tailwind-merge       | Yes               | ~6kb    |
 | compiler/*           | **No** (build only) | 0     |
 | styled-components    | **Removed**        | 0      |
 | **Total**            |                   | **~1.5kb** |
