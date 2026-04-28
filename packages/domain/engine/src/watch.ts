@@ -29,6 +29,8 @@ function getNativeWatcher() {
 }
 
 export interface WatcherOptions {
+  /** Directories to ignore (currently not enforced by native watcher, kept for API compatibility). */
+  ignoreDirectories?: string[]
   /** Delay before emitting change event to reduce noisy bursts (applied in Rust layer). */
   debounceMs?: number
   /** Polling interval in ms for the Rust native watcher (default: 200). */

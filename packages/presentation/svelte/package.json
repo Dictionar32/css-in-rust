@@ -23,16 +23,14 @@
     "test": "node --test __tests__/*.test.mjs",
     "test:watch": "node --test --watch __tests__/*.test.mjs"
   },
-  "peerDependencies": {
-    "svelte": ">=4.0.0",
-    "tailwind-merge": ">=2.0.0"
-  },
-  "devDependencies": {
-    "svelte": "^5.0.0",
-    "tailwind-merge": "^3.5.0",
-    "tsup": "^8.0.0",
-    "typescript": "^6"
-  },
+   "peerDependencies": {
+     "svelte": ">=4.0.0"
+   },
+   "devDependencies": {
+     "svelte": "^5.0.0",
+     "tsup": "^8.0.0",
+     "typescript": "^6"
+   },
   "keywords": [
     "tailwind",
     "svelte",
@@ -46,10 +44,11 @@
     "node": ">=20"
   },
   "sideEffects": false,
-  "dependencies": {
-    "@tailwind-styled/shared": "^5.0.4",
-    "inversify": "^8.1.0",
-    "reflect-metadata": "^0.2.2",
-    "zod": "^4.3.6"
-  }
+   "dependencies": {
+     "@tailwind-styled/core": "^5.0.4",
+     "@tailwind-styled/shared": "^5.0.4",
+     "inversify": "^8.1.0",
+     "reflect-metadata": "^0.2.2",
+     "zod": "^4.3.6"
+   }
 }

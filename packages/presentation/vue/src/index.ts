@@ -23,7 +23,7 @@
  * // <Button intent="danger" size="lg">Delete</Button>
  */
 
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "@tailwind-styled/core"
 import { type App, type Component, computed, type DefineComponent, defineComponent, h } from "vue"
 
 import type { VariantValue, VariantProps as Props, HtmlTagName as HtmlTag } from '@tailwind-styled/shared'
