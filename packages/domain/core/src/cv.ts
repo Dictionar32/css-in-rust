@@ -1,16 +1,16 @@
 /**
  * tailwind-styled-v4 — cv()
  *
- * Runtime: pure JS, browser-safe, zero fs/native.
+ * Runtime: native-first with fallback to generated variant tables.
  *
  * Dua mode:
  * 1. GENERATED (optimal) — import dari variants.generated.ts hasil `npx tw compile-variants`
  *    → O(1) lookup, static, zero runtime computation
- * 2. RUNTIME (fallback) — compute on-the-fly, pure JS
- *    → Tetap browser-safe, tidak ada native binding
+ * 2. RUNTIME (fallback) — compute on-the-fly via native binding
+ *    → Requires native Rust binding for variant resolution
  */
 
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "./merge"
 import type { ComponentConfig, CvFn, InferVariantProps } from "./types"
 import { getNativeBinding } from "./native"
 
