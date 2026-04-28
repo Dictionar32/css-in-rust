@@ -131,9 +131,9 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
    output.writeText(pc.bold("  [1/4]") + pc.cyan("  packages"))
    const hasCorePkg = await alreadyInstalled(cwd, "tailwind-styled-v4")
 
-   toInstall = hasCorePkg ? null : "tailwind-styled-v4"
+   const toInstall = hasCorePkg ? [] : ["tailwind-styled-v4"]
 
-   if (toInstall) await installPackages(cwd, pm, toInstall, false, setupFlags, logger)
+   if (toInstall.length > 0) await installPackages(cwd, pm, toInstall, false, setupFlags, logger)
    else logger.skip("tailwind-styled-v4 sudah terpasang")
 
   output.writeText("\n" + pc.bold("  [2/4]") + pc.cyan("  bundler config"))
