@@ -21,6 +21,7 @@ notify = "6"
 # ─ OPTIMIZATION (Phase 2): Parallel iterators for workspace scanning
 rayon = "1.7"
 num_cpus = "1.16"
+smallvec = "1.11"
 # ─ OPTIMIZATION (Phase 3): AST-based template detection
 oxc_parser = "0.55"
 oxc_allocator = "0.55"

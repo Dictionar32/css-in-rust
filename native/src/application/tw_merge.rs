@@ -12,6 +12,7 @@
 
 use napi_derive::napi;
 use std::collections::HashMap;
+use smallvec::{smallvec, SmallVec};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conflict group resolution
@@ -612,7 +613,7 @@ fn split_variants(class: &str) -> (&str, &str) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 pub fn merge_class_string(input: &str) -> String {
-    let tokens: Vec<&str> = input.split_whitespace().collect();
+    let tokens: SmallVec<[&str; 8]> = input.split_whitespace().collect();
     if tokens.is_empty() {
         return String::new();
     }
@@ -620,35 +621,25 @@ pub fn merge_class_string(input: &str) -> String {
         return tokens[0].to_string();
     }
 
-    // slot_index[group_key] = index into `slots` that currently "owns" this group
     let mut group_owner: HashMap<String, usize> = HashMap::with_capacity(tokens.len());
-    // We keep a parallel Vec to track which slot is still alive
-    // None = evicted, Some(class) = surviving
-    let mut slots: Vec<Option<&str>> = Vec::with_capacity(tokens.len());
+    let mut slots: SmallVec<[Option<&str>; 8]> = SmallVec::with_capacity(tokens.len());
 
     for token in &tokens {
         let (variants, base) = split_variants(token);
-
         if let Some(group) = conflict_group(base) {
             let key = format!("{}::{}", variants, group);
             if let Some(&prev_idx) = group_owner.get(&key) {
-                // evict previous winner
                 slots[prev_idx] = None;
             }
             let new_idx = slots.len();
             group_owner.insert(key, new_idx);
             slots.push(Some(token));
         } else {
-            // No conflict group — always keep
             slots.push(Some(token));
         }
     }
 
-    slots
-        .iter()
-        .filter_map(|s| *s)
-        .collect::<Vec<_>>()
-        .join(" ")
+    slots.iter().filter_map(|&s| s).collect::<SmallVec<[&str; 8]>>().join(" ")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
