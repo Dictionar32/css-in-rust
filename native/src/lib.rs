@@ -6,6 +6,7 @@ mod ast_optimizer;
 mod oxc_parser;
 mod scan_cache;
 mod watcher;
+mod debug;
 
 // DDD layers
 pub mod application;
