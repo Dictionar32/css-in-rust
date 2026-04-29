@@ -48,8 +48,7 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.target }}
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - name: Install cross (Linux ARM64)
         if: matrix.cross

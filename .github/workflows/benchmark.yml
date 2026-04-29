@@ -2,7 +2,7 @@ name: Benchmark
 
 on:
   push:
-    branches: [main]
+    branches: [main, tailwnd-js-css]
     paths:
       - 'native/src/**'
       - 'packages/domain/core/src/**'
@@ -28,8 +28,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - uses: actions/setup-node@v4
         with:

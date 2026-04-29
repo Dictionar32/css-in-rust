@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, alpha, work]
+    branches: [main, tailwnd-js-css, alpha]
   pull_request:
-    branches: [main, alpha]
+    branches: [main, tailwnd-js-css, alpha]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -26,8 +26,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy, rustfmt
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - name: cargo fmt
         run: cargo fmt --manifest-path native/Cargo.toml --check
@@ -52,8 +51,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - name: cargo test
         run: cargo test --manifest-path native/Cargo.toml --release
@@ -79,8 +77,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - uses: actions/setup-node@v4
         with:
@@ -117,8 +114,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - uses: actions/setup-node@v4
         with:

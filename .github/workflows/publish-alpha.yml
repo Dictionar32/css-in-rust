@@ -21,8 +21,7 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - uses: actions/setup-node@v4
         with:

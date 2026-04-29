@@ -18,8 +18,7 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
+          cache-workspaces: native
 
       - uses: actions/setup-node@v4
         with:
