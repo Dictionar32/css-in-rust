@@ -140,7 +140,11 @@ pub fn hash_file(
     #[napi(ts_arg_type = "\"md5\" | \"sha256\" | \"fnv\" | \"ahash\"")] algorithm: Option<String>,
     length: Option<u32>,
 ) -> String {
-    dispatch_hash(&file_path, algorithm.as_deref(), length)
+    let content = match std::fs::read_to_string(&file_path) {
+        Ok(c) => c,
+        Err(_) => return "00000000".to_string(),
+    };
+    dispatch_hash(&content, algorithm.as_deref(), length)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

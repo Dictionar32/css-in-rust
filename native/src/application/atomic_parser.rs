@@ -138,6 +138,7 @@ static ATOMIC_REGISTRY: Lazy<DashMap<String, CachedAtomicRule>> = Lazy::new(Dash
 
 #[napi(object)]
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AtomicRule {
     pub tw_class: String,
     pub atomic_name: String,

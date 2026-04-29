@@ -36,6 +36,15 @@ fn build_compile_stats_json(input: &str) -> String {
 /// Process raw CSS dari Tailwind JS dengan LightningCSS.
 /// Input: CSS string (bukan class names).
 fn process_css_string(css: &str) -> String {
+    // Jika input tidak mengandung '{', berarti input adalah class names bukan CSS.
+    // Generate CSS selector stubs sehingga class names tetap ada di output.
+    if !css.contains('{') {
+        return css
+            .split_whitespace()
+            .map(|c| format!(".{} {{}}", c.replace(':', "\\:")))
+            .collect::<Vec<_>>()
+            .join("\n");
+    }
     process_tailwind_css_lightning(css.to_string()).css
 }
 

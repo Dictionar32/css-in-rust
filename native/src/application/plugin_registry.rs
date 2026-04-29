@@ -62,6 +62,7 @@ impl From<PluginInfoIn> for PluginInfoOut {
 
 #[napi(object)]
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateCheckResult {
     pub name: String,
     pub has_update: bool,
@@ -461,9 +462,9 @@ mod tests {
 
     #[test]
     fn test_sha256_known_value() {
-        // SHA-256("abc") = ba7816bf8f01cfea414140de5dae2ec73b00361bbef0469348423f656b2b04d9 (hex)
-        // base64: ungWv8Ts9lCi...
+        // SHA-256("abc") = ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad (hex)
+        // base64: ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=
         let result = sha256_base64(b"abc");
-        assert_eq!(result, "ungWv8Ts9lCibvNpqyPLQWjzDot5q89zaFdvURbmyqY=");
+        assert_eq!(result, "ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=");
     }
 }

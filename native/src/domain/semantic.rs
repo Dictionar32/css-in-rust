@@ -50,7 +50,7 @@ pub(crate) fn split_variant_and_base(class_name: &str) -> (String, String) {
         return (String::new(), class_name.to_string());
     }
     let base = parts.last().unwrap_or(&class_name).to_string();
-    let variant_key = parts[..parts.len() - 1].join(":");
+    let variant_key = format!("{}:", parts[..parts.len() - 1].join(":"));
     (variant_key, base)
 }
 

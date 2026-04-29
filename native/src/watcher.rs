@@ -3,7 +3,7 @@
 //! Exposes a Rust-managed watcher that sends change events to JavaScript
 //! via an N-API threadsafe function callback.
 
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, Event, EventKind, PollWatcher, RecursiveMode, Watcher};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -43,7 +43,7 @@ pub struct WatchEvent {
 // ─────────────────────────────────────────────────────────────────────────────
 
 pub struct WatcherHandle {
-    _watcher: RecommendedWatcher,
+    _watcher: PollWatcher,
 }
 
 /// Start watching `root_dir` recursively.
@@ -98,7 +98,7 @@ where
 
     let config = Config::default().with_poll_interval(Duration::from_millis(500));
 
-    let mut watcher = RecommendedWatcher::new(handler, config)?;
+    let mut watcher = PollWatcher::new(handler, config)?;
     watcher.watch(Path::new(root_dir), RecursiveMode::Recursive)?;
 
     Ok(WatcherHandle { _watcher: watcher })

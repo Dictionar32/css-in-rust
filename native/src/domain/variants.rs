@@ -157,6 +157,7 @@ pub struct VariantValidationResult {
 
 /// Extended config untuk validasi — compound variants dan base tidak diperlukan.
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct ValidateConfig {
     pub variants: Option<HashMap<String, HashMap<String, String>>>,
     pub default_variants: Option<HashMap<String, String>>,
