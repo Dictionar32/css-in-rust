@@ -54,3 +54,38 @@ export function cx(...inputs: ClassValue[]): string {
  * @deprecated Use cx() instead.
  */
 export const cxm = cx
+
+/**
+ * cxn — cx() dengan nested array support.
+ * Delegates ke Rust cx_nested yang flatten rekursif dalam satu pass.
+ *
+ * @example cxn(["p-4", ["flex", isActive && "gap-2"], null]) → "p-4 flex gap-2"
+ * @example cxn(["p-4", [["flex", "gap-2"]]]) → "p-4 flex gap-2"
+ */
+/**
+ * Flatten nested array ke string[] — recursive.
+ * Internal helper untuk cxn().
+ */
+function flattenInputs(inputs: unknown[]): string[] {
+  const result: string[] = []
+  for (const item of inputs) {
+    if (typeof item === "string" && item) result.push(item)
+    else if (Array.isArray(item)) result.push(...flattenInputs(item as unknown[]))
+    // null, false, 0, undefined — skip
+  }
+  return result
+}
+
+/**
+ * cxn — cx() dengan nested array support.
+ * Flatten di TS lalu delegate ke native resolveClassNames (zero overhead).
+ *
+ * @example cxn(["p-4", ["flex", isActive && "gap-2"], null]) → "p-4 flex gap-2"
+ */
+export function cxn(inputs: unknown[]): string {
+  const flat = flattenInputs(inputs)
+  if (flat.length === 0) return ""
+  const native = getNativeBinding()
+  if (native?.resolveClassNames) return native.resolveClassNames(flat)
+  return flat.join(" ")
+}

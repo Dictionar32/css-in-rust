@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use ahash::AHasher;
 use std::hash::{Hasher, BuildHasherDefault};
 
+#[allow(dead_code)]
 type AHashHasher = BuildHasherDefault<AHasher>;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -316,55 +317,6 @@ mod tests {
         assert!(result.is_none());
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Additional unit tests for hash functions
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[cfg(test)]
-mod hash_tests {
-    use super::*;
-
-    #[test]
-    fn test_hash_content_deterministic() {
-        let content = "bg-red-500 p-4".to_string();
-        let hash1 = hash_content(content.clone(), Some("md5".into()), Some(8));
-        let hash2 = hash_content(content, Some("md5".into()), Some(8));
-        assert_eq!(hash1, hash2);
-    }
-
-    #[test]
-    fn test_hash_content_different_algorithms() {
-        let content = "test content".to_string();
-        let md5 = hash_content(content.clone(), Some("md5".into()), Some(32));
-        let sha256 = hash_content(content.clone(), Some("sha256".into()), Some(32));
-        let fnv = hash_content(content, Some("fnv".into()), Some(16));
-
-        // MD5 and SHA256 should be different lengths (32 vs 32 but different values)
-        assert_ne!(md5, sha256);
-        // FNV length can be controlled
-        assert_eq!(fnv.len(), 16);
-    }
-
-    #[test]
-    fn test_hash_content_length_truncation() {
-        let content = "hello world".to_string();
-        let hash8 = hash_content(content.clone(), Some("md5".into()), Some(8));
-        let hash16 = hash_content(content.clone(), Some("md5".into()), Some(16));
-        let hash32 = hash_content(content, Some("md5".into()), Some(32));
-
-        assert_eq!(hash8.len(), 8);
-        assert_eq!(hash16.len(), 16);
-        assert_eq!(hash32.len(), 32);
-    }
-
-    #[test]
-    fn test_hash_file_nonexistent_returns_zero() {
-        let hash = hash_file("/nonexistent/file.txt".into(), Some("md5".into()), Some(8));
-        assert_eq!(hash, "00000000");
-    }
-}
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Additional unit tests for hash functions

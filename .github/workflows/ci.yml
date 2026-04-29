@@ -1,0 +1,135 @@
+name: CI
+
+on:
+  push:
+    branches: [main, alpha, work]
+  pull_request:
+    branches: [main, alpha]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # ── Job 1: Rust checks (fast, no build) ────────────────────────────────────
+  rust-check:
+    name: Rust Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+          cache: true
+          cache-dependency-paths: native/Cargo.lock
+
+      - name: cargo fmt
+        run: cargo fmt --manifest-path native/Cargo.toml --check
+
+      - name: cargo clippy
+        run: cargo clippy --manifest-path native/Cargo.toml --all-features -- -D warnings
+
+      - name: cargo check
+        run: cargo check --manifest-path native/Cargo.toml
+
+  # ── Job 2: Rust tests ──────────────────────────────────────────────────────
+  rust-test:
+    name: Rust Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+          cache-dependency-paths: native/Cargo.lock
+
+      - name: cargo test
+        run: cargo test --manifest-path native/Cargo.toml --release
+
+      - name: cargo test (with TWS_DEBUG)
+        run: cargo test --manifest-path native/Cargo.toml
+        env:
+          TWS_DEBUG: "1"
+
+  # ── Job 3: Build native + TS ───────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.os }} / Node ${{ matrix.node }})
+    needs: [rust-check]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+          cache-dependency-paths: native/Cargo.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Rust native bindings
+        run: npm run build:rust
+
+      - name: Build TypeScript packages
+        run: npm run build:packages
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Upload native binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ matrix.os }}-node${{ matrix.node }}
+          path: native/*.node
+          retention-days: 7
+
+  # ── Job 4: TypeScript tests ────────────────────────────────────────────────
+  ts-test:
+    name: TS Tests
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+          cache-dependency-paths: native/Cargo.lock
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run all tests
+        run: npm test --workspaces --if-present

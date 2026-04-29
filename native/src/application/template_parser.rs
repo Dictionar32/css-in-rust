@@ -13,6 +13,7 @@
 //! karena TemplateStringsArray tidak bisa di-serialize ke NAPI.
 
 use napi_derive::napi;
+use crate::tws_debug;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
@@ -83,6 +84,7 @@ pub struct ParsedTemplateResult {
 /// ```
 #[napi]
 pub fn parse_template(raw: String) -> ParsedTemplateResult {
+    tws_debug!("[template_parser] parse_template len={}", raw.len());
     let mut subs: HashMap<String, String> = HashMap::new();
     let mut base = raw.clone();
 

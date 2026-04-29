@@ -410,6 +410,17 @@ export declare function classifyAndSortClasses(classes: Array<string>): Array<Bu
  */
 export declare function classifyKnownClasses(classes: Array<string>, safelist: Array<string>, customUtilities: Array<string>): Array<KnownClassResult>
 
+/** Result dari compute_class_stats */
+export interface ClassStatsResult {
+  totalClassOccurrences: number
+  /** JSON array ClassUsage[] — top N by count */
+  topJson: string
+  /** JSON array ClassUsage[] — count >= frequent_threshold, max top_limit items */
+  frequentJson: string
+  /** JSON array ClassUsage[] — count === 1 */
+  uniqueJson: string
+}
+
 export interface ClassToken {
   raw: string
   type: string
@@ -554,6 +565,20 @@ export interface ComponentPropUsage {
  * - `top`           — berapa top classes yang dikembalikan (default 10)
  */
 export declare function computeCacheStats(filesClasses: Array<Array<string>>, sizes: Array<number>, top?: number | undefined | null): CacheStatsResult
+
+/**
+ * Menggantikan JS stats aggregation di analyzeWorkspace.ts:
+ * ```ts
+ * const top = all.slice(0, topLimit)
+ * const frequent = all.filter(u => u.count >= frequentThreshold).slice(0, topLimit)
+ * const unique = all.filter(u => u.count === 1)
+ * const totalClassOccurrences = all.reduce((sum, u) => sum + u.count, 0)
+ * ```
+ *
+ * Input: JSON array ClassUsage[] sudah di-sort by count desc dari buildClassUsage()
+ * Output: ClassStatsResult dengan semua 4 nilai sekaligus (satu pass)
+ */
+export declare function computeClassStats(usagesJson: string, topLimit: number, frequentThreshold: number): ClassStatsResult
 
 /**
  * Compute full risk + suggestions in a single native call — avoids double JSON
@@ -789,28 +814,26 @@ export declare function generateSuggestions(className: string, impactJson: strin
  *
  * **Menggantikan** `hashContent(content, algorithm, length)` di `shared/src/hash.ts`.
  *
- * Algoritma yang didukung: `"md5"` (default), `"sha256"`, `"fnv"`.
+ * Algoritma yang didukung: `"md5"` (default), `"sha256"`, `"fnv"`, `"ahash"`.
  * `length` memotong output hex (mis. `8` untuk short hash cache key).
  *
  * Kecepatan dibanding JS `crypto.createHash`:
  * - `"md5"` : ~12x lebih cepat (no JS→C++ bridge overhead per call)
  * - `"fnv"` : ~40x lebih cepat (pure integer math, zero allocation)
+ * - `"ahash"`: ~50x lebih cepat (SIMD-optimized, modern CPU)
  */
-export declare function hashContent(content: string, algorithm?: "md5" | "sha256" | "fnv", length?: number | undefined | null): string
+export declare function hashContent(content: string, algorithm?: "md5" | "sha256" | "fnv" | "ahash", length?: number | undefined | null): string
 
 /**
  * Hash isi sebuah file — baca → hash dalam satu NAPI call.
  *
  * **Menggantikan** `hashFile(filePath, algorithm, length)` di `shared/src/hash.ts`.
  *
- * Returns `"00000000"` jika file tidak bisa dibaca (tidak ditemukan,
- * permission denied, dll) — perilaku identik dengan JS fallback.
+ * Returns `"00000000"` jika file tidak bisa dibaca.
  *
- * Lebih efisien dari JS karena:
- *   JS: `fs.readFileSync` (C++ bridge) → `crypto.createHash` (C++ bridge) → `.digest` (alloc)
- *   Rust: satu system call `read_to_string` → integer math hash → format string
+ * Lebih efisien dari JS karena satu system call vs multiple JS bridges.
  */
-export declare function hashFile(filePath: string, algorithm?: "md5" | "sha256" | "fnv", length?: number | undefined | null): string
+export declare function hashFile(filePath: string, algorithm?: "md5" | "sha256" | "fnv" | "ahash", length?: number | undefined | null): string
 
 /** Hash a file's content for change detection. */
 export declare function hashFileContent(content: string): string
@@ -1699,6 +1722,31 @@ export declare function twMerge(classString: string): string
  * Joins all inputs with a space, then resolves conflicts.
  */
 export declare function twMergeMany(classStrings: Array<string>): string
+
+/** tw_merge_many dengan custom separator. */
+export declare function twMergeManyWithSeparator(classStrings: Array<string>, opts: TwMergeOptions): string
+
+/** Options untuk tw_merge_with_separator */
+export interface TwMergeOptions {
+  /** Separator antar class (default: " ") */
+  separator?: string
+  /** Aktifkan debug logging (override TWS_DEBUG env) */
+  debug?: boolean
+}
+
+/**
+ * tw_merge dengan custom separator.
+ *
+ * ```ts
+ * twMergeWithSeparator("p-4 p-8", { separator: "
+" })
+ * // → "p-8"  (output dipisah newline, tapi conflict resolution tetap jalan)
+ *
+ * twMergeWithSeparator("p-4 flex", { separator: " | " })
+ * // → "p-4 | flex"
+ * ```
+ */
+export declare function twMergeWithSeparator(classString: string, opts: TwMergeOptions): string
 
 export interface UpdateCheckResult {
   name: string

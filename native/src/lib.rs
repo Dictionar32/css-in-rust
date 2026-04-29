@@ -51,7 +51,7 @@ pub use application::css_analysis::{
 pub use application::template_parser::parse_template;
 pub use application::class_utils::resolve_class_names;
 pub use application::state_css::tw_classes_to_css;
-pub use application::tw_merge::{tw_merge, tw_merge_many, build_dependency_chain};
+pub use application::tw_merge::{tw_merge, tw_merge_many, build_dependency_chain, tw_merge_with_separator, tw_merge_many_with_separator};
 pub use application::container_query::{layout_classes_to_css, build_container_rules, ContainerBreakpoint};
 pub use application::engine::{
    compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,

@@ -545,6 +545,7 @@ pub fn batch_split_classes(classes: Vec<String>) -> Vec<VariantSplitResult> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::application::tw_merge::split_variants;
 
     #[test]
     fn test_parse_classes_from_string_basic() {

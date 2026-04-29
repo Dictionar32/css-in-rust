@@ -100,6 +100,10 @@ interface NativeBinding {
   buildVariantLookupKey?: (defaultVariantsJson: string, propsJson: string) => string
   /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
   resolveClassNames?: (inputs: string[]) => string
+  /** tw_merge dengan custom separator dan optional debug */
+  twMergeWithSeparator?: (classString: string, opts: { separator?: string; debug?: boolean }) => string
+  /** tw_merge_many dengan custom separator */
+  twMergeManyWithSeparator?: (classStrings: string[], opts: { separator?: string; debug?: boolean }) => string
   /** conflict-aware Tailwind class merger — port of tailwind-merge. (tw_merge.rs) */
   twMerge?: (classString: string) => string
   /** variadic convenience wrapper untuk twMerge. (tw_merge.rs) */

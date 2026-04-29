@@ -12,8 +12,8 @@
 
 use napi_derive::napi;
 use std::collections::HashMap;
-use smallvec::{smallvec, SmallVec};
-use crate::debug::tws_debug;
+use smallvec::SmallVec;
+use crate::tws_debug;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conflict group resolution
@@ -589,7 +589,7 @@ fn conflict_group(base: &str) -> Option<String> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Splits `hover:dark:bg-red-500` into (`"hover:dark:"`, `"bg-red-500"`).
-fn split_variants(class: &str) -> (&str, &str) {
+pub(crate) fn split_variants(class: &str) -> (&str, &str) {
     // Walk from the right to find the last `:` that isn't inside `[…]`
     let bytes = class.as_bytes();
     let mut depth = 0_usize;
@@ -660,6 +660,7 @@ pub fn merge_class_string(input: &str) -> String {
 /// ```
 #[napi]
 pub fn tw_merge(class_string: String) -> String {
+    tws_debug!("[tw_merge] input: {:?}", class_string);
     merge_class_string(&class_string)
 }
 
@@ -850,5 +851,64 @@ pub fn parse_subcomponent_blocks_napi(
     SubcomponentParseResult {
         base_classes: base.split_whitespace().collect::<Vec<_>>().join(" "),
         sub_map_json,
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// tw_merge_with_separator — Batch G feature
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Options untuk tw_merge_with_separator
+#[napi(object)]
+pub struct TwMergeOptions {
+    /// Separator antar class (default: " ")
+    pub separator: Option<String>,
+    /// Aktifkan debug logging (override TWS_DEBUG env)
+    pub debug: Option<bool>,
+}
+
+/// tw_merge dengan custom separator.
+///
+/// ```ts
+/// twMergeWithSeparator("p-4 p-8", { separator: "\n" })
+/// // → "p-8"  (output dipisah newline, tapi conflict resolution tetap jalan)
+///
+/// twMergeWithSeparator("p-4 flex", { separator: " | " })
+/// // → "p-4 | flex"
+/// ```
+#[napi]
+pub fn tw_merge_with_separator(class_string: String, opts: TwMergeOptions) -> String {
+    let sep = opts.separator.as_deref().unwrap_or(" ");
+    let debug = opts.debug.unwrap_or(false);
+
+    if debug || crate::debug::is_enabled() {
+        eprintln!("[tw_merge_with_separator] input={:?} sep={:?}", class_string, sep);
+    }
+
+    // Conflict resolution tetap pakai spasi sebagai internal separator
+    let resolved = merge_class_string(&class_string);
+
+    // Ganti output separator jika bukan spasi
+    if sep == " " {
+        resolved
+    } else {
+        resolved.split_whitespace().collect::<Vec<_>>().join(sep)
+    }
+}
+
+/// tw_merge_many dengan custom separator.
+#[napi]
+pub fn tw_merge_many_with_separator(class_strings: Vec<String>, opts: TwMergeOptions) -> String {
+    let sep = opts.separator.as_deref().unwrap_or(" ");
+    let joined = class_strings
+        .iter()
+        .filter(|s| !s.is_empty())
+        .map(|s| s.as_str())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let resolved = merge_class_string(&joined);
+    if sep == " " {
+        resolved
+    } else {
+        resolved.split_whitespace().collect::<Vec<_>>().join(sep)
     }
 }

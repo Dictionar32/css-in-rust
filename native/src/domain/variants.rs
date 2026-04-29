@@ -5,6 +5,7 @@
  * Move variant matching logic from TypeScript to Rust for 10x performance.
  */
 use napi_derive::napi;
+use crate::tws_debug;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
@@ -34,6 +35,7 @@ pub struct VariantResult {
 /// This is the hot path - executed thousands of times per build.
 #[napi]
 pub fn resolve_variants(config_json: String, props_json: String) -> VariantResult {
+    tws_debug!("[variants] resolve_variants props={:?}", props_json);
     // Parse inputs
     let config: VariantConfig = match serde_json::from_str(&config_json) {
         Ok(c) => c,

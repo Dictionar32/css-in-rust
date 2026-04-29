@@ -15,6 +15,7 @@
 //! Note: `cx()` (twMerge wrapper) tetap di JS karena tergantung tailwind-merge.
 
 use napi_derive::napi;
+use crate::tws_debug;
 
 /// Gabungkan class names — filter falsy, join dengan spasi, normalisasi whitespace.
 ///
@@ -35,6 +36,7 @@ use napi_derive::napi;
 /// ```
 #[napi]
 pub fn resolve_class_names(inputs: Vec<String>) -> String {
+    tws_debug!("[class_utils] resolve_class_names count={}", inputs.len());
     let mut parts: Vec<&str> = Vec::with_capacity(inputs.len() * 2);
     for input in &inputs {
         let trimmed = input.trim();
