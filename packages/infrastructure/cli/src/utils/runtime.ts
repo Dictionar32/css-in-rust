@@ -25,6 +25,10 @@ const isHelpExit = (error: unknown): boolean => {
   return isCommanderLikeError(error) && error.code === "commander.helpDisplayed"
 }
 
+const isVersionExit = (error: unknown): boolean => {
+  return isCommanderLikeError(error) && error.code === "commander.version"
+}
+
 const normalizeCliError = (error: unknown): unknown => {
   if (!isCommanderLikeError(error)) return error
   if (!error.code?.startsWith("commander.")) return error
@@ -134,7 +138,8 @@ export async function runCliMain(options: CliMainOptions): Promise<void> {
     await program.parseAsync(argv)
   } catch (error) {
     const isHelpError = isHelpExit(error)
-    if (isHelpError) return
+    const isVersionError = isVersionExit(error)
+    if (isHelpError || isVersionError) return
 
     const normalized = normalizeCliError(error)
     const isJson = input.json

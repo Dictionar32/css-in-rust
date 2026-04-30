@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { fileURLToPath } from "node:url"
 import { buildMainProgram } from "./commands/program"
 import { runCliMain } from "./utils/runtime"
 
@@ -15,4 +16,8 @@ async function main() {
   })
 }
 
-main()
+// Only run main() when executed directly, not when imported/required
+const __filename = fileURLToPath(import.meta.url)
+if (process.argv[1] === __filename) {
+  main()
+}
