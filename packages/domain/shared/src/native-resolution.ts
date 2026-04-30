@@ -8,56 +8,14 @@
  * 3. Local build dari source (developer mode)
  */
 
+import { createRequire } from "node:module"
+import * as fs from "node:fs"
+import * as path from "node:path"
+
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-// ESM-safe require detection
-let nodeModuleRef: any = null
-function getNodeModuleRef() {
-  if (isBrowser) return null
-  if (nodeModuleRef !== null) return nodeModuleRef
-  try {
-    const test = typeof require === 'function' ? require('node:module') : null
-    nodeModuleRef = test
-    return test
-  } catch {
-    nodeModuleRef = null
-    return null
-  }
-}
-
-let _nodeFs: any = null
-let _nodePath: any = null
-let _nodeModule: any = null
-let _require: any = null
-
-function getNodeFs() {
-  if (isBrowser) return { existsSync: () => false }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { existsSync: () => false }
-  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
-  return _nodeFs
-}
-function getNodePath() {
-  if (isBrowser) return { resolve: () => "", dirname: "" }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { resolve: () => "", dirname: "" }
-  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
-  return _nodePath!
-}
-function getNodeModule() {
-  if (isBrowser) return { createRequire: () => { throw new Error("node:module not available") } }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { createRequire: () => { throw new Error("require not available") } }
-  if (!_nodeModule) _nodeModule = nodeRequire
-  return _nodeModule
-}
-function getRequire(_importMetaUrl: string) {
-  if (isBrowser) return () => { throw new Error("node:module not available") }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return () => { throw new Error("require not available") }
-  if (!_require) _require = nodeRequire.createRequire(_importMetaUrl)
-  return _require
-}
+// ESM-safe require — works in both ESM and CJS contexts
+const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
 
 export interface NativeResolutionResult {
   path: string | null
@@ -100,10 +58,6 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     return { path: null, source: "not-found", platform, tried: ["not available in browser"] }
   }
 
-  const fs = getNodeFs()
-  const path = getNodePath()
-  const _req = getRequire(import.meta.url)
-
   // 1. Env var override
   const envPath = process.env.TW_NATIVE_PATH?.trim()
   if (envPath) {
@@ -117,7 +71,7 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   const prebuiltPkgs = PLATFORM_MAP[platform] ?? []
   for (const pkg of prebuiltPkgs) {
     try {
-      const candidate = _req.resolve(`${pkg}/tailwind_styled_parser.node`)
+      const candidate = _require.resolve(`${pkg}/tailwind_styled_parser.node`)
       if (fs.existsSync(candidate)) {
         return { path: candidate, source: "prebuilt", platform, tried }
       }
