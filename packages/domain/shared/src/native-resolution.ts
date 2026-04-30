@@ -88,18 +88,30 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   const napiPlatform = platform === "linux-x64" ? "linux-x64-gnu"
     : platform === "linux-arm64" ? "linux-arm64-gnu"
     : platform
-  const localCandidates = [
+
+  const localCandidates: string[] = [
     path.resolve(base, "tailwind_styled_parser.node"),
     path.resolve(base, "..", "tailwind_styled_parser.node"),
-    path.resolve(cwd, "native", "tailwind_styled_parser.node"),
-    path.resolve(cwd, "native", "target", "release", "tailwind_styled_parser.node"),
-    // napi-rs conventional output — platform key
+    // napi-rs conventional output — platform key and gnu suffix
     path.resolve(base, `tailwind_styled_parser.${platform}.node`),
-    // napi-rs conventional output — with gnu suffix (Linux)
     path.resolve(base, `tailwind_styled_parser.${napiPlatform}.node`),
-    path.resolve(cwd, "native", `tailwind_styled_parser.${platform}.node`),
-    path.resolve(cwd, "native", `tailwind_styled_parser.${napiPlatform}.node`),
   ]
+
+  // Walk up from cwd AND from base to find repo root native/ dir
+  // Needed when npm workspaces sets cwd to the package dir, not repo root
+  for (const startDir of [cwd, base]) {
+    let dir = startDir
+    for (let i = 0; i < 6; i++) {
+      const nativeDir = path.resolve(dir, "native")
+      localCandidates.push(path.resolve(nativeDir, "tailwind_styled_parser.node"))
+      localCandidates.push(path.resolve(nativeDir, `tailwind_styled_parser.${platform}.node`))
+      localCandidates.push(path.resolve(nativeDir, `tailwind_styled_parser.${napiPlatform}.node`))
+      localCandidates.push(path.resolve(nativeDir, "target", "release", "tailwind_styled_parser.node"))
+      const parent = path.resolve(dir, "..")
+      if (parent === dir) break
+      dir = parent
+    }
+  }
 
   for (const candidate of localCandidates) {
     tried.push(`local:${candidate}`)
