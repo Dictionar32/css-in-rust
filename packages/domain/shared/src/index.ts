@@ -236,7 +236,7 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
 export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string): string {
   if (dir) return path.resolve(dir)
   try {
-    return fileURLToPath(importMetaUrl)
+    return path.dirname(fileURLToPath(importMetaUrl))
   } catch {
     return process.cwd()
   }

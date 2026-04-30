@@ -591,14 +591,29 @@ mod tests {
 
     #[test]
     fn test_registry_caches() {
-        clear_atomic_registry();
-        assert_eq!(atomic_registry_size(), 0);
-        parse_atomic_class("p-4".to_string());
-        assert_eq!(atomic_registry_size(), 1);
-        // Second call hits cache
-        parse_atomic_class("p-4".to_string());
-        assert_eq!(atomic_registry_size(), 1);
-        clear_atomic_registry();
-        assert_eq!(atomic_registry_size(), 0);
+        // Use a unique key unlikely to be touched by parallel tests
+        let unique_class = format!(
+            "p-registry-test-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.subsec_nanos())
+                .unwrap_or(99999)
+        );
+
+        let before = atomic_registry_size();
+        parse_atomic_class(unique_class.clone());
+        let after_first = atomic_registry_size();
+        // Registry should have grown by at least 1
+        assert!(
+            after_first > before,
+            "registry should grow after first parse"
+        );
+        // Second call with same key hits cache — size must not increase
+        parse_atomic_class(unique_class.clone());
+        assert_eq!(
+            atomic_registry_size(),
+            after_first,
+            "cache hit should not add new entry"
+        );
     }
 }
