@@ -121,7 +121,7 @@ mod tests {
             .to_string_lossy()
             .into_owned();
         assert!(css.contains(".bg-blue-500"));
-        tailwind_free(ptr);
+        unsafe { tailwind_free(ptr) };
     }
 
     #[test]
