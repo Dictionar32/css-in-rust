@@ -77,6 +77,14 @@ pub extern "C" fn tailwind_compile_with_stats(code: *const c_char) -> *mut c_cha
     c_string_or_empty(build_compile_stats_json(&source))
 }
 
+/// Free a pointer previously returned by `tailwind_compile` or similar FFI functions.
+///
+/// # Safety
+///
+/// - `ptr` must be a pointer returned by one of the `tailwind_*` FFI functions.
+/// - Must not be called more than once for the same pointer (double-free).
+/// - Must not be used after this call (use-after-free).
+/// - Passing a null pointer is safe and a no-op.
 #[no_mangle]
 pub unsafe extern "C" fn tailwind_free(ptr: *mut c_char) {
     if ptr.is_null() {
