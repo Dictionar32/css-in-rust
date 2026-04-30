@@ -130,13 +130,21 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   // 3. Local build candidates
   const cwd = process.cwd()
   const base = runtimeDir ?? cwd
+  // napi-rs naming: platform key may have -gnu suffix on Linux
+  const napiPlatform = platform === "linux-x64" ? "linux-x64-gnu"
+    : platform === "linux-arm64" ? "linux-arm64-gnu"
+    : platform
   const localCandidates = [
     path.resolve(base, "tailwind_styled_parser.node"),
     path.resolve(base, "..", "tailwind_styled_parser.node"),
     path.resolve(cwd, "native", "tailwind_styled_parser.node"),
     path.resolve(cwd, "native", "target", "release", "tailwind_styled_parser.node"),
-    // napi-rs conventional output
+    // napi-rs conventional output — platform key
     path.resolve(base, `tailwind_styled_parser.${platform}.node`),
+    // napi-rs conventional output — with gnu suffix (Linux)
+    path.resolve(base, `tailwind_styled_parser.${napiPlatform}.node`),
+    path.resolve(cwd, "native", `tailwind_styled_parser.${platform}.node`),
+    path.resolve(cwd, "native", `tailwind_styled_parser.${napiPlatform}.node`),
   ]
 
   for (const candidate of localCandidates) {
