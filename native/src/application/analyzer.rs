@@ -190,7 +190,12 @@ pub fn build_distribution(usages_json: String) -> ClassDistribution {
         }
     }
 
-    ClassDistribution { once, few, moderate, frequent }
+    ClassDistribution {
+        once,
+        few,
+        moderate,
+        frequent,
+    }
 }
 
 /// Aggregate class counts from a list of (file, classes[]) scan entries.
@@ -338,10 +343,9 @@ pub fn compute_class_stats(
         if top.len() < top_limit {
             top.push(usage);
         }
-        if count >= frequent_threshold
-            && frequent.len() < top_limit {
-                frequent.push(usage);
-            }
+        if count >= frequent_threshold && frequent.len() < top_limit {
+            frequent.push(usage);
+        }
         if count == 1 {
             unique.push(usage);
         }

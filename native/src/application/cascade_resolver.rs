@@ -171,12 +171,12 @@ fn build_causes(winner: &RuleInput, loser: &RuleInput) -> Vec<ResolutionCause> {
 
 fn format_cause(cause: &ResolutionCause) -> &'static str {
     match cause {
-        ResolutionCause::LowerOrigin { .. }      => "lower origin",
-        ResolutionCause::LowerLayer { .. }       => "lower layer",
-        ResolutionCause::LowerImportance         => "lower importance",
+        ResolutionCause::LowerOrigin { .. } => "lower origin",
+        ResolutionCause::LowerLayer { .. } => "lower layer",
+        ResolutionCause::LowerImportance => "lower importance",
         ResolutionCause::LowerSpecificity { .. } => "lower specificity",
-        ResolutionCause::EarlierOrder { .. }     => "earlier order",
-        ResolutionCause::InactiveCondition { .. }=> "inactive condition",
+        ResolutionCause::EarlierOrder { .. } => "earlier order",
+        ResolutionCause::InactiveCondition { .. } => "inactive condition",
     }
 }
 
@@ -211,7 +211,11 @@ fn resolve_property_bucket(
     active.sort_by(|a, b| cascade_priority(a, b));
 
     let winner = active[0];
-    let losers: Vec<&RuleInput> = active[1..].iter().copied().chain(inactive.iter().copied()).collect();
+    let losers: Vec<&RuleInput> = active[1..]
+        .iter()
+        .copied()
+        .chain(inactive.iter().copied())
+        .collect();
 
     let stage = if losers.is_empty() {
         STAGE_ORDER
@@ -270,7 +274,8 @@ pub fn resolve_cascade(rules_json: String) -> String {
     let rules: Vec<RuleInput> = match serde_json::from_str(&rules_json) {
         Ok(r) => r,
         Err(e) => {
-            let err = serde_json::json!({ "error": format!("parse error: {}", e), "resolutions": [] });
+            let err =
+                serde_json::json!({ "error": format!("parse error: {}", e), "resolutions": [] });
             return err.to_string();
         }
     };
@@ -280,7 +285,10 @@ pub fn resolve_cascade(rules_json: String) -> String {
         std::collections::HashMap::new();
 
     for rule in &rules {
-        property_buckets.entry(rule.property).or_default().push(rule);
+        property_buckets
+            .entry(rule.property)
+            .or_default()
+            .push(rule);
     }
 
     let mut resolutions: Vec<CascadeResolution> = Vec::new();
@@ -300,9 +308,8 @@ pub fn resolve_cascade(rules_json: String) -> String {
     }
 
     let result = CascadeResult { resolutions };
-    serde_json::to_string(&result).unwrap_or_else(|e| {
-        format!("{{\"error\":\"{}\",\"resolutions\":[]}}", e)
-    })
+    serde_json::to_string(&result)
+        .unwrap_or_else(|e| format!("{{\"error\":\"{}\",\"resolutions\":[]}}", e))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -313,8 +320,25 @@ pub fn resolve_cascade(rules_json: String) -> String {
 mod tests {
     use super::*;
 
-    fn make_rule(id: u32, property: u32, origin: u8, importance: u8, layer_order: i32, specificity: i32, insertion_order: u32) -> RuleInput {
-        RuleInput { id, property, origin, importance, layer_order, specificity, condition_result: 0, insertion_order }
+    fn make_rule(
+        id: u32,
+        property: u32,
+        origin: u8,
+        importance: u8,
+        layer_order: i32,
+        specificity: i32,
+        insertion_order: u32,
+    ) -> RuleInput {
+        RuleInput {
+            id,
+            property,
+            origin,
+            importance,
+            layer_order,
+            specificity,
+            condition_result: 0,
+            insertion_order,
+        }
     }
 
     #[test]
@@ -352,8 +376,26 @@ mod tests {
 
     #[test]
     fn test_inactive_rule_loses() {
-        let active = RuleInput { id: 0, property: 1, origin: 2, importance: 0, layer_order: 4, specificity: 5, condition_result: 0, insertion_order: 0 };
-        let inactive = RuleInput { id: 1, property: 1, origin: 2, importance: 0, layer_order: 4, specificity: 100, condition_result: 1, insertion_order: 1 };
+        let active = RuleInput {
+            id: 0,
+            property: 1,
+            origin: 2,
+            importance: 0,
+            layer_order: 4,
+            specificity: 5,
+            condition_result: 0,
+            insertion_order: 0,
+        };
+        let inactive = RuleInput {
+            id: 1,
+            property: 1,
+            origin: 2,
+            importance: 0,
+            layer_order: 4,
+            specificity: 100,
+            condition_result: 1,
+            insertion_order: 1,
+        };
         let mut rules = vec![&active, &inactive];
         let mut counter = 0u32;
         let res = resolve_property_bucket(1, &mut rules, &mut counter).unwrap();

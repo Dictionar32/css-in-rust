@@ -436,10 +436,19 @@ pub fn parse_css_rules(css: String) -> Vec<CssRuleLookup> {
         };
 
         // Unescape CSS class name (e.g., "hover\:bg-blue" → "hover:bg-blue")
-        let class_name = raw_class
-            .replace("\\:", ":")
+        // Temporarily replace escaped colons before stripping pseudo-class suffix
+        let unescaped = raw_class
+            .replace("\\:", "\x00") // placeholder for escaped colon
             .replace("\\.", ".")
             .replace("\\/", "/");
+
+        // Strip trailing pseudo-class selectors (e.g., ":hover", ":focus", ":active")
+        // These are bare colons (not escaped), so split on ':' and take only the class part
+        let class_name = unescaped
+            .split(':')
+            .next()
+            .unwrap_or(&unescaped)
+            .replace('\x00', ":"); // restore escaped colons
 
         // Extract variants from class name
         let (variant_key, _base) = split_variant_and_base(&class_name);

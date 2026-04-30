@@ -24,43 +24,43 @@ use napi_derive::napi;
 
 fn layout_class_to_decl(cls: &str) -> Option<&'static str> {
     match cls {
-        "flex"              => Some("display:flex"),
-        "grid"              => Some("display:grid"),
-        "block"             => Some("display:block"),
-        "inline-flex"       => Some("display:inline-flex"),
-        "hidden"            => Some("display:none"),
-        "flex-col"          => Some("flex-direction:column"),
-        "flex-row"          => Some("flex-direction:row"),
-        "flex-wrap"         => Some("flex-wrap:wrap"),
-        "flex-nowrap"       => Some("flex-wrap:nowrap"),
-        "items-center"      => Some("align-items:center"),
-        "items-start"       => Some("align-items:flex-start"),
-        "items-end"         => Some("align-items:flex-end"),
-        "items-stretch"     => Some("align-items:stretch"),
-        "justify-center"    => Some("justify-content:center"),
-        "justify-between"   => Some("justify-content:space-between"),
-        "justify-start"     => Some("justify-content:flex-start"),
-        "justify-end"       => Some("justify-content:flex-end"),
-        "grid-cols-1"       => Some("grid-template-columns:repeat(1,minmax(0,1fr))"),
-        "grid-cols-2"       => Some("grid-template-columns:repeat(2,minmax(0,1fr))"),
-        "grid-cols-3"       => Some("grid-template-columns:repeat(3,minmax(0,1fr))"),
-        "grid-cols-4"       => Some("grid-template-columns:repeat(4,minmax(0,1fr))"),
-        "grid-cols-6"       => Some("grid-template-columns:repeat(6,minmax(0,1fr))"),
-        "grid-cols-12"      => Some("grid-template-columns:repeat(12,minmax(0,1fr))"),
-        _                   => None,
+        "flex" => Some("display:flex"),
+        "grid" => Some("display:grid"),
+        "block" => Some("display:block"),
+        "inline-flex" => Some("display:inline-flex"),
+        "hidden" => Some("display:none"),
+        "flex-col" => Some("flex-direction:column"),
+        "flex-row" => Some("flex-direction:row"),
+        "flex-wrap" => Some("flex-wrap:wrap"),
+        "flex-nowrap" => Some("flex-wrap:nowrap"),
+        "items-center" => Some("align-items:center"),
+        "items-start" => Some("align-items:flex-start"),
+        "items-end" => Some("align-items:flex-end"),
+        "items-stretch" => Some("align-items:stretch"),
+        "justify-center" => Some("justify-content:center"),
+        "justify-between" => Some("justify-content:space-between"),
+        "justify-start" => Some("justify-content:flex-start"),
+        "justify-end" => Some("justify-content:flex-end"),
+        "grid-cols-1" => Some("grid-template-columns:repeat(1,minmax(0,1fr))"),
+        "grid-cols-2" => Some("grid-template-columns:repeat(2,minmax(0,1fr))"),
+        "grid-cols-3" => Some("grid-template-columns:repeat(3,minmax(0,1fr))"),
+        "grid-cols-4" => Some("grid-template-columns:repeat(4,minmax(0,1fr))"),
+        "grid-cols-6" => Some("grid-template-columns:repeat(6,minmax(0,1fr))"),
+        "grid-cols-12" => Some("grid-template-columns:repeat(12,minmax(0,1fr))"),
+        _ => None,
     }
 }
 
 /// Default breakpoint map — identik dengan CONTAINER_BREAKPOINTS di containerQuery.ts
 fn default_breakpoint(key: &str) -> Option<&'static str> {
     match key {
-        "xs"  => Some("240px"),
-        "sm"  => Some("320px"),
-        "md"  => Some("640px"),
-        "lg"  => Some("1024px"),
-        "xl"  => Some("1280px"),
+        "xs" => Some("240px"),
+        "sm" => Some("320px"),
+        "md" => Some("640px"),
+        "lg" => Some("1024px"),
+        "xl" => Some("1280px"),
         "2xl" => Some("1536px"),
-        _     => None,
+        _ => None,
     }
 }
 
@@ -202,7 +202,10 @@ mod tests {
     #[test]
     fn test_layout_named_classes() {
         let result = layout_classes_to_css("flex flex-col items-center".into());
-        assert_eq!(result, "display:flex;flex-direction:column;align-items:center");
+        assert_eq!(
+            result,
+            "display:flex;flex-direction:column;align-items:center"
+        );
     }
 
     #[test]
@@ -290,8 +293,14 @@ mod tests {
     #[test]
     fn test_build_container_rules_multiple_breakpoints() {
         let bps = vec![
-            ContainerBreakpoint { key: "sm".into(), classes: "flex".into() },
-            ContainerBreakpoint { key: "lg".into(), classes: "grid".into() },
+            ContainerBreakpoint {
+                key: "sm".into(),
+                classes: "flex".into(),
+            },
+            ContainerBreakpoint {
+                key: "lg".into(),
+                classes: "grid".into(),
+            },
         ];
         let result = build_container_rules("comp".into(), bps, None);
         let lines: Vec<&str> = result.lines().collect();

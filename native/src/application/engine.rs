@@ -285,7 +285,10 @@ mod fingerprint_tests {
     #[test]
     fn test_empty_parts_produces_fnv_offset_string() {
         let result = create_fingerprint(vec![]);
-        assert!(!result.is_empty(), "fingerprint of empty parts should not be empty");
+        assert!(
+            !result.is_empty(),
+            "fingerprint of empty parts should not be empty"
+        );
     }
 
     #[test]
