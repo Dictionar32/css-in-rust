@@ -78,13 +78,11 @@ pub extern "C" fn tailwind_compile_with_stats(code: *const c_char) -> *mut c_cha
 }
 
 #[no_mangle]
-pub extern "C" fn tailwind_free(ptr: *mut c_char) {
+pub unsafe extern "C" fn tailwind_free(ptr: *mut c_char) {
     if ptr.is_null() {
         return;
     }
-    unsafe {
-        drop(CString::from_raw(ptr));
-    }
+    drop(CString::from_raw(ptr));
 }
 
 #[no_mangle]
