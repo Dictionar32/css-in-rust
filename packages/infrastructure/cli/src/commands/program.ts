@@ -55,6 +55,7 @@ export function buildMainProgram(context: CommandContext): Command {
   program
     .name("tw")
     .description("tailwind-styled-v4 CLI")
+    .version("5.0.4", "--version", "Output the current version")
     .option("--json", "Output strict JSON envelope")
     .option("--debug", "Include stack traces for errors")
     .option("--verbose", "Verbose runtime logs")
