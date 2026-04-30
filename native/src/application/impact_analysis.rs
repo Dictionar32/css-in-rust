@@ -19,11 +19,27 @@ use std::collections::HashSet;
 
 static CRITICAL_PATTERNS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     [
-        "fixed", "absolute", "sticky", "z-50", "z-index",
-        "top-0", "right-0", "bottom-0", "left-0",
-        "w-full", "h-full", "min-h-screen",
-        "flex", "grid", "block", "inline", "hidden",
-        "visible", "opacity", "pointer-events", "cursor",
+        "fixed",
+        "absolute",
+        "sticky",
+        "z-50",
+        "z-index",
+        "top-0",
+        "right-0",
+        "bottom-0",
+        "left-0",
+        "w-full",
+        "h-full",
+        "min-h-screen",
+        "flex",
+        "grid",
+        "block",
+        "inline",
+        "hidden",
+        "visible",
+        "opacity",
+        "pointer-events",
+        "cursor",
     ]
     .into_iter()
     .collect()
@@ -117,7 +133,8 @@ fn generate_suggestions_inner(
                         .to_string(),
                 );
             }
-            suggestions.push("Manual code review recommended before removing this class.".to_string());
+            suggestions
+                .push("Manual code review recommended before removing this class.".to_string());
         }
         "medium" => {
             suggestions.push(format!(
@@ -125,9 +142,8 @@ fn generate_suggestions_inner(
                 total_components
             ));
             if indirect_usage > 0 {
-                suggestions.push(
-                    "Check for indirect usages via variants before removing.".to_string(),
-                );
+                suggestions
+                    .push("Check for indirect usages via variants before removing.".to_string());
             }
         }
         _ => {
@@ -282,7 +298,8 @@ mod tests {
 
     #[test]
     fn test_calculate_impact_json_roundtrip() {
-        let input = r#"{"className":"fixed","totalComponents":1,"indirectUsage":0,"bundleSizeBytes":200}"#;
+        let input =
+            r#"{"className":"fixed","totalComponents":1,"indirectUsage":0,"bundleSizeBytes":200}"#;
         let output = calculate_impact(input.to_string());
         let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
         assert_eq!(parsed["riskLevel"], "high");

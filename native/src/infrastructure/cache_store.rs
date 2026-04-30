@@ -330,7 +330,10 @@ pub fn prune_stale_entries(
     }
 
     let removed = (entries.len() as u32).saturating_sub(kept_indices.len() as u32);
-    PruneResult { kept_indices, removed }
+    PruneResult {
+        kept_indices,
+        removed,
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -434,8 +437,14 @@ mod cache_store_tests {
     #[test]
     fn test_prune_stale_entries_all_fresh() {
         let entries = vec![
-            StaleCheckEntry { file: "/nonexistent/a.ts".into(), last_seen_ms: 0.0 },
-            StaleCheckEntry { file: "/nonexistent/b.ts".into(), last_seen_ms: 0.0 },
+            StaleCheckEntry {
+                file: "/nonexistent/a.ts".into(),
+                last_seen_ms: 0.0,
+            },
+            StaleCheckEntry {
+                file: "/nonexistent/b.ts".into(),
+                last_seen_ms: 0.0,
+            },
         ];
         // check_exists=false so file existence is skipped
         let result = prune_stale_entries(entries, None, Some(false));
@@ -447,8 +456,14 @@ mod cache_store_tests {
     fn test_prune_stale_entries_too_old() {
         let very_old_ms = 1_000_000.0; // epoch 1970 — definitly stale
         let entries = vec![
-            StaleCheckEntry { file: "/nonexistent/a.ts".into(), last_seen_ms: very_old_ms },
-            StaleCheckEntry { file: "/nonexistent/b.ts".into(), last_seen_ms: 0.0 },
+            StaleCheckEntry {
+                file: "/nonexistent/a.ts".into(),
+                last_seen_ms: very_old_ms,
+            },
+            StaleCheckEntry {
+                file: "/nonexistent/b.ts".into(),
+                last_seen_ms: 0.0,
+            },
         ];
         let result = prune_stale_entries(entries, None, Some(false));
         // a.ts stale (too old), b.ts fresh (last_seen_ms=0 means never checked → keep)
@@ -469,9 +484,18 @@ mod cache_store_tests {
         assert_eq!(result.total_classes, 5);
         assert_eq!(result.total_size_bytes, 1536);
         // top class: p-4 and flex both count=2
-        assert!(result.most_used_classes.iter().any(|c| c.class == "p-4" && c.count == 2));
-        assert!(result.most_used_classes.iter().any(|c| c.class == "flex" && c.count == 2));
-        assert!(result.most_used_classes.iter().any(|c| c.class == "text-red-500" && c.count == 1));
+        assert!(result
+            .most_used_classes
+            .iter()
+            .any(|c| c.class == "p-4" && c.count == 2));
+        assert!(result
+            .most_used_classes
+            .iter()
+            .any(|c| c.class == "flex" && c.count == 2));
+        assert!(result
+            .most_used_classes
+            .iter()
+            .any(|c| c.class == "text-red-500" && c.count == 1));
     }
 
     #[test]

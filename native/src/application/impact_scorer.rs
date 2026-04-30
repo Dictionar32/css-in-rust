@@ -19,11 +19,27 @@ use serde::Deserialize;
 // ─────────────────────────────────────────────────────────────────────────────
 
 static CRITICAL_PATTERNS: &[&str] = &[
-    "fixed", "absolute", "sticky", "z-50", "z-index",
-    "top-0", "right-0", "bottom-0", "left-0",
-    "w-full", "h-full", "min-h-screen",
-    "flex", "grid", "block", "inline", "hidden",
-    "visible", "opacity", "pointer-events", "cursor",
+    "fixed",
+    "absolute",
+    "sticky",
+    "z-50",
+    "z-index",
+    "top-0",
+    "right-0",
+    "bottom-0",
+    "left-0",
+    "w-full",
+    "h-full",
+    "min-h-screen",
+    "flex",
+    "grid",
+    "block",
+    "inline",
+    "hidden",
+    "visible",
+    "opacity",
+    "pointer-events",
+    "cursor",
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -50,9 +66,9 @@ struct ImpactReportInput {
 #[napi]
 pub fn is_critical_class(class_name: String) -> bool {
     let normalized = class_name.strip_prefix('.').unwrap_or(&class_name);
-    CRITICAL_PATTERNS.iter().any(|pattern| {
-        normalized == *pattern || normalized.starts_with(&format!("{}:", pattern))
-    })
+    CRITICAL_PATTERNS
+        .iter()
+        .any(|pattern| normalized == *pattern || normalized.starts_with(&format!("{}:", pattern)))
 }
 
 /// Estimate bundle savings from removing a class.
@@ -156,7 +172,8 @@ pub fn generate_suggestions(class_name: String, impact_json: String) -> Vec<Stri
     }
     if impact.bundle_size_bytes > 100 {
         suggestions.push(
-            "This class has significant CSS bundle contribution. Removal will improve load times.".into()
+            "This class has significant CSS bundle contribution. Removal will improve load times."
+                .into(),
         );
     }
 
@@ -205,7 +222,8 @@ mod tests {
             "bundleSizeBytes": bundle,
             "estimatedSavings": savings,
             "riskLevel": risk
-        }).to_string()
+        })
+        .to_string()
     }
 
     #[test]
@@ -249,7 +267,10 @@ mod tests {
 
     #[test]
     fn test_generate_suggestions_high_count() {
-        let s = generate_suggestions("bg-blue-500".to_string(), impact_json(15, "high", 0, 200, 500));
+        let s = generate_suggestions(
+            "bg-blue-500".to_string(),
+            impact_json(15, "high", 0, 200, 500),
+        );
         assert!(s.iter().any(|x| x.contains("15 components")));
         assert!(s.iter().any(|x| x.contains("Manual code review")));
         assert!(s.iter().any(|x| x.contains("savings")));

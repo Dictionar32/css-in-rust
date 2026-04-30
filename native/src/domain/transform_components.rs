@@ -18,13 +18,11 @@ use crate::shared::utils::{serde_json_string, short_hash};
 //   RE_BLOCK_BARE    — legacy compat `name { ... }` dengan \b agar aman
 // ─────────────────────────────────────────────────────────────────────────────
 
-static RE_BLOCK_BRACKET: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\[([a-z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}").unwrap()
-});
+static RE_BLOCK_BRACKET: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\[([a-z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}").unwrap());
 
-static RE_BLOCK_BARE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)\b([a-z][a-zA-Z0-9_]*)\s*\{([^}]*)\}").unwrap()
-});
+static RE_BLOCK_BARE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)\b([a-z][a-zA-Z0-9_]*)\s*\{([^}]*)\}").unwrap());
 
 pub(crate) fn parse_subcomponent_blocks(
     template: &str,
@@ -56,15 +54,15 @@ pub(crate) fn parse_subcomponent_blocks(
         }
 
         let sub_tag = match sub_name.as_str() {
-            "label"         => "label",
-            "input"         => "input",
+            "label" => "label",
+            "input" => "input",
             "img" | "image" => "img",
-            "header"        => "header",
-            "footer"        => "footer",
-            "icon"          => "span",
-            "button"        => "button",
-            "a" | "link"    => "a",
-            _               => "span",
+            "header" => "header",
+            "footer" => "footer",
+            "icon" => "span",
+            "button" => "button",
+            "a" | "link" => "a",
+            _ => "span",
         };
 
         let hash_input = format!("{}_{}_{}", component_name, sub_name, sub_classes);

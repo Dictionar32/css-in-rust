@@ -126,15 +126,30 @@ static TW_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     m.insert("ring-2", "box-shadow:0 0 0 2px rgba(59,130,246,0.5)");
     m.insert("ring-4", "box-shadow:0 0 0 4px rgba(59,130,246,0.5)");
     m.insert("ring-8", "box-shadow:0 0 0 8px rgba(59,130,246,0.5)");
-    m.insert("ring-inset", "box-shadow:inset 0 0 0 3px rgba(59,130,246,0.5)");
+    m.insert(
+        "ring-inset",
+        "box-shadow:inset 0 0 0 3px rgba(59,130,246,0.5)",
+    );
 
     // Shadow
     m.insert("shadow-none", "box-shadow:none");
     m.insert("shadow-sm", "box-shadow:0 1px 2px 0 rgba(0,0,0,0.05)");
-    m.insert("shadow", "box-shadow:0 1px 3px 0 rgba(0,0,0,0.1),0 1px 2px -1px rgba(0,0,0,0.1)");
-    m.insert("shadow-md", "box-shadow:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1)");
-    m.insert("shadow-lg", "box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1)");
-    m.insert("shadow-xl", "box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1)");
+    m.insert(
+        "shadow",
+        "box-shadow:0 1px 3px 0 rgba(0,0,0,0.1),0 1px 2px -1px rgba(0,0,0,0.1)",
+    );
+    m.insert(
+        "shadow-md",
+        "box-shadow:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -2px rgba(0,0,0,0.1)",
+    );
+    m.insert(
+        "shadow-lg",
+        "box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1)",
+    );
+    m.insert(
+        "shadow-xl",
+        "box-shadow:0 20px 25px -5px rgba(0,0,0,0.1),0 8px 10px -6px rgba(0,0,0,0.1)",
+    );
 
     // Border
     m.insert("border", "border-width:1px");
@@ -150,7 +165,10 @@ static TW_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
 
     // Outline
     m.insert("outline", "outline:2px solid currentColor");
-    m.insert("outline-none", "outline:2px solid transparent;outline-offset:2px");
+    m.insert(
+        "outline-none",
+        "outline:2px solid transparent;outline-offset:2px",
+    );
     m.insert("outline-dashed", "outline-style:dashed");
     m.insert("outline-dotted", "outline-style:dotted");
 
@@ -205,7 +223,10 @@ static TW_MAP: Lazy<HashMap<&'static str, &'static str>> = Lazy::new(|| {
     m.insert("select-auto", "user-select:auto");
 
     // Truncate / whitespace
-    m.insert("truncate", "overflow:hidden;text-overflow:ellipsis;white-space:nowrap");
+    m.insert(
+        "truncate",
+        "overflow:hidden;text-overflow:ellipsis;white-space:nowrap",
+    );
     m.insert("whitespace-nowrap", "white-space:nowrap");
     m.insert("whitespace-normal", "white-space:normal");
     m.insert("whitespace-pre", "white-space:pre");
@@ -417,7 +438,10 @@ mod tests {
     #[test]
     fn test_arbitrary_bg() {
         assert_eq!(css("bg-[#f00]"), "background-color:#f00");
-        assert_eq!(css("bg-[rgba(0,0,0,0.5)]"), "background-color:rgba(0,0,0,0.5)");
+        assert_eq!(
+            css("bg-[rgba(0,0,0,0.5)]"),
+            "background-color:rgba(0,0,0,0.5)"
+        );
     }
 
     #[test]

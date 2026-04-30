@@ -110,8 +110,7 @@ pub struct CssThemeVar {
 /// Menggantikan JS regex di `themeReader.ts extractThemeFromCSS()`.
 #[napi]
 pub fn extract_theme_from_css(css: String) -> Vec<CssThemeVar> {
-    static RE_BLOCK: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"@theme\s*\{([\s\S]*?)\}").unwrap());
+    static RE_BLOCK: Lazy<Regex> = Lazy::new(|| Regex::new(r"@theme\s*\{([\s\S]*?)\}").unwrap());
     static RE_VAR_KV: Lazy<Regex> =
         Lazy::new(|| Regex::new(r"--([a-zA-Z0-9_-]+)\s*:\s*([^;]+);").unwrap());
 
@@ -141,11 +140,10 @@ pub fn extract_theme_from_css(css: String) -> Vec<CssThemeVar> {
 /// Cycles are broken after 32 hops. Returns empty string if key is not in the map.
 #[napi]
 pub fn resolve_theme_value(key: String, raw_map_json: String) -> String {
-    let map: std::collections::HashMap<String, String> =
-        match serde_json::from_str(&raw_map_json) {
-            Ok(m) => m,
-            Err(_) => return String::new(),
-        };
+    let map: std::collections::HashMap<String, String> = match serde_json::from_str(&raw_map_json) {
+        Ok(m) => m,
+        Err(_) => return String::new(),
+    };
 
     let mut current = key.trim_start_matches("--").to_string();
     let mut visited = std::collections::HashSet::new();

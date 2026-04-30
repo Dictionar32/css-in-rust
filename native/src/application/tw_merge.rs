@@ -10,10 +10,10 @@
 //!
 //! This matches tailwind-merge's "last wins" semantic.
 
-use napi_derive::napi;
-use std::collections::HashMap;
-use smallvec::SmallVec;
 use crate::tws_debug;
+use napi_derive::napi;
+use smallvec::SmallVec;
+use std::collections::HashMap;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Conflict group resolution
@@ -388,13 +388,21 @@ fn conflict_group(base: &str) -> Option<String> {
     }
 
     // ── Rounded ───────────────────────────────────────────────────────────
-    if base.starts_with("rounded-t") || base.starts_with("rounded-r")
-        || base.starts_with("rounded-b") || base.starts_with("rounded-l")
-        || base.starts_with("rounded-s") || base.starts_with("rounded-e")
-        || base.starts_with("rounded-tl") || base.starts_with("rounded-tr")
-        || base.starts_with("rounded-br") || base.starts_with("rounded-bl")
+    if base.starts_with("rounded-t")
+        || base.starts_with("rounded-r")
+        || base.starts_with("rounded-b")
+        || base.starts_with("rounded-l")
+        || base.starts_with("rounded-s")
+        || base.starts_with("rounded-e")
+        || base.starts_with("rounded-tl")
+        || base.starts_with("rounded-tr")
+        || base.starts_with("rounded-br")
+        || base.starts_with("rounded-bl")
     {
-        return Some(format!("rounded-{}", &base["rounded-".len()..].chars().next().unwrap_or('x')));
+        return Some(format!(
+            "rounded-{}",
+            &base["rounded-".len()..].chars().next().unwrap_or('x')
+        ));
     }
     if base == "rounded" || base.starts_with("rounded-") {
         return Some("rounded".to_string());
@@ -513,7 +521,10 @@ fn conflict_group(base: &str) -> Option<String> {
 
     // ── Backdrop ──────────────────────────────────────────────────────────
     if let Some(rest) = base.strip_prefix("backdrop-") {
-        return Some(format!("backdrop-{}", rest.split('-').next().unwrap_or("x")));
+        return Some(format!(
+            "backdrop-{}",
+            rest.split('-').next().unwrap_or("x")
+        ));
     }
 
     // ── Scroll ────────────────────────────────────────────────────────────
@@ -640,7 +651,11 @@ pub fn merge_class_string(input: &str) -> String {
         }
     }
 
-    slots.iter().filter_map(|&s| s).collect::<SmallVec<[&str; 8]>>().join(" ")
+    slots
+        .iter()
+        .filter_map(|&s| s)
+        .collect::<SmallVec<[&str; 8]>>()
+        .join(" ")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -756,7 +771,10 @@ mod tests {
 
     #[test]
     fn test_compound_variants() {
-        assert_eq!(m("dark:hover:bg-red-500 dark:hover:bg-blue-500"), "dark:hover:bg-blue-500");
+        assert_eq!(
+            m("dark:hover:bg-red-500 dark:hover:bg-blue-500"),
+            "dark:hover:bg-blue-500"
+        );
     }
 }
 
@@ -881,7 +899,10 @@ pub fn tw_merge_with_separator(class_string: String, opts: TwMergeOptions) -> St
     let debug = opts.debug.unwrap_or(false);
 
     if debug || crate::debug::is_enabled() {
-        eprintln!("[tw_merge_with_separator] input={:?} sep={:?}", class_string, sep);
+        eprintln!(
+            "[tw_merge_with_separator] input={:?} sep={:?}",
+            class_string, sep
+        );
     }
 
     // Conflict resolution tetap pakai spasi sebagai internal separator

@@ -12,8 +12,8 @@
 //! Note: `strings` (TemplateStringsArray) di-join dulu di TS sebelum dikirim ke Rust,
 //! karena TemplateStringsArray tidak bisa di-serialize ke NAPI.
 
-use napi_derive::napi;
 use crate::tws_debug;
+use napi_derive::napi;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
@@ -25,16 +25,13 @@ use std::collections::HashMap;
 /// Matches `[name] { ... }` (bracket) OR `name { ... }` (no-bracket) sub-component blocks.
 /// Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = inner classes.
 static SUB_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r"(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}",
-    )
-    .expect("SUB_RE is valid")
+    Regex::new(r"(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}")
+        .expect("SUB_RE is valid")
 });
 
 /// Strip `// comment` to end-of-line.
-static COMMENT_RE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"//[^\n]*").expect("COMMENT_RE is valid")
-});
+static COMMENT_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"//[^\n]*").expect("COMMENT_RE is valid"));
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Return type
