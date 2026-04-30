@@ -1,23 +1,17 @@
 [build]
-# Paralel build jobs — sesuaikan dengan jumlah core CI runner (ubuntu/macos = 4, windows = 2)
 jobs = 4
 
 [profile.dev]
-# Faster incremental builds saat development
 incremental = true
 
 [profile.release]
-# Optimasi maksimal untuk binary NAPI yang di-ship
 opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
 
 [net]
-# Retry download kalau CI flaky
 retry = 3
 
 [term]
-# Output CI lebih bersih
 color = "always"
-progress = false
