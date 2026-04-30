@@ -5,29 +5,33 @@
  * Uses @tailwind-styled/shared for native resolution.
  */
 
+import { createRequire } from "node:module"
+import { dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+// ESM-safe require — works in both ESM and CJS contexts
+const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
 
 function getResolveRuntimeDir() {
   if (isBrowser) return () => ""
-  const { dirname } = nodeRequire!("node:path")
-  const { fileURLToPath } = nodeRequire!("node:url")
-  return (dir: string | undefined, importMetaUrl: string) => dir ?? dirname(fileURLToPath(importMetaUrl))
+  return (dir: string | undefined, importMetaUrl: string) =>
+    dir ?? dirname(fileURLToPath(importMetaUrl))
 }
 
 function getResolveNativeBinary() {
   if (isBrowser) return () => ({ path: null, source: "not-found", platform: "browser", tried: [] })
-  const { resolveNativeBinary: resolve } = nodeRequire!("@tailwind-styled/shared")
+  const { resolveNativeBinary: resolve } = _require("@tailwind-styled/shared")
   return resolve
 }
 
 function getCreateRequire() {
   if (isBrowser) return () => { throw new Error("node:module is not available in browser") }
-  return nodeRequire!("node:module").createRequire
+  return createRequire
 }
 
 let _resolveRuntimeDir: ReturnType<typeof getResolveRuntimeDir>
