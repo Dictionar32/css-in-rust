@@ -255,7 +255,7 @@ pub fn parse_css_rules(css: String) -> Vec<CssRuleLookup> {
         let variants: Vec<String> = if variant_key.is_empty() {
             vec![]
         } else {
-            variant_key.split(':').map(|s| s.to_string()).collect()
+            variant_key.trim_end_matches(':').split(':').filter(|s| !s.is_empty()).map(|s| s.to_string()).collect()
         };
 
         // Calculate specificity: 1 class = 10, each pseudo/variant adds
@@ -318,7 +318,7 @@ pub fn batch_split_classes(classes: Vec<String>) -> Vec<VariantSplitResult> {
         let variants: Vec<String> = if variant_key.is_empty() {
             vec![]
         } else {
-            variant_key.split(':').map(|s| s.to_string()).collect()
+            variant_key.trim_end_matches(':').split(':').filter(|s| !s.is_empty()).map(|s| s.to_string()).collect()
         };
 
         // Extract opacity modifier: "bg-blue-500/50" → base="bg-blue-500", mod="50"
@@ -797,4 +797,3 @@ pub fn analyze_route_class_distribution(
         }
     }).collect()
 }
-

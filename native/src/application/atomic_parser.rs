@@ -23,7 +23,9 @@ struct PropMapping {
     transform: fn(&str) -> String,
 }
 
-fn identity(v: &str) -> String { v.to_string() }
+fn identity(v: &str) -> String {
+    v.to_string()
+}
 fn spacing(v: &str) -> String {
     match v.parse::<f64>() {
         Ok(n) => format!("{}rem", n * 0.25),
@@ -31,50 +33,81 @@ fn spacing(v: &str) -> String {
     }
 }
 fn size_value(v: &str) -> String {
-    if let Ok(n) = v.parse::<f64>() { return format!("{}rem", n * 0.25); }
+    if let Ok(n) = v.parse::<f64>() {
+        return format!("{}rem", n * 0.25);
+    }
     match v {
-        "full"   => "100%".into(),
+        "full" => "100%".into(),
         "screen" => "100vw".into(),
-        "auto"   => "auto".into(),
-        "min"    => "min-content".into(),
-        "max"    => "max-content".into(),
-        "fit"    => "fit-content".into(),
-        "svw"    => "100svw".into(),
-        "svh"    => "100svh".into(),
-        _        => v.to_string(),
+        "auto" => "auto".into(),
+        "min" => "min-content".into(),
+        "max" => "max-content".into(),
+        "fit" => "fit-content".into(),
+        "svw" => "100svw".into(),
+        "svh" => "100svh".into(),
+        _ => v.to_string(),
     }
 }
 fn text_size(v: &str) -> String {
     match v {
-        "xs"  => "0.75rem",  "sm"  => "0.875rem", "base" => "1rem",
-        "lg"  => "1.125rem", "xl"  => "1.25rem",  "2xl"  => "1.5rem",
-        "3xl" => "1.875rem", "4xl" => "2.25rem",  "5xl"  => "3rem",
-        "6xl" => "3.75rem",  "7xl" => "4.5rem",   "8xl"  => "6rem",
-        "9xl" => "8rem",     _ => return v.to_string(),
-    }.to_string()
+        "xs" => "0.75rem",
+        "sm" => "0.875rem",
+        "base" => "1rem",
+        "lg" => "1.125rem",
+        "xl" => "1.25rem",
+        "2xl" => "1.5rem",
+        "3xl" => "1.875rem",
+        "4xl" => "2.25rem",
+        "5xl" => "3rem",
+        "6xl" => "3.75rem",
+        "7xl" => "4.5rem",
+        "8xl" => "6rem",
+        "9xl" => "8rem",
+        _ => return v.to_string(),
+    }
+    .to_string()
 }
 fn font_weight(v: &str) -> String {
     match v {
-        "thin" => "100", "extralight" => "200", "light"    => "300",
-        "normal" => "400", "medium"  => "500", "semibold"  => "600",
-        "bold" => "700",  "extrabold" => "800", "black"    => "900",
+        "thin" => "100",
+        "extralight" => "200",
+        "light" => "300",
+        "normal" => "400",
+        "medium" => "500",
+        "semibold" => "600",
+        "bold" => "700",
+        "extrabold" => "800",
+        "black" => "900",
         _ => return v.to_string(),
-    }.to_string()
+    }
+    .to_string()
 }
 fn leading_value(v: &str) -> String {
     match v {
-        "none" => "1", "tight" => "1.25", "snug"    => "1.375",
-        "normal" => "1.5", "relaxed" => "1.625", "loose" => "2",
+        "none" => "1",
+        "tight" => "1.25",
+        "snug" => "1.375",
+        "normal" => "1.5",
+        "relaxed" => "1.625",
+        "loose" => "2",
         _ => return v.to_string(),
-    }.to_string()
+    }
+    .to_string()
 }
 fn rounded_value(v: &str) -> String {
     match v {
-        ""     => "0.25rem", "sm" => "0.125rem", "md"   => "0.375rem",
-        "lg"   => "0.5rem",  "xl" => "0.75rem",  "2xl"  => "1rem",
-        "3xl"  => "1.5rem",  "full" => "9999px", "none" => "0",
-        _      => return format!("{}rem", v),
-    }.to_string()
+        "" => "0.25rem",
+        "sm" => "0.125rem",
+        "md" => "0.375rem",
+        "lg" => "0.5rem",
+        "xl" => "0.75rem",
+        "2xl" => "1rem",
+        "3xl" => "1.5rem",
+        "full" => "9999px",
+        "none" => "0",
+        _ => return format!("{}rem", v),
+    }
+    .to_string()
 }
 fn opacity_value(v: &str) -> String {
     match v.parse::<f64>() {
@@ -85,29 +118,167 @@ fn opacity_value(v: &str) -> String {
 
 static PROP_MAP: Lazy<Vec<(&'static str, PropMapping)>> = Lazy::new(|| {
     vec![
-        ("p",       PropMapping { prop: "padding",         transform: spacing }),
-        ("px",      PropMapping { prop: "padding-inline",  transform: spacing }),
-        ("py",      PropMapping { prop: "padding-block",   transform: spacing }),
-        ("pt",      PropMapping { prop: "padding-top",     transform: spacing }),
-        ("pb",      PropMapping { prop: "padding-bottom",  transform: spacing }),
-        ("pl",      PropMapping { prop: "padding-left",    transform: spacing }),
-        ("pr",      PropMapping { prop: "padding-right",   transform: spacing }),
-        ("m",       PropMapping { prop: "margin",          transform: spacing }),
-        ("mx",      PropMapping { prop: "margin-inline",   transform: spacing }),
-        ("my",      PropMapping { prop: "margin-block",    transform: spacing }),
-        ("mt",      PropMapping { prop: "margin-top",      transform: spacing }),
-        ("mb",      PropMapping { prop: "margin-bottom",   transform: spacing }),
-        ("ml",      PropMapping { prop: "margin-left",     transform: spacing }),
-        ("mr",      PropMapping { prop: "margin-right",    transform: spacing }),
-        ("gap",     PropMapping { prop: "gap",             transform: spacing }),
-        ("w",       PropMapping { prop: "width",           transform: size_value }),
-        ("h",       PropMapping { prop: "height",          transform: size_value }),
-        ("text",    PropMapping { prop: "font-size",       transform: text_size }),
-        ("font",    PropMapping { prop: "font-weight",     transform: font_weight }),
-        ("leading", PropMapping { prop: "line-height",     transform: leading_value }),
-        ("opacity", PropMapping { prop: "opacity",         transform: opacity_value }),
-        ("z",       PropMapping { prop: "z-index",         transform: identity }),
-        ("rounded", PropMapping { prop: "border-radius",   transform: rounded_value }),
+        (
+            "p",
+            PropMapping {
+                prop: "padding",
+                transform: spacing,
+            },
+        ),
+        (
+            "px",
+            PropMapping {
+                prop: "padding-inline",
+                transform: spacing,
+            },
+        ),
+        (
+            "py",
+            PropMapping {
+                prop: "padding-block",
+                transform: spacing,
+            },
+        ),
+        (
+            "pt",
+            PropMapping {
+                prop: "padding-top",
+                transform: spacing,
+            },
+        ),
+        (
+            "pb",
+            PropMapping {
+                prop: "padding-bottom",
+                transform: spacing,
+            },
+        ),
+        (
+            "pl",
+            PropMapping {
+                prop: "padding-left",
+                transform: spacing,
+            },
+        ),
+        (
+            "pr",
+            PropMapping {
+                prop: "padding-right",
+                transform: spacing,
+            },
+        ),
+        (
+            "m",
+            PropMapping {
+                prop: "margin",
+                transform: spacing,
+            },
+        ),
+        (
+            "mx",
+            PropMapping {
+                prop: "margin-inline",
+                transform: spacing,
+            },
+        ),
+        (
+            "my",
+            PropMapping {
+                prop: "margin-block",
+                transform: spacing,
+            },
+        ),
+        (
+            "mt",
+            PropMapping {
+                prop: "margin-top",
+                transform: spacing,
+            },
+        ),
+        (
+            "mb",
+            PropMapping {
+                prop: "margin-bottom",
+                transform: spacing,
+            },
+        ),
+        (
+            "ml",
+            PropMapping {
+                prop: "margin-left",
+                transform: spacing,
+            },
+        ),
+        (
+            "mr",
+            PropMapping {
+                prop: "margin-right",
+                transform: spacing,
+            },
+        ),
+        (
+            "gap",
+            PropMapping {
+                prop: "gap",
+                transform: spacing,
+            },
+        ),
+        (
+            "w",
+            PropMapping {
+                prop: "width",
+                transform: size_value,
+            },
+        ),
+        (
+            "h",
+            PropMapping {
+                prop: "height",
+                transform: size_value,
+            },
+        ),
+        (
+            "text",
+            PropMapping {
+                prop: "font-size",
+                transform: text_size,
+            },
+        ),
+        (
+            "font",
+            PropMapping {
+                prop: "font-weight",
+                transform: font_weight,
+            },
+        ),
+        (
+            "leading",
+            PropMapping {
+                prop: "line-height",
+                transform: leading_value,
+            },
+        ),
+        (
+            "opacity",
+            PropMapping {
+                prop: "opacity",
+                transform: opacity_value,
+            },
+        ),
+        (
+            "z",
+            PropMapping {
+                prop: "z-index",
+                transform: identity,
+            },
+        ),
+        (
+            "rounded",
+            PropMapping {
+                prop: "border-radius",
+                transform: rounded_value,
+            },
+        ),
     ]
 });
 
@@ -161,7 +332,13 @@ pub struct ToAtomicClassesResult {
 
 fn sanitize_class_name(cls: &str) -> String {
     cls.chars()
-        .map(|c| if matches!(c, '/' | ':' | '[' | ']' | '.' | '!' | '%') { '_' } else { c })
+        .map(|c| {
+            if matches!(c, '/' | ':' | '[' | ']' | '.' | '!' | '%') {
+                '_'
+            } else {
+                c
+            }
+        })
         .collect()
 }
 
@@ -231,8 +408,11 @@ pub fn generate_atomic_css(rules_json: String) -> String {
     };
 
     let breakpoints: &[(&str, &str)] = &[
-        ("sm", "640px"), ("md", "768px"), ("lg", "1024px"),
-        ("xl", "1280px"), ("2xl", "1536px"),
+        ("sm", "640px"),
+        ("md", "768px"),
+        ("lg", "1024px"),
+        ("xl", "1280px"),
+        ("2xl", "1536px"),
     ];
 
     let mut lines: Vec<String> = Vec::with_capacity(rules.len() * 2);
@@ -244,20 +424,26 @@ pub fn generate_atomic_css(rules_json: String) -> String {
             if let Some((_, bp)) = breakpoints.iter().find(|(k, _)| *k == modifier.as_str()) {
                 lines.push(format!(
                     "@media (min-width: {bp}) {{\n  {selector} {{ {prop}: {value}; }}\n}}",
-                    bp = bp, selector = selector,
-                    prop = rule.property, value = rule.value
+                    bp = bp,
+                    selector = selector,
+                    prop = rule.property,
+                    value = rule.value
                 ));
             } else {
                 lines.push(format!(
                     "{selector}:{modifier} {{ {prop}: {value}; }}",
-                    selector = selector, modifier = modifier,
-                    prop = rule.property, value = rule.value
+                    selector = selector,
+                    modifier = modifier,
+                    prop = rule.property,
+                    value = rule.value
                 ));
             }
         } else {
             lines.push(format!(
                 "{selector} {{ {prop}: {value}; }}",
-                selector = selector, prop = rule.property, value = rule.value
+                selector = selector,
+                prop = rule.property,
+                value = rule.value
             ));
         }
     }

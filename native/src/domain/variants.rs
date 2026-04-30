@@ -1,3 +1,4 @@
+use crate::tws_debug;
 /**
  * tailwind-styled-v5 — Variants Module
  *
@@ -5,7 +6,6 @@
  * Move variant matching logic from TypeScript to Rust for 10x performance.
  */
 use napi_derive::napi;
-use crate::tws_debug;
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
@@ -273,10 +273,7 @@ pub fn validate_variant_config(config_json: String) -> VariantValidationResult {
 /// # Output
 /// Key string seperti `"size:lg|variant:solid"`
 #[napi]
-pub fn build_variant_lookup_key(
-    default_variants_json: String,
-    props_json: String,
-) -> String {
+pub fn build_variant_lookup_key(default_variants_json: String, props_json: String) -> String {
     // Parse defaults dan props
     let defaults: HashMap<String, String> =
         serde_json::from_str(&default_variants_json).unwrap_or_default();
@@ -303,7 +300,10 @@ pub fn build_variant_lookup_key(
     }
 
     // Sort keys, filter className (sudah difilter saat insert), build key
-    let mut keys: Vec<&String> = merged.keys().filter(|k| k.as_str() != "className").collect();
+    let mut keys: Vec<&String> = merged
+        .keys()
+        .filter(|k| k.as_str() != "className")
+        .collect();
     keys.sort();
 
     keys.iter()

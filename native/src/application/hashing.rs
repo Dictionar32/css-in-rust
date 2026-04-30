@@ -12,10 +12,10 @@
 //!   sebelumnya JS baca file → call native extract → call native hash (3 steps).
 //!   Sekarang satu call: Rust baca + extract + hash sekaligus.
 
+use ahash::AHasher;
 use napi_derive::napi;
 use serde::{Deserialize, Serialize};
-use ahash::AHasher;
-use std::hash::{Hasher, BuildHasherDefault};
+use std::hash::{BuildHasherDefault, Hasher};
 
 #[allow(dead_code)]
 type AHashHasher = BuildHasherDefault<AHasher>;
@@ -194,28 +194,26 @@ pub fn scan_files_batch(file_paths: Vec<String>) -> Vec<NativeScanFileResult> {
 
     file_paths
         .par_iter()
-        .map(|path| {
-            match std::fs::read_to_string(path) {
-                Ok(source) => {
-                    let hash = md5_hex(&source, None);
-                    let classes = extract_classes_from_source(source.clone());
-                    let mut seen = std::collections::HashSet::new();
-                    let unique: Vec<String> = classes
-                        .into_iter()
-                        .filter(|c| !c.is_empty() && seen.insert(c.clone()))
-                        .collect();
-                    NativeScanFileResult {
-                        file: path.clone(),
-                        classes: unique,
-                        hash,
-                    }
-                }
-                Err(_) => NativeScanFileResult {
+        .map(|path| match std::fs::read_to_string(path) {
+            Ok(source) => {
+                let hash = md5_hex(&source, None);
+                let classes = extract_classes_from_source(source.clone());
+                let mut seen = std::collections::HashSet::new();
+                let unique: Vec<String> = classes
+                    .into_iter()
+                    .filter(|c| !c.is_empty() && seen.insert(c.clone()))
+                    .collect();
+                NativeScanFileResult {
                     file: path.clone(),
-                    classes: vec![],
-                    hash: String::new(),
-                },
+                    classes: unique,
+                    hash,
+                }
             }
+            Err(_) => NativeScanFileResult {
+                file: path.clone(),
+                classes: vec![],
+                hash: String::new(),
+            },
         })
         .collect()
 }
@@ -282,7 +280,11 @@ mod tests {
 
     #[test]
     fn test_hash_file_nonexistent_returns_fallback() {
-        let r = hash_file("/nonexistent/path/that/does/not/exist.ts".into(), None, None);
+        let r = hash_file(
+            "/nonexistent/path/that/does/not/exist.ts".into(),
+            None,
+            None,
+        );
         assert_eq!(r, "00000000");
     }
 
@@ -297,7 +299,10 @@ mod tests {
         let content_hash = hash_content(content.into(), Some("md5".into()), Some(8));
 
         std::fs::remove_file(&tmp).ok();
-        assert_eq!(file_hash, content_hash, "hash_file should match hash_content of same content");
+        assert_eq!(
+            file_hash, content_hash,
+            "hash_file should match hash_content of same content"
+        );
     }
 
     #[test]
