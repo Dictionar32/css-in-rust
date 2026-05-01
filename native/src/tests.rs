@@ -330,6 +330,7 @@ const Card = tw.div`rounded-lg shadow-md p-4`
 // ═════════════════════════════════════════════════════════════════════════════
 
 mod new_feature_tests {
+    use crate::domain::css_compiler::compile_raw_css as compile_css;
     use crate::*;
 
     // ── cache ────────────────────────────────────────────────────────────────

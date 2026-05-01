@@ -15,6 +15,7 @@ pub mod impact_analysis;
 pub mod impact_scorer;
 pub mod incremental;
 pub mod insights;
+pub mod legacy_part;
 pub mod optimization;
 pub mod plugin_registry;
 pub mod scanner;

@@ -43,11 +43,17 @@ function getNative(): AtomicNativeBridge {
  *
  * Rust: parse_atomic_class(tw_class: String) -> Option<String>
  */
+const _parseAtomicCache = new Map<string, AtomicRule>()
+
 export function parseAtomicClass(twClass: string): AtomicRule | null {
+  const cached = _parseAtomicCache.get(twClass)
+  if (cached !== undefined) return cached
   const native = getNative()
   const json = native.parseAtomicClass(twClass)
   if (!json) return null
-  return JSON.parse(json) as AtomicRule
+  const result = JSON.parse(json) as AtomicRule
+  _parseAtomicCache.set(twClass, result)
+  return result
 }
 
 /**

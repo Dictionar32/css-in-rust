@@ -65,10 +65,11 @@ pub fn process_tailwind_css_with_targets(
     }
 }
 
-/// Backward compat — sekarang input adalah raw CSS, bukan class names.
+/// Process raw CSS string (bukan class names) dengan LightningCSS.
 /// CSS harus datang dari Tailwind JS engine.
+/// Renamed dari compile_css untuk menghindari konflik dengan legacy_part::compile_css.
 #[napi]
-pub fn compile_css(css: String, _prefix: Option<String>) -> CssCompileResult {
+pub fn compile_raw_css(css: String, _prefix: Option<String>) -> CssCompileResult {
     process_tailwind_css_lightning(css)
 }
 
