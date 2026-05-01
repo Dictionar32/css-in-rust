@@ -7,6 +7,12 @@ use serde::{Deserialize, Serialize};
 use crate::infrastructure::cache_store::{CacheEntry, CacheReadResult};
 use crate::shared::utils::{serde_json_string, short_hash};
 
+#[allow(
+    clippy::needless_splitn,
+    clippy::manual_strip,
+    clippy::no_effect_replace,
+    clippy::manual_split_once
+)]
 fn json_unescape(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     let mut chars = input.chars();
@@ -429,6 +435,12 @@ pub struct CssCompileResult {
 /// This is the Rust implementation of LightningCSS-style compilation.
 /// For classes without a known mapping, generates `@apply` fallback rules.
 #[napi]
+#[allow(
+    clippy::needless_splitn,
+    clippy::manual_strip,
+    clippy::no_effect_replace,
+    clippy::manual_split_once
+)]
 pub fn compile_css(classes: Vec<String>, prefix: Option<String>) -> CssCompileResult {
     let pfx = prefix.as_deref().unwrap_or(".");
 
@@ -547,6 +559,7 @@ fn variant_to_at_rule(variant: &str) -> &'static str {
 /// Covers the most common utility classes used in practice.
 /// Resolve Tailwind color scale classes → CSS color property.
 /// Covers all standard Tailwind colors with shades 50–950.
+#[allow(clippy::manual_strip, clippy::manual_split_once)]
 fn resolve_color_class(class: &str) -> Option<String> {
     // Map color names to their hex palette (50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950)
     let (prop, rest) = if class.starts_with("bg-") {
@@ -713,6 +726,7 @@ fn resolve_color_class(class: &str) -> Option<String> {
 
 /// Resolve Tailwind spacing classes with decimal v4 values.
 /// Covers w-{n}, h-{n}, p-{n}, m-{n}, gap-{n} etc. for non-integer steps.
+#[allow(clippy::manual_strip, clippy::manual_split_once)]
 fn resolve_spacing_class(class: &str) -> Option<String> {
     // Only handle cases not already in the static match table
     // Tailwind spacing scale: 1 unit = 0.25rem
