@@ -15,8 +15,15 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-// ESM-safe require
-const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
+// Use new Function to bypass esbuild/tsup static analysis for native .node loading.
+// Direct require() or createRequire() calls get intercepted by the bundler and fail
+// with "Dynamic require is not supported" when loading .node native addons.
+// eslint-disable-next-line @typescript-eslint/no-implied-eval
+const _loadNative: (path: string) => unknown = new Function(
+  "require",
+  "path",
+  "return require(path)"
+).bind(null, typeof require !== "undefined" ? require : createRequire(import.meta.url))
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
@@ -138,7 +145,7 @@ const getBinding = (): NativeBinding => {
       : resolveNativeBinary(runtimeDir)
 
     if (result.path && result.path.endsWith(".node")) {
-      const mod = _require(result.path) as NativeBinding
+      const mod = _loadNative(result.path) as NativeBinding
       if (mod?.batchSplitClasses) {
         nativeBinding = mod
         return nativeBinding

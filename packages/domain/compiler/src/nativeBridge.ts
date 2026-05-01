@@ -8,6 +8,14 @@
 import { resolveNativeBinary, resolveRuntimeDir } from "@tailwind-styled/shared"
 import { createRequire } from "node:module"
 
+// Bypass esbuild/tsup static analysis for native .node loading
+// eslint-disable-next-line @typescript-eslint/no-implied-eval
+const _loadNative: (path: string) => unknown = new Function(
+  "require",
+  "path",
+  "return require(path)"
+).bind(null, typeof require !== "undefined" ? require : createRequire(import.meta.url))
+
 export interface ComponentMetadata {
   component: string
   tag: string
@@ -157,7 +165,7 @@ export const getNativeBridge = (): NativeBridge => {
 
     if (result.path && result.path.endsWith(".node")) {
       try {
-        const binding = require(result.path) as NativeBridge
+        const binding = _loadNative(result.path) as NativeBridge
         if (isValidNativeBridge(binding)) {
           nativeBridge = binding
           log("Native bridge loaded successfully from:", result.path)
