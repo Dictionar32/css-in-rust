@@ -1,6 +1,6 @@
 /**
  * tailwind-styled-v5 — Native Rust Bindings
- * 
+ *
  * All functions require native Rust bindings.
  * Uses @tailwind-styled/shared for native resolution.
  */
@@ -8,35 +8,15 @@
 import { createRequire } from "node:module"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import { resolveNativeBinary } from "@tailwind-styled/shared"
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-// ESM-safe require — works in both ESM and CJS contexts
+// ESM-safe require
 const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
-
-function getResolveRuntimeDir() {
-  if (isBrowser) return () => ""
-  return (dir: string | undefined, importMetaUrl: string) =>
-    dir ?? dirname(fileURLToPath(importMetaUrl))
-}
-
-function getResolveNativeBinary() {
-  if (isBrowser) return () => ({ path: null, source: "not-found", platform: "browser", tried: [] })
-  const { resolveNativeBinary: resolve } = _require("@tailwind-styled/shared")
-  return resolve
-}
-
-function getCreateRequire() {
-  if (isBrowser) return () => { throw new Error("node:module is not available in browser") }
-  return createRequire
-}
-
-let _resolveRuntimeDir: ReturnType<typeof getResolveRuntimeDir>
-let _resolveNativeBinary: ReturnType<typeof getResolveNativeBinary>
-let _createRequire: ReturnType<typeof getCreateRequire>
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
@@ -152,16 +132,13 @@ const getBinding = (): NativeBinding => {
   bindingLoadAttempted = true
 
   try {
-    if (!_resolveRuntimeDir) _resolveRuntimeDir = getResolveRuntimeDir()
-    if (!_resolveNativeBinary) _resolveNativeBinary = getResolveNativeBinary()
-    if (!_createRequire) _createRequire = getCreateRequire()
-    
-    const runtimeDir = _resolveRuntimeDir(undefined, import.meta.url)
-    const require = _createRequire(import.meta.url)
-    const result = _resolveNativeBinary(runtimeDir)
+    const runtimeDir = isBrowser ? "" : dirname(fileURLToPath(import.meta.url))
+    const result = isBrowser
+      ? { path: null, source: "not-found", platform: "browser", tried: [] }
+      : resolveNativeBinary(runtimeDir)
 
     if (result.path && result.path.endsWith(".node")) {
-      const mod = require(result.path) as NativeBinding
+      const mod = _require(result.path) as NativeBinding
       if (mod?.batchSplitClasses) {
         nativeBinding = mod
         return nativeBinding
