@@ -89,24 +89,32 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     : platform === "linux-arm64" ? "linux-arm64-gnu"
     : platform
 
-  const localCandidates: string[] = [
-    path.resolve(base, "tailwind_styled_parser.node"),
-    path.resolve(base, "..", "tailwind_styled_parser.node"),
-    // napi-rs conventional output — platform key and gnu suffix
-    path.resolve(base, `tailwind_styled_parser.${platform}.node`),
-    path.resolve(base, `tailwind_styled_parser.${napiPlatform}.node`),
-  ]
+  // Both possible binary names:
+  // - "tailwind_styled_parser" (old hardcoded name in resolvers)
+  // - "tailwind-styled-native" (actual binaryName in native/package.json)
+  const BINARY_NAMES = ["tailwind-styled-native", "tailwind_styled_parser"]
 
-  // Walk up from cwd AND from base to find repo root native/ dir
-  // Needed when npm workspaces sets cwd to the package dir, not repo root
+  const localCandidates: string[] = []
+
+  for (const bin of BINARY_NAMES) {
+    localCandidates.push(path.resolve(base, `${bin}.node`))
+    localCandidates.push(path.resolve(base, "..", `${bin}.node`))
+    localCandidates.push(path.resolve(base, `${bin}.${platform}.node`))
+    localCandidates.push(path.resolve(base, `${bin}.${napiPlatform}.node`))
+  }
+
+  // Walk up from cwd AND base to find repo root native/ dir
+  // Needed when npm workspaces sets cwd to the package subdir
   for (const startDir of [cwd, base]) {
     let dir = startDir
     for (let i = 0; i < 6; i++) {
       const nativeDir = path.resolve(dir, "native")
-      localCandidates.push(path.resolve(nativeDir, "tailwind_styled_parser.node"))
-      localCandidates.push(path.resolve(nativeDir, `tailwind_styled_parser.${platform}.node`))
-      localCandidates.push(path.resolve(nativeDir, `tailwind_styled_parser.${napiPlatform}.node`))
-      localCandidates.push(path.resolve(nativeDir, "target", "release", "tailwind_styled_parser.node"))
+      for (const bin of BINARY_NAMES) {
+        localCandidates.push(path.resolve(nativeDir, `${bin}.node`))
+        localCandidates.push(path.resolve(nativeDir, `${bin}.${platform}.node`))
+        localCandidates.push(path.resolve(nativeDir, `${bin}.${napiPlatform}.node`))
+        localCandidates.push(path.resolve(nativeDir, "target", "release", `${bin}.node`))
+      }
       const parent = path.resolve(dir, "..")
       if (parent === dir) break
       dir = parent
