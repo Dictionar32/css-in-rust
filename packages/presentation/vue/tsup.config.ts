@@ -1,21 +1,21 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  entry: {
-    index: "src/index.ts",
-    internal: "src/internal.ts",
-  },
-  format: ["esm", "cjs"],
+  entry: { index: "src/index.ts" },
+  format: ["esm"],
   dts: true,
   clean: true,
-  target: "node20",
-  platform: "node",
   external: [
-    "typescript",
-    "tailwindcss",
-    "@tailwindcss/postcss",
-    "postcss",
-    "oxc-parser"
+    "@tailwind-styled/core",
+    "@tailwind-styled/shared",
+    "vue",
+    "inversify",
+    "reflect-metadata",
+    "zod",
+    "node:module",
+    "node:path",
+    "node:url",
+    "node:fs",
   ],
   esbuildOptions(options, context) {
     if (context.format === "esm") {

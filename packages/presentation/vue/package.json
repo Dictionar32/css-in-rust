@@ -20,22 +20,22 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts",
-    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "check": "tsc --noEmit",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "pack:check": "node ../../scripts/check-pack-artifacts.mjs packages/presentation/vue",
     "test": "node --test __tests__/*.test.mjs",
     "test:watch": "node --test --watch __tests__/*.test.mjs"
   },
-   "peerDependencies": {
-     "vue": ">=3.3.0"
-   },
-    "devDependencies": {
-      "tsup": "^8.0.0",
-      "typescript": "^6",
-      "vue": "^3.4.0"
-    },
+  "peerDependencies": {
+    "vue": ">=3.3.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^6",
+    "vue": "^3.4.0"
+  },
   "keywords": [
     "tailwind",
     "vue",
@@ -49,11 +49,11 @@
     "type": "git",
     "url": "https://github.com/your-org/tailwind-styled-v4"
   },
-   "dependencies": {
-     "@tailwind-styled/core": "^5.0.4",
-     "@tailwind-styled/shared": "^5.0.4",
-     "inversify": "^8.1.0",
-     "reflect-metadata": "^0.2.2",
-     "zod": "^4.3.6"
-   }
+  "dependencies": {
+    "@tailwind-styled/core": "^5.0.4",
+    "@tailwind-styled/shared": "^5.0.4",
+    "inversify": "^8.1.0",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.3.6"
+  }
 }

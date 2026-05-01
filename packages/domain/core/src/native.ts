@@ -5,7 +5,6 @@
  * Uses @tailwind-styled/shared for native resolution.
  */
 
-import { createRequire } from "node:module"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { resolveNativeBinary } from "@tailwind-styled/shared"
@@ -15,15 +14,9 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-// Use new Function to bypass esbuild/tsup static analysis for native .node loading.
-// Direct require() or createRequire() calls get intercepted by the bundler and fail
-// with "Dynamic require is not supported" when loading .node native addons.
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const _loadNative: (path: string) => unknown = new Function(
-  "require",
-  "path",
-  "return require(path)"
-).bind(null, typeof require !== "undefined" ? require : createRequire(import.meta.url))
+// require() is safe here — tsup banner injects CJS-compatible require into ESM output.
+// See tsup.config.ts esbuildOptions banner for how this is set up.
+const _loadNative = (path: string): unknown => require(path)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
