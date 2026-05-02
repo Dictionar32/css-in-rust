@@ -1,16 +1,16 @@
 /**
  * tailwind-styled-v4 — cv()
  *
- * Runtime: pure JS, browser-safe, zero fs/native.
+ * Runtime: native-first with fallback to generated variant tables.
  *
  * Dua mode:
  * 1. GENERATED (optimal) — import dari variants.generated.ts hasil `npx tw compile-variants`
  *    → O(1) lookup, static, zero runtime computation
- * 2. RUNTIME (fallback) — compute on-the-fly, pure JS
- *    → Tetap browser-safe, tidak ada native binding
+ * 2. RUNTIME (fallback) — compute on-the-fly via native binding
+ *    → Requires native Rust binding for variant resolution
  */
 
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "./merge"
 import type { ComponentConfig, CvFn, InferVariantProps } from "./types"
 import { getNativeBinding } from "./native"
 
@@ -56,17 +56,23 @@ function resolveVariantsNative<C extends ComponentConfig>(
 
   const binding = getNativeBinding()
   if (binding?.resolveSimpleVariants) {
-    const cleanProps: Record<string, string> = {}
+    // Pre-merge di JS: defaultVariants sebagai base, user props override
+    // Ini lebih reliable daripada bergantung pada Rust untuk merge priority
+    const mergedProps: Record<string, string> = {}
+    for (const [k, v] of Object.entries(defaultVariants as Record<string, string>)) {
+      if (v !== undefined && v !== null) mergedProps[k] = String(v)
+    }
     for (const [k, v] of Object.entries(props)) {
       if (v !== undefined && v !== null && k !== "className") {
-        cleanProps[k] = String(v)
+        mergedProps[k] = String(v)
       }
     }
+
     let result = binding.resolveSimpleVariants(
       base || null,
       variants as Record<string, Record<string, string>>,
-      defaultVariants as Record<string, string>,
-      cleanProps
+      {}, // already merged into mergedProps
+      mergedProps
     )
 
     // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)

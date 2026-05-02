@@ -37,17 +37,8 @@ function getNodeUrl() {
 export type PlatformExtension = ".node" | ".dll" | ".dylib" | ".so"
 
 export function getPlatformExtension(): PlatformExtension {
-  const platform = getNodeOs().platform()
-  switch (platform) {
-    case "win32":
-      return ".dll"
-    case "darwin":
-      return ".dylib"
-    case "linux":
-      return ".so"
-    default:
-      return ".dll"
-  }
+  // napi-rs always produces .node files regardless of platform
+  return ".node"
 }
 
 export interface NativeBindingLoadError {

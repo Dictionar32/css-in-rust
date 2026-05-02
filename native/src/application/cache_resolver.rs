@@ -47,7 +47,6 @@ struct CachedRule {
     class_name: String,
     property: String,
     value: String,
-    is_important: bool,
     variants: Vec<String>,
     specificity: u32,
 }
@@ -58,7 +57,6 @@ impl From<CssRuleLookup> for CachedRule {
             class_name: r.class_name,
             property: r.property,
             value: r.value,
-            is_important: r.is_important,
             variants: r.variants,
             specificity: r.specificity,
         }
@@ -208,7 +206,10 @@ pub fn reverse_lookup_by_property(css: String, property: String) -> Vec<ReverseL
     let mut value_map: std::collections::HashMap<String, Vec<ClassUsageResult>> =
         std::collections::HashMap::new();
 
-    for rule in rules.iter().filter(|r| r.property.to_lowercase() == norm_property) {
+    for rule in rules
+        .iter()
+        .filter(|r| r.property.to_lowercase() == norm_property)
+    {
         value_map
             .entry(rule.value.clone())
             .or_default()
@@ -300,8 +301,11 @@ mod tests {
 
     #[test]
     fn test_from_css_finds_property_value_match() {
-        let results =
-            reverse_lookup_from_css(SAMPLE_CSS.to_string(), "display".to_string(), "flex".to_string());
+        let results = reverse_lookup_from_css(
+            SAMPLE_CSS.to_string(),
+            "display".to_string(),
+            "flex".to_string(),
+        );
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].property, "display");
         assert_eq!(results[0].used_in_classes[0].class_name, "flex");
@@ -332,12 +336,28 @@ mod tests {
         reverse_lookup_clear_cache();
         assert_eq!(reverse_lookup_cache_size(), 0);
 
-        let _ = reverse_lookup_from_css(SAMPLE_CSS.to_string(), "display".to_string(), "flex".to_string());
-        assert_eq!(reverse_lookup_cache_size(), 1, "cache should have one entry after parse");
+        let _ = reverse_lookup_from_css(
+            SAMPLE_CSS.to_string(),
+            "display".to_string(),
+            "flex".to_string(),
+        );
+        assert_eq!(
+            reverse_lookup_cache_size(),
+            1,
+            "cache should have one entry after parse"
+        );
 
         // Second call should hit cache
-        let _ = reverse_lookup_from_css(SAMPLE_CSS.to_string(), "display".to_string(), "none".to_string());
-        assert_eq!(reverse_lookup_cache_size(), 1, "same CSS should reuse cache entry");
+        let _ = reverse_lookup_from_css(
+            SAMPLE_CSS.to_string(),
+            "display".to_string(),
+            "none".to_string(),
+        );
+        assert_eq!(
+            reverse_lookup_cache_size(),
+            1,
+            "same CSS should reuse cache entry"
+        );
 
         reverse_lookup_clear_cache();
         assert_eq!(reverse_lookup_cache_size(), 0);
@@ -348,14 +368,18 @@ mod tests {
         let deps = reverse_lookup_find_dependents(SAMPLE_CSS.to_string(), "bg-red-500".to_string());
         // hover:bg-red-500 shares base "bg-red-500"
         assert!(
-            deps.iter().any(|d| d.contains("bg-red-500") && d != "bg-red-500"),
+            deps.iter()
+                .any(|d| d.contains("bg-red-500") && d != "bg-red-500"),
             "should find hover variant as dependent"
         );
     }
 
     #[test]
     fn test_empty_css_returns_empty() {
-        assert!(reverse_lookup_from_css(String::new(), "color".to_string(), "red".to_string()).is_empty());
+        assert!(
+            reverse_lookup_from_css(String::new(), "color".to_string(), "red".to_string())
+                .is_empty()
+        );
         assert!(reverse_lookup_by_property(String::new(), "color".to_string()).is_empty());
         assert!(reverse_lookup_find_dependents(String::new(), "bg-red-500".to_string()).is_empty());
     }

@@ -1,3 +1,18 @@
+use napi_derive::napi;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use crate::infrastructure::cache_store::{CacheEntry, CacheReadResult};
+use crate::shared::utils::{serde_json_string, short_hash};
+
+#[allow(
+    clippy::needless_splitn,
+    clippy::manual_strip,
+    clippy::no_effect_replace,
+    clippy::manual_split_once
+)]
 fn json_unescape(input: &str) -> String {
     let mut out = String::with_capacity(input.len());
     let mut chars = input.chars();
@@ -420,6 +435,12 @@ pub struct CssCompileResult {
 /// This is the Rust implementation of LightningCSS-style compilation.
 /// For classes without a known mapping, generates `@apply` fallback rules.
 #[napi]
+#[allow(
+    clippy::needless_splitn,
+    clippy::manual_strip,
+    clippy::no_effect_replace,
+    clippy::manual_split_once
+)]
 pub fn compile_css(classes: Vec<String>, prefix: Option<String>) -> CssCompileResult {
     let pfx = prefix.as_deref().unwrap_or(".");
 
@@ -538,6 +559,7 @@ fn variant_to_at_rule(variant: &str) -> &'static str {
 /// Covers the most common utility classes used in practice.
 /// Resolve Tailwind color scale classes → CSS color property.
 /// Covers all standard Tailwind colors with shades 50–950.
+#[allow(clippy::manual_strip, clippy::manual_split_once)]
 fn resolve_color_class(class: &str) -> Option<String> {
     // Map color names to their hex palette (50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950)
     let (prop, rest) = if class.starts_with("bg-") {
@@ -704,6 +726,7 @@ fn resolve_color_class(class: &str) -> Option<String> {
 
 /// Resolve Tailwind spacing classes with decimal v4 values.
 /// Covers w-{n}, h-{n}, p-{n}, m-{n}, gap-{n} etc. for non-integer steps.
+#[allow(clippy::manual_strip, clippy::manual_split_once)]
 fn resolve_spacing_class(class: &str) -> Option<String> {
     // Only handle cases not already in the static match table
     // Tailwind spacing scale: 1 unit = 0.25rem
@@ -748,7 +771,7 @@ fn resolve_spacing_class(class: &str) -> Option<String> {
     };
 
     // Parse numeric value (integer or decimal like 0.5, 1.5, 2.5)
-    let n: f64 = rest.replace('.', ".").parse().ok()?;
+    let n: f64 = rest.replace(',', ".").parse().ok()?;
     // Tailwind: 1 unit = 0.25rem (except for fractional like 1/2, 1/3)
     if rest.contains('/') {
         // Fractional: 1/2, 1/3, 2/3 etc.
@@ -779,6 +802,11 @@ fn resolve_rotate(val: &str) -> Option<String> {
     Some(format!("transform: rotate({}deg)", n))
 }
 
+#[allow(
+    clippy::manual_strip,
+    clippy::manual_split_once,
+    clippy::no_effect_replace
+)]
 fn tw_class_to_css(class: &str) -> Option<String> {
     // Handle arbitrary values: bg-[#ff0000], p-[1.5rem], etc.
     if class.contains('[') && class.contains(']') {
@@ -1169,6 +1197,11 @@ fn tw_class_to_css(class: &str) -> Option<String> {
 }
 
 /// Handle arbitrary value classes like bg-[#ff0000], p-[1.5rem], w-[200px]
+#[allow(
+    clippy::manual_strip,
+    clippy::manual_split_once,
+    clippy::no_effect_replace
+)]
 fn tw_arbitrary_to_css(class: &str) -> Option<String> {
     // Extract: prefix-[value] or prefix:-[value] (with variant)
     let base = if class.contains(':') {
@@ -1422,4 +1455,3 @@ const Card = tw.div`rounded-lg`"#;
         assert!(r.css.contains("#app flex"), "should use custom prefix");
     }
 }
-

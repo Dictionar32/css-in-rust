@@ -184,8 +184,7 @@ mod tests {
         id_registry_generate(h, "alpha".into());
         id_registry_generate(h, "beta".into());
         let snap = id_registry_snapshot(h);
-        let parsed: std::collections::HashMap<String, u32> =
-            serde_json::from_str(&snap).unwrap();
+        let parsed: std::collections::HashMap<String, u32> = serde_json::from_str(&snap).unwrap();
         assert_eq!(parsed["alpha"], 0);
         assert_eq!(parsed["beta"], 1);
         id_registry_destroy(h);

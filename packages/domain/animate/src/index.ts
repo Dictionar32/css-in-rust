@@ -28,10 +28,24 @@ export function getDefaultAnimationRegistry(): AnimationRegistry {
 }
 
 export async function compileAnimation(
-  opts: AnimateOptions,
-  registry: AnimationRegistry = defaultRegistry
+  optsOrName: AnimateOptions | string,
+  secondArg?: AnimationRegistry | Partial<AnimateOptions>
 ): Promise<CompiledAnimation> {
-  return registry.compileAnimation(opts)
+  // Overload: compileAnimation(name, partialOpts?)
+  if (typeof optsOrName === "string") {
+    const partialOpts =
+      secondArg && typeof (secondArg as AnimationRegistry).compileAnimation !== "function"
+        ? (secondArg as Partial<AnimateOptions>)
+        : {}
+    const opts: AnimateOptions = { from: "", to: "", ...partialOpts, name: optsOrName }
+    return defaultRegistry.compileAnimation(opts)
+  }
+  // Original: compileAnimation(opts, registry?)
+  const registry =
+    secondArg && typeof (secondArg as AnimationRegistry).compileAnimation === "function"
+      ? (secondArg as AnimationRegistry)
+      : defaultRegistry
+  return registry.compileAnimation(optsOrName)
 }
 
 export async function compileKeyframes(
@@ -108,6 +122,13 @@ export function injectAnimationCss(
   styleEl.textContent = registry.extractCss()
 }
 
-export { AnimationRegistry, createAnimationRegistry } from "./registry"
+export { createAnimationRegistry } from "./registry"
+
+// Export createAnimationRegistry as AnimationRegistry for consumers that use
+// `new AnimationRegistry()` or import { AnimationRegistry } as a value
+export { createAnimationRegistry as AnimationRegistry } from "./registry"
+
+// Re-export the type separately for type-only imports
+export type { AnimationRegistry as AnimationRegistryType } from "./registry"
 
 export const animations = createAnimationPresets(defaultRegistry)

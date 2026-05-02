@@ -18,7 +18,7 @@ import { availableParallelism } from "node:os"
 import { fileURLToPath } from "node:url"
 
 import { isScannableFile, DEFAULT_EXTENSIONS, DEFAULT_IGNORES } from "./index"
-import { batchExtractClassesNative, collectFilesNative } from "./native-bridge"
+import { batchExtractClassesNative, collectFilesNative, rebuildWorkspaceResultNative } from "./native-bridge"
 import type { ScanWorkspaceResult, ScanFileResult } from "./types"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,6 +112,10 @@ function mergeResults(batchResults: NativeBatchResult[]): ScanWorkspaceResult {
     classes: r.classes,
     hash: r.content_hash,
   }))
+  // Native-first: Rust HashSet dedup + sort_unstable (satu pass, zero GC)
+  const native = rebuildWorkspaceResultNative(files)
+  if (native) return native
+  // Fallback — hanya aktif jika binding belum loaded (e.g. test env)
   const unique = new Set(files.flatMap((f) => f.classes))
   return { files, totalFiles: files.length, uniqueClasses: Array.from(unique).sort() }
 }

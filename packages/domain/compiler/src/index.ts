@@ -171,17 +171,33 @@ export const eliminateDeadCss = (css: string, deadClasses: Set<string>): string 
   return (compiled?.css ?? pruned).trim()
 }
 
-export const findDeadVariants = (variantConfig: Record<string, unknown>, usage: Record<string, Set<string>>) => {
+export const findDeadVariants = (
+  variantConfig: Record<string, unknown> | Array<{ name: string; variants: Record<string, Record<string, string>>; defaultVariants?: Record<string, string> }>,
+  usage: Record<string, Set<string>>
+) => {
   const unused: string[] = []
-  const variants = variantConfig as Record<string, Record<string, string>>
-  for (const [key, values] of Object.entries(variants)) {
-    for (const [value] of Object.entries(values)) {
-      if (!usage[key]?.has(value)) {
-        unused.push(`${key}:${value}`)
+
+  // Support both array-of-components form and raw variants object form
+  const configs = Array.isArray(variantConfig)
+    ? variantConfig
+    : [{ name: "__root__", variants: variantConfig as Record<string, Record<string, string>> }]
+
+  for (const component of configs) {
+    const componentUsage = usage[component.name] ?? new Set<string>()
+    const variants = component.variants as Record<string, Record<string, string>>
+    for (const [key, values] of Object.entries(variants)) {
+      for (const [value] of Object.entries(values)) {
+        if (!componentUsage.has(`${key}:${value}`)) {
+          unused.push(`${component.name !== "__root__" ? `${component.name}/` : ""}${key}:${value}`)
+        }
       }
     }
   }
-  return unused
+
+  return {
+    unusedCount: unused.length,
+    unused,
+  }
 }
 
 export const runElimination = (css: string, scanResult: unknown): string => {
@@ -531,12 +547,21 @@ export const registerGlobalClasses = (_classes: string[]): void => {
 // INCREMENTAL ENGINE
 // =============================================================================
 
-export const getIncrementalEngine = () => ({
-  compile: (source: string) => transformSource(source),
-})
+// =============================================================================
+// INCREMENTAL ENGINE
+// =============================================================================
+
+let _incrementalEngineInstance: InstanceType<typeof IncrementalEngine> | null = null
+
+export const getIncrementalEngine = () => {
+  if (!_incrementalEngineInstance) {
+    _incrementalEngineInstance = new IncrementalEngine()
+  }
+  return _incrementalEngineInstance
+}
 
 export const resetIncrementalEngine = (): void => {
-  // Native engine manages its own state — no JS instance to reset
+  _incrementalEngineInstance = null
 }
 
 export const IncrementalEngine = class {

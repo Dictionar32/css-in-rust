@@ -14,28 +14,35 @@ const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "container
 
 /**
  * Extract sub-component blocks dari template → Map<name, classes>
- * Mendukung dua syntax:
- *   - Bracket:    `[name] { classes }`
- *   - No-bracket: `name { classes }`
+ * Native-first: delegates ke Rust `parse_subcomponent_blocks_napi`.
+ * No JS fallback — native binding required.
  */
 function parseSubComponentBlocks(template: string): Map<string, string> {
-  const map = new Map<string, string>()
-  // Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = classes
-  const re = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(template)) !== null) {
-    const name = (m[1] ?? m[2])!
-    const classes = m[3]!.trim().replace(/\s+/g, " ")
-    if (classes) map.set(name, classes)
+  const native = getNativeBinding()
+  if (!native?.parseSubcomponentBlocksNapi) {
+    throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
   }
-  return map
+  const result = native.parseSubcomponentBlocksNapi(template, "tw")
+  const raw = JSON.parse(result.subMapJson) as Record<string, string>
+  return new Map(Object.entries(raw))
 }
 
 /**
- * Strip semua sub-component blocks (bracket dan no-bracket) dari template string
- * sehingga twMerge hanya menerima base classes (outer scope).
+ * Strip semua sub-component blocks dari template string.
+ * Native-first: uses result dari parse_subcomponent_blocks_napi.base_classes.
+ * JS fallback: regex strip.
  */
 function extractBaseClasses(template: string): string {
+  try {
+    const native = getNativeBinding()
+    if (native?.parseSubcomponentBlocksNapi) {
+      const result = native.parseSubcomponentBlocksNapi(template, "tw")
+      return result.baseClasses
+    }
+  } catch {
+    // fall through
+  }
+
   return template
     .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
     .replace(/\s+/g, " ")

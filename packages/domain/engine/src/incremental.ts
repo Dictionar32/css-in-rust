@@ -39,16 +39,7 @@ function rebuildWorkspaceResult(
     }
   }
 
-  // JS fallback
-  const unique = new Set<string>()
-  for (const file of files) {
-    for (const cls of file.classes) unique.add(cls)
-  }
-  return {
-    files,
-    totalFiles: files.length,
-    uniqueClasses: Array.from(unique).sort(),
-  }
+  throw new Error("FATAL: Native binding 'rebuildWorkspaceResult' is required but not available.")
 }
 
 /**
@@ -64,11 +55,7 @@ function applyClassDiff(existing: string[], added: string[], removed: string[]):
     return native.applyClassDiff(existing, added, removed)
   }
 
-  // JS fallback
-  const next = new Set(existing)
-  for (const cls of added) next.add(cls)
-  for (const cls of removed) next.delete(cls)
-  return Array.from(next)
+  throw new Error("FATAL: Native binding 'applyClassDiff' is required but not available.")
 }
 
 /**
@@ -84,13 +71,7 @@ function areClassSetsEqual(a: string[], b: string[]): boolean {
     return native.areClassSetsEqual(a, b)
   }
 
-  // JS fallback
-  if (a.length !== b.length) return false
-  const bSet = new Set(b)
-  for (const cls of a) {
-    if (!bSet.has(cls)) return false
-  }
-  return true
+  throw new Error("FATAL: Native binding 'areClassSetsEqual' is required but not available.")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

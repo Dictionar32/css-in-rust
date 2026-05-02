@@ -52,22 +52,21 @@ export default defineConfig({
   sourcemap: true,
   treeshake: true,
   minify: false,
-  external: [
-    // Frameworks
-    "react", "react-dom", "react/jsx-runtime",
-    "next", "vite", "webpack", "@rspack/core",
-    "vue", "svelte",
-    // Dependencies
-    "zod",
-    "tailwind-merge",
-    "tailwindcss",
-    "postcss",
-    "inversify",
-    "reflect-metadata",
-    "@clack/prompts",
-    "ts-pattern",
-    "@storybook/types",
-    "@storybook/core-events",
+   external: [
+     // Frameworks
+     "react", "react-dom", "react/jsx-runtime",
+     "next", "vite", "webpack", "@rspack/core",
+     "vue", "svelte",
+     // Dependencies
+     "zod",
+     "tailwindcss",
+     "postcss",
+     "inversify",
+     "reflect-metadata",
+     "@clack/prompts",
+     "ts-pattern",
+     "@storybook/types",
+     "@storybook/core-events",
     // Node.js built-ins — tidak boleh masuk browser bundle
     "fs", "path", "os", "url", "crypto", "module",
     "child_process", "worker_threads", "stream", "events", "util",

@@ -120,6 +120,10 @@ interface NativeScannerBinding {
     avgClassesPerEntryX100: number
     mostUsedClasses: Array<{ class: string; count: number }>
   }
+   /** Rebuild workspace result — Rust HashSet dedup + sort. Menggantikan JS fallback di mergeResults() */
+   rebuildWorkspaceResult?: (
+     files: Array<{ file: string; classes: readonly string[] }>
+   ) => { files: Array<{ file: string; classes: string[] }>; totalFiles: number; uniqueClasses: string[] }
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -501,6 +505,18 @@ export function pruneStaleEntriesNative(
  *
  * Menggantikan `computeCacheStats()` di `cache-native.ts`.
  */
+export function rebuildWorkspaceResultNative(
+  files: Array<{ file: string; classes: readonly string[] }>
+): { files: typeof files; totalFiles: number; uniqueClasses: string[] } | null {
+  const binding = scannerBridgeLoader.get()
+  if (!binding?.rebuildWorkspaceResult) return null
+  try {
+    return binding.rebuildWorkspaceResult(files)
+  } catch {
+    return null
+  }
+}
+
 export function computeCacheStatsNative(
   filesClasses: string[][],
   sizes: number[],

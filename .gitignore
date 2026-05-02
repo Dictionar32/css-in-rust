@@ -13,8 +13,6 @@ build.log
 .idea/
 
 # Lock files (monorepo)
-package-lock.json
-Cargo.lock
 
 # npm config
 .npmrc

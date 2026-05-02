@@ -172,7 +172,7 @@ export default function Layout({ children }) {
 ## Vue 3
 
 ```bash
-npm install @tailwind-styled/vue tailwind-merge
+npm install @tailwind-styled/vue vue
 ```
 
 ```vue
@@ -201,7 +201,7 @@ const Button = tw('button', {
 ## Svelte 4/5
 
 ```bash
-npm install @tailwind-styled/svelte tailwind-merge
+npm install @tailwind-styled/svelte
 ```
 
 ```svelte

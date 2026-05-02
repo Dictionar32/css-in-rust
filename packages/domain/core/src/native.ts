@@ -1,38 +1,22 @@
 /**
  * tailwind-styled-v5 — Native Rust Bindings
- * 
+ *
  * All functions require native Rust bindings.
  * Uses @tailwind-styled/shared for native resolution.
  */
+
+import { dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+import { resolveNativeBinary } from "@tailwind-styled/shared"
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
-
-function getResolveRuntimeDir() {
-  if (isBrowser) return () => ""
-  const { dirname } = nodeRequire!("node:path")
-  const { fileURLToPath } = nodeRequire!("node:url")
-  return (dir: string | undefined, importMetaUrl: string) => dir ?? dirname(fileURLToPath(importMetaUrl))
-}
-
-function getResolveNativeBinary() {
-  if (isBrowser) return () => ({ path: null, source: "not-found", platform: "browser", tried: [] })
-  const { resolveNativeBinary: resolve } = nodeRequire!("@tailwind-styled/shared")
-  return resolve
-}
-
-function getCreateRequire() {
-  if (isBrowser) return () => { throw new Error("node:module is not available in browser") }
-  return nodeRequire!("node:module").createRequire
-}
-
-let _resolveRuntimeDir: ReturnType<typeof getResolveRuntimeDir>
-let _resolveNativeBinary: ReturnType<typeof getResolveNativeBinary>
-let _createRequire: ReturnType<typeof getCreateRequire>
+// require() is safe here — tsup banner injects CJS-compatible require into ESM output.
+// See tsup.config.ts esbuildOptions banner for how this is set up.
+const _loadNative = (path: string): unknown => require(path)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
@@ -84,8 +68,39 @@ interface NativeBinding {
   detectClassConflicts?: (classes: string) => { conflicts: Array<{ class1: string; class2: string; reason: string }>; conflictedClassNames: string[] }
   resolveVariants?: (configJson: string, propsJson: string) => { classes: string; resolvedCount: number }
   resolveSimpleVariants?: (base: string | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>) => string
+  /** Parse template literal yang sudah di-join. Menggantikan parseTemplate() di twProxy.ts */
+  parseTemplate?: (raw: string) => {
+    base: string
+    subsJson: string
+    hasSubs: boolean
+  }
+  /** Validate ComponentConfig — menggantikan validateVariantConfig() di cv.ts */
+  validateVariantConfig?: (configJson: string) => {
+    valid: boolean
+    errors: Array<{ errorType: string; key: string; value?: string; message: string }>
+    warnings: string[]
+  }
+  /** Build lookup key untuk generated registry — menggantikan key builder di lookupGenerated() */
+  buildVariantLookupKey?: (defaultVariantsJson: string, propsJson: string) => string
   /** Menggantikan cn() — filter+join class names dalam satu Rust pass. (class_utils.rs) */
   resolveClassNames?: (inputs: string[]) => string
+  /** tw_merge dengan custom separator dan optional debug */
+  twMergeWithSeparator?: (classString: string, opts: { separator?: string; debug?: boolean }) => string
+  /** tw_merge_many dengan custom separator */
+  twMergeManyWithSeparator?: (classStrings: string[], opts: { separator?: string; debug?: boolean }) => string
+  /** conflict-aware Tailwind class merger — port of tailwind-merge. (tw_merge.rs) */
+  twMerge?: (classString: string) => string
+  /** variadic convenience wrapper untuk twMerge. (tw_merge.rs) */
+  twMergeMany?: (classStrings: string[]) => string
+  /** Tailwind classes → semicolon-separated inline CSS declarations. (state_css.rs) */
+  twClassesToCss?: (classes: string) => string
+  /** Iterative CSS var() chain resolver. (theme.rs) */
+  resolveThemeValue?: (key: string, rawMapJson: string) => string
+  /** Parse sub-component block syntax from tw`` template. (tw_merge.rs) */
+  parseSubcomponentBlocksNapi?: (template: string, componentName: string) => {
+    baseClasses: string
+    subMapJson: string
+  }
   /** Menggantikan layoutClassesToCss() — static lookup + split dalam satu Rust pass. (container_query.rs) */
   layoutClassesToCss?: (classes: string) => string
   /** Menggantikan buildContainerRules() — generate @container CSS rules. (container_query.rs) */
@@ -117,16 +132,13 @@ const getBinding = (): NativeBinding => {
   bindingLoadAttempted = true
 
   try {
-    if (!_resolveRuntimeDir) _resolveRuntimeDir = getResolveRuntimeDir()
-    if (!_resolveNativeBinary) _resolveNativeBinary = getResolveNativeBinary()
-    if (!_createRequire) _createRequire = getCreateRequire()
-    
-    const runtimeDir = _resolveRuntimeDir(undefined, import.meta.url)
-    const require = _createRequire(import.meta.url)
-    const result = _resolveNativeBinary(runtimeDir)
+    const runtimeDir = isBrowser ? "" : dirname(fileURLToPath(import.meta.url))
+    const result = isBrowser
+      ? { path: null, source: "not-found", platform: "browser", tried: [] }
+      : resolveNativeBinary(runtimeDir)
 
     if (result.path && result.path.endsWith(".node")) {
-      const mod = require(result.path) as NativeBinding
+      const mod = _loadNative(result.path) as NativeBinding
       if (mod?.batchSplitClasses) {
         nativeBinding = mod
         return nativeBinding

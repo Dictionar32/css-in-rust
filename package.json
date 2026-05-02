@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.25",
+  "version": "5.0.6-canary.0.0.26",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -30,10 +30,10 @@
     "radix",
     "headless-ui"
   ],
-  "homepage": "https://github.com/Dictionar32/tailwind-styled-v4",
+  "homepage": "https://github.com/Dictionar32/css-in-rust",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Dictionar32/tailwind-styled-v4.git"
+    "url": "git+https://github.com/Dictionar32/css-in-rust.git"
   },
   "workspaces": [
     "packages/domain/*",
@@ -41,7 +41,7 @@
     "packages/presentation/*"
   ],
   "bugs": {
-    "url": "https://github.com/Dictionar32/tailwind-styled-v4/issues"
+    "url": "https://github.com/Dictionar32/css-in-rust/issues"
   },
   "readme": "README.md",
   "main": "dist/index.js",
@@ -248,21 +248,20 @@
       "optional": true
     }
   },
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.10",
-    "@napi-rs/cli": "^3.6.2",
-    "@types/node": "^20.19.39",
-    "@types/react": "^19",
-    "dependency-cruiser": "^17.3.10",
-    "next": "^16.2.2",
-    "tailwind-merge": "^3.5.0",
-    "tsup": "^8.5.0",
-    "tsx": "^4.21.0",
-    "turbo": "^2.9.3",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.8",
-    "vue": "^3.5.30"
-  },
+   "devDependencies": {
+     "@biomejs/biome": "^2.4.10",
+     "@napi-rs/cli": "^3.6.2",
+     "@types/node": "^20.19.39",
+     "@types/react": "^19",
+     "dependency-cruiser": "^17.3.10",
+     "next": "^16.2.2",
+     "tsup": "^8.5.0",
+     "tsx": "^4.21.0",
+     "turbo": "^2.9.3",
+     "typescript": "^6.0.2",
+     "vite": "^8.0.8",
+     "vue": "^3.5.30"
+   },
   "optionalDependencies": {
     "@tailwind-styled/native-darwin-arm64": "5.0.6-canary.0.0",
     "@tailwind-styled/native-darwin-x64": "5.0.6-canary.0.0",
@@ -273,9 +272,8 @@
     "oxc-parser": "^0.120.0",
     "oxc-transform": "^0.120.0"
   },
-  "dependencies": {
-    "tailwind-merge": "^3.5.0",
-    "@clack/prompts": "^1.1.0",
-    "ts-pattern": "^5.9.0"
-  }
+   "dependencies": {
+     "@clack/prompts": "^1.1.0",
+     "ts-pattern": "^5.9.0"
+   }
 }

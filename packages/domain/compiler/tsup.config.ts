@@ -19,7 +19,20 @@ export default defineConfig({
     "tailwindcss",
     "@tailwindcss/postcss",
     "postcss",
-    "tailwind-merge",
     "oxc-parser"
-  ]
+  ],
+  esbuildOptions(options, context) {
+    if (context.format === "esm") {
+      options.banner = {
+        ...options.banner,
+        js: [
+          options.banner?.js ?? "",
+          `import { createRequire as __createRequire } from "node:module";`,
+          `const require = __createRequire(import.meta.url);`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      }
+    }
+  },
 })

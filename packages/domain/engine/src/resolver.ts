@@ -214,36 +214,8 @@ export class CascadeResolver {
     return resolved.get(property) ?? null
   }
 
-  // ── Legacy accessors (kept for API compatibility) ─────────────────────────
-
-  getBucket(property: PropertyId): PropertyBucketIR | undefined {
-    const rules = Array.from(this.rules.values())
-      .filter((r) => r.property.value === property.value)
-    if (rules.length === 0) return undefined
-    return { property, rules: rules.map((r) => r.id) }
-  }
-
-  getAllBuckets(): Map<PropertyId, PropertyBucketIR> {
-    const buckets = new Map<PropertyId, PropertyBucketIR>()
-    const propertyIdMap = new Map<number, PropertyId>()
-
-    for (const rule of this.rules.values()) {
-      if (!propertyIdMap.has(rule.property.value)) {
-        propertyIdMap.set(rule.property.value, rule.property)
-      }
-    }
-
-    for (const [, propertyId] of propertyIdMap) {
-      const rules = Array.from(this.rules.values())
-        .filter((r) => r.property.value === propertyId.value)
-      buckets.set(propertyId, { property: propertyId, rules: rules.map((r) => r.id) })
-    }
-
-    return buckets
-  }
-
-  getResolution(_id: CascadeResolutionId): CascadeResolutionIR | undefined {
-    // Resolutions are not cached — re-resolve on demand
-    return undefined
-  }
-}
+   getResolution(_id: CascadeResolutionId): CascadeResolutionIR | undefined {
+     // Resolutions are not cached — re-resolve on demand
+     return undefined
+   }
+ }

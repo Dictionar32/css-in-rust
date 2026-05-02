@@ -4,37 +4,51 @@ on:
   push:
     branches: [alpha]
 
+concurrency:
+  group: publish-alpha
+  cancel-in-progress: false
+
 jobs:
-  publish:
+  publish-alpha:
+    name: Publish Alpha to NPM
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          cache: true
-          cache-dependency-paths: native/Cargo.lock
-      
+          cache-workspaces: native
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-      
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+
       - name: Install
         run: npm ci
-      
-      - name: Build Rust native bindings
+
+      - name: cargo test
+        run: cargo test --manifest-path native/Cargo.toml --release
+
+      - name: Build native
         run: npm run build:rust
-      
-      - name: Build
+
+      - name: Build TypeScript
         run: npm run build
-      
-      - name: Test
-        run: npm run test
-      
-      - name: Publish (alpha tag)
+
+      - name: Bump version to alpha
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          ALPHA="${VERSION}-alpha.$(date +%Y%m%d%H%M%S)"
+          npm version $ALPHA --no-git-tag-version
+          echo "Publishing alpha: $ALPHA"
+
+      - name: Publish
         run: npm publish --tag alpha --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -4,9 +4,23 @@ Semua perubahan signifikan pada project ini didokumentasikan di file ini.
 
 ---
 
-## [5.0.6-canary] — 2026-04-24
+## [5.0.6-canary] — 2026-04-29
 
 > Rilis canary terkini. Versi ini mencerminkan state aktual dari source code.
+
+### ⚠️ Breaking Changes
+
+### CI/CD Consolidation
+- **Removed legacy workflows**: `build-matrix.yml`, `compat-matrix.yml`, `example-next-app.yml`, `plugin-registry-benchmark.yml`, `plugin-registry-test.yml`, `publish-benchmark.yml`, `quality.yml`, `release-candidate-gate.yml`, `rust-parser-regression.yml`, `scale-benchmark.yml`, `test-coverage.yml`
+- **New unified CI**: All CI/CD functionality consolidated into `ci.yml`
+- **New release workflow**: `release-candidate.yml` replaces `release-candidate-gate.yml`
+- **Updated workflows**: `benchmark.yml`, `dependencies.yml`, `publish-alpha.yml`, `publish.yml`
+
+### Build Configuration
+- `native/Cargo.lock` is now tracked for reproducible native builds
+- `package-lock.json` added to root for consistent npm dependency management
+- Removed temporary clippy output files (`native/clippy-final.txt`, `native/clippy-warnings.txt`)
+- `examples/next-js-app/package-lock.json` now tracked
 
 ### 📦 Packages (26 total)
 

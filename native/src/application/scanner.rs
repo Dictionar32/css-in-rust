@@ -134,7 +134,7 @@ pub fn scan_workspace(root: String, extensions: Option<Vec<String>>) -> napi::Re
             .iter()
             .map(|(path, content)| {
                 let classes = extract_classes_from_source(content.clone());
-                let hash = short_hash(&content);
+                let hash = short_hash(content);
                 ScannedFile {
                     file: path.clone(),
                     classes,
@@ -150,7 +150,7 @@ pub fn scan_workspace(root: String, extensions: Option<Vec<String>>) -> napi::Re
                 .par_iter()
                 .map(|(path, content)| {
                     let classes = extract_classes_from_source(content.clone());
-                    let hash = short_hash(&content);
+                    let hash = short_hash(content);
                     ScannedFile {
                         file: path.clone(),
                         classes,
@@ -407,28 +407,30 @@ pub fn generate_sub_component_types(
     root: String,
     output_path: Option<String>,
 ) -> napi::Result<SubComponentScanResult> {
-    use std::collections::HashSet;
     use regex::Regex;
+    use std::collections::HashSet;
 
     let root_path = std::path::Path::new(&root);
     if !root_path.exists() {
-        return Err(napi::Error::from_reason(format!("Root path does not exist: {}", root)));
+        return Err(napi::Error::from_reason(format!(
+            "Root path does not exist: {}",
+            root
+        )));
     }
 
     // Patterns untuk detect sub-component registration
     let register_re = Regex::new(
-        r#"registerSubComponent\s*\(\s*\{[^}]*name\s*:\s*["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#
-    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        r#"registerSubComponent\s*\(\s*\{[^}]*name\s*:\s*["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#,
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
     // Pattern untuk detect .withSub<"name1" | "name2">()
-    let with_sub_re = Regex::new(
-        r#"\.withSub\s*<\s*([^>]+)\s*>"#
-    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let with_sub_re = Regex::new(r#"\.withSub\s*<\s*([^>]+)\s*>"#)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
     // Pattern untuk extract string literals dari union types
-    let literal_re = Regex::new(
-        r#"["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#
-    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let literal_re = Regex::new(r#"["']([a-zA-Z][a-zA-Z0-9_-]*)["']"#)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
     let extensions = ["ts", "tsx", "js", "jsx", "mjs"];
     let ignore_dirs = ["node_modules", ".next", "dist", "out", ".turbo"];
@@ -437,6 +439,7 @@ pub fn generate_sub_component_types(
     let mut files_scanned = 0u32;
 
     // Walk directory
+    #[allow(clippy::too_many_arguments)]
     fn walk(
         dir: &std::path::Path,
         extensions: &[&str],
@@ -447,22 +450,35 @@ pub fn generate_sub_component_types(
         names: &mut HashSet<String>,
         count: &mut u32,
     ) {
-        let Ok(entries) = std::fs::read_dir(dir) else { return };
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_dir() {
-                let dir_name = path.file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
+                let dir_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if !ignore_dirs.contains(&dir_name) {
-                    walk(&path, extensions, ignore_dirs, register_re, with_sub_re, literal_re, names, count);
+                    walk(
+                        &path,
+                        extensions,
+                        ignore_dirs,
+                        register_re,
+                        with_sub_re,
+                        literal_re,
+                        names,
+                        count,
+                    );
                 }
                 continue;
             }
             let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-            if !extensions.contains(&ext) { continue; }
+            if !extensions.contains(&ext) {
+                continue;
+            }
 
-            let Ok(source) = std::fs::read_to_string(&path) else { continue };
+            let Ok(source) = std::fs::read_to_string(&path) else {
+                continue;
+            };
             *count += 1;
 
             // Extract dari registerSubComponent({ name: "..." })
@@ -505,7 +521,10 @@ pub fn generate_sub_component_types(
     // Write to file jika output_path diberikan
     if let Some(path) = &output_path {
         if let Err(e) = std::fs::write(path, &dts_content) {
-            return Err(napi::Error::from_reason(format!("Failed to write .d.ts: {}", e)));
+            return Err(napi::Error::from_reason(format!(
+                "Failed to write .d.ts: {}",
+                e
+            )));
         }
     }
 
@@ -520,7 +539,7 @@ fn generate_dts(names: &[String]) -> String {
     if names.is_empty() {
         return String::from(
             "// tailwind-styled-v4 — no sub-components detected\n\
-             // Run: npx tw generate-types to regenerate\n"
+             // Run: npx tw generate-types to regenerate\n",
         );
     }
 
@@ -631,17 +650,28 @@ pub fn collect_files(
     ignore_dirs: Option<Vec<String>>,
 ) -> Vec<String> {
     let exts: Vec<String> = extensions.unwrap_or_else(|| {
-        [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue", ".svelte"]
-            .iter()
-            .map(|s| s.to_string())
-            .collect()
+        [
+            ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue", ".svelte",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect()
     });
     let ignores: std::collections::HashSet<String> = ignore_dirs
         .unwrap_or_else(|| {
-            ["node_modules", ".git", ".next", "dist", "out", ".turbo", ".cache", "target"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect()
+            [
+                "node_modules",
+                ".git",
+                ".next",
+                "dist",
+                "out",
+                ".turbo",
+                ".cache",
+                "target",
+            ]
+            .iter()
+            .map(|s| s.to_string())
+            .collect()
         })
         .into_iter()
         .collect();
@@ -677,7 +707,10 @@ fn collect_files_recursive(
             }
         } else {
             let path_str = path.to_string_lossy();
-            if extensions.iter().any(|ext| path_str.ends_with(ext.as_str())) {
+            if extensions
+                .iter()
+                .any(|ext| path_str.ends_with(ext.as_str()))
+            {
                 out.push(path.to_string_lossy().into_owned());
             }
         }
@@ -743,11 +776,14 @@ mod collect_files_tests {
     #[test]
     fn test_collect_files_ignores_node_modules() {
         let dir = TempDir::new().unwrap();
-        make_tree(&dir, &[
-            "src/index.ts",
-            "node_modules/react/index.js",
-            "node_modules/react/jsx.ts",
-        ]);
+        make_tree(
+            &dir,
+            &[
+                "src/index.ts",
+                "node_modules/react/index.js",
+                "node_modules/react/jsx.ts",
+            ],
+        );
         let root = dir.path().to_string_lossy().to_string();
 
         let result = collect_files(root, None, None);
@@ -760,7 +796,10 @@ mod collect_files_tests {
     #[test]
     fn test_collect_files_custom_extensions() {
         let dir = TempDir::new().unwrap();
-        make_tree(&dir, &["styles/main.css", "styles/theme.scss", "src/app.ts"]);
+        make_tree(
+            &dir,
+            &["styles/main.css", "styles/theme.scss", "src/app.ts"],
+        );
         let root = dir.path().to_string_lossy().to_string();
 
         let result = collect_files(
@@ -777,11 +816,7 @@ mod collect_files_tests {
     #[test]
     fn test_collect_files_custom_ignore_dirs() {
         let dir = TempDir::new().unwrap();
-        make_tree(&dir, &[
-            "src/index.ts",
-            "dist/bundle.js",
-            ".next/server.ts",
-        ]);
+        make_tree(&dir, &["src/index.ts", "dist/bundle.js", ".next/server.ts"]);
         let root = dir.path().to_string_lossy().to_string();
 
         let result = collect_files(
@@ -812,11 +847,7 @@ mod collect_files_tests {
     #[test]
     fn test_collect_files_nested() {
         let dir = TempDir::new().unwrap();
-        make_tree(&dir, &[
-            "a/b/c/deep.tsx",
-            "a/b/mid.ts",
-            "root.ts",
-        ]);
+        make_tree(&dir, &["a/b/c/deep.tsx", "a/b/mid.ts", "root.ts"]);
         let root = dir.path().to_string_lossy().to_string();
 
         let result = collect_files(root, None, None);

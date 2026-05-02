@@ -1,18 +1,20 @@
 /**
- * Centralized hash utilities
+ * Centralized hash utilities — Node.js only.
  *
- * MIGRATION: Native-first via NAPI binding (Rust FNV/MD5), JS fallback
- * untuk environment yang belum load native (mis. test runner tanpa .node binary).
+ * Native-first via NAPI binding (Rust FNV/MD5/SHA256).
+ * Node.js crypto fallback jika native tidak tersedia (mis. test runner tanpa .node binary).
  *
- * Before: selalu pakai Node `crypto.createHash` (C++ bridge overhead per call)
- * After:  native Rust dispatch_hash → ~12-40x lebih cepat, tanpa browser-check noise
+ * Browser fallbacks DIHAPUS — package ini Node.js-only (dipanggil dari
+ * compiler, engine, CLI — tidak pernah dari browser bundle).
  *
- * Fungsi yang dipindah ke native:
+ * Native functions:
  *   hashContent → native/src/application/hashing.rs :: hash_content()
  *   hashFile    → native/src/application/hashing.rs :: hash_file()
  */
 
 import { loadNativeBinding, resolveNativeBindingCandidates, resolveRuntimeDir } from "./nativeBinding"
+import crypto from "node:crypto"
+import fs from "node:fs"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Native binding type
@@ -29,14 +31,13 @@ const isHashBinding = (mod: unknown): mod is NativeHashBinding => {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Lazy singleton — load satu kali, reuse selamanya
+// Lazy singleton
 // ─────────────────────────────────────────────────────────────────────────────
 
 let _bindingCache: NativeHashBinding | null | "unloaded" = "unloaded"
 
 function getNativeHashBinding(): NativeHashBinding | null {
   if (_bindingCache !== "unloaded") return _bindingCache
-
   try {
     const runtimeDir = resolveRuntimeDir(
       typeof __dirname === "string" ? __dirname : undefined,
@@ -56,63 +57,31 @@ function getNativeHashBinding(): NativeHashBinding | null {
   } catch {
     _bindingCache = null
   }
-
   return _bindingCache
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JS fallbacks (dipakai kalau native tidak tersedia)
+// Node.js fallback — Node crypto (no browser dead code)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
-
-// Lazy require — hindari import statis supaya tidak crash di browser / ESM env
-const _nodeCache: { crypto?: any; fs?: any } = {}
-
-function getNodeCrypto() {
-  if (!_nodeCache.crypto) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _nodeCache.crypto = require("node:crypto")
-  }
-  return _nodeCache.crypto
+function nodeHashContent(content: string, algorithm: string, length: number): string {
+  return crypto.createHash(algorithm === "fnv" ? "md5" : algorithm)
+    .update(content)
+    .digest("hex")
+    .slice(0, length)
 }
 
-function getNodeFs() {
-  if (!_nodeCache.fs) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    _nodeCache.fs = require("node:fs")
-  }
-  return _nodeCache.fs
-}
-
-/** Fallback djb2-ish untuk browser (tidak ada crypto, tidak ada native) */
-function djb2Hash(content: string, length: number): string {
-  let hash = 0
-  for (let i = 0; i < content.length; i++) {
-    const char = content.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash // Convert to 32-bit int
-  }
-  return Math.abs(hash).toString(16).padStart(8, "0").slice(0, length)
-}
-
-function jsHashContent(content: string, algorithm: string, length: number): string {
-  if (isBrowser) return djb2Hash(content, length)
-  return getNodeCrypto().createHash(algorithm).update(content).digest("hex").slice(0, length)
-}
-
-function jsHashFile(filePath: string, algorithm: string, length: number): string {
-  if (isBrowser) return "00000000"
+function nodeHashFile(filePath: string, algorithm: string, length: number): string {
   try {
-    const content = getNodeFs().readFileSync(filePath, "utf8") as string
-    return jsHashContent(content, algorithm, length)
+    const content = fs.readFileSync(filePath, "utf8")
+    return nodeHashContent(content, algorithm, length)
   } catch {
     return "00000000"
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Public API — perilaku identik dengan sebelumnya, tapi native-first
+// Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -129,10 +98,9 @@ function jsHashFile(filePath: string, algorithm: string, length: number): string
 export function hashContent(content: string, algorithm = "md5", length = 8): string {
   const native = getNativeHashBinding()
   if (native) {
-    const alg = algorithm as "md5" | "sha256" | "fnv"
-    return native.hashContent(content, alg, length)
+    return native.hashContent(content, algorithm as "md5" | "sha256" | "fnv", length)
   }
-  return jsHashContent(content, algorithm, length)
+  return nodeHashContent(content, algorithm, length)
 }
 
 /**
@@ -147,8 +115,7 @@ export function hashContent(content: string, algorithm = "md5", length = 8): str
 export function hashFile(filePath: string, algorithm = "md5", length = 8): string {
   const native = getNativeHashBinding()
   if (native) {
-    const alg = algorithm as "md5" | "sha256" | "fnv"
-    return native.hashFile(filePath, alg, length)
+    return native.hashFile(filePath, algorithm as "md5" | "sha256" | "fnv", length)
   }
-  return jsHashFile(filePath, algorithm, length)
+  return nodeHashFile(filePath, algorithm, length)
 }

@@ -5,7 +5,6 @@
 //!
 //! Usage: cargo run --bin export-schemas
 
-use serde_json;
 use std::fs;
 use std::path::Path;
 

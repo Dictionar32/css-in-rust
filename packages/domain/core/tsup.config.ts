@@ -37,7 +37,6 @@ export default defineConfig({
     "@tailwind-styled/atomic",
     "react",
     "react-dom",
-    "tailwind-merge",
     "tailwindcss",
     "@tailwindcss/postcss",
     "postcss",
@@ -70,5 +69,22 @@ export default defineConfig({
   minify: false,
   banner: {
     js: "/* @tailwind-styled/core v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
-  }
+  },
+  esbuildOptions(options, context) {
+    // Inject a CJS-compatible require into ESM output so that native .node
+    // addons can be loaded at runtime without bundler interference.
+    // This is the standard approach used by vite, better-sqlite3, etc.
+    if (context.format === "esm") {
+      options.banner = {
+        ...options.banner,
+        js: [
+          options.banner?.js ?? "",
+          `import { createRequire as __createRequire } from "node:module";`,
+          `const require = __createRequire(import.meta.url);`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      }
+    }
+  },
 })

@@ -168,7 +168,7 @@ export function Button({ variant, size, className, children, ...props }: ButtonP
 
 ### 4. fungsi cx() / cn() (Conditional Merge)
 
-Fungsi `cx()` (atau `cn()`) digunakan untuk menggabungkan class secara kondisional, mirip dengan `clsx` atau `tailwind-merge`.
+Fungsi `cx()` (atau `cn()`) digunakan untuk menggabungkan class secara kondisional, mirip dengan `clsx` namun dengan konflik resolution otomatis via native Rust engine.
 
 **Contoh (dari `vite/src/App.tsx` dan `standar-config-next-js-app/src/components/Card.tsx`):**
 

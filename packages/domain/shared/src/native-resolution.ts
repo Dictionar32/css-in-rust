@@ -8,56 +8,14 @@
  * 3. Local build dari source (developer mode)
  */
 
+import { createRequire } from "node:module"
+import * as fs from "node:fs"
+import * as path from "node:path"
+
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-// ESM-safe require detection
-let nodeModuleRef: any = null
-function getNodeModuleRef() {
-  if (isBrowser) return null
-  if (nodeModuleRef !== null) return nodeModuleRef
-  try {
-    const test = typeof require === 'function' ? require('node:module') : null
-    nodeModuleRef = test
-    return test
-  } catch {
-    nodeModuleRef = null
-    return null
-  }
-}
-
-let _nodeFs: any = null
-let _nodePath: any = null
-let _nodeModule: any = null
-let _require: any = null
-
-function getNodeFs() {
-  if (isBrowser) return { existsSync: () => false }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { existsSync: () => false }
-  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
-  return _nodeFs
-}
-function getNodePath() {
-  if (isBrowser) return { resolve: () => "", dirname: "" }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { resolve: () => "", dirname: "" }
-  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
-  return _nodePath!
-}
-function getNodeModule() {
-  if (isBrowser) return { createRequire: () => { throw new Error("node:module not available") } }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return { createRequire: () => { throw new Error("require not available") } }
-  if (!_nodeModule) _nodeModule = nodeRequire
-  return _nodeModule
-}
-function getRequire(_importMetaUrl: string) {
-  if (isBrowser) return () => { throw new Error("node:module not available") }
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) return () => { throw new Error("require not available") }
-  if (!_require) _require = nodeRequire.createRequire(_importMetaUrl)
-  return _require
-}
+// ESM-safe require — works in both ESM and CJS contexts
+const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
 
 export interface NativeResolutionResult {
   path: string | null
@@ -100,10 +58,6 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     return { path: null, source: "not-found", platform, tried: ["not available in browser"] }
   }
 
-  const fs = getNodeFs()
-  const path = getNodePath()
-  const _req = getRequire(import.meta.url)
-
   // 1. Env var override
   const envPath = process.env.TW_NATIVE_PATH?.trim()
   if (envPath) {
@@ -117,7 +71,7 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   const prebuiltPkgs = PLATFORM_MAP[platform] ?? []
   for (const pkg of prebuiltPkgs) {
     try {
-      const candidate = _req.resolve(`${pkg}/tailwind_styled_parser.node`)
+      const candidate = _require.resolve(`${pkg}/tailwind_styled_parser.node`)
       if (fs.existsSync(candidate)) {
         return { path: candidate, source: "prebuilt", platform, tried }
       }
@@ -130,14 +84,42 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   // 3. Local build candidates
   const cwd = process.cwd()
   const base = runtimeDir ?? cwd
-  const localCandidates = [
-    path.resolve(base, "tailwind_styled_parser.node"),
-    path.resolve(base, "..", "tailwind_styled_parser.node"),
-    path.resolve(cwd, "native", "tailwind_styled_parser.node"),
-    path.resolve(cwd, "native", "target", "release", "tailwind_styled_parser.node"),
-    // napi-rs conventional output
-    path.resolve(base, `tailwind_styled_parser.${platform}.node`),
-  ]
+  // napi-rs naming: platform key may have -gnu suffix on Linux
+  const napiPlatform = platform === "linux-x64" ? "linux-x64-gnu"
+    : platform === "linux-arm64" ? "linux-arm64-gnu"
+    : platform
+
+  // Both possible binary names:
+  // - "tailwind_styled_parser" (old hardcoded name in resolvers)
+  // - "tailwind-styled-native" (actual binaryName in native/package.json)
+  const BINARY_NAMES = ["tailwind-styled-native", "tailwind_styled_parser"]
+
+  const localCandidates: string[] = []
+
+  for (const bin of BINARY_NAMES) {
+    localCandidates.push(path.resolve(base, `${bin}.node`))
+    localCandidates.push(path.resolve(base, "..", `${bin}.node`))
+    localCandidates.push(path.resolve(base, `${bin}.${platform}.node`))
+    localCandidates.push(path.resolve(base, `${bin}.${napiPlatform}.node`))
+  }
+
+  // Walk up from cwd AND base to find repo root native/ dir
+  // Needed when npm workspaces sets cwd to the package subdir
+  for (const startDir of [cwd, base]) {
+    let dir = startDir
+    for (let i = 0; i < 6; i++) {
+      const nativeDir = path.resolve(dir, "native")
+      for (const bin of BINARY_NAMES) {
+        localCandidates.push(path.resolve(nativeDir, `${bin}.node`))
+        localCandidates.push(path.resolve(nativeDir, `${bin}.${platform}.node`))
+        localCandidates.push(path.resolve(nativeDir, `${bin}.${napiPlatform}.node`))
+        localCandidates.push(path.resolve(nativeDir, "target", "release", `${bin}.node`))
+      }
+      const parent = path.resolve(dir, "..")
+      if (parent === dir) break
+      dir = parent
+    }
+  }
 
   for (const candidate of localCandidates) {
     tried.push(`local:${candidate}`)

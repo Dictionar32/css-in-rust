@@ -253,8 +253,14 @@ mod tests {
     #[test]
     fn test_rebuild_workspace_result_preserves_file_list() {
         let files = vec![
-            IncrementalFileEntry { file: "a.tsx".into(), classes: vec!["p-4".into()] },
-            IncrementalFileEntry { file: "b.tsx".into(), classes: vec!["flex".into()] },
+            IncrementalFileEntry {
+                file: "a.tsx".into(),
+                classes: vec!["p-4".into()],
+            },
+            IncrementalFileEntry {
+                file: "b.tsx".into(),
+                classes: vec!["flex".into()],
+            },
         ];
 
         let result = rebuild_workspace_result(files);

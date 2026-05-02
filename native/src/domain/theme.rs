@@ -110,8 +110,7 @@ pub struct CssThemeVar {
 /// Menggantikan JS regex di `themeReader.ts extractThemeFromCSS()`.
 #[napi]
 pub fn extract_theme_from_css(css: String) -> Vec<CssThemeVar> {
-    static RE_BLOCK: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"@theme\s*\{([\s\S]*?)\}").unwrap());
+    static RE_BLOCK: Lazy<Regex> = Lazy::new(|| Regex::new(r"@theme\s*\{([\s\S]*?)\}").unwrap());
     static RE_VAR_KV: Lazy<Regex> =
         Lazy::new(|| Regex::new(r"--([a-zA-Z0-9_-]+)\s*:\s*([^;]+);").unwrap());
 
@@ -130,3 +129,47 @@ pub fn extract_theme_from_css(css: String) -> Vec<CssThemeVar> {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────────
+// resolve_theme_value — iterative var() chain resolver
+// Mirrors resolveThemeValue() from themeReader.ts (recursive → iterative)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Resolve a CSS custom property chain like `var(--color-primary)` → concrete value.
+///
+/// `raw_map` is a JSON object string: `{"key": "value", ...}` (the `theme.raw` dict).
+/// Cycles are broken after 32 hops. Returns empty string if key is not in the map.
+#[napi]
+pub fn resolve_theme_value(key: String, raw_map_json: String) -> String {
+    let map: std::collections::HashMap<String, String> = match serde_json::from_str(&raw_map_json) {
+        Ok(m) => m,
+        Err(_) => return String::new(),
+    };
+
+    let mut current = key.trim_start_matches("--").to_string();
+    let mut visited = std::collections::HashSet::new();
+
+    for _ in 0..32 {
+        let raw = match map.get(&current) {
+            Some(v) => v,
+            None => return String::new(),
+        };
+        // Check if value is `var(--some-token)`
+        if let Some(inner) = raw
+            .trim()
+            .strip_prefix("var(")
+            .and_then(|s| s.strip_suffix(')'))
+        {
+            let next = inner.trim().trim_start_matches("--").to_string();
+            if visited.contains(&current) {
+                return raw.clone(); // cycle detected
+            }
+            visited.insert(current);
+            current = next;
+        } else {
+            return raw.clone();
+        }
+    }
+
+    // Max hops exceeded — return whatever is at current position
+    map.get(&current).cloned().unwrap_or_default()
+}

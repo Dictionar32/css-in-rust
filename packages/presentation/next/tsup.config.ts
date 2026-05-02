@@ -10,40 +10,39 @@ export default defineConfig({
   dts: true,
   clean: true,
   platform: "node",
-  external: [
-    // All node built-ins must be external
-    "fs",
-    "path", 
-    "crypto",
-    "module", 
-    "url",
-    "os",
-    "node:fs",
-    "node:path", 
-    "node:crypto",
-    "node:module",
-    "node:url",
-    "node:os",
-    // Framework
-    "next",
-    // Tailwind packages - use CJS require path
-    "@tailwind-styled/compiler",
-    "@tailwind-styled/plugin", 
-    "@tailwind-styled/shared",
-    "@tailwind-styled/engine",
-    // Loaders
-    "./turbopackLoader",
-    "./webpackLoader",
-    // Other deps
-    "tailwindcss",
-    "@tailwindcss/oxide",
-    "@tailwindcss/postcss",
-    "postcss",
-    "tailwind-merge",
-    "zod",
-    "inversify",
-    "reflect-metadata",
-  ],
+   external: [
+     // All node built-ins must be external
+     "fs",
+     "path", 
+     "crypto",
+     "module", 
+     "url",
+     "os",
+     "node:fs",
+     "node:path", 
+     "node:crypto",
+     "node:module",
+     "node:url",
+     "node:os",
+     // Framework
+     "next",
+     // Tailwind packages - use CJS require path
+     "@tailwind-styled/compiler",
+     "@tailwind-styled/plugin", 
+     "@tailwind-styled/shared",
+     "@tailwind-styled/engine",
+     // Loaders
+     "./turbopackLoader",
+     "./webpackLoader",
+     // Other deps
+     "tailwindcss",
+     "@tailwindcss/oxide",
+     "@tailwindcss/postcss",
+     "postcss",
+     "zod",
+     "inversify",
+     "reflect-metadata",
+   ],
   noExternal: [],
   tsconfig: "tsconfig.json",
   outExtension({ format }) {

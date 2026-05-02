@@ -11,6 +11,7 @@
 
 import React from "react"
 import { createComponent } from "./createComponent"
+import { getNativeBinding } from "./native"
 import type {
   ComponentConfig,
   TwComponentFactory,
@@ -37,12 +38,11 @@ interface ParsedTemplate {
   hasSubs: boolean
 }
 
-// Matches both `[name] { ... }` (bracket) and `name { ... }` (no-bracket) sub-component blocks.
-// Group 1 = bracket name, Group 2 = no-bracket name, Group 3 = classes inside braces.
+// JS fallback — hanya aktif jika native binding tidak tersedia (e.g. browser)
 const SUB_RE = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
 const COMMENT_RE = /\/\/[^\n]*/g
 
-function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
+function parseTemplateFallback(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
   const raw = strings.raw.reduce((acc, str, i) => {
     const expr = exprs[i]
     const exprStr = typeof expr === "function" ? "" : (expr ?? "")
@@ -52,13 +52,12 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
   const subs: Record<string, string> = {}
   let base = raw
 
-  // Extract dan hapus semua sub-component blocks dari base (bracket dan no-bracket)
   let match: RegExpExecArray | null
   SUB_RE.lastIndex = 0
   while ((match = SUB_RE.exec(raw)) !== null) {
     const name = match[1] ?? match[2]
     const inner = match[3]
-      .replace(COMMENT_RE, "")           // strip //comments
+      .replace(COMMENT_RE, "")
       .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
       .replace(/\s+/g, " ").trim()
 
@@ -66,17 +65,44 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
     base = base.replace(match[0], "")
   }
 
-  // Clean base: strip comments, normalize whitespace
   const cleanBase = base
     .replace(COMMENT_RE, "")
     .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
     .replace(/\s+/g, " ").trim()
 
-  return {
-    base: cleanBase,
-    subs,
-    hasSubs: Object.keys(subs).length > 0,
+  return { base: cleanBase, subs, hasSubs: Object.keys(subs).length > 0 }
+}
+
+/**
+ * parseTemplate — native-first.
+ *
+ * Join strings+exprs di JS (TemplateStringsArray tidak bisa di-serialize ke NAPI),
+ * lalu kirim raw string ke Rust untuk parsing.
+ * Fallback ke pure-JS jika native tidak tersedia (browser / test env).
+ */
+function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
+  // Join dulu di JS — Rust terima satu raw string
+  const raw = strings.raw.reduce((acc, str, i) => {
+    const expr = exprs[i]
+    const exprStr = typeof expr === "function" ? "" : (expr ?? "")
+    return acc + str + String(exprStr)
+  }, "")
+
+  try {
+    const binding = getNativeBinding()
+    if (binding?.parseTemplate) {
+      const result = binding.parseTemplate(raw)
+      // Parse subsJson → Record<string, string>
+      const subs: Record<string, string> = result.hasSubs
+        ? JSON.parse(result.subsJson)
+        : {}
+      return { base: result.base, subs, hasSubs: result.hasSubs }
+    }
+  } catch {
+    // binding unavailable — fall through to JS
   }
+
+  return parseTemplateFallback(strings, exprs)
 }
 
 type RuntimeTagFactory = ((

@@ -43,11 +43,11 @@ function stableKeyframesEntries(
 
 function animationCacheKey(opts: AnimateOptions): string {
   const normalized = {
-    from: opts.from.trim(),
-    to: opts.to.trim(),
-    duration: normalizeNumber(opts.duration, DEFAULT_DURATION),
+    from: (opts.from ?? "").trim(),
+    to: (opts.to ?? "").trim(),
+    duration: normalizeNumber(opts.duration as number | undefined, DEFAULT_DURATION),
     easing: (opts.easing ?? DEFAULT_EASING).trim(),
-    delay: normalizeNumber(opts.delay, DEFAULT_DELAY),
+    delay: normalizeNumber(opts.delay as number | undefined, DEFAULT_DELAY),
     fill: opts.fill ?? DEFAULT_FILL,
     iterations: normalizeIterations(opts.iterations),
     direction: opts.direction ?? DEFAULT_DIRECTION,
@@ -113,6 +113,8 @@ export interface AnimationRegistry {
   compileKeyframes(name: string, stops: KeyframesDefinition): Promise<CompiledAnimation>
   extractCss(): string
   reset(): void
+  /** Check apakah className sudah terdaftar di registry */
+  has(className: string): boolean
 }
 
 export function createAnimationRegistry(
@@ -121,6 +123,7 @@ export function createAnimationRegistry(
   const cacheLimit = normalizeCacheLimit(options.cacheLimit)
   const cache = new LRUCache<string, CompiledAnimation>(cacheLimit)
   const cssChunks: string[] = []
+  const classNames = new Set<string>()
 
   return {
     async compileAnimation(opts: AnimateOptions): Promise<CompiledAnimation> {
@@ -130,10 +133,15 @@ export function createAnimationRegistry(
 
       const binding = await getAnimateBinding()
 
-      await validateTailwindClasses([
-        { classList: opts.from, context: "from" },
-        { classList: opts.to, context: "to" },
-      ])
+      // Only validate if from/to are non-empty strings
+      const classesToValidate = [
+        { classList: opts.from ?? "", context: "from" },
+        { classList: opts.to ?? "", context: "to" },
+      ].filter((entry) => entry.classList.trim().length > 0)
+
+      if (classesToValidate.length > 0) {
+        await validateTailwindClasses(classesToValidate)
+      }
 
       if (!binding.compileAnimation) {
         throw new Error("FATAL: Native binding 'compileAnimation' is required but not available.")
@@ -206,6 +214,11 @@ export function createAnimationRegistry(
     reset(): void {
       cache.clear?.()
       cssChunks.length = 0
+      classNames.clear()
+    },
+
+    has(className: string): boolean {
+      return classNames.has(className)
     },
   }
 }

@@ -1,0 +1,52 @@
+name: Release Candidate Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version (e.g. 5.1.0)'
+        required: true
+
+jobs:
+  gate:
+    name: RC Gate — v${{ github.event.inputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: clippy
+          cache-workspaces: native
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: cargo clippy (strict)
+        run: cargo clippy --manifest-path native/Cargo.toml -- -D warnings -D clippy::unwrap_used
+
+      - name: cargo test --release
+        run: cargo test --manifest-path native/Cargo.toml --release
+
+      - name: Full build
+        run: npm run build
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: All TS tests
+        run: npm test --workspaces --if-present
+
+      - name: Pack check
+        run: npm pack --dry-run
+
+      - name: Print summary
+        run: |
+          echo "## RC Gate: v${{ github.event.inputs.version }} ✅" >> $GITHUB_STEP_SUMMARY
+          echo "All checks passed. Ready to tag and publish." >> $GITHUB_STEP_SUMMARY

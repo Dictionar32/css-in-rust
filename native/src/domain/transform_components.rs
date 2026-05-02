@@ -1,3 +1,4 @@
+use napi_derive::napi;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -17,13 +18,11 @@ use crate::shared::utils::{serde_json_string, short_hash};
 //   RE_BLOCK_BARE    — legacy compat `name { ... }` dengan \b agar aman
 // ─────────────────────────────────────────────────────────────────────────────
 
-static RE_BLOCK_BRACKET: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"\[([a-z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}").unwrap()
-});
+static RE_BLOCK_BRACKET: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\[([a-z][a-zA-Z0-9_-]*)\]\s*\{([^}]*)\}").unwrap());
 
-static RE_BLOCK_BARE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"(?m)\b([a-z][a-zA-Z0-9_]*)\s*\{([^}]*)\}").unwrap()
-});
+static RE_BLOCK_BARE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)\b([a-z][a-zA-Z0-9_]*)\s*\{([^}]*)\}").unwrap());
 
 pub(crate) fn parse_subcomponent_blocks(
     template: &str,
@@ -55,15 +54,15 @@ pub(crate) fn parse_subcomponent_blocks(
         }
 
         let sub_tag = match sub_name.as_str() {
-            "label"         => "label",
-            "input"         => "input",
+            "label" => "label",
+            "input" => "input",
             "img" | "image" => "img",
-            "header"        => "header",
-            "footer"        => "footer",
-            "icon"          => "span",
-            "button"        => "button",
-            "a" | "link"    => "a",
-            _               => "span",
+            "header" => "header",
+            "footer" => "footer",
+            "icon" => "span",
+            "button" => "button",
+            "a" | "link" => "a",
+            _ => "span",
         };
 
         let hash_input = format!("{}_{}_{}", component_name, sub_name, sub_classes);
@@ -178,3 +177,46 @@ pub(crate) fn build_metadata_json(
 // ─────────────────────────────────────────────────────────────────────────────
 // N-API exports
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// NAPI export — wraps pub(crate) parse_subcomponent_blocks for TS consumers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Result type untuk parse_subcomponent_blocks_napi
+#[napi(object)]
+pub struct SubcomponentParseResult {
+    /// Base template string dengan semua sub-component blocks dihapus
+    pub base_classes: String,
+    /// JSON string dari HashMap<name, classes>: {"icon":"h-4 w-4","badge":"px-2"}
+    pub sub_map_json: String,
+}
+
+/// Parse sub-component blocks dari template literal.
+/// Menggantikan JS regex parser di createComponent.ts.
+///
+/// # Example
+/// ```ts
+/// const r = native.parseSubcomponentBlocksNapi("p-4 [icon] { h-4 w-4 } flex", "tw")
+/// // r.baseClasses = "p-4 flex"
+/// // r.subMapJson  = "{\"icon\":\"h-4 w-4\"}"
+/// ```
+#[napi]
+pub fn parse_subcomponent_blocks_napi(
+    template: String,
+    component_name: String,
+) -> SubcomponentParseResult {
+    let (base, subs) = parse_subcomponent_blocks(&template, &component_name);
+
+    // Build JSON manually — avoid serde dependency
+    let mut pairs: Vec<String> = Vec::with_capacity(subs.len());
+    for s in &subs {
+        let k = s.name.replace('\\', "\\\\").replace('"', "\\\"");
+        let v = s.classes.replace('\\', "\\\\").replace('"', "\\\"");
+        pairs.push(format!("\"{}\":\"{}\"", k, v));
+    }
+    let sub_map_json = format!("{{{}}}", pairs.join(","));
+
+    SubcomponentParseResult {
+        base_classes: base,
+        sub_map_json,
+    }
+}

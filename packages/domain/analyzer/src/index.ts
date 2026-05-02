@@ -26,15 +26,15 @@ export type {
 
 export { analyzeWorkspace, classToCss }
 
-export const __internal = {
-  normalizeClassInput,
-  splitVariantAndBase,
-  resolveConflictGroup,
-  collectClassCounts,
-  buildDistribution,
-  utilityPrefix,
-  parseAnalyzerOptions,
-  parseClassToCssOptions,
-  parseNativeReport,
-  parseNativeCssCompileResult,
-}
+ export const __internal = {
+   normalizeClassInput,
+   splitVariantAndBase,
+   resolveConflictGroup,
+   collectClassCounts,
+   buildDistribution,
+   utilityPrefix,
+   parseAnalyzerOptions,
+   parseClassToCssOptions,
+   parseNativeReport,
+   parseNativeCssCompileResult,
+ }

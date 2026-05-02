@@ -1,7 +1,7 @@
 //! Class utility functions — migrated from `core/src/cx.ts`
 //!
 //! Fungsi yang dimigrate:
-//!   - `cn(...inputs)`  → `resolve_class_names(inputs)`
+//! - `cn(...inputs)` → `resolve_class_names(inputs)`
 //!
 //! Kenapa worth di-native:
 //! - `cn()` dipanggil di setiap render loop untuk setiap komponen yang
@@ -9,11 +9,12 @@
 //!   overhead filter+join+trim di JS bertumpuk.
 //! - Rust version: satu pass iterator tanpa intermediate allocation.
 //!   JS: `inputs.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()`
-//!       = 3 allocations + RegExp per call.
+//!   = 3 allocations + RegExp per call.
 //!   Rust: satu `split_whitespace` pass + satu `join` = 1 allocation.
 //!
 //! Note: `cx()` (twMerge wrapper) tetap di JS karena tergantung tailwind-merge.
 
+use crate::tws_debug;
 use napi_derive::napi;
 
 /// Gabungkan class names — filter falsy, join dengan spasi, normalisasi whitespace.
@@ -35,6 +36,7 @@ use napi_derive::napi;
 /// ```
 #[napi]
 pub fn resolve_class_names(inputs: Vec<String>) -> String {
+    tws_debug!("[class_utils] resolve_class_names count={}", inputs.len());
     let mut parts: Vec<&str> = Vec::with_capacity(inputs.len() * 2);
     for input in &inputs {
         let trimmed = input.trim();

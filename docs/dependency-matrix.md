@@ -24,7 +24,6 @@ Sumber: `packages/domain/core/package.json`
 
 ### dependencies kunci
 - `postcss` `^8`
-- `tailwind-merge` `^3`
 
 ### peerDependencies
 - `react` `>=18`
@@ -48,7 +47,6 @@ Sumber: `packages/domain/compiler/package.json`
 
 ### external contract
 - `postcss` `^8`
-- `tailwind-merge` `^3`
 - peer `@tailwindcss/postcss` `^4`
 - peer `tailwindcss` `^4`
 
@@ -64,8 +62,8 @@ Sumber: `packages/presentation/vite/package.json`
 - `vite` `>=6.2.0`
 
 ## Adapter dan App Penting
-- `@tailwind-styled/vue` versi `5.0.4`, peer `vue >=3.3.0`, peer `tailwind-merge >=2.0.0`
-- `@tailwind-styled/svelte` versi `5.0.4`, peer `svelte >=4.0.0`, peer `tailwind-merge >=2.0.0`
+- `@tailwind-styled/vue` versi `5.0.4`, peer `vue >=3.3.0`
+- `@tailwind-styled/svelte` versi `5.0.4`, peer `svelte >=4.0.0`
 - `@tailwind-styled/testing` versi `5.0.4`
 - `@tailwind-styled/storybook-addon` versi `5.0.4`
 - `@tailwind-styled/studio-desktop` versi `5.0.4`, dependency `electron-updater ^6.0.0`

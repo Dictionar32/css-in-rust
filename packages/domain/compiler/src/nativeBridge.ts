@@ -6,7 +6,10 @@
  */
 
 import { resolveNativeBinary, resolveRuntimeDir } from "@tailwind-styled/shared"
-import { createRequire } from "node:module"
+
+// require() is safe here — tsup banner injects CJS-compatible require into ESM output.
+// See tsup.config.ts esbuildOptions banner for how this is set up.
+const _loadNative = (path: string): unknown => require(path)
 
 export interface ComponentMetadata {
   component: string
@@ -150,14 +153,13 @@ export const getNativeBridge = (): NativeBridge => {
 
   try {
     const runtimeDir = resolveRuntimeDir(undefined, import.meta.url)
-    const require = createRequire(import.meta.url)
     
     // Use shared's native resolution
     const result = resolveNativeBinary(runtimeDir)
 
     if (result.path && result.path.endsWith(".node")) {
       try {
-        const binding = require(result.path) as NativeBridge
+        const binding = _loadNative(result.path) as NativeBridge
         if (isValidNativeBridge(binding)) {
           nativeBridge = binding
           log("Native bridge loaded successfully from:", result.path)

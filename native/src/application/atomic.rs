@@ -56,29 +56,98 @@ struct PropMapping {
 
 fn tw_property_map(prefix: &str) -> Option<PropMapping> {
     match prefix {
-        "p"       => Some(PropMapping { prop: "padding",         transform: Some(spacing) }),
-        "px"      => Some(PropMapping { prop: "padding-inline",  transform: Some(spacing) }),
-        "py"      => Some(PropMapping { prop: "padding-block",   transform: Some(spacing) }),
-        "pt"      => Some(PropMapping { prop: "padding-top",     transform: Some(spacing) }),
-        "pb"      => Some(PropMapping { prop: "padding-bottom",  transform: Some(spacing) }),
-        "pl"      => Some(PropMapping { prop: "padding-left",    transform: Some(spacing) }),
-        "pr"      => Some(PropMapping { prop: "padding-right",   transform: Some(spacing) }),
-        "m"       => Some(PropMapping { prop: "margin",          transform: Some(spacing) }),
-        "mx"      => Some(PropMapping { prop: "margin-inline",   transform: Some(spacing) }),
-        "my"      => Some(PropMapping { prop: "margin-block",    transform: Some(spacing) }),
-        "mt"      => Some(PropMapping { prop: "margin-top",      transform: Some(spacing) }),
-        "mb"      => Some(PropMapping { prop: "margin-bottom",   transform: Some(spacing) }),
-        "ml"      => Some(PropMapping { prop: "margin-left",     transform: Some(spacing) }),
-        "mr"      => Some(PropMapping { prop: "margin-right",    transform: Some(spacing) }),
-        "gap"     => Some(PropMapping { prop: "gap",             transform: Some(spacing) }),
-        "w"       => Some(PropMapping { prop: "width",           transform: Some(size_value) }),
-        "h"       => Some(PropMapping { prop: "height",          transform: Some(size_value) }),
-        "text"    => Some(PropMapping { prop: "font-size",       transform: Some(text_size) }),
-        "font"    => Some(PropMapping { prop: "font-weight",     transform: Some(font_weight) }),
-        "leading" => Some(PropMapping { prop: "line-height",     transform: Some(leading_value) }),
-        "opacity" => Some(PropMapping { prop: "opacity",         transform: Some(opacity_value) }),
-        "z"       => Some(PropMapping { prop: "z-index",         transform: None }),
-        "rounded" => Some(PropMapping { prop: "border-radius",   transform: Some(rounded_value) }),
+        "p" => Some(PropMapping {
+            prop: "padding",
+            transform: Some(spacing),
+        }),
+        "px" => Some(PropMapping {
+            prop: "padding-inline",
+            transform: Some(spacing),
+        }),
+        "py" => Some(PropMapping {
+            prop: "padding-block",
+            transform: Some(spacing),
+        }),
+        "pt" => Some(PropMapping {
+            prop: "padding-top",
+            transform: Some(spacing),
+        }),
+        "pb" => Some(PropMapping {
+            prop: "padding-bottom",
+            transform: Some(spacing),
+        }),
+        "pl" => Some(PropMapping {
+            prop: "padding-left",
+            transform: Some(spacing),
+        }),
+        "pr" => Some(PropMapping {
+            prop: "padding-right",
+            transform: Some(spacing),
+        }),
+        "m" => Some(PropMapping {
+            prop: "margin",
+            transform: Some(spacing),
+        }),
+        "mx" => Some(PropMapping {
+            prop: "margin-inline",
+            transform: Some(spacing),
+        }),
+        "my" => Some(PropMapping {
+            prop: "margin-block",
+            transform: Some(spacing),
+        }),
+        "mt" => Some(PropMapping {
+            prop: "margin-top",
+            transform: Some(spacing),
+        }),
+        "mb" => Some(PropMapping {
+            prop: "margin-bottom",
+            transform: Some(spacing),
+        }),
+        "ml" => Some(PropMapping {
+            prop: "margin-left",
+            transform: Some(spacing),
+        }),
+        "mr" => Some(PropMapping {
+            prop: "margin-right",
+            transform: Some(spacing),
+        }),
+        "gap" => Some(PropMapping {
+            prop: "gap",
+            transform: Some(spacing),
+        }),
+        "w" => Some(PropMapping {
+            prop: "width",
+            transform: Some(size_value),
+        }),
+        "h" => Some(PropMapping {
+            prop: "height",
+            transform: Some(size_value),
+        }),
+        "text" => Some(PropMapping {
+            prop: "font-size",
+            transform: Some(text_size),
+        }),
+        "font" => Some(PropMapping {
+            prop: "font-weight",
+            transform: Some(font_weight),
+        }),
+        "leading" => Some(PropMapping {
+            prop: "line-height",
+            transform: Some(leading_value),
+        }),
+        "opacity" => Some(PropMapping {
+            prop: "opacity",
+            transform: Some(opacity_value),
+        }),
+        "z" => Some(PropMapping {
+            prop: "z-index",
+            transform: None,
+        }),
+        "rounded" => Some(PropMapping {
+            prop: "border-radius",
+            transform: Some(rounded_value),
+        }),
         _ => None,
     }
 }
@@ -101,64 +170,64 @@ fn size_value(v: &str) -> String {
         return format!("{}rem", n * 0.25);
     }
     match v {
-        "full"   => "100%".to_string(),
+        "full" => "100%".to_string(),
         "screen" => "100vw".to_string(),
-        "auto"   => "auto".to_string(),
-        "min"    => "min-content".to_string(),
-        "max"    => "max-content".to_string(),
-        "fit"    => "fit-content".to_string(),
-        "svw"    => "100svw".to_string(),
-        "svh"    => "100svh".to_string(),
-        other    => other.to_string(),
+        "auto" => "auto".to_string(),
+        "min" => "min-content".to_string(),
+        "max" => "max-content".to_string(),
+        "fit" => "fit-content".to_string(),
+        "svw" => "100svw".to_string(),
+        "svh" => "100svh".to_string(),
+        other => other.to_string(),
     }
 }
 
 /// textSize(v)
 fn text_size(v: &str) -> String {
     match v {
-        "xs"   => "0.75rem".to_string(),
-        "sm"   => "0.875rem".to_string(),
+        "xs" => "0.75rem".to_string(),
+        "sm" => "0.875rem".to_string(),
         "base" => "1rem".to_string(),
-        "lg"   => "1.125rem".to_string(),
-        "xl"   => "1.25rem".to_string(),
-        "2xl"  => "1.5rem".to_string(),
-        "3xl"  => "1.875rem".to_string(),
-        "4xl"  => "2.25rem".to_string(),
-        "5xl"  => "3rem".to_string(),
-        "6xl"  => "3.75rem".to_string(),
-        "7xl"  => "4.5rem".to_string(),
-        "8xl"  => "6rem".to_string(),
-        "9xl"  => "8rem".to_string(),
-        other  => other.to_string(),
+        "lg" => "1.125rem".to_string(),
+        "xl" => "1.25rem".to_string(),
+        "2xl" => "1.5rem".to_string(),
+        "3xl" => "1.875rem".to_string(),
+        "4xl" => "2.25rem".to_string(),
+        "5xl" => "3rem".to_string(),
+        "6xl" => "3.75rem".to_string(),
+        "7xl" => "4.5rem".to_string(),
+        "8xl" => "6rem".to_string(),
+        "9xl" => "8rem".to_string(),
+        other => other.to_string(),
     }
 }
 
 /// fontWeight(v)
 fn font_weight(v: &str) -> String {
     match v {
-        "thin"       => "100".to_string(),
+        "thin" => "100".to_string(),
         "extralight" => "200".to_string(),
-        "light"      => "300".to_string(),
-        "normal"     => "400".to_string(),
-        "medium"     => "500".to_string(),
-        "semibold"   => "600".to_string(),
-        "bold"       => "700".to_string(),
-        "extrabold"  => "800".to_string(),
-        "black"      => "900".to_string(),
-        other        => other.to_string(),
+        "light" => "300".to_string(),
+        "normal" => "400".to_string(),
+        "medium" => "500".to_string(),
+        "semibold" => "600".to_string(),
+        "bold" => "700".to_string(),
+        "extrabold" => "800".to_string(),
+        "black" => "900".to_string(),
+        other => other.to_string(),
     }
 }
 
 /// leadingValue(v)
 fn leading_value(v: &str) -> String {
     match v {
-        "none"    => "1".to_string(),
-        "tight"   => "1.25".to_string(),
-        "snug"    => "1.375".to_string(),
-        "normal"  => "1.5".to_string(),
+        "none" => "1".to_string(),
+        "tight" => "1.25".to_string(),
+        "snug" => "1.375".to_string(),
+        "normal" => "1.5".to_string(),
         "relaxed" => "1.625".to_string(),
-        "loose"   => "2".to_string(),
-        other     => other.to_string(),
+        "loose" => "2".to_string(),
+        other => other.to_string(),
     }
 }
 
@@ -173,16 +242,16 @@ fn opacity_value(v: &str) -> String {
 /// roundedValue(v) — empty string key = no suffix after "rounded"
 fn rounded_value(v: &str) -> String {
     match v {
-        ""     => "0.25rem".to_string(),
-        "sm"   => "0.125rem".to_string(),
-        "md"   => "0.375rem".to_string(),
-        "lg"   => "0.5rem".to_string(),
-        "xl"   => "0.75rem".to_string(),
-        "2xl"  => "1rem".to_string(),
-        "3xl"  => "1.5rem".to_string(),
+        "" => "0.25rem".to_string(),
+        "sm" => "0.125rem".to_string(),
+        "md" => "0.375rem".to_string(),
+        "lg" => "0.5rem".to_string(),
+        "xl" => "0.75rem".to_string(),
+        "2xl" => "1rem".to_string(),
+        "3xl" => "1.5rem".to_string(),
         "full" => "9999px".to_string(),
         "none" => "0".to_string(),
-        other  => format!("{}rem", other),
+        other => format!("{}rem", other),
     }
 }
 
@@ -252,8 +321,7 @@ fn parse_atomic_class_inner(tw_class: &str) -> Option<AtomicRule> {
 /// JS equivalent: `parseAtomicClass(twClass: string): AtomicRule | null`
 #[napi]
 pub fn parse_atomic_class(tw_class: String) -> Option<String> {
-    parse_atomic_class_inner(&tw_class)
-        .and_then(|rule| serde_json::to_string(&rule).ok())
+    parse_atomic_class_inner(&tw_class).and_then(|rule| serde_json::to_string(&rule).ok())
 }
 
 /// Generate CSS string from an array of AtomicRule JSON.
@@ -270,10 +338,10 @@ pub fn generate_atomic_css(rules_json: String) -> String {
     };
 
     let breakpoints: &[(&str, &str)] = &[
-        ("sm",  "640px"),
-        ("md",  "768px"),
-        ("lg",  "1024px"),
-        ("xl",  "1280px"),
+        ("sm", "640px"),
+        ("md", "768px"),
+        ("lg", "1024px"),
+        ("xl", "1280px"),
         ("2xl", "1536px"),
     ];
 
@@ -287,14 +355,23 @@ pub fn generate_atomic_css(rules_json: String) -> String {
                 // Check if it's a breakpoint modifier
                 if let Some(bp) = breakpoints.iter().find(|(bp, _)| *bp == modifier.as_str()) {
                     lines.push(format!("@media (min-width: {}) {{", bp.1));
-                    lines.push(format!("  {} {{ {}: {}; }}", selector, rule.property, rule.value));
+                    lines.push(format!(
+                        "  {} {{ {}: {}; }}",
+                        selector, rule.property, rule.value
+                    ));
                     lines.push("}".to_string());
                 } else {
-                    lines.push(format!("{}:{} {{ {}: {}; }}", selector, modifier, rule.property, rule.value));
+                    lines.push(format!(
+                        "{}:{} {{ {}: {}; }}",
+                        selector, modifier, rule.property, rule.value
+                    ));
                 }
             }
             None => {
-                lines.push(format!("{} {{ {}: {}; }}", selector, rule.property, rule.value));
+                lines.push(format!(
+                    "{} {{ {}: {}; }}",
+                    selector, rule.property, rule.value
+                ));
             }
         }
     }
@@ -333,9 +410,8 @@ pub fn to_atomic_classes(tw_classes: String) -> String {
         unknown_classes,
     };
 
-    serde_json::to_string(&result).unwrap_or_else(|_| {
-        r#"{"atomicClasses":"","rules":[],"unknownClasses":[]}"#.to_string()
-    })
+    serde_json::to_string(&result)
+        .unwrap_or_else(|_| r#"{"atomicClasses":"","rules":[],"unknownClasses":[]}"#.to_string())
 }
 
 /// Clear the global atomic registry.
@@ -421,13 +497,20 @@ mod tests {
     fn test_to_atomic_classes() {
         let result = to_atomic_classes("p-4 text-lg unknown-class".to_string());
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
-        assert!(parsed["atomicClasses"].as_str().unwrap().contains("_tw_p-4"));
-        assert!(parsed["unknownClasses"].as_array().unwrap().contains(&serde_json::json!("unknown-class")));
+        assert!(parsed["atomicClasses"]
+            .as_str()
+            .unwrap()
+            .contains("_tw_p-4"));
+        assert!(parsed["unknownClasses"]
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!("unknown-class")));
     }
 
     #[test]
     fn test_generate_atomic_css_base() {
-        let rules = r#"[{"twClass":"p-4","atomicName":"_tw_p-4","property":"padding","value":"1rem"}]"#;
+        let rules =
+            r#"[{"twClass":"p-4","atomicName":"_tw_p-4","property":"padding","value":"1rem"}]"#;
         let css = generate_atomic_css(rules.to_string());
         assert_eq!(css, "._tw_p-4 { padding: 1rem; }");
     }

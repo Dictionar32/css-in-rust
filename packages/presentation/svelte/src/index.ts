@@ -31,7 +31,7 @@
  * </button>
  */
 
-import { twMerge } from "tailwind-merge"
+import { twMerge } from "@tailwind-styled/core"
 
 import type { VariantValue, VariantProps as Props } from '@tailwind-styled/shared'
 

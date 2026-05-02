@@ -8,10 +8,10 @@ Svelte 4/5 adapter for tailwind-styled — class variants, utility merger, and s
 ## Installation
 
 ```bash
-npm install @tailwind-styled/svelte tailwind-merge
+npm install @tailwind-styled/svelte
 ```
 
-> `tailwind-merge` is a peer dependency. Ensure version 2.x or 3.x is installed.
+> **Note:** `@tailwind-styled/svelte` requires a native Rust binding. Build from source: `npm run build:rust` at monorepo root, or install prebuilt binary.
 
 ## API
 
@@ -54,7 +54,7 @@ Defines a component with base class and variants based on props.
 
 ### `tw()` — Simple Class Merger
 
-Merges class strings with automatic conflict resolution (via tailwind-merge).
+Merges class strings with automatic conflict resolution (via native Rust engine).
 
 ```svelte
 <script>
@@ -152,9 +152,9 @@ Designed specifically for Svelte 5 runes.
 
 ## Compatibility
 
-| Version | Svelte | tailwind-merge | Node.js |
-|---|---|---|---|
-| 5.0.0 | 4.x - 5.x | 2.x - 3.x | >= 20 |
+| Version | Svelte | Node.js |
+|---|---|---|
+| 5.0.0 | 4.x - 5.x | >= 20 |
 
 ## License
 

@@ -224,11 +224,19 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
     } catch { /* ignore read errors */ }
   }
 
-  const ext = process.platform === "win32" ? ".dll" : process.platform === "darwin" ? ".dylib" : ".so"
-  const defaultBindingName = `tailwind_styled_parser${ext}`
-  candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
-  candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
-  candidates.push(path.resolve(process.cwd(), "native", defaultBindingName))
+  const BINARY_NAMES = ["tailwind-styled-native", "tailwind_styled_parser"]
+  const napiPlatform = process.platform === "linux" && process.arch === "x64" ? "linux-x64-gnu"
+    : process.platform === "linux" && process.arch === "arm64" ? "linux-arm64-gnu"
+    : `${process.platform}-${process.arch}`
+
+  for (const bin of BINARY_NAMES) {
+    candidates.push(path.resolve(runtimeDir, `${bin}.node`))
+    candidates.push(path.resolve(runtimeDir, `${bin}.${napiPlatform}.node`))
+    candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", `${bin}.node`))
+    candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", `${bin}.node`))
+    candidates.push(path.resolve(process.cwd(), "native", `${bin}.node`))
+    candidates.push(path.resolve(process.cwd(), "native", `${bin}.${napiPlatform}.node`))
+  }
 
   return Array.from(new Set(candidates))
 }
@@ -236,7 +244,7 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
 export function resolveRuntimeDir(dir: string | undefined, importMetaUrl: string): string {
   if (dir) return path.resolve(dir)
   try {
-    return fileURLToPath(importMetaUrl)
+    return path.dirname(fileURLToPath(importMetaUrl))
   } catch {
     return process.cwd()
   }

@@ -50,7 +50,7 @@ pub(crate) fn split_variant_and_base(class_name: &str) -> (String, String) {
         return (String::new(), class_name.to_string());
     }
     let base = parts.last().unwrap_or(&class_name).to_string();
-    let variant_key = parts[..parts.len() - 1].join(":");
+    let variant_key = format!("{}:", parts[..parts.len() - 1].join(":"));
     (variant_key, base)
 }
 
@@ -372,11 +372,7 @@ pub fn classify_known_classes(
             let utility_prefix = if is_arbitrary {
                 "arbitrary".to_string()
             } else {
-                let normalized = if base.starts_with('-') {
-                    &base[1..]
-                } else {
-                    &base
-                };
+                let normalized = base.strip_prefix('-').unwrap_or(&base);
                 // Find prefix: everything before first '-' that has value after it
                 let prefix_end = normalized.find('-').map_or(normalized.len(), |i| i);
                 normalized[..prefix_end].to_string()
@@ -440,17 +436,33 @@ pub fn parse_css_rules(css: String) -> Vec<CssRuleLookup> {
         };
 
         // Unescape CSS class name (e.g., "hover\:bg-blue" → "hover:bg-blue")
-        let class_name = raw_class
-            .replace("\\:", ":")
+        // Temporarily replace escaped colons before stripping pseudo-class suffix
+        let unescaped = raw_class
+            .replace("\\:", "\x00") // placeholder for escaped colon
             .replace("\\.", ".")
             .replace("\\/", "/");
+
+        // Strip trailing pseudo-class selectors (e.g., ":hover", ":focus", ":active")
+        // These are bare colons (not escaped), so split on ':' and take only the class part
+        let class_name = unescaped
+            .split(':')
+            .next()
+            .unwrap_or(&unescaped)
+            .replace('\x00', ":"); // restore escaped colons
 
         // Extract variants from class name
         let (variant_key, _base) = split_variant_and_base(&class_name);
         let variants: Vec<String> = if variant_key.is_empty() {
             vec![]
         } else {
-            variant_key.split(':').map(|s| s.to_string()).collect()
+            // variant_key now includes trailing colon e.g. "hover:" or "dark:hover:"
+            // trim trailing colon before splitting to avoid empty string entries
+            variant_key
+                .trim_end_matches(':')
+                .split(':')
+                .filter(|s| !s.is_empty())
+                .map(|s| s.to_string())
+                .collect()
         };
 
         // Calculate specificity: 1 class = 10, each pseudo/variant adds
@@ -515,7 +527,12 @@ pub fn batch_split_classes(classes: Vec<String>) -> Vec<VariantSplitResult> {
             let variants: Vec<String> = if variant_key.is_empty() {
                 vec![]
             } else {
-                variant_key.split(':').map(|s| s.to_string()).collect()
+                variant_key
+                    .trim_end_matches(':')
+                    .split(':')
+                    .filter(|s| !s.is_empty())
+                    .map(|s| s.to_string())
+                    .collect()
             };
 
             // Extract opacity modifier: "bg-blue-500/50" → base="bg-blue-500", mod="50"
@@ -543,3 +560,78 @@ pub fn batch_split_classes(classes: Vec<String>) -> Vec<VariantSplitResult> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Unit tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::application::tw_merge::split_variants;
+
+    #[test]
+    fn test_parse_classes_from_string_basic() {
+        let result = parse_classes_from_string("p-4 m-2".to_string());
+        assert_eq!(result, vec!["p-4", "m-2"]);
+    }
+
+    #[test]
+    fn test_parse_classes_from_empty() {
+        let result = parse_classes_from_string("".to_string());
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_classes_filters_invalid() {
+        let result = parse_classes_from_string("p-4 @invalid".to_string());
+        assert_eq!(result, vec!["p-4"]);
+    }
+
+    #[test]
+    fn test_split_variant_and_base() {
+        assert_eq!(split_variants("bg-red-500"), ("", "bg-red-500"));
+        assert_eq!(split_variants("md:hover:bg-red"), ("md:hover:", "bg-red"));
+        assert_eq!(split_variants("hover:focus:"), ("hover:focus:", ""));
+    }
+
+    #[test]
+    fn test_classify_known_classes_safelist() {
+        let classes = vec!["custom-tailwind".to_string()];
+        let safelist = vec!["custom-tailwind".to_string()];
+        let custom = vec![];
+        let result = classify_known_classes(classes, safelist, custom);
+        assert_eq!(result.len(), 1);
+        assert!(result[0].is_known);
+    }
+
+    #[test]
+    fn test_classify_known_classes_custom_utility() {
+        let classes = vec!["my-custom-utility".to_string()];
+        let safelist = vec![];
+        let custom = vec!["my-custom-utility".to_string()];
+        let result = classify_known_classes(classes, safelist, custom);
+        assert_eq!(result.len(), 1);
+        assert!(result[0].is_known);
+    }
+
+    #[test]
+    fn test_classify_known_classes_unknown() {
+        let classes = vec!["non-existing-utility-xyz".to_string()];
+        let safelist = vec![];
+        let custom = vec![];
+        let result = classify_known_classes(classes, safelist, custom);
+        assert_eq!(result.len(), 1);
+        assert!(!result[0].is_known);
+    }
+
+    #[test]
+    fn test_classify_known_classes_variant_aware() {
+        let classes = vec!["hover:bg-red-500".to_string()];
+        let safelist = vec![];
+        let custom = vec![];
+        let result = classify_known_classes(classes, safelist, custom);
+        assert_eq!(result.len(), 1);
+        assert!(result[0].is_known);
+        assert_eq!(result[0].variant_key, "hover:");
+        assert_eq!(result[0].base_class, "bg-red-500");
+    }
+}

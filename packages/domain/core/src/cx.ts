@@ -1,63 +1,93 @@
 /**
  * tailwind-styled-v4 v2 — cx / cn
  *
- * FIX #09: Rename for clarity — behavior was confusing with two near-identical utils.
- *
- * BEFORE:
- *   cx()  → simple join, no conflict resolution → cx("p-4", "p-8") = "p-4 p-8" (WRONG)
- *   cxm() → twMerge, correct — but obscure name
- *
- * AFTER:
- *   cn()  → simple join (for cases where you know there's no conflict)
- *   cx()  → twMerge-powered, conflict-aware (recommended for most use cases)
- *   cxm() → kept as alias for cx() for backward compat
+ * Native-first:
+ *   cn() → simple join (no conflict resolution) — delegates ke Rust `resolve_class_names`
+ *   cx() → conflict-aware merge — delegates ke Rust `tw_merge` (required)
+ *   cxm() → alias cx() untuk backward compat
  */
 
-import { twMerge } from "tailwind-merge"
 import { getNativeBinding } from "./native"
 
 type ClassValue = string | undefined | null | false | 0
 
 /**
  * cn — simple class name joiner (no conflict resolution).
- * Use when you know classes don't conflict.
- *
  * Native-first: delegates ke Rust `resolve_class_names` yang filter+join
  * dalam satu pass tanpa intermediate allocations.
- * JS fallback: `filter(Boolean).join(" ").replace(/\s+/g, " ").trim()`
- *
- * FIX #09: Previously named `cx`. Renamed to `cn` for clarity.
  *
  * @example cn("p-4", isActive && "opacity-100") → "p-4 opacity-100"
  */
-export function cn(...inputs: ClassValue[]): string {
-  try {
-    const native = getNativeBinding()
-    if (native?.resolveClassNames) {
-      const strings = inputs.filter(Boolean) as string[]
-      return native.resolveClassNames(strings)
-    }
-  } catch {
-    // Native binding not available — fall through to JS
+export function cn(...inputs: (ClassValue | ClassValue[])[]): string {
+  const native = getNativeBinding()
+  if (!native?.resolveClassNames) {
+    throw new Error("FATAL: Native binding 'resolveClassNames' is required but not available.")
   }
-  return inputs.filter(Boolean).join(" ").replace(/\s+/g, " ").trim()
+  const strings = (inputs as unknown[]).flat().filter(Boolean) as string[]
+  return native.resolveClassNames(strings)
 }
 
 /**
- * cx — conflict-aware class merger using tailwind-merge.
- * Recommended for combining Tailwind classes where conflicts are possible.
+ * cx — conflict-aware class merger.
+ * Native-first: delegates ke Rust `tw_merge` (required).
+ * Mendukung array inputs — flatten sebelum di-pass ke native.
  *
- * FIX #09: Previously named `cxm`. Renamed to `cx` as the primary utility.
- *
- * @example cx("p-4 p-8") → "p-8"  (conflict resolved, last wins)
- * @example cx("bg-red-500", "bg-blue-500") → "bg-blue-500"
+ * @example cx("p-4 p-8")                        → "p-8"
+ * @example cx("bg-red-500", "bg-blue-500")       → "bg-blue-500"
+ * @example cx(["flex", "items-center"], "px-4")  → "flex items-center px-4"
  */
-export function cx(...inputs: ClassValue[]): string {
-  return twMerge(...(inputs.filter(Boolean) as string[]))
+export function cx(...inputs: (ClassValue | ClassValue[])[]): string {
+  // Flatten arrays + filter falsy in one pass
+  const filtered = (inputs as unknown[]).flat().filter(Boolean) as string[]
+  if (filtered.length === 0) return ""
+
+  const native = getNativeBinding()
+  if (!native?.twMergeMany && !native?.twMerge) {
+    throw new Error("FATAL: Native binding 'twMerge' or 'twMergeMany' is required but not available.")
+  }
+  if (native.twMergeMany) {
+    return native.twMergeMany(filtered)
+  }
+  return native.twMerge!(filtered.join(" "))
 }
 
 /**
- * cxm — alias for cx(), kept for backward compatibility.
+ * cxm — alias untuk cx(), kept for backward compatibility.
  * @deprecated Use cx() instead.
  */
 export const cxm = cx
+
+/**
+ * cxn — cx() dengan nested array support.
+ * Delegates ke Rust cx_nested yang flatten rekursif dalam satu pass.
+ *
+ * @example cxn(["p-4", ["flex", isActive && "gap-2"], null]) → "p-4 flex gap-2"
+ * @example cxn(["p-4", [["flex", "gap-2"]]]) → "p-4 flex gap-2"
+ */
+/**
+ * Flatten nested array ke string[] — recursive.
+ * Internal helper untuk cxn().
+ */
+function flattenInputs(inputs: unknown[]): string[] {
+  const result: string[] = []
+  for (const item of inputs) {
+    if (typeof item === "string" && item) result.push(item)
+    else if (Array.isArray(item)) result.push(...flattenInputs(item as unknown[]))
+    // null, false, 0, undefined — skip
+  }
+  return result
+}
+
+/**
+ * cxn — cx() dengan nested array support.
+ * Flatten di TS lalu delegate ke native resolveClassNames (zero overhead).
+ *
+ * @example cxn(["p-4", ["flex", isActive && "gap-2"], null]) → "p-4 flex gap-2"
+ */
+export function cxn(inputs: unknown[]): string {
+  const flat = flattenInputs(inputs)
+  if (flat.length === 0) return ""
+  const native = getNativeBinding()
+  if (native?.resolveClassNames) return native.resolveClassNames(flat)
+  return flat.join(" ")
+}

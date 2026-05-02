@@ -14,112 +14,6 @@ import { debugLog, formatErrorMessage, isRecord, pathExists } from "./utils"
 
 
 const SUPPORTED_TAILWIND_CONFIG_EXTENSIONS = new Set([".ts", ".js", ".cjs", ".mjs"])
-const KNOWN_UTILITY_PREFIXES = new Set([
-  "absolute",
-  "align",
-  "animate",
-  "arbitrary",
-  "aspect",
-  "backdrop",
-  "basis",
-  "bg",
-  "block",
-  "border",
-  "bottom",
-  "col",
-  "container",
-  "contents",
-  "cursor",
-  "dark",
-  "display",
-  "divide",
-  "fill",
-  "fixed",
-  "flex",
-  "float",
-  "font",
-  "from",
-  "gap",
-  "grid",
-  "grow",
-  "h",
-  "hidden",
-  "inset",
-  "inline",
-  "isolate",
-  "items",
-  "justify",
-  "left",
-  "leading",
-  "line",
-  "list",
-  "m",
-  "max-h",
-  "max-w",
-  "mb",
-  "min-h",
-  "min-w",
-  "ml",
-  "mr",
-  "mt",
-  "mx",
-  "my",
-  "object",
-  "opacity",
-  "order",
-  "origin",
-  "outline",
-  "overflow",
-  "overscroll",
-  "p",
-  "pb",
-  "pe",
-  "perspective",
-  "place",
-  "pl",
-  "pointer",
-  "position",
-  "pr",
-  "ps",
-  "pt",
-  "px",
-  "py",
-  "relative",
-  "right",
-  "ring",
-  "rotate",
-  "rounded",
-  "row",
-  "scale",
-  "shadow",
-  "shrink",
-  "size",
-  "skew",
-  "snap",
-  "space-x",
-  "space-y",
-  "sr",
-  "start",
-  "static",
-  "sticky",
-  "stroke",
-  "table",
-  "text",
-  "to",
-  "top",
-  "touch",
-  "tracking",
-  "transform",
-  "transition",
-  "translate",
-  "truncate",
-  "underline",
-  "via",
-  "visible",
-  "w",
-  "whitespace",
-  "z",
-])
 
 const tailwindConfigCache = new Map<string, TailwindConfigCacheEntry>()
 
@@ -160,57 +54,21 @@ const detectConflicts = async (
   conflicts: ClassConflict[]
   conflictedClassNames: Set<string>
 }> => {
-  // ── Native path: Rust HashSet conflict detection ──────────────────────────
+  // Native-first: Rust HashSet conflict detection (required)
   const native = await getNativeBinding()
-  if (native?.detectClassConflicts) {
-    const result = native.detectClassConflicts(JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count }))))
-    return {
-      conflicts: result.conflicts.map((c) => ({
-        className: c.group,
-        variants: c.variantKey.length > 0 ? c.variantKey.split(":") : [],
-        classes: c.classes,
-        message: c.message,
-      })),
-      conflictedClassNames: new Set(result.conflictedClassNames),
-    }
+  if (!native?.detectClassConflicts) {
+    throw new Error("FATAL: Native binding 'detectClassConflicts' is required but not available.")
   }
-
-  // ── JS fallback ───────────────────────────────────────────────────────────
-  const buckets = new Map<string, { variantKey: string; group: string; classes: Set<string> }>()
-
-  for (const usage of usages) {
-    const { variantKey, base } = splitVariantAndBase(usage.name)
-    const group = resolveConflictGroup(base)
-    if (!group) continue
-
-    const key = `${variantKey}::${group}`
-    const bucket = buckets.get(key) ?? { variantKey, group, classes: new Set<string>() }
-    bucket.classes.add(usage.name)
-    buckets.set(key, bucket)
+  const result = native.detectClassConflicts(JSON.stringify(usages.map((u) => ({ name: u.name, count: u.count }))))
+  return {
+    conflicts: result.conflicts.map((c) => ({
+      className: c.group,
+      variants: c.variantKey.length > 0 ? c.variantKey.split(":") : [],
+      classes: c.classes,
+      message: c.message,
+    })),
+    conflictedClassNames: new Set(result.conflictedClassNames),
   }
-
-  const conflicts: ClassConflict[] = []
-  const conflictedClassNames = new Set<string>()
-
-  for (const bucket of buckets.values()) {
-    if (bucket.classes.size <= 1) continue
-    const classes = Array.from(bucket.classes).sort()
-    for (const className of classes) conflictedClassNames.add(className)
-    const variantLabel = bucket.variantKey.length > 0 ? bucket.variantKey : "base"
-    conflicts.push({
-      className: bucket.group,
-      variants: bucket.variantKey.length > 0 ? bucket.variantKey.split(":") : [],
-      classes,
-      message: `Multiple ${bucket.group} utilities detected for "${variantLabel}".`,
-    })
-  }
-
-  conflicts.sort((left, right) => {
-    if (right.classes.length !== left.classes.length) return right.classes.length - left.classes.length
-    return left.className.localeCompare(right.className)
-  })
-
-  return { conflicts, conflictedClassNames }
 }
 
 const isSupportedTailwindConfigPath = (configPath: string): boolean => {
@@ -422,8 +280,8 @@ const loadTailwindConfig = async (
       `(loaded=${loaded.loaded}, safelist=${loaded.safelist.size}, custom=${loaded.customUtilities.size})`
   )
 
-  return loaded
-}
+    return loaded
+  }
 
 export const utilityPrefix = (baseClass: string): string => {
   const normalized = baseClass.startsWith("-") ? baseClass.slice(1) : baseClass
@@ -445,18 +303,6 @@ export const utilityPrefix = (baseClass: string): string => {
   return normalized.slice(0, hyphen)
 }
 
-const isKnownTailwindClass = (
-  className: string,
-  safelist: Set<string>,
-  customUtilities: Set<string>
-): boolean => {
-  if (safelist.has(className) || customUtilities.has(className)) return true
-  const { base } = splitVariantAndBase(className)
-  if (customUtilities.has(base)) return true
-  const prefix = utilityPrefix(base)
-  return KNOWN_UTILITY_PREFIXES.has(prefix)
-}
-
 export const buildSemanticReport = async (
   usages: ClassUsage[],
   root: string,
@@ -472,9 +318,25 @@ export const buildSemanticReport = async (
     .sort()
     .map((className) => ({ name: className, count: 0, isUnused: true }))
 
-  const unknownClasses: ClassUsage[] = usages
-    .filter((usage) => !isKnownTailwindClass(usage.name, safelist, customUtilities))
-    .map((usage) => ({ ...usage, isUnused: true }))
+   // ── Unknown classes — native-first (required) ─────────────────────────────
+   const native = await getNativeBinding()
+   if (!native?.classifyKnownClasses) {
+     throw new Error("FATAL: Native binding 'classifyKnownClasses' is required but not available.")
+   }
+   const classNames = usages.map((u) => u.name)
+   const results = native.classifyKnownClasses(
+     classNames,
+     Array.from(safelist),
+     Array.from(customUtilities)
+   )
+    const unknownSet = new Set(
+      results
+        .filter((r: { className: string; isKnown: boolean }) => !r.isKnown)
+        .map((r: { className: string; isKnown: boolean }) => r.className)
+    )
+    const unknownClasses = usages
+      .filter((usage) => unknownSet.has(usage.name))
+      .map((usage) => ({ ...usage, isUnused: true }))
 
   const { conflicts } = await detectConflicts(usages)
 

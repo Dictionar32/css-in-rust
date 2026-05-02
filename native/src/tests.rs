@@ -121,7 +121,7 @@ mod tests {
             .to_string_lossy()
             .into_owned();
         assert!(css.contains(".bg-blue-500"));
-        tailwind_free(ptr);
+        unsafe { tailwind_free(ptr) };
     }
 
     #[test]
@@ -330,6 +330,7 @@ const Card = tw.div`rounded-lg shadow-md p-4`
 // ═════════════════════════════════════════════════════════════════════════════
 
 mod new_feature_tests {
+    use crate::domain::css_compiler::compile_raw_css as compile_css;
     use crate::*;
 
     // ── cache ────────────────────────────────────────────────────────────────
@@ -455,8 +456,14 @@ const Card = tw.div`rounded-lg`"#;
             ".btn{background-color:#3b82f6;color:#fff;border-color:#dc2626}".to_string(),
             None,
         );
-        assert!(r.css.contains("background-color:#3b82f6"), "background-color");
-        assert!(r.css.contains("color:#fff") || r.css.contains("color:#ffffff"), "color");
+        assert!(
+            r.css.contains("background-color:#3b82f6"),
+            "background-color"
+        );
+        assert!(
+            r.css.contains("color:#fff") || r.css.contains("color:#ffffff"),
+            "color"
+        );
         assert!(r.css.contains("border-color:#dc2626"), "border-color");
     }
 
@@ -465,12 +472,18 @@ const Card = tw.div`rounded-lg`"#;
         let r = compile_css(".btn:hover{background-color:#2563eb}".to_string(), None);
         assert_eq!(r.resolved_classes.len(), 0);
         assert!(r.css.contains(":hover"), "hover selector should remain");
-        assert!(r.css.contains("background-color:#2563eb"), "hover background color");
+        assert!(
+            r.css.contains("background-color:#2563eb"),
+            "hover background color"
+        );
     }
 
     #[test]
     fn compile_css_handles_responsive_variant() {
-        let r = compile_css("@media (min-width:768px){.md-flex{display:flex}}".to_string(), None);
+        let r = compile_css(
+            "@media (min-width:768px){.md-flex{display:flex}}".to_string(),
+            None,
+        );
         assert_eq!(r.resolved_classes.len(), 0);
         assert!(r.css.contains("@media"), "media query should remain");
         assert!(r.css.contains("display:flex"));
@@ -478,10 +491,7 @@ const Card = tw.div`rounded-lg`"#;
 
     #[test]
     fn compile_css_handles_arbitrary_values() {
-        let r = compile_css(
-            ".box{background:#3b82f6;width:200px}".to_string(),
-            None,
-        );
+        let r = compile_css(".box{background:#3b82f6;width:200px}".to_string(), None);
         assert!(r.css.contains("#3b82f6"), "arbitrary bg color");
         assert!(r.css.contains("width:200px"), "arbitrary width");
         assert_eq!(r.unknown_classes.len(), 0);
@@ -496,7 +506,10 @@ const Card = tw.div`rounded-lg`"#;
 
     #[test]
     fn compile_css_custom_prefix() {
-        let r = compile_css("#app .flex{display:flex}".to_string(), Some("#app ".to_string()));
+        let r = compile_css(
+            "#app .flex{display:flex}".to_string(),
+            Some("#app ".to_string()),
+        );
         assert!(r.css.contains("#app"), "raw CSS prefix should remain");
         assert!(r.css.contains("display:flex"));
     }

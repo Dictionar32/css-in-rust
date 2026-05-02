@@ -5,6 +5,6 @@ pub mod semantic;
 pub mod services;
 pub mod theme;
 pub mod transform;
-pub(crate) mod transform_components;
+pub mod transform_components;
 pub(crate) mod transform_parser;
 pub mod variants;

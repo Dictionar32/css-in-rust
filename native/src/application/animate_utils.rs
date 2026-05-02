@@ -100,11 +100,10 @@ pub fn normalize_iterations(value: String) -> String {
 /// Output JSON: `[{ "offset": "0%", "classes": "opacity-0" }, ...]` sorted by offset.
 #[napi]
 pub fn stable_keyframes_entries(stops_json: String) -> Vec<KeyframeEntry> {
-    let stops: std::collections::HashMap<String, String> =
-        match serde_json::from_str(&stops_json) {
-            Ok(m) => m,
-            Err(_) => return vec![],
-        };
+    let stops: std::collections::HashMap<String, String> = match serde_json::from_str(&stops_json) {
+        Ok(m) => m,
+        Err(_) => return vec![],
+    };
 
     let mut entries: Vec<KeyframeEntry> = stops
         .into_iter()
@@ -145,9 +144,7 @@ pub fn animation_cache_key(opts_json: String) -> String {
 
     let iterations_str = match &opts.iterations {
         Some(serde_json::Value::String(s)) => normalize_iterations_inner(s),
-        Some(serde_json::Value::Number(n)) => {
-            normalize_iterations_inner(&n.to_string())
-        }
+        Some(serde_json::Value::Number(n)) => normalize_iterations_inner(&n.to_string()),
         _ => DEFAULT_ITERATIONS.to_string(),
     };
 
@@ -243,7 +240,7 @@ mod tests {
         let opts = r#"{"from":"scale-95","to":"scale-100"}"#;
         let key = animation_cache_key(opts.to_string());
         assert!(key.contains("ease-out")); // default easing
-        assert!(key.contains("300"));      // default duration
+        assert!(key.contains("300")); // default duration
     }
 
     #[test]

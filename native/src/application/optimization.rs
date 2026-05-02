@@ -57,7 +57,7 @@ pub fn hoist_components(source: String) -> HoistResult {
     for cap in RE_INDENTED_TW.captures_iter(&source) {
         let indent = cap.get(1).map_or("", |m| m.as_str());
         let name = cap.get(3).map_or("", |m| m.as_str());
-        if indent.is_empty() || !name.chars().next().map_or(false, |c| c.is_uppercase()) {
+        if indent.is_empty() || !name.chars().next().is_some_and(|c| c.is_uppercase()) {
             continue;
         }
         let start = cap.get(0).map_or(0, |m| m.start());
@@ -242,7 +242,7 @@ pub fn compile_variant_table(config_json: String) -> VariantTableResult {
             let matches = compound
                 .iter()
                 .filter(|(k, _)| *k != "class")
-                .all(|(k, v)| combo_map.get(k.as_str()).map_or(false, |cv| cv == v));
+                .all(|(k, v)| combo_map.get(k.as_str()).is_some_and(|cv| cv == v));
             if matches {
                 if let Some(cls) = compound.get("class") {
                     if !cls.is_empty() {

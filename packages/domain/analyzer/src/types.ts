@@ -47,6 +47,8 @@ export interface AnalyzerReport {
   readonly uniqueClassCount: number
   readonly totalClassOccurrences: number
   readonly classStats: AnalyzerClassStats
+  /** Alias for classStats.top — backward compat & test contract */
+  readonly topClasses: readonly ClassUsage[]
   readonly safelist: readonly string[]
   readonly semantic?: AnalyzerSemanticReport
 }
@@ -117,6 +119,12 @@ export interface NativeAnalyzerBinding {
   /** Aggregate class counts from scan files JSON. */
   collectClassCounts?(filesJson: string): Array<{ name: string; count: number }>
   /** Compute frequency distribution buckets for class usages. */
+  computeClassStats?(usagesJson: string, topLimit: number, frequentThreshold: number): {
+    totalClassOccurrences: number
+    topJson: string
+    frequentJson: string
+    uniqueJson: string
+  }
   buildDistribution?(usagesJson: string): {
     once: number
     few: number

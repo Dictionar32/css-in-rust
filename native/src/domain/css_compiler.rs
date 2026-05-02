@@ -13,7 +13,6 @@
  *   classes[] → [JS: Tailwind compile()] → raw CSS string
  *            → [Rust: process_tailwind_css_lightning()] → final CSS
  */
-
 use lightningcss::stylesheet::{MinifyOptions, ParserOptions, PrinterOptions, StyleSheet};
 use lightningcss::targets::{Browsers, Targets};
 use napi_derive::napi;
@@ -43,7 +42,10 @@ pub fn process_tailwind_css_lightning(css: String) -> CssCompileResult {
 
 /// Post-process dengan vendor prefix sesuai target browser.
 #[napi]
-pub fn process_tailwind_css_with_targets(css: String, _targets: Option<String>) -> CssCompileResult {
+pub fn process_tailwind_css_with_targets(
+    css: String,
+    _targets: Option<String>,
+) -> CssCompileResult {
     let browser_targets = Targets {
         browsers: Some(Browsers {
             chrome: Some(80 << 16),
@@ -63,10 +65,11 @@ pub fn process_tailwind_css_with_targets(css: String, _targets: Option<String>) 
     }
 }
 
-/// Backward compat — sekarang input adalah raw CSS, bukan class names.
+/// Process raw CSS string (bukan class names) dengan LightningCSS.
 /// CSS harus datang dari Tailwind JS engine.
+/// Renamed dari compile_css untuk menghindari konflik dengan legacy_part::compile_css.
 #[napi]
-pub fn compile_css(css: String, _prefix: Option<String>) -> CssCompileResult {
+pub fn compile_raw_css(css: String, _prefix: Option<String>) -> CssCompileResult {
     process_tailwind_css_lightning(css)
 }
 
@@ -82,7 +85,12 @@ fn optimise_with_lightning(raw_css: &str) -> Option<String> {
     }
     let mut sheet = StyleSheet::parse(raw_css, ParserOptions::default()).ok()?;
     sheet.minify(MinifyOptions::default()).ok()?;
-    let out = sheet.to_css(PrinterOptions { minify: true, ..Default::default() }).ok()?;
+    let out = sheet
+        .to_css(PrinterOptions {
+            minify: true,
+            ..Default::default()
+        })
+        .ok()?;
     Some(out.code)
 }
 
@@ -90,8 +98,25 @@ fn optimise_with_targets(raw_css: &str, targets: Targets) -> Option<String> {
     if raw_css.trim().is_empty() {
         return Some(String::new());
     }
-    let mut sheet = StyleSheet::parse(raw_css, ParserOptions { ..Default::default() }).ok()?;
-    sheet.minify(MinifyOptions { targets: targets.clone(), ..Default::default() }).ok()?;
-    let out = sheet.to_css(PrinterOptions { minify: true, targets, ..Default::default() }).ok()?;
+    let mut sheet = StyleSheet::parse(
+        raw_css,
+        ParserOptions {
+            ..Default::default()
+        },
+    )
+    .ok()?;
+    sheet
+        .minify(MinifyOptions {
+            targets,
+            ..Default::default()
+        })
+        .ok()?;
+    let out = sheet
+        .to_css(PrinterOptions {
+            minify: true,
+            targets,
+            ..Default::default()
+        })
+        .ok()?;
     Some(out.code)
 }
