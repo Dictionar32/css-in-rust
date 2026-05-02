@@ -47,11 +47,13 @@ export interface NativeBindingLoadError {
 }
 
 export interface ResolveNativeBindingCandidatesOptions {
-  runtimeDir: string
+  runtimeDir?: string
   envVarNames?: string[]
   enforceNodeExtensionForEnvPath?: boolean
   includeDefaultCandidates?: boolean
   platformExtension?: PlatformExtension
+  /** @deprecated use envVarNames instead */
+  packageName?: string
 }
 
 export interface LoadNativeBindingOptions<T> {
@@ -89,7 +91,8 @@ export function resolveNativeBindingCandidates(
   
   const out: string[] = []
   const nodePath = getNodePath()
-  const envVarNames = options.envVarNames ?? ["TWS_NATIVE_PATH"]
+  // Include both TWS_NATIVE_PATH (legacy) and TW_NATIVE_PATH (native-resolution convention)
+  const envVarNames = options.envVarNames ?? ["TW_NATIVE_PATH", "TWS_NATIVE_PATH"]
 
   for (const envVarName of envVarNames) {
     const raw = process.env[envVarName]?.trim()
@@ -112,8 +115,11 @@ export function resolveNativeBindingCandidates(
     const defaultBindingName = `tailwind_styled_parser${ext}`
 
     out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
-    out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", defaultBindingName))
-    out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+    // Only include runtimeDir-based paths when runtimeDir is provided
+    if (options.runtimeDir) {
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", defaultBindingName))
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+    }
   }
 
   return Array.from(new Set(out))

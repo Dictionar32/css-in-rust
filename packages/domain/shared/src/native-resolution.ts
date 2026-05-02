@@ -58,6 +58,11 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     return { path: null, source: "not-found", platform, tried: ["not available in browser"] }
   }
 
+  // 0. Disabled flag — always short-circuit before any I/O
+  if (process.env.TWS_DISABLE_NATIVE === "1") {
+    return { path: null, source: "not-found", platform, tried: [] }
+  }
+
   // 1. Env var override
   const envPath = process.env.TW_NATIVE_PATH?.trim()
   if (envPath) {

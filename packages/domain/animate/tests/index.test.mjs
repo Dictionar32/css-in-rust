@@ -70,10 +70,10 @@ describe("animate()", () => {
   it("returns CSS class string", async () => {
     if (!animate) return
     try {
-      const result = await animate({ name: "fadeIn", duration: "200ms" })
+      const result = await animate({ from: "opacity-0", to: "opacity-100", duration: 200 })
       assert.ok(typeof result === "string", "should return string")
     } catch (err) {
-      if (String(err).includes("native") || String(err).includes("NATIVE")) {
+      if (String(err).toLowerCase().includes("native")) {
         console.warn("[animate] Native not available for animate()")
         return
       }

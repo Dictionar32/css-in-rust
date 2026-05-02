@@ -77,9 +77,20 @@ export function extractAllClasses(source: string): string[] {
 }
 
 export function parseClasses(raw: string): string[] {
-  const bridge = getNativeBridge()
-  if (!bridge?.parseClassesFromString) {
-    throw new Error("FATAL: Native binding 'parseClassesFromString' is required but not available.")
+  // JS fallback — works without native binding
+  // Split on whitespace, filter by valid class regex
+  const tokens = raw.split(/\s+/).filter(t => t.length > 0)
+  const valid = tokens.filter(t => VALID_CLASS_RE.test(t))
+
+  // Attempt to use native for speed, fall back to JS result if unavailable
+  try {
+    const bridge = getNativeBridge()
+    if (bridge?.parseClassesFromString) {
+      return (bridge.parseClassesFromString as (r: string) => string[])(raw)
+    }
+  } catch {
+    // native not available — return JS fallback result
   }
-  return (bridge.parseClassesFromString as (r: string) => string[])(raw)
+
+  return valid
 }

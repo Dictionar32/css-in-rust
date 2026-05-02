@@ -104,18 +104,20 @@ export interface TransformContext {
 export interface TwGlobalRegistry {
   transforms: Array<(config: ComponentConfig, ctx: TransformContext) => ComponentConfig>
   tokens: Record<string, string>
+  variants: Map<string, VariantResolver>
 }
 
 const transformRegistry: TwGlobalRegistry = {
   transforms: [],
   tokens: {},
+  variants: new Map(),
 }
 
 const normalizeTokenName = (name: string): string =>
   name.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase()
 
-export function getGlobalRegistry(): PluginRegistry {
-  return legacyState.globalRegistry
+export function getGlobalRegistry(): TwGlobalRegistry {
+  return transformRegistry
 }
 
 export function registerTransform(
@@ -146,6 +148,7 @@ const legacyState = { globalRegistry: createPluginRegistry() }
 
 export function resetGlobalRegistry(): void {
   transformRegistry.transforms.length = 0
+  transformRegistry.variants.clear()
   for (const key of Object.keys(transformRegistry.tokens)) {
     delete transformRegistry.tokens[key]
   }
@@ -162,6 +165,9 @@ export function createPluginContext(
     config,
     addVariant(name, resolver) {
       registry.variants.set(name, resolver)
+      if (isLegacyRegistry) {
+        transformRegistry.variants.set(name, resolver)
+      }
     },
     addUtility(name, styles) {
       registry.utilities.set(name, styles)
@@ -247,6 +253,14 @@ export function createTw(config: Record<string, unknown> = {}): TwContext & {
   }
 
   return result
+}
+
+/**
+ * Creates a TwContext that writes through to the global (legacy) registry.
+ * Used by createTwPlugin() in the plugin package.
+ */
+export function createGlobalPluginContext(config: Record<string, unknown> = {}): TwContext {
+  return createPluginContext(legacyState.globalRegistry, config)
 }
 
 export function use(plugin: TwPlugin): void {

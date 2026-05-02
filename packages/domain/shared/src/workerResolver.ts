@@ -22,10 +22,15 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 
   try {
     const nodeUrl = require(NODE_URL!)
-    return nodeUrl.fileURLToPath(importMetaUrl)
+    const nodePath = require(NODE_PATH!)
+    // fileURLToPath returns the file path — we need the directory
+    return nodePath.dirname(nodeUrl.fileURLToPath(importMetaUrl))
   } catch {
     if (importMetaUrl.startsWith("file://")) {
-      return importMetaUrl.slice(7)
+      const filePath = importMetaUrl.slice(7)
+      // strip the filename to get the directory
+      const lastSlash = filePath.lastIndexOf("/")
+      return lastSlash >= 0 ? filePath.slice(0, lastSlash) : filePath
     }
     return ""
   }
