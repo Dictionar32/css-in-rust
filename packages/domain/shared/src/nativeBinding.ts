@@ -47,7 +47,7 @@ export interface NativeBindingLoadError {
 }
 
 export interface ResolveNativeBindingCandidatesOptions {
-  runtimeDir: string
+  runtimeDir?: string
   envVarNames?: string[]
   enforceNodeExtensionForEnvPath?: boolean
   includeDefaultCandidates?: boolean
@@ -55,7 +55,7 @@ export interface ResolveNativeBindingCandidatesOptions {
 }
 
 export interface LoadNativeBindingOptions<T> {
-  runtimeDir: string
+  runtimeDir?: string
   candidates: string[]
   isValid: (module: unknown) => module is T
   invalidExportMessage: string
@@ -171,7 +171,8 @@ export function loadNativeBinding<T>(
   const nodeModule = getNodeModule()
   const nodePath = getNodePath()
   const nodeFs = getNodeFs()
-  const req = nodeModule.createRequire(nodePath.join(options.runtimeDir, "noop.cjs"))
+  const loadRuntimeDir = options.runtimeDir || process.cwd()
+  const req = nodeModule.createRequire(nodePath.join(loadRuntimeDir, "noop.cjs"))
   const loadErrors: NativeBindingLoadError[] = []
 
   for (const candidate of options.candidates) {
