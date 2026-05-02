@@ -13,6 +13,7 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ── Job 1: Rust checks (fast, no build) ────────────────────────────────────
@@ -100,7 +101,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.os }}-node${{ matrix.node }}
-          path: native/*.node
+          path: |
+            native/*.node
+            native/index.js
           retention-days: 7
 
   # ── Job 4: TypeScript tests ────────────────────────────────────────────────

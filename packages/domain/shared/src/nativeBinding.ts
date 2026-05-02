@@ -112,13 +112,19 @@ export function resolveNativeBindingCandidates(
 
   if (options.includeDefaultCandidates !== false) {
     const ext = options.platformExtension ?? getPlatformExtension()
-    const defaultBindingName = `tailwind_styled_parser${ext}`
+    // napi-rs generates platform-specific names: tailwind-styled-native.<platform>.node
+    // We probe both naming conventions for compatibility
+    const napiBindingName = `tailwind-styled-native${ext}`
+    const legacyBindingName = `tailwind_styled_parser${ext}`
 
-    out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
+    out.push(nodePath.resolve(process.cwd(), "native", napiBindingName))
+    out.push(nodePath.resolve(process.cwd(), "native", legacyBindingName))
     // Only include runtimeDir-based paths when runtimeDir is provided
     if (options.runtimeDir) {
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", defaultBindingName))
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", napiBindingName))
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", legacyBindingName))
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", napiBindingName))
+      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", legacyBindingName))
     }
   }
 

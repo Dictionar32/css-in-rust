@@ -199,7 +199,11 @@ export function createPluginContext(
       registry.buildHooks.push(hook)
     },
     getToken(name) {
-      return readToken(resolveTokenEngine(), name)
+      const normalized = normalizeTokenName(name)
+      // Check local registry first (populated by addToken), then fallback to token engine
+      const local = registry.tokens.get(normalized)
+      if (local !== undefined) return local
+      return readToken(resolveTokenEngine(), normalized)
     },
     subscribeTokens(callback) {
       const engine = resolveTokenEngine()
