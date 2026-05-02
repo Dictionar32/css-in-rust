@@ -46,19 +46,22 @@ function getNativeBridge(): NativeSyntaxBridge {
   const runtimeDir = getRuntimeDir()
   const candidates = [
     "@tailwind-styled/native",
-    // binaryName baru: tailwind-styled-native
+    // runtimeDir = dist/ → naik 4 level ke repo root
     path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
     path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}.node`),
     path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind-styled-native.node"),
+    path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    // 3 level fallback
     path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
     path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
-    // binaryName lama: index.node / index.mjs (backward compat)
+    // backward compat
     path.resolve(process.cwd(), "native", "index.mjs"),
-    path.resolve(runtimeDir, "..", "..", "..", "native", "index.mjs"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "index.mjs"),
+    path.resolve(runtimeDir, "..", "..", "..", "native", "index.mjs"),
     path.resolve(process.cwd(), "native", "index.node"),
-    path.resolve(runtimeDir, "..", "..", "..", "native", "index.node"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "index.node"),
+    path.resolve(runtimeDir, "..", "..", "..", "native", "index.node"),
   ]
 
   for (const candidate of candidates) {

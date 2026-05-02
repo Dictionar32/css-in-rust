@@ -52,6 +52,8 @@ export interface ResolveNativeBindingCandidatesOptions {
   enforceNodeExtensionForEnvPath?: boolean
   includeDefaultCandidates?: boolean
   platformExtension?: PlatformExtension
+  /** @deprecated — ignored, kept for backward compat with older test callers */
+  packageName?: string
 }
 
 export interface LoadNativeBindingOptions<T> {
@@ -89,7 +91,7 @@ export function resolveNativeBindingCandidates(
 
   const out: string[] = []
   const nodePath = getNodePath()
-  const envVarNames = options.envVarNames ?? ["TWS_NATIVE_PATH"]
+  const envVarNames = options.envVarNames ?? ["TW_NATIVE_PATH", "TWS_NATIVE_PATH"]
   // Default runtimeDir ke cwd jika tidak disediakan
   const runtimeDir = options.runtimeDir || process.cwd()
 
@@ -120,14 +122,18 @@ export function resolveNativeBindingCandidates(
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native${ext}`))
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platform}${ext}`))
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platformGnu}${ext}`))
+    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native${ext}`))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${platformGnu}${ext}`))
+    // 3 level fallback
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native${ext}`))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${platformGnu}${ext}`))
 
     // binaryName lama: tailwind_styled_parser (backward compat)
     const defaultBindingName = `tailwind_styled_parser${ext}`
     out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
-    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
   }
 
   return Array.from(new Set(out))
