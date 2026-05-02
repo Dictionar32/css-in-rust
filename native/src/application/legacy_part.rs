@@ -802,6 +802,11 @@ fn resolve_rotate(val: &str) -> Option<String> {
     Some(format!("transform: rotate({}deg)", n))
 }
 
+#[allow(
+    clippy::manual_strip,
+    clippy::manual_split_once,
+    clippy::no_effect_replace
+)]
 fn tw_class_to_css(class: &str) -> Option<String> {
     // Handle arbitrary values: bg-[#ff0000], p-[1.5rem], etc.
     if class.contains('[') && class.contains(']') {
@@ -1192,6 +1197,11 @@ fn tw_class_to_css(class: &str) -> Option<String> {
 }
 
 /// Handle arbitrary value classes like bg-[#ff0000], p-[1.5rem], w-[200px]
+#[allow(
+    clippy::manual_strip,
+    clippy::manual_split_once,
+    clippy::no_effect_replace
+)]
 fn tw_arbitrary_to_css(class: &str) -> Option<String> {
     // Extract: prefix-[value] or prefix:-[value] (with variant)
     let base = if class.contains(':') {

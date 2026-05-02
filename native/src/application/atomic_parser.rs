@@ -591,19 +591,19 @@ mod tests {
 
     #[test]
     fn test_registry_caches() {
-        // Use a unique key unlikely to be touched by parallel tests
+        // Use a globally unique key — thread id + nanos — to avoid collisions with parallel tests
         let unique_class = format!(
-            "p-registry-test-{}",
+            "p-registry-test-{:?}-{}",
+            std::thread::current().id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.subsec_nanos())
+                .map(|d| d.as_nanos())
                 .unwrap_or(99999)
         );
 
         let before = atomic_registry_size();
         parse_atomic_class(unique_class.clone());
         let after_first = atomic_registry_size();
-        // Registry should have grown by at least 1
         assert!(
             after_first > before,
             "registry should grow after first parse"
