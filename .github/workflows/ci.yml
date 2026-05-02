@@ -13,7 +13,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # ── Job 1: Rust checks (fast, no build) ────────────────────────────────────
@@ -92,10 +91,10 @@ jobs:
         run: npm run build:rust
 
       - name: Generate native index.js loader
-        run: cd native && npx @napi-rs/cli artifacts --build-dir . --output-dir .
+        run: cd native && ../node_modules/.bin/napi artifacts --build-dir . --output-dir .
 
       - name: Build TypeScript packages
-        run: npx turbo run build --filter=!@tailwind-styled/studio-desktop --continue
+        run: npm run build:packages
 
       - name: Type check
         run: npx tsc --noEmit
@@ -104,9 +103,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-${{ matrix.os }}-node${{ matrix.node }}
-          path: |
-            native/*.node
-            native/index.js
+          path: native/*.node
           retention-days: 7
 
   # ── Job 4: TypeScript tests ────────────────────────────────────────────────
