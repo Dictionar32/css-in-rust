@@ -771,7 +771,7 @@ fn resolve_spacing_class(class: &str) -> Option<String> {
     };
 
     // Parse numeric value (integer or decimal like 0.5, 1.5, 2.5)
-    let n: f64 = rest.replace('.', ".").parse().ok()?;
+    let n: f64 = rest.replace(',', ".").parse().ok()?;
     // Tailwind: 1 unit = 0.25rem (except for fractional like 1/2, 1/3)
     if rest.contains('/') {
         // Fractional: 1/2, 1/3, 2/3 etc.
