@@ -4,12 +4,18 @@
   "description": "Native Rust engine for tailwind-styled-v4",
   "main": "index.js",
   "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "artifacts": "napi artifacts --build-dir . --output-dir .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["Rust", "Tailwind CSS", "compiler", "transformer"],
   "author": "Dictionar32",
   "license": "MIT",
   "type": "commonjs",
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
   "napi": {
     "binaryName": "tailwind-styled-native",
     "targets": [
