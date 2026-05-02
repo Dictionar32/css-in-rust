@@ -333,34 +333,45 @@ mod tests {
 
     #[test]
     fn test_cache_populates_and_reuses() {
-        reverse_lookup_clear_cache();
-        assert_eq!(reverse_lookup_cache_size(), 0);
+        // Gunakan unique CSS string agar tidak collision dengan parallel tests
+        // yang share static CSS_RULE_CACHE yang sama.
+        // Jangan assert absolute size = 0 setelah clear — test lain bisa insert duluan.
+        let unique_css = format!("/* test-cache-populates-unique */\n{}", SAMPLE_CSS);
 
+        // Catat baseline sebelum kita insert
+        let size_before = reverse_lookup_cache_size();
+
+        // First call → harus insert satu entry baru ke cache
         let _ = reverse_lookup_from_css(
-            SAMPLE_CSS.to_string(),
+            unique_css.clone(),
             "display".to_string(),
             "flex".to_string(),
         );
-        assert_eq!(
-            reverse_lookup_cache_size(),
-            1,
-            "cache should have one entry after parse"
+        let size_after_first = reverse_lookup_cache_size();
+        assert!(
+            size_after_first > size_before,
+            "cache should grow after first parse (before={size_before}, after={size_after_first})"
         );
 
-        // Second call should hit cache
+        // Second call dengan CSS yang sama → harus hit cache, tidak insert entry baru
         let _ = reverse_lookup_from_css(
-            SAMPLE_CSS.to_string(),
+            unique_css.clone(),
             "display".to_string(),
             "none".to_string(),
         );
+        let size_after_second = reverse_lookup_cache_size();
         assert_eq!(
-            reverse_lookup_cache_size(),
-            1,
-            "same CSS should reuse cache entry"
+            size_after_first, size_after_second,
+            "same CSS should reuse existing cache entry — size must not grow"
         );
 
+        // Verifikasi clear bekerja
         reverse_lookup_clear_cache();
-        assert_eq!(reverse_lookup_cache_size(), 0);
+        let size_after_clear = reverse_lookup_cache_size();
+        assert!(
+            size_after_clear < size_after_first,
+            "clear should reduce cache size (before_clear={size_after_first}, after_clear={size_after_clear})"
+        );
     }
 
     #[test]
