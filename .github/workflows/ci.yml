@@ -91,7 +91,7 @@ jobs:
         run: npm run build:rust
 
       - name: Generate native index.js loader
-        run: cd native && ../node_modules/.bin/napi artifacts --build-dir . --output-dir .
+        run: cd native && ../node_modules/.bin/napi artifacts
 
       - name: Build TypeScript packages
         run: npm run build:packages
