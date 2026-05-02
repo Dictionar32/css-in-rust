@@ -193,6 +193,8 @@ export async function analyzeWorkspace(
       `(files=${normalizedScan.totalFiles}, uniqueClasses=${all.length})`
   )
 
+  const distribution = await buildDistribution(all, binding)
+
   return {
     root: nativeReport.root || resolvedRoot,
     totalFiles: nativeReport.totalFiles,
@@ -203,8 +205,10 @@ export async function analyzeWorkspace(
       top,
       frequent,
       unique,
-      distribution: await buildDistribution(all, binding),
+      distribution,
     },
+    // topClasses — alias for classStats.top (test contract & backward compat)
+    topClasses: top,
     safelist: all.map((usage) => usage.name),
     ...(semanticReport ? { semantic: semanticReport } : {}),
   }

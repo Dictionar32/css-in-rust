@@ -56,17 +56,23 @@ function resolveVariantsNative<C extends ComponentConfig>(
 
   const binding = getNativeBinding()
   if (binding?.resolveSimpleVariants) {
-    const cleanProps: Record<string, string> = {}
+    // Pre-merge di JS: defaultVariants sebagai base, user props override
+    // Ini lebih reliable daripada bergantung pada Rust untuk merge priority
+    const mergedProps: Record<string, string> = {}
+    for (const [k, v] of Object.entries(defaultVariants as Record<string, string>)) {
+      if (v !== undefined && v !== null) mergedProps[k] = String(v)
+    }
     for (const [k, v] of Object.entries(props)) {
       if (v !== undefined && v !== null && k !== "className") {
-        cleanProps[k] = String(v)
+        mergedProps[k] = String(v)
       }
     }
+
     let result = binding.resolveSimpleVariants(
       base || null,
       variants as Record<string, Record<string, string>>,
-      defaultVariants as Record<string, string>,
-      cleanProps
+      {}, // already merged into mergedProps
+      mergedProps
     )
 
     // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)

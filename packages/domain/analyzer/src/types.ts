@@ -47,6 +47,8 @@ export interface AnalyzerReport {
   readonly uniqueClassCount: number
   readonly totalClassOccurrences: number
   readonly classStats: AnalyzerClassStats
+  /** Alias for classStats.top — backward compat & test contract */
+  readonly topClasses: readonly ClassUsage[]
   readonly safelist: readonly string[]
   readonly semantic?: AnalyzerSemanticReport
 }

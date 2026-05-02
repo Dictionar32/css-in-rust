@@ -114,8 +114,8 @@ const transformRegistry: TwGlobalRegistry = {
 const normalizeTokenName = (name: string): string =>
   name.replace(/[^a-zA-Z0-9-]/g, "-").toLowerCase()
 
-export function getGlobalRegistry(): TwGlobalRegistry {
-  return transformRegistry
+export function getGlobalRegistry(): PluginRegistry {
+  return legacyState.globalRegistry
 }
 
 export function registerTransform(
