@@ -46,6 +46,13 @@ function getNativeBridge(): NativeSyntaxBridge {
   const runtimeDir = getRuntimeDir()
   const candidates = [
     "@tailwind-styled/native",
+    // binaryName baru: tailwind-styled-native
+    path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
+    path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}.node`),
+    path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
+    path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    // binaryName lama: index.node / index.mjs (backward compat)
     path.resolve(process.cwd(), "native", "index.mjs"),
     path.resolve(runtimeDir, "..", "..", "..", "native", "index.mjs"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "index.mjs"),
@@ -77,20 +84,9 @@ export function extractAllClasses(source: string): string[] {
 }
 
 export function parseClasses(raw: string): string[] {
-  // JS fallback — works without native binding
-  // Split on whitespace, filter by valid class regex
-  const tokens = raw.split(/\s+/).filter(t => t.length > 0)
-  const valid = tokens.filter(t => VALID_CLASS_RE.test(t))
-
-  // Attempt to use native for speed, fall back to JS result if unavailable
-  try {
-    const bridge = getNativeBridge()
-    if (bridge?.parseClassesFromString) {
-      return (bridge.parseClassesFromString as (r: string) => string[])(raw)
-    }
-  } catch {
-    // native not available — return JS fallback result
+  const bridge = getNativeBridge()
+  if (!bridge?.parseClassesFromString) {
+    throw new Error("FATAL: Native binding 'parseClassesFromString' is required but not available.")
   }
-
-  return valid
+  return (bridge.parseClassesFromString as (r: string) => string[])(raw)
 }

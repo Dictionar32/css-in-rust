@@ -47,13 +47,11 @@ export interface NativeBindingLoadError {
 }
 
 export interface ResolveNativeBindingCandidatesOptions {
-  runtimeDir?: string
+  runtimeDir: string
   envVarNames?: string[]
   enforceNodeExtensionForEnvPath?: boolean
   includeDefaultCandidates?: boolean
   platformExtension?: PlatformExtension
-  /** @deprecated use envVarNames instead */
-  packageName?: string
 }
 
 export interface LoadNativeBindingOptions<T> {
@@ -88,11 +86,12 @@ export function resolveNativeBindingCandidates(
   options: ResolveNativeBindingCandidatesOptions
 ): string[] {
   if (isBrowser) return []
-  
+
   const out: string[] = []
   const nodePath = getNodePath()
-  // Include both TWS_NATIVE_PATH (legacy) and TW_NATIVE_PATH (native-resolution convention)
-  const envVarNames = options.envVarNames ?? ["TW_NATIVE_PATH", "TWS_NATIVE_PATH"]
+  const envVarNames = options.envVarNames ?? ["TWS_NATIVE_PATH"]
+  // Default runtimeDir ke cwd jika tidak disediakan
+  const runtimeDir = options.runtimeDir || process.cwd()
 
   for (const envVarName of envVarNames) {
     const raw = process.env[envVarName]?.trim()
@@ -112,20 +111,23 @@ export function resolveNativeBindingCandidates(
 
   if (options.includeDefaultCandidates !== false) {
     const ext = options.platformExtension ?? getPlatformExtension()
-    // napi-rs generates platform-specific names: tailwind-styled-native.<platform>.node
-    // We probe both naming conventions for compatibility
-    const napiBindingName = `tailwind-styled-native${ext}`
-    const legacyBindingName = `tailwind_styled_parser${ext}`
+    const platform = `${process.platform}-${process.arch}`
+    const platformGnu = platform === "linux-x64" ? "linux-x64-gnu"
+      : platform === "linux-arm64" ? "linux-arm64-gnu"
+      : platform
 
-    out.push(nodePath.resolve(process.cwd(), "native", napiBindingName))
-    out.push(nodePath.resolve(process.cwd(), "native", legacyBindingName))
-    // Only include runtimeDir-based paths when runtimeDir is provided
-    if (options.runtimeDir) {
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", napiBindingName))
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "native", legacyBindingName))
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", napiBindingName))
-      out.push(nodePath.resolve(options.runtimeDir, "..", "..", "..", "..", "native", legacyBindingName))
-    }
+    // binaryName baru: tailwind-styled-native
+    out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native${ext}`))
+    out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platform}${ext}`))
+    out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platformGnu}${ext}`))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native${ext}`))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${platformGnu}${ext}`))
+
+    // binaryName lama: tailwind_styled_parser (backward compat)
+    const defaultBindingName = `tailwind_styled_parser${ext}`
+    out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
+    out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
   }
 
   return Array.from(new Set(out))

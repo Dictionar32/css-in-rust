@@ -61,6 +61,13 @@ const createNativeParserLoader = () => {
     const req = createRequire(path.join(runtimeDir, "noop.cjs"))
 
     const candidates = [
+      // ── binaryName baru: tailwind-styled-native (napi-rs naming) ──
+      path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
+      path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}.node`),
+      path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+      path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
+      path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+      // ── binaryName lama: tailwind_styled_parser (backward compat) ──
       path.resolve(process.cwd(), "native/tailwind_styled_parser.node"),
       path.resolve(process.cwd(), "native/build/Release/tailwind_styled_parser.node"),
       path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind_styled_parser.node"),

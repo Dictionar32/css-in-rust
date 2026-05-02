@@ -126,7 +126,17 @@ export function expectNoClasses(element: Element | null | undefined, classes: st
  */
 export function getClassList(element: Element | null | undefined): string[] {
   if (!element) return []
-  return Array.from(element.classList).sort()
+  // classList mungkin tidak iterable di test environment (mock object)
+  // Fallback ke parsing className string jika Array.from gagal atau hasilkan []
+  try {
+    const list = Array.from(element.classList)
+    if (list.length > 0) return list.sort()
+  } catch {}
+  // Fallback: parse dari className string
+  if (element.className && typeof element.className === "string") {
+    return element.className.trim().split(/\s+/).filter(Boolean).sort()
+  }
+  return []
 }
 
 // ─── Variant snapshot helpers ────────────────────────────────────────────────
