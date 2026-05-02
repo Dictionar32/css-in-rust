@@ -76,6 +76,26 @@ export declare function areClassSetsEqual(a: Array<string>, b: Array<string>): b
  */
 export declare function astExtractClasses(source: string, filename: string): AstExtractResult
 
+/**
+ * Parse a source file and extract Tailwind classes using AST-level analysis.
+ * More accurate than regex-only approaches — handles JSX, template literals,
+ * and object configs. Implements the same interface as the oxc-based scanner.
+ */
+export declare function astExtractClasses(source: string, filename: string): AstExtractResult
+
+export interface AstExtractResult {
+  /** All Tailwind classes found in the file */
+  classes: Array<string>
+  /** Component names found (const Foo = tw.div`...`) */
+  componentNames: Array<string>
+  /** Whether any tw.* usage was found */
+  hasTwUsage: boolean
+  /** Whether the file has "use client" directive */
+  hasUseClient: boolean
+  /** Import statements found */
+  imports: Array<string>
+}
+
 export interface AstExtractResult {
   /** All Tailwind classes found in the file */
   classes: Array<string>
@@ -238,6 +258,18 @@ export interface CacheEntry {
 export declare function cachePriority(mtimeMs: number, size: number, cachedMtimeMs: number, cachedSize: number, cachedHitCount: number, cachedLastSeenMs: number, nowMs: number): number
 
 /**
+ * Compute priority score for a file (SmartCache logic in Rust).
+ * Higher score = process first.
+ */
+export declare function cachePriority(mtimeMs: number, size: number, cachedMtimeMs: number, cachedSize: number, cachedHitCount: number, cachedLastSeenMs: number, nowMs: number): number
+
+/**
+ * Read a scanner cache JSON file into structured entries.
+ * Replaces the JS `ScanCache.read()` method.
+ */
+export declare function cacheRead(cachePath: string): CacheReadResult
+
+/**
  * Read a scanner cache JSON file into structured entries.
  * Replaces the JS `ScanCache.read()` method.
  */
@@ -258,6 +290,12 @@ export interface CacheStatsResult {
   /** Top-10 class paling sering muncul lintas file. */
   mostUsedClasses: Array<ClassFrequency>
 }
+
+/**
+ * Write cache entries to a JSON cache file.
+ * Replaces the JS `ScanCache.save()` method.
+ */
+export declare function cacheWrite(cachePath: string, entries: Array<CacheEntry>): boolean
 
 /**
  * Write cache entries to a JSON cache file.
@@ -482,10 +520,11 @@ export declare function collectFiles(root: string, extensions?: Array<string> | 
 export declare function compileAnimation(from: string, to: string, name?: string | undefined | null, durationMs?: number | undefined | null, easing?: string | undefined | null, delayMs?: number | undefined | null, fill?: string | undefined | null, iterations?: string | undefined | null, direction?: string | undefined | null): CompiledAnimation
 
 /**
- * Backward compat — sekarang input adalah raw CSS, bukan class names.
- * CSS harus datang dari Tailwind JS engine.
+ * Compile a list of Tailwind classes into atomic CSS.
+ * This is the Rust implementation of LightningCSS-style compilation.
+ * For classes without a known mapping, generates `@apply` fallback rules.
  */
-export declare function compileCss(css: string, prefix?: string | undefined | null): CssCompileResult
+export declare function compileCss(classes: Array<string>, prefix?: string | undefined | null): CssCompileResult
 
 /** Alias untuk backward compat. */
 export declare function compileCssLightning(css: string, prefix?: string | undefined | null): CssCompileResult
@@ -513,6 +552,13 @@ export interface CompiledTheme {
  * `stops_json`: `[{"stop":"0%","classes":"opacity-0 scale-95"},...]`
  */
 export declare function compileKeyframes(name: string, stopsJson: string): CompiledAnimation
+
+/**
+ * Process raw CSS string (bukan class names) dengan LightningCSS.
+ * CSS harus datang dari Tailwind JS engine.
+ * Renamed dari compile_css untuk menghindari konflik dengan legacy_part::compile_css.
+ */
+export declare function compileRawCss(css: string, prefix?: string | undefined | null): CssCompileResult
 
 /**
  * Parse a token map JSON and compile it into a CSS variable block.
@@ -625,6 +671,17 @@ export interface ContainerBreakpoint {
  * - Math.abs not needed — u64 wrapping is always non-negative
  */
 export declare function createFingerprint(parts: Array<string>): string
+
+export interface CssCompileResult {
+  /** Generated CSS output */
+  css: string
+  /** Classes that were successfully resolved */
+  resolvedClasses: Array<string>
+  /** Classes that had no known mapping (passed through as @apply) */
+  unknownClasses: Array<string>
+  /** Byte size of generated CSS */
+  sizeBytes: number
+}
 
 export interface CssCompileResult {
   css: string
