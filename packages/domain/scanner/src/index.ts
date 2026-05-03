@@ -21,10 +21,19 @@ const log = createLogger("scanner")
 const SCAN_WORKER_TIMEOUT_MS = 120_000
 
 type NativeParsedClass = { raw?: string }
+// ClassExtractResult shape dari Rust (napi-rs export)
+type NativeClassExtractResult = {
+  classes: string[]
+  componentNames: string[]
+  hasTwUsage: boolean
+  hasUseClient: boolean
+  imports: string[]
+}
 type NativeParserBinding = {
   parse_classes?: (input: string) => NativeParsedClass[]
   parseClasses?: (input: string) => NativeParsedClass[]
-  extractClassesFromSource?: (source: string) => string[] | null
+  // Rust returns ClassExtractResult object, bukan plain string[]
+  extractClassesFromSource?: (source: string) => NativeClassExtractResult | string[] | null
   batchExtractClassesNative?: (filePaths: string[]) => Array<{
     file: string; classes: string[]; contentHash: string; ok: boolean; error?: string
   }>
@@ -285,9 +294,14 @@ function toCacheSize(size: number): number {
 export function scanSource(source: string): string[] {
   const nativeBinding = nativeParserLoader.get()
   if (nativeBinding?.extractClassesFromSource) {
-    const classes = nativeBinding.extractClassesFromSource(source)
-    if (Array.isArray(classes)) {
-      return Array.from(new Set(classes.filter(Boolean)))
+    const result = nativeBinding.extractClassesFromSource(source)
+    // Rust mengembalikan ClassExtractResult { classes: string[], ... }
+    // bukan plain string[] — handle kedua kemungkinan untuk backward compat
+    if (Array.isArray(result)) {
+      return Array.from(new Set(result.filter(Boolean)))
+    }
+    if (result !== null && result !== undefined && Array.isArray((result as NativeClassExtractResult).classes)) {
+      return Array.from(new Set((result as NativeClassExtractResult).classes.filter(Boolean)))
     }
   }
 
