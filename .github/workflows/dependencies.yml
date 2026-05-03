@@ -19,7 +19,7 @@ jobs:
       - name: cargo audit
         run: |
           cargo install cargo-audit --quiet
-          cargo audit --manifest-path native/Cargo.toml
+          cd native && cargo audit
 
       - uses: actions/setup-node@v4
         with:
@@ -38,6 +38,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: npm outdated
         run: npm outdated --depth=0
