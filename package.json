@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.27",
+  "version": "5.0.6-canary.0.0.26",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -57,6 +57,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/index.browser.mjs",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
@@ -228,13 +229,12 @@
     "check:binary-size:strict": "node scripts/check-binary-size.mjs --max-mb=15",
     "validate:canary": "node scripts/validate-canary.mjs",
     "validate:canary:ci": "node scripts/validate-canary.mjs shared compiler engine scanner core",
-    "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ \u2014 run npm run generate:schemas and commit\" && exit 1)",
+    "generate:schemas:check": "npx tsx scripts/generate-json-schemas.ts && git diff --exit-code packages/domain/shared/src/generated/ || (echo \"Generated schemas differ — run npm run generate:schemas and commit\" && exit 1)",
     "test:smoke:fallback": "TWS_DISABLE_NATIVE=1 node --test tests/smoke/*.test.mjs",
     "example:build": "cd examples/next-js-app && npm install --ignore-scripts && npx next build --turbopack",
     "example:dev": "cd examples/next-js-app && npm install --ignore-scripts && npx next dev",
     "example:typecheck": "cd examples/next-js-app && npx tsc --noEmit",
     "wave4:schema-drift": "npx tsx scripts/generate-json-schemas.ts --check 2>/dev/null || echo 'Schema drift check: schemas may need regeneration'"
-
   },
   "peerDependencies": {
     "react": ">=18",
@@ -248,20 +248,20 @@
       "optional": true
     }
   },
-   "devDependencies": {
-     "@biomejs/biome": "^2.4.10",
-     "@napi-rs/cli": "^3.6.2",
-     "@types/node": "^20.19.39",
-     "@types/react": "^19",
-     "dependency-cruiser": "^17.3.10",
-     "next": "^16.2.2",
-     "tsup": "^8.5.0",
-     "tsx": "^4.21.0",
-     "turbo": "^2.9.3",
-     "typescript": "^6.0.2",
-     "vite": "^8.0.8",
-     "vue": "^3.5.30"
-   },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@napi-rs/cli": "^3.6.2",
+    "@types/node": "^20.19.39",
+    "@types/react": "^19",
+    "dependency-cruiser": "^17.3.10",
+    "next": "^16.2.2",
+    "tsup": "^8.5.0",
+    "tsx": "^4.21.0",
+    "turbo": "^2.9.3",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.8",
+    "vue": "^3.5.30"
+  },
   "optionalDependencies": {
     "@tailwind-styled/native-darwin-arm64": "5.0.6-canary.0.0",
     "@tailwind-styled/native-darwin-x64": "5.0.6-canary.0.0",
@@ -272,8 +272,8 @@
     "oxc-parser": "^0.120.0",
     "oxc-transform": "^0.120.0"
   },
-   "dependencies": {
-     "@clack/prompts": "^1.1.0",
-     "ts-pattern": "^5.9.0"
-   }
+  "dependencies": {
+    "@clack/prompts": "^1.1.0",
+    "ts-pattern": "^5.9.0"
+  }
 }

@@ -1,4 +1,10 @@
 import { defineConfig } from "tsup"
+import type { BuildOptions } from "esbuild"
+
+// import.meta.url selalu tersedia di ESM — tidak butuh @types/node
+const projectRoot = new URL(".", import.meta.url).pathname
+  .replace(/^\/([A-Z]:)/, "$1") // fix Windows path: /C:/... → C:/...
+const root = (p: string) => `${projectRoot}${p}`
 
 const entries = {
   index: "src/umbrella/index.ts",
@@ -32,49 +38,69 @@ const entries = {
   vue: "src/umbrella/vue.ts",
 }
 
-export default defineConfig({
-  entry: entries,
-  target: "node20",
-  platform: "node",
-  format: ["esm", "cjs"],
-  // clean ditangani oleh "rm -rf dist" di build script (lihat package.json)
-  // supaya tidak race condition dengan tsup.dts.config.ts yang jalan sesudah ini
+const sharedExternal = [
+  "react", "react-dom", "react/jsx-runtime",
+  "next", "vite", "webpack", "@rspack/core",
+  "vue", "svelte",
+  "zod", "tailwindcss", "postcss", "inversify",
+  "reflect-metadata", "@clack/prompts", "ts-pattern",
+  "@storybook/types", "@storybook/core-events",
+]
+
+const nodeBuiltins = [
+  "fs", "path", "os", "url", "crypto", "module",
+  "child_process", "worker_threads", "stream", "events", "util",
+  "node:fs", "node:path", "node:os", "node:url", "node:crypto",
+  "node:module", "node:child_process", "node:worker_threads",
+  "node:stream", "node:events", "node:util",
+]
+
+const sharedConfig = {
   clean: false,
   dts: false,
   tsconfig: "./tsconfig.json",
   outDir: "dist",
   splitting: false,
-  noExternal: [
-    // Force-bundle semua workspace packages ke dalam dist
-    // Tanpa ini, tsup treat @tailwind-styled/* sebagai external karena ada di node_modules via symlink
-    /^@tailwind-styled\//,
-  ],
+  noExternal: [/^@tailwind-styled\//] as RegExp[],
   sourcemap: true,
   treeshake: true,
   minify: false,
-   external: [
-     // Frameworks
-     "react", "react-dom", "react/jsx-runtime",
-     "next", "vite", "webpack", "@rspack/core",
-     "vue", "svelte",
-     // Dependencies
-     "zod",
-     "tailwindcss",
-     "postcss",
-     "inversify",
-     "reflect-metadata",
-     "@clack/prompts",
-     "ts-pattern",
-     "@storybook/types",
-     "@storybook/core-events",
-    // Node.js built-ins — tidak boleh masuk browser bundle
-    "fs", "path", "os", "url", "crypto", "module",
-    "child_process", "worker_threads", "stream", "events", "util",
-    "node:fs", "node:path", "node:os", "node:url", "node:crypto",
-    "node:module", "node:child_process", "node:worker_threads",
-    "node:stream", "node:events", "node:util",
-  ],
   banner: {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
   },
-})
+}
+
+export default defineConfig([
+  // ── Server / Node.js bundle ────────────────────────────────────────────────
+  {
+    ...sharedConfig,
+    entry: entries,
+    target: "node20" as const,
+    platform: "node" as const,
+    format: ["esm", "cjs"] as const,
+    external: [...sharedExternal, ...nodeBuiltins],
+  },
+
+  // ── Browser bundle ─────────────────────────────────────────────────────────
+  // native.ts → native.browser.ts via esbuild alias
+  // Zero node built-ins — safe untuk Next.js client components
+  {
+    ...sharedConfig,
+    entry: {
+      "index.browser": "src/umbrella/index.browser.ts",
+    },
+    target: "es2020" as const,
+    platform: "browser" as const,
+    format: ["esm"] as const,
+    external: sharedExternal,
+    esbuildOptions(options: BuildOptions) {
+      options.alias = {
+        ...options.alias,
+        [root("packages/domain/core/src/native.ts")]:
+          root("packages/domain/core/src/native.browser.ts"),
+        [root("packages/domain/core/src/compatibility.ts")]:
+          root("packages/domain/core/src/native.browser.ts"),
+      }
+    },
+  },
+])

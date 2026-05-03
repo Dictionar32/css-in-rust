@@ -32,23 +32,19 @@ export type InferStatesProps<T extends ComponentConfig> = {
 
 // ── Sub-component Config ──────────────────────────────────────────────────────
 /**
- * Config object untuk sub-component dengan tag override dan asChild support.
+ * Sub config bisa berupa:
+ * - string: "font-bold text-lg" → render <span>
+ * - Record<name, string>: nested object per HTML tag
  *
  * @example
  * sub: {
- *   header: { classes: "font-bold text-lg border-b", tag: "header" },
- *   body:   { classes: "text-gray-600 py-2",          tag: "section" },
- *   action: { classes: "mt-4", asChild: true },
+ *   icon: "w-4 h-4",                        // → <span class="w-4 h-4"> dipanggil Card.icon
+ *   header: { topBar: "bg-gray-900" },       // → <header> dipanggil Card.topBar
+ *   h2: { title: "text-xl font-bold" },      // → <h2> dipanggil Card.title
+ *   section: { content: "px-6 py-4" },       // → <section> dipanggil Card.content
  * }
  */
-export interface SubComponentConfig {
-  /** Tailwind classes untuk sub-component ini — konsisten dengan ComponentConfig.base */
-  base: string
-  /** HTML tag yang dirender — default: "span" */
-  tag?: keyof React.JSX.IntrinsicElements
-  /** asChild: merge className + event handlers ke direct child element */
-  asChild?: boolean
-}
+export type SubValue = string | Record<string, string>
 
 // ── States Config ─────────────────────────────────────────────────────────────
 /**
@@ -81,14 +77,25 @@ export interface ComponentConfig {
    * Maksimal 16 states per komponen (2^16 kombinasi).
    */
   states?: StatesConfig
-  /** Sub-component definitions — keys di-infer otomatis oleh TypeScript */
-  sub?: Record<string, string | SubComponentConfig>
+  /** Sub-component definitions — string atau nested { tag: { name: classes } } */
+  sub?: Record<string, SubValue>
 }
 
-// Infer sub-component names dari config object { sub: { icon: "...", footer: "..." } }
-// Handle both string value dan SubComponentConfig object value.
+/**
+ * Infer semua sub-component names dari config.sub:
+ * - string value  → key langsung: { icon: "..." } → "icon"
+ * - nested object → nested keys: { h2: { title: "..." } } → "title"
+ */
 type InferSubFromConfig<C extends ComponentConfig> =
-  C extends { sub: Record<infer K extends string, string | SubComponentConfig> } ? K : never
+  C extends { sub: infer S extends Record<string, SubValue> }
+    ? {
+        [K in keyof S]: S[K] extends string
+          ? K                           // string value → key langsung
+          : S[K] extends Record<infer N extends string, string>
+            ? N                         // nested object → nested keys
+            : never
+      }[keyof S]
+    : never
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {

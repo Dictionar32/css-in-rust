@@ -6,7 +6,7 @@ import { processContainer } from "./containerQuery"
 import { twMerge } from "./merge"
 import { getNativeBinding } from "./native"
 import { processState } from "./stateEngine"
-import type { ComponentConfig, SubComponentConfig, TwStyledComponent } from "./types"
+import type { ComponentConfig, SubValue, TwStyledComponent } from "./types"
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
@@ -47,6 +47,39 @@ function extractBaseClasses(template: string): string {
     .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
     .replace(/\s+/g, " ")
     .trim()
+}
+
+// Valid HTML semantic tags yang otomatis di-detect dari key name
+const SEMANTIC_HTML_TAGS = new Set([
+  "article", "aside", "details", "figcaption", "figure",
+  "footer", "header", "main", "mark", "nav", "section", "summary", "time",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "p", "ul", "ol", "li", "dl", "dt", "dd",
+  "table", "thead", "tbody", "tfoot", "tr", "th", "td",
+  "form", "fieldset", "legend", "label",
+  "a", "button", "img", "span", "div",
+  "blockquote", "pre", "code", "em", "strong", "small",
+])
+
+/**
+ * Parse sub-component key — support dua format:
+ *
+ * 1. "tag:name"  → tag HTML explicit, nama component = name
+ *    contoh: "header:topBar" → tag=header, componentName=topBar
+ *
+ * 2. "name"      → cek apakah nama adalah valid HTML tag
+ *    contoh: "header" → tag=header, componentName=header
+ *    contoh: "icon"   → tag=span (fallback), componentName=icon
+ */
+function parseSubKey(key: string): { tag: string; componentName: string } {
+  const colonIdx = key.indexOf(":")
+  if (colonIdx !== -1) {
+    const tag = key.slice(0, colonIdx).trim()
+    const componentName = key.slice(colonIdx + 1).trim()
+    return { tag: tag || "span", componentName: componentName || tag }
+  }
+  const isSemanticTag = SEMANTIC_HTML_TAGS.has(key)
+  return { tag: isSemanticTag ? key : "span", componentName: key }
 }
 
 /**
@@ -96,26 +129,30 @@ function createSubComponentAccessor(
 function registerSubComponents<P extends object>(
   component: TwStyledComponent<P>,
   template: string,
-  configSub?: Record<string, string | SubComponentConfig>
+  configSub?: Record<string, SubValue>
 ): void {
   const displayName = component.displayName ?? "tw"
   const map = component as unknown as Record<string, unknown>
 
   // Priority 1: config.sub object — explicit, fully typed
   if (configSub) {
-    for (const [name, value] of Object.entries(configSub)) {
+    for (const [key, value] of Object.entries(configSub)) {
       if (typeof value === "string") {
-        map[name] = createSubComponentAccessor(displayName, name, value.trim().replace(/\s+/g, " "))
-      } else {
-        // SubComponentConfig object
-        const classes = value.base.trim().replace(/\s+/g, " ")
-        map[name] = createSubComponentAccessor(
-          displayName,
-          name,
-          classes,
-          value.tag ?? "span",
-          value.asChild ?? false
+        // String value — pakai parseSubKey untuk detect semantic tag dari key
+        const { tag, componentName } = parseSubKey(key)
+        map[componentName] = createSubComponentAccessor(
+          displayName, componentName, value.trim().replace(/\s+/g, " "), tag
         )
+      } else {
+        // Nested object — key adalah HTML tag, nested keys adalah component names
+        // contoh: h2: { title: "text-xl", subtitle: "text-lg" }
+        // → Card.title renders <h2>, Card.subtitle renders <h2>
+        const tag = key
+        for (const [componentName, classes] of Object.entries(value)) {
+          map[componentName] = createSubComponentAccessor(
+            displayName, componentName, classes.trim().replace(/\s+/g, " "), tag
+          )
+        }
       }
     }
   }
