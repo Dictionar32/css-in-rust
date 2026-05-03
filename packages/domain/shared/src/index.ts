@@ -197,14 +197,22 @@ function requireNativeModule(p: string): unknown {
 }
 
 export interface ResolveCandidatesOptions {
-  runtimeDir: string
+  runtimeDir?: string
   envVarNames?: string[]
   includeDefaultCandidates?: boolean
   enforceNodeExtensionForEnvPath?: boolean
+  /** @deprecated — ignored, kept for backward compat */
+  packageName?: string
 }
 
 export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions): string[] {
-  const { runtimeDir, envVarNames = [], includeDefaultCandidates = true, enforceNodeExtensionForEnvPath = false } = options
+  const {
+    envVarNames = ["TW_NATIVE_PATH", "TWS_NATIVE_PATH"],
+    includeDefaultCandidates = true,
+    enforceNodeExtensionForEnvPath = false,
+  } = options
+  // Default ke cwd kalau runtimeDir tidak disediakan
+  const runtimeDir = options.runtimeDir || process.cwd()
   const candidates: string[] = []
 
   for (const envVar of envVarNames) {
@@ -232,8 +240,11 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
   for (const bin of BINARY_NAMES) {
     candidates.push(path.resolve(runtimeDir, `${bin}.node`))
     candidates.push(path.resolve(runtimeDir, `${bin}.${napiPlatform}.node`))
-    candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", `${bin}.node`))
+    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/
     candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", `${bin}.node`))
+    candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", `${bin}.${napiPlatform}.node`))
+    // 3 level fallback
+    candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", `${bin}.node`))
     candidates.push(path.resolve(process.cwd(), "native", `${bin}.node`))
     candidates.push(path.resolve(process.cwd(), "native", `${bin}.${napiPlatform}.node`))
   }
