@@ -38,6 +38,9 @@ ahash = "0.8"
 # Di bagian [dependencies], tambahkan:
 lightningcss = { version = "1.0.0-alpha.60", features = ["default"] }
 
+[dev-dependencies]
+serial_test = "3.0"
+
 [build-dependencies]
 napi-build = "2"
 

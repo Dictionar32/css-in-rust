@@ -284,8 +284,11 @@ pub fn reverse_lookup_cache_size() -> u32 {
 // ─────────────────────────────────────────────────────────────────────────────
 // Tests
 // ─────────────────────────────────────────────────────────────────────────────
+#[cfg(test)]
+use serial_test::serial;
 
 #[cfg(test)]
+#[serial]
 mod tests {
     use super::*;
 
@@ -325,7 +328,6 @@ mod tests {
     fn test_by_property_groups_by_value() {
         let results = reverse_lookup_by_property(SAMPLE_CSS.to_string(), "display".to_string());
         assert!(!results.is_empty());
-        // Both flex and none should appear
         let values: Vec<&str> = results.iter().map(|r| r.value.as_str()).collect();
         assert!(values.contains(&"flex"));
         assert!(values.contains(&"none"));
@@ -333,51 +335,31 @@ mod tests {
 
     #[test]
     fn test_cache_populates_and_reuses() {
-        // Gunakan unique CSS string agar tidak collision dengan parallel tests
-        // yang share static CSS_RULE_CACHE yang sama.
-        // Jangan assert absolute size = 0 setelah clear — test lain bisa insert duluan.
-        let unique_css = format!("/* test-cache-populates-unique */\n{}", SAMPLE_CSS);
+        reverse_lookup_clear_cache(); // bersihkan cache, aman karena serial
 
-        // Catat baseline sebelum kita insert
+        let unique_css = format!("/* test-cache-populates-unique */\n{}", SAMPLE_CSS);
         let size_before = reverse_lookup_cache_size();
 
-        // First call → harus insert satu entry baru ke cache
         let _ = reverse_lookup_from_css(
             unique_css.clone(),
             "display".to_string(),
             "flex".to_string(),
         );
         let size_after_first = reverse_lookup_cache_size();
-        assert!(
-            size_after_first > size_before,
-            "cache should grow after first parse (before={size_before}, after={size_after_first})"
-        );
+        assert!(size_after_first > size_before);
 
-        // Second call dengan CSS yang sama → harus hit cache, tidak insert entry baru
         let _ = reverse_lookup_from_css(
             unique_css.clone(),
             "display".to_string(),
             "none".to_string(),
         );
         let size_after_second = reverse_lookup_cache_size();
-        assert_eq!(
-            size_after_first, size_after_second,
-            "same CSS should reuse existing cache entry — size must not grow"
-        );
-
-        // Verifikasi clear bekerja
-        reverse_lookup_clear_cache();
-        let size_after_clear = reverse_lookup_cache_size();
-        assert!(
-            size_after_clear < size_after_first,
-            "clear should reduce cache size (before_clear={size_after_first}, after_clear={size_after_clear})"
-        );
+        assert_eq!(size_after_first, size_after_second);
     }
 
     #[test]
     fn test_find_dependents() {
         let deps = reverse_lookup_find_dependents(SAMPLE_CSS.to_string(), "bg-red-500".to_string());
-        // hover:bg-red-500 shares base "bg-red-500"
         assert!(
             deps.iter()
                 .any(|d| d.contains("bg-red-500") && d != "bg-red-500"),

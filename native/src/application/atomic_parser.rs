@@ -13,6 +13,8 @@ use dashmap::DashMap;
 use napi_derive::napi;
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+#[cfg(test)]
+use serial_test::serial;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Static property map — mirrors TW_PROPERTY_MAP in index.ts
@@ -505,6 +507,7 @@ pub fn atomic_registry_size() -> u32 {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
+#[serial]
 mod tests {
     use super::*;
 
@@ -591,6 +594,7 @@ mod tests {
 
     #[test]
     fn test_registry_caches() {
+        clear_atomic_registry();
         // Use a globally unique key — thread id + nanos — to avoid collisions with parallel tests
         let unique_class = format!(
             "p-registry-test-{:?}-{}",
