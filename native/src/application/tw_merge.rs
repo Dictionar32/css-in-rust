@@ -933,3 +933,92 @@ pub fn tw_merge_many_with_separator(class_strings: Vec<String>, opts: TwMergeOpt
         resolved.split_whitespace().collect::<Vec<_>>().join(sep)
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// States bitmask pre-generation
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Hasil pregenerate_states_napi — siap di-serialize ke TypeScript lookup table.
+#[napi(object)]
+pub struct StatesLookupResult {
+    /// JSON string: Record<number, string> — bitmask → merged class string
+    pub lookup_json: String,
+    /// Ordered list of state keys — urutan ini menentukan bit position
+    pub state_keys: Vec<String>,
+    /// Jumlah kombinasi yang di-generate (2^n)
+    pub combinations: u32,
+}
+
+/// Pre-generate semua kombinasi boolean states di build time.
+///
+/// Algorithm:
+///   1. Terima HashMap<stateName, classes> dari JS
+///   2. Enumerate semua 2^n bitmask combinations
+///   3. Per combination: concat active classes → merge_class_string() untuk resolve conflicts
+///   4. Return lookup table sebagai JSON + ordered state keys
+///
+/// Threshold: maksimal 16 states (2^16 = 65536 kombinasi).
+/// Lebih dari itu → JS harus fallback ke runtime cx().
+///
+/// # Example
+/// Input:  { "loading": "opacity-60 cursor-wait", "fullWidth": "w-full" }
+/// Output: { 0b00: "", 0b01: "opacity-60 cursor-wait", 0b10: "w-full", 0b11: "opacity-60 cursor-wait w-full" }
+#[napi]
+pub fn pregenerate_states_napi(
+    states: HashMap<String, String>,
+) -> napi::Result<StatesLookupResult> {
+    let n = states.len();
+
+    // Hard limit: 16 states = 65536 kombinasi maksimal
+    if n > 16 {
+        return Err(napi::Error::from_reason(format!(
+            "states: terlalu banyak boolean states ({n}). Maksimal 16. \
+             Untuk states > 16, gunakan variants atau cx() di runtime."
+        )));
+    }
+
+    // Stabilkan urutan keys — sort alphabetically untuk deterministic output
+    let mut keys: Vec<(String, String)> = states.into_iter().collect();
+    keys.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let state_keys: Vec<String> = keys.iter().map(|(k, _)| k.clone()).collect();
+    let combinations = 1u32 << n;
+
+    // Build lookup: bitmask → merged class string
+    let mut lookup: HashMap<u32, String> = HashMap::with_capacity(combinations as usize);
+
+    for mask in 0u32..combinations {
+        // Concat semua active state classes berdasarkan bit position
+        let combined: String = keys
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| mask & (1 << i) != 0)
+            .map(|(_, (_, classes))| classes.as_str())
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        // Resolve conflicts via merge_class_string (e.g. opacity-60 + opacity-50 → last wins)
+        let resolved = if combined.is_empty() {
+            String::new()
+        } else {
+            merge_class_string(&combined)
+        };
+
+        lookup.insert(mask, resolved);
+    }
+
+    // Serialize ke JSON — format: { "0": "", "1": "opacity-60 cursor-wait", ... }
+    let mut json_pairs: Vec<String> = lookup
+        .iter()
+        .map(|(k, v)| format!("\"{}\":\"{}\"", k, v.replace('"', "\\\"")))
+        .collect();
+    json_pairs.sort(); // deterministic output
+
+    let lookup_json = format!("{{{}}}", json_pairs.join(","));
+
+    Ok(StatesLookupResult {
+        lookup_json,
+        state_keys,
+        combinations,
+    })
+}

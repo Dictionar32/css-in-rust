@@ -6,7 +6,7 @@ import { processContainer } from "./containerQuery"
 import { twMerge } from "./merge"
 import { getNativeBinding } from "./native"
 import { processState } from "./stateEngine"
-import type { ComponentConfig, TwStyledComponent } from "./types"
+import type { ComponentConfig, SubComponentConfig, TwStyledComponent } from "./types"
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
@@ -51,22 +51,36 @@ function extractBaseClasses(template: string): string {
 
 /**
  * Buat sub-component React FC dengan classes-nya sendiri.
- * className prop di-merge ke belakang agar bisa di-override dari luar.
+ * Support tag override dan asChild pattern.
+ *
+ * @param tag - HTML tag yang dirender, default "span"
+ * @param asChild - jika true, merge className ke direct child element
  */
 function createSubComponentAccessor(
   parentDisplayName: string,
   name: string,
-  classes: string
+  classes: string,
+  tag: string = "span",
+  asChild: boolean = false
 ): React.FC<{ children?: React.ReactNode; className?: string }> {
   const SubComponent: React.FC<{ children?: React.ReactNode; className?: string }> = ({
     children,
     className,
-  }) =>
-    React.createElement(
-      "span",
-      { className: className ? `${classes} ${className}` : classes },
-      children
-    )
+  }) => {
+    const mergedClass = className ? `${classes} ${className}` : classes
+
+    // asChild: clone direct child element dan merge className ke dalamnya
+    if (asChild && React.isValidElement(children)) {
+      const child = React.Children.only(children) as React.ReactElement<{ className?: string }>
+      return React.cloneElement(child, {
+        className: child.props.className
+          ? `${mergedClass} ${child.props.className}`
+          : mergedClass,
+      })
+    }
+
+    return React.createElement(tag, { className: mergedClass }, children)
+  }
   SubComponent.displayName = `${parentDisplayName}[${name}]`
   return SubComponent
 }
@@ -74,19 +88,35 @@ function createSubComponentAccessor(
 /** Register semua sub-components ke component object.
  * Sumber: (1) config.sub object — prioritas utama, TypeScript infer keys-nya.
  *         (2) parseSubComponentBlocks dari template string — fallback untuk template literal syntax.
+ *
+ * config.sub value bisa berupa:
+ *   - string: "font-bold text-lg" → render sebagai <span>
+ *   - SubComponentConfig: { classes: "...", tag: "header", asChild: false }
  */
 function registerSubComponents<P extends object>(
   component: TwStyledComponent<P>,
   template: string,
-  configSub?: Record<string, string>
+  configSub?: Record<string, string | SubComponentConfig>
 ): void {
   const displayName = component.displayName ?? "tw"
   const map = component as unknown as Record<string, unknown>
 
   // Priority 1: config.sub object — explicit, fully typed
   if (configSub) {
-    for (const [name, classes] of Object.entries(configSub)) {
-      map[name] = createSubComponentAccessor(displayName, name, classes.trim().replace(/\s+/g, " "))
+    for (const [name, value] of Object.entries(configSub)) {
+      if (typeof value === "string") {
+        map[name] = createSubComponentAccessor(displayName, name, value.trim().replace(/\s+/g, " "))
+      } else {
+        // SubComponentConfig object
+        const classes = value.base.trim().replace(/\s+/g, " ")
+        map[name] = createSubComponentAccessor(
+          displayName,
+          name,
+          classes,
+          value.tag ?? "span",
+          value.asChild ?? false
+        )
+      }
     }
   }
 
@@ -105,11 +135,12 @@ function normalizeClassName(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
 }
 
-function makeFilterProps(variantKeys: Set<string>) {
+function makeFilterProps(variantKeys: Set<string>, stateKeys: Set<string> = new Set()) {
   return function filterProps(props: Record<string, unknown>): Record<string, unknown> {
     const out: Record<string, unknown> = {}
     for (const key in props) {
       if (variantKeys.has(key)) continue
+      if (stateKeys.has(key)) continue
       if (key.startsWith("$")) continue
       if (ALWAYS_BLOCKED.has(key)) continue
       out[key] = props[key]
@@ -132,6 +163,44 @@ function resolveVariants(
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
   return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+}
+
+/**
+ * Resolve states bitmask dari props → lookup class string.
+ * O(1) — hitung bitmask dari boolean props, lookup di pre-generated table.
+ *
+ * Fallback: kalau lookup tidak tersedia, cx() runtime.
+ */
+function resolveStates(
+  statesConfig: Record<string, string>,
+  stateKeys: string[],
+  statesLookup: Record<number, string> | null,
+  props: Record<string, unknown>
+): string {
+  // Fast path: pre-generated lookup tersedia
+  if (statesLookup && stateKeys.length > 0) {
+    let mask = 0
+    for (let i = 0; i < stateKeys.length; i++) {
+      if (props[stateKeys[i]]) mask |= (1 << i)
+    }
+    return statesLookup[mask] ?? ""
+  }
+
+  // Fallback: runtime concat → native tw_merge_many
+  const activeClasses = stateKeys
+    .filter(k => props[k])
+    .map(k => statesConfig[k])
+    .filter(Boolean)
+
+  if (activeClasses.length === 0) return ""
+
+  const native = getNativeBinding()
+  if (native?.twMergeMany) {
+    return native.twMergeMany(activeClasses)
+  }
+
+  // Last resort: join saja tanpa merge (native unavailable — seharusnya tidak terjadi)
+  return activeClasses.join(" ")
 }
 
 function resolveCompound(
@@ -302,6 +371,23 @@ export function createComponent<P extends object = Record<string, unknown>>(
   const containerConfig = typeof config === "string" ? undefined : config.container
   const containerName = typeof config === "string" ? undefined : config.containerName
   const configSub = typeof config === "string" ? undefined : config.sub
+  const statesConfig = typeof config === "string" ? undefined : config.states
+
+  // Pre-generate states bitmask lookup via Rust (build time)
+  let statesLookup: Record<number, string> | null = null
+  let stateKeys: string[] = []
+  if (statesConfig && Object.keys(statesConfig).length > 0) {
+    try {
+      const native = getNativeBinding()
+      if (native?.pregenerateStatesNapi) {
+        const result = native.pregenerateStatesNapi(statesConfig)
+        statesLookup = JSON.parse(result.lookupJson) as Record<number, string>
+        stateKeys = result.stateKeys
+      }
+    } catch (e) {
+      console.warn("[tailwind-styled-v4] states pre-generation failed, falling back to runtime cx()", e)
+    }
+  }
 
   const stateResult = stateConfig
     ? processState(typeof tag === "string" ? tag : "component", stateConfig)
@@ -314,7 +400,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
     .filter(Boolean)
     .join(" ")
 
-  const filterProps = makeFilterProps(new Set(Object.keys(variants)))
+  const filterProps = makeFilterProps(new Set(Object.keys(variants)), new Set(stateKeys))
   const tagLabel =
     typeof tag === "string" ? tag : ((tag as { displayName?: string }).displayName ?? "Component")
 
@@ -341,11 +427,14 @@ export function createComponent<P extends object = Record<string, unknown>>(
     const runtimeClassName = normalizeClassName(className)
     const variantClasses = resolveVariants(variants, props, defaultVariants)
     const compoundClasses = resolveCompound(compoundVariants, props)
+    const statesClasses = statesConfig
+      ? resolveStates(statesConfig, stateKeys, statesLookup, props)
+      : ""
 
     return React.createElement(tag, {
       ref,
       ...filterProps(rest),
-      className: twMerge(extractBaseClasses(base), variantClasses, compoundClasses, engineClasses, runtimeClassName),
+      className: twMerge(extractBaseClasses(base), variantClasses, compoundClasses, statesClasses, engineClasses, runtimeClassName),
     })
   })
 

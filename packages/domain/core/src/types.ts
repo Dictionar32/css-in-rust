@@ -18,6 +18,55 @@ export type InferVariantProps<T extends ComponentConfig> = {
   [K in keyof T["variants"]]?: keyof T["variants"][K]
 }
 
+/**
+ * Infer boolean props dari states config.
+ * Setiap key di states → optional boolean prop di component.
+ *
+ * @example
+ * // states: { loading: "...", fullWidth: "..." }
+ * // → { loading?: boolean, fullWidth?: boolean }
+ */
+export type InferStatesProps<T extends ComponentConfig> = {
+  [K in keyof T["states"]]?: boolean
+}
+
+// ── Sub-component Config ──────────────────────────────────────────────────────
+/**
+ * Config object untuk sub-component dengan tag override dan asChild support.
+ *
+ * @example
+ * sub: {
+ *   header: { classes: "font-bold text-lg border-b", tag: "header" },
+ *   body:   { classes: "text-gray-600 py-2",          tag: "section" },
+ *   action: { classes: "mt-4", asChild: true },
+ * }
+ */
+export interface SubComponentConfig {
+  /** Tailwind classes untuk sub-component ini — konsisten dengan ComponentConfig.base */
+  base: string
+  /** HTML tag yang dirender — default: "span" */
+  tag?: keyof React.JSX.IntrinsicElements
+  /** asChild: merge className + event handlers ke direct child element */
+  asChild?: boolean
+}
+
+// ── States Config ─────────────────────────────────────────────────────────────
+/**
+ * Boolean props yang di-resolve via bitmask lookup table (pre-generated di build time).
+ * Berbeda dari `state` (CSS data-attribute driven) — ini adalah React props boolean.
+ *
+ * @example
+ * states: {
+ *   loading:   "opacity-60 cursor-wait pointer-events-none",
+ *   fullWidth: "w-full",
+ *   disabled:  "opacity-50 cursor-not-allowed",
+ * }
+ *
+ * // JSX — boolean prop langsung:
+ * <Button loading fullWidth>Submit</Button>
+ */
+export type StatesConfig = Record<string, string>
+
 // ── Component Config ─────────────────────────────────────────────────────────
 export interface ComponentConfig {
   base?: string
@@ -27,14 +76,19 @@ export interface ComponentConfig {
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
   containerName?: string
+  /**
+   * Boolean props — di-resolve via Rust bitmask lookup table di build time.
+   * Maksimal 16 states per komponen (2^16 kombinasi).
+   */
+  states?: StatesConfig
   /** Sub-component definitions — keys di-infer otomatis oleh TypeScript */
-  sub?: Record<string, string>
+  sub?: Record<string, string | SubComponentConfig>
 }
 
 // Infer sub-component names dari config object { sub: { icon: "...", footer: "..." } }
-// TypeScript infer literal key types dari object literal secara sempurna.
+// Handle both string value dan SubComponentConfig object value.
 type InferSubFromConfig<C extends ComponentConfig> =
-  C extends { sub: Record<infer K extends string, string> } ? K : never
+  C extends { sub: Record<infer K extends string, string | SubComponentConfig> } ? K : never
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
@@ -129,7 +183,7 @@ export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
   S extends string = string
 > = {
-  (props: StyledComponentProps & InferVariantProps<Config>): React.ReactElement | null
+  (props: StyledComponentProps & InferVariantProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
     (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S>

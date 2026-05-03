@@ -109,6 +109,12 @@ interface NativeBinding {
     breakpoints: Array<{ key: string; classes: string }>,
     containerName: string | null
   ) => string
+  /** Pre-generate semua kombinasi boolean states via bitmask (tw_merge.rs) */
+  pregenerateStatesNapi?: (states: Record<string, string>) => {
+    lookupJson: string
+    stateKeys: string[]
+    combinations: number
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
