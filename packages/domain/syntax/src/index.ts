@@ -83,7 +83,13 @@ export function extractAllClasses(source: string): string[] {
   if (result === null || result === undefined) {
     throw new Error("[tailwind-styled/syntax] Native extractClassesFromSource returned null.")
   }
-  return result.sort()
+  // NAPI kadang return non-Array (misal string JSON) — normalize dulu sebelum sort
+  const arr: string[] = Array.isArray(result)
+    ? result
+    : typeof result === "string"
+      ? (JSON.parse(result) as string[])
+      : Array.from(result as Iterable<string>)
+  return arr.sort()
 }
 
 export function parseClasses(raw: string): string[] {
