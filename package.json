@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.34",
+  "version": "5.0.6-canary.0.0.35",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"

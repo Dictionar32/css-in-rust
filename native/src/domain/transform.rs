@@ -27,6 +27,12 @@ static RE_IMPORT_TW: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"import\s*\{[^}]*\btw\b[^}]*\}\s*from\s*["']tailwind-styled-v4["'];?\n?"#).unwrap()
 });
 static RE_STILL_TW: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(server\.)?\w+[`(]").unwrap());
+// STEP 3 — object config syntax: tw.tag({ base, variants, sizes, states })
+static RE_OBJ_CONFIG_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(\w+)\s*\(").unwrap());
+static RE_OBJ_COMP_NAME: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)(?:const|let|var)\s+(\w+)\s*=\s*tw\.\w+\s*\(").unwrap());
+static RE_FLAT_BACKTICK: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(\w[\w-]*)\s*:\s*`([^`]*)` *").unwrap());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types exposed to N-API
@@ -77,6 +83,227 @@ pub struct RscAnalysis {
 
 fn is_dynamic(content: &str) -> bool {
     content.contains("${")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Object config helpers (STEP 3)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Find the matching `)` for a `(` at `start`, respecting backtick strings.
+fn find_matching_paren_from(s: &str, start: usize) -> Option<usize> {
+    let bytes = s.as_bytes();
+    let mut depth = 0i32;
+    let mut i = start;
+    let mut in_backtick = false;
+    while i < bytes.len() {
+        if in_backtick {
+            if bytes[i] == b'`' {
+                in_backtick = false;
+            }
+            i += 1;
+            continue;
+        }
+        match bytes[i] {
+            b'`' => in_backtick = true,
+            b'(' => depth += 1,
+            b')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(i);
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Extract the inner content of `{...}` where `inner_start` is the index
+/// immediately after the opening `{`.  Respects nested braces and backtick strings.
+fn extract_brace_inner(content: &str, inner_start: usize) -> Option<&str> {
+    let s = &content[inner_start..];
+    let bytes = s.as_bytes();
+    let mut depth = 1i32;
+    let mut i = 0;
+    let mut in_backtick = false;
+    while i < bytes.len() {
+        if in_backtick {
+            if bytes[i] == b'`' {
+                in_backtick = false;
+            }
+            i += 1;
+            continue;
+        }
+        match bytes[i] {
+            b'`' => in_backtick = true,
+            b'{' => depth += 1,
+            b'}' => {
+                depth -= 1;
+                if depth == 0 {
+                    return Some(&s[..i]);
+                }
+            }
+            _ => {}
+        }
+        i += 1;
+    }
+    None
+}
+
+/// Extract the backtick string value for `key: \`...\`` inside an object literal.
+fn extract_backtick_for_key(content: &str, key: &str) -> Option<String> {
+    let search = format!("{}:", key);
+    let pos = content.find(&search)?;
+    let after = content[pos + search.len()..].trim_start();
+    if !after.starts_with('`') {
+        return None;
+    }
+    let inner = &after[1..];
+    let end = inner.find('`')?;
+    Some(inner[..end].to_string())
+}
+
+/// Return the inner content of `key: { ... }` inside an object literal.
+fn find_obj_section<'a>(content: &'a str, key: &str) -> Option<&'a str> {
+    let search = format!("{}:", key);
+    let key_pos = content.find(&search)?;
+    let after_colon = &content[key_pos + search.len()..];
+    let ws_len = after_colon.len() - after_colon.trim_start().len();
+    let trimmed = after_colon.trim_start();
+    if !trimmed.starts_with('{') {
+        return None;
+    }
+    let abs_after_brace = key_pos + search.len() + ws_len + 1; // +1 skips `{`
+    extract_brace_inner(content, abs_after_brace)
+}
+
+/// Parse `{ key: \`classes\` }` → HashMap<key, normalised classes>.
+fn parse_flat_backtick_map(content: &str) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for cap in RE_FLAT_BACKTICK.captures_iter(content) {
+        let classes = normalise_classes(&cap[2]).join(" ");
+        map.insert(cap[1].to_string(), classes);
+    }
+    map
+}
+
+/// Parse `{ outerKey: { innerKey: \`classes\` } }` → nested HashMap.
+fn parse_nested_backtick_map(content: &str) -> HashMap<String, HashMap<String, String>> {
+    let mut result = HashMap::new();
+    // RE_FLAT_BACKTICK would match inner keys; we need to walk top-level keys manually.
+    let re_key = Regex::new(r"(\w[\w-]*)\s*:\s*\{").expect("parse_nested_backtick_map regex");
+    let mut search_from = 0usize;
+    loop {
+        let slice = &content[search_from..];
+        let cap = match re_key.captures(slice) {
+            Some(c) => c,
+            None => break,
+        };
+        let outer_key = cap[1].to_string();
+        let rel_end = cap.get(0).unwrap().end(); // position right after `{`
+        let abs_inner_start = search_from + rel_end;
+        match extract_brace_inner(content, abs_inner_start) {
+            Some(inner) => {
+                let flat = parse_flat_backtick_map(inner);
+                let inner_len = inner.len();
+                result.insert(outer_key, flat);
+                search_from = abs_inner_start + inner_len + 1; // +1 for `}`
+            }
+            None => break,
+        }
+    }
+    result
+}
+
+/// Emit a forwardRef component for `tw.tag({ base, variants, sizes, states })`.
+/// Variants: `props[variantName] === "value"` → apply classes.
+/// Sizes:    `props.size === "sizeName"` → apply classes.
+/// States:   `props[stateName]` (boolean) → apply classes.
+fn render_object_config_component(
+    tag: &str,
+    fn_name: &str,
+    base_classes: &str,
+    variants: &HashMap<String, HashMap<String, String>>,
+    sizes: &HashMap<String, String>,
+    states: &HashMap<String, String>,
+) -> String {
+    let mut lines: Vec<String> = Vec::new();
+    lines.push(format!(
+        "React.forwardRef(function {fn_name}(props, ref) {{"
+    ));
+    lines.push(format!(
+        "  var _cls = [{}];",
+        serde_json_string(base_classes)
+    ));
+
+    // Variant prop checks
+    let mut variant_keys: Vec<String> = Vec::new();
+    // Sort for deterministic output
+    let mut sorted_variants: Vec<_> = variants.iter().collect();
+    sorted_variants.sort_by_key(|(k, _)| k.as_str());
+    for (variant_name, variant_values) in &sorted_variants {
+        variant_keys.push(variant_name.to_string());
+        let mut sorted_values: Vec<_> = variant_values.iter().collect();
+        sorted_values.sort_by_key(|(k, _)| k.as_str());
+        for (value, classes) in sorted_values {
+            lines.push(format!(
+                "  if (props.{} === {}) _cls.push({});",
+                variant_name,
+                serde_json_string(value),
+                serde_json_string(classes),
+            ));
+        }
+    }
+
+    // Size prop checks
+    if !sizes.is_empty() {
+        let mut sorted_sizes: Vec<_> = sizes.iter().collect();
+        sorted_sizes.sort_by_key(|(k, _)| k.as_str());
+        for (size_name, classes) in sorted_sizes {
+            lines.push(format!(
+                "  if (props.size === {}) _cls.push({});",
+                serde_json_string(size_name),
+                serde_json_string(classes),
+            ));
+        }
+    }
+
+    // Boolean state prop checks
+    let mut state_keys: Vec<String> = Vec::new();
+    let mut sorted_states: Vec<_> = states.iter().collect();
+    sorted_states.sort_by_key(|(k, _)| k.as_str());
+    for (state_name, classes) in sorted_states {
+        state_keys.push(state_name.clone());
+        lines.push(format!(
+            "  if (props.{}) _cls.push({});",
+            state_name,
+            serde_json_string(classes),
+        ));
+    }
+
+    lines.push("  if (props.className) _cls.push(props.className);".to_string());
+    lines.push("  var _p = Object.assign({}, props);".to_string());
+
+    // Delete custom props so they don't reach the DOM element
+    let mut deletes: Vec<String> = vec!["delete _p.className;".to_string()];
+    for k in &variant_keys {
+        deletes.push(format!("delete _p.{};", k));
+    }
+    if !sizes.is_empty() {
+        deletes.push("delete _p.size;".to_string());
+    }
+    for k in &state_keys {
+        deletes.push(format!("delete _p.{};", k));
+    }
+    lines.push(format!("  {}", deletes.join(" ")));
+
+    lines.push(format!(
+        "  return React.createElement(\"{tag}\", Object.assign({{ref: ref}}, _p, {{className: _cls.filter(Boolean).join(\" \")}}));",
+        tag = tag,
+    ));
+    lines.push("})".to_string());
+    lines.join("\n")
 }
 
 // ─ OPTIMIZATION (Phase 1.3): Pre-compute component name index for O(1) lookups
@@ -418,6 +645,143 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
         }
     }
 
+    // STEP 3: tw.tag({ base, variants, sizes, states }) — object config syntax
+    //
+    // Unlike STEP 1/2 (template literals), this syntax passes a plain JS object.
+    // The Rust transformer parses the object fields at build time and emits a
+    // static forwardRef component — no `tw` or native binding needed at runtime.
+    //
+    // Condition: only process if the inner paren starts with `{` (object literal).
+    // Plain function calls like `tw(Component)` are already handled by STEP 2.
+    {
+        let snap = code.clone();
+
+        // Build component name index for object config declarations:
+        //   const Button = tw.button({ ... })  →  "Button"
+        let obj_comp_index: HashMap<String, usize> = {
+            let mut idx = HashMap::new();
+            for cap in RE_OBJ_COMP_NAME.captures_iter(&snap) {
+                let pos = cap.get(0).map(|m| m.start()).unwrap_or(0);
+                idx.insert(cap[1].to_string(), pos);
+            }
+            idx
+        };
+
+        let mut replacements: Vec<(String, String)> = Vec::with_capacity(4);
+        let mut search_from = 0usize;
+
+        loop {
+            let slice = &snap[search_from..];
+            let cap = match RE_OBJ_CONFIG_START.captures(slice) {
+                Some(c) => c,
+                None => break,
+            };
+
+            let tag = cap[1].to_string();
+            let rel_start = cap.get(0).unwrap().start();
+            let rel_end = cap.get(0).unwrap().end(); // position right after `(`
+
+            let abs_match_start = search_from + rel_start;
+            let abs_paren_pos = search_from + rel_end - 1; // the `(`
+
+            let paren_end = match find_matching_paren_from(&snap, abs_paren_pos) {
+                Some(p) => p,
+                None => {
+                    search_from += rel_end;
+                    continue;
+                }
+            };
+
+            // Inner content between the parens
+            let inner_paren = &snap[abs_paren_pos + 1..paren_end];
+            let inner_trimmed = inner_paren.trim_start();
+
+            // Guard: must be an object literal `{...}`, not a wrapped component
+            if !inner_trimmed.starts_with('{') {
+                search_from = paren_end + 1;
+                continue;
+            }
+
+            // Extract the inner object content (skip outer `{`)
+            let obj_content = match extract_brace_inner(inner_trimmed, 1) {
+                Some(c) => c.to_string(),
+                None => {
+                    search_from = paren_end + 1;
+                    continue;
+                }
+            };
+
+            // Parse fields
+            let base_raw = extract_backtick_for_key(&obj_content, "base").unwrap_or_default();
+            let base_classes = normalise_classes(&base_raw).join(" ");
+
+            let variants = find_obj_section(&obj_content, "variants")
+                .map(parse_nested_backtick_map)
+                .unwrap_or_default();
+
+            let sizes = find_obj_section(&obj_content, "sizes")
+                .map(parse_flat_backtick_map)
+                .unwrap_or_default();
+
+            let states = find_obj_section(&obj_content, "states")
+                .map(parse_flat_backtick_map)
+                .unwrap_or_default();
+
+            // Skip if the object is empty / not a TwConfig
+            if base_classes.is_empty()
+                && variants.is_empty()
+                && sizes.is_empty()
+                && states.is_empty()
+            {
+                search_from = paren_end + 1;
+                continue;
+            }
+
+            // Collect all Tailwind classes for content scanning
+            all_classes.extend(normalise_classes(&base_classes));
+            for inner_map in variants.values() {
+                for cls in inner_map.values() {
+                    all_classes.extend(normalise_classes(cls));
+                }
+            }
+            for cls in sizes.values() {
+                all_classes.extend(normalise_classes(cls));
+            }
+            for cls in states.values() {
+                all_classes.extend(normalise_classes(cls));
+            }
+
+            // Resolve component name from declaration
+            let comp_name = obj_comp_index
+                .iter()
+                .filter(|(_, &pos)| pos < abs_match_start)
+                .max_by_key(|(_, &pos)| pos)
+                .map(|(name, _)| name.clone())
+                .unwrap_or_else(|| format!("Tw_{}", tag));
+
+            let fn_name = format!("_Tw_{}", comp_name);
+            let full_match = snap[abs_match_start..=paren_end].to_string();
+            let replacement = render_object_config_component(
+                &tag,
+                &fn_name,
+                &base_classes,
+                &variants,
+                &sizes,
+                &states,
+            );
+
+            replacements.push((full_match, replacement));
+            changed = true;
+            needs_react = true;
+
+            search_from = paren_end + 1;
+        }
+
+        for (from, to) in replacements {
+            code = code.replacen(&from, &to, 1);
+        }
+    }
+
     if !changed {
         return TransformResult {
             code: source,
@@ -427,8 +791,6 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
             metadata_json: None,
         };
     }
-
-    // STEP 3: Ensure React import
     if needs_react
         && !source.contains("import React")
         && !source.contains("from 'react'")
