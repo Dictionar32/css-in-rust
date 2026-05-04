@@ -1,7 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node"],
     "rootDir": ".",
     "paths": {
       "@tailwind-styled/shared": [
@@ -79,6 +78,9 @@
       "@tailwind-styled/core": [
         "./packages/domain/core/src/index.ts"
       ],
+      "@tailwind-styled/core/browser": [
+        "./packages/domain/core/src/index.browser.ts"
+      ],
       "@tailwind-styled/dashboard": [
         "./packages/infrastructure/dashboard/src/index.ts"
       ],
@@ -100,6 +102,7 @@
     }
   },
   "include": [
+    "tsup.config.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "packages/*/*/src/**/*.ts",

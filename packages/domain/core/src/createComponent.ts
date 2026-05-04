@@ -401,7 +401,7 @@ export function createComponent<P extends object = Record<string, unknown>>(
 ): TwStyledComponent<P> {
   const isStatic = typeof config === "string"
   const base = typeof config === "string" ? config : (config.base ?? "")
-  const variants = typeof config === "string" ? {} : (config.variants ?? {})
+  const variants = typeof config === "string" ? {} : (config.variants ?? {}) as Record<string, Record<string, string>>
   const compoundVariants = typeof config === "string" ? [] : (config.compoundVariants ?? [])
   const defaultVariants = typeof config === "string" ? {} : (config.defaultVariants ?? {})
   const stateConfig = typeof config === "string" ? undefined : config.state

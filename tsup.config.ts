@@ -84,23 +84,26 @@ export default defineConfig([
   // ── Browser bundle ─────────────────────────────────────────────────────────
   // native.ts → native.browser.ts via esbuild alias
   // Zero node built-ins — safe untuk Next.js client components
-  {
-    ...sharedConfig,
-    entry: {
-      "index.browser": "src/umbrella/index.browser.ts",
-    },
-    target: "es2020" as const,
-    platform: "browser" as const,
-    format: ["esm"] as const,
-    external: sharedExternal,
-    esbuildOptions(options: BuildOptions) {
-      options.alias = {
-        ...options.alias,
-        [root("packages/domain/core/src/native.ts")]:
-          root("packages/domain/core/src/native.browser.ts"),
-        [root("packages/domain/core/src/compatibility.ts")]:
-          root("packages/domain/core/src/native.browser.ts"),
-      }
-    },
-  },
+  // Guard: hanya jalankan dari root project, bukan dari sub-package
+  ...(projectRoot.replace(/\\/g, "/").endsWith("css-in-rust-tailwnd-js-css/")
+    ? [{
+        ...sharedConfig,
+        entry: {
+          "index.browser": "src/umbrella/index.browser.ts",
+        },
+        target: "es2020" as const,
+        platform: "browser" as const,
+        format: ["esm" as const],
+        external: sharedExternal,
+        esbuildOptions(options: BuildOptions) {
+          options.alias = {
+            ...options.alias,
+            [root("packages/domain/core/src/native.ts")]:
+              root("packages/domain/core/src/native.browser.ts"),
+            [root("packages/domain/core/src/compatibility.ts")]:
+              root("packages/domain/core/src/native.browser.ts"),
+          }
+        },
+      }]
+    : []),
 ])

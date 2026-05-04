@@ -14,9 +14,17 @@ export type { HtmlTagName, VariantProps, VariantValue, VariantMatrix } from "@ta
 // ── Variant Types ────────────────────────────────────────────────────────────
 export type VariantLiterals = string | number | boolean
 
+/** Sizes sugar syntax — shorthand untuk variants.size */
+export type SizesConfig = Record<string, string>
+
 export type InferVariantProps<T extends ComponentConfig> = {
   [K in keyof T["variants"]]?: keyof T["variants"][K]
 }
+
+export type InferSizeProps<T extends ComponentConfig> =
+  T["sizes"] extends Record<string, string>
+    ? { size?: keyof T["sizes"] }
+    : Record<never, never>
 
 /**
  * Infer boolean props dari states config.
@@ -66,12 +74,17 @@ export type StatesConfig = Record<string, string>
 // ── Component Config ─────────────────────────────────────────────────────────
 export interface ComponentConfig {
   base?: string
+  /** Variants — nested: { intent: { primary: "..." }, size: { sm: "..." } } */
   variants?: Record<string, Record<string, string>>
   defaultVariants?: Record<string, string>
   compoundVariants?: Array<{ class: string; [key: string]: string }>
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
   containerName?: string
+  /** Sugar syntax untuk variants.size — { sm: "...", md: "...", lg: "..." } */
+  sizes?: SizesConfig
+  /** defaultSize — default ke key pertama kalau tidak diset */
+  defaultSize?: string
   /**
    * Boolean props — di-resolve via Rust bitmask lookup table di build time.
    * Maksimal 16 states per komponen (2^16 kombinasi).
@@ -190,7 +203,7 @@ export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
   S extends string = string
 > = {
-  (props: StyledComponentProps & InferVariantProps<Config> & InferStatesProps<Config>): React.ReactElement | null
+  (props: StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
     (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S>
