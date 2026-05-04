@@ -26,12 +26,12 @@ export interface NativeResolutionResult {
 
 /** Platform key → prebuilt npm package name */
 const PLATFORM_MAP: Record<string, string[]> = {
-  "linux-x64":    ["@tailwind-styled/native-linux-x64"],
-  "linux-arm64":  ["@tailwind-styled/native-linux-arm64"],
+  "linux-x64":    ["@tailwind-styled/native-linux-x64-gnu", "@tailwind-styled/native-linux-x64"],
+  "linux-arm64":  ["@tailwind-styled/native-linux-arm64-gnu", "@tailwind-styled/native-linux-arm64"],
   "darwin-x64":   ["@tailwind-styled/native-darwin-x64"],
   "darwin-arm64": ["@tailwind-styled/native-darwin-arm64"],
-  "win32-x64":    ["@tailwind-styled/native-win32-x64"],
-  "win32-arm64":  ["@tailwind-styled/native-win32-arm64"],
+  "win32-x64":    ["@tailwind-styled/native-win32-x64-msvc", "@tailwind-styled/native-win32-x64"],
+  "win32-arm64":  ["@tailwind-styled/native-win32-arm64-msvc", "@tailwind-styled/native-win32-arm64"],
 }
 
 function platformKey(): string {
@@ -86,13 +86,33 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
     }
   }
 
-  // 3. Local build candidates
-  const cwd = process.cwd()
-  const base = runtimeDir ?? cwd
-  // napi-rs naming: platform key may have -gnu suffix on Linux
+  // 2b. .node file bundled inside this package itself (via "files": ["native/*.node"])
+  //     Covers the case where user installs tailwind-styled-v4 directly from npm
+  //     and the .node file lands at node_modules/tailwind-styled-v4/native/*.node
   const napiPlatform = platform === "linux-x64" ? "linux-x64-gnu"
     : platform === "linux-arm64" ? "linux-arm64-gnu"
     : platform
+  const BINARY_NAMES_SELF = ["tailwind-styled-native", "tailwind_styled_parser"]
+  if (runtimeDir) {
+    // runtimeDir is typically dist/ — go up to package root, then into native/
+    for (const depth of ["..", path.join("..", ".."), path.join("..", "..", "..")]) {
+      const pkgRoot = path.resolve(runtimeDir, depth)
+      for (const bin of BINARY_NAMES_SELF) {
+        for (const suffix of ["", `.${platform}`, `.${napiPlatform}`]) {
+          const candidate = path.resolve(pkgRoot, "native", `${bin}${suffix}.node`)
+          tried.push(`self-bundled:${candidate}`)
+          if (fs.existsSync(candidate)) {
+            return { path: candidate, source: "prebuilt", platform, tried }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Local build candidates
+  const cwd = process.cwd()
+  const base = runtimeDir ?? cwd
+  // napi-rs naming: platform key may have -gnu suffix on Linux (already computed above)
 
   // Both possible binary names:
   // - "tailwind_styled_parser" (old hardcoded name in resolvers)
