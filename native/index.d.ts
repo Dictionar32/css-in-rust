@@ -1336,6 +1336,24 @@ export declare function pluginVerifyIntegrity(content: string, expectedIntegrity
 export declare function pollWatchEvents(handleId: number): Array<WatchChangeEvent>
 
 /**
+ * Pre-generate semua kombinasi boolean states di build time.
+ *
+ * Algorithm:
+ *   1. Terima HashMap<stateName, classes> dari JS
+ *   2. Enumerate semua 2^n bitmask combinations
+ *   3. Per combination: concat active classes → merge_class_string() untuk resolve conflicts
+ *   4. Return lookup table sebagai JSON + ordered state keys
+ *
+ * Threshold: maksimal 16 states (2^16 = 65536 kombinasi).
+ * Lebih dari itu → JS harus fallback ke runtime cx().
+ *
+ * # Example
+ * Input:  { "loading": "opacity-60 cursor-wait", "fullWidth": "w-full" }
+ * Output: { 0b00: "", 0b01: "opacity-60 cursor-wait", 0b10: "w-full", 0b11: "opacity-60 cursor-wait w-full" }
+ */
+export declare function pregenerateStatesNapi(states: Record<string, string>): StatesLookupResult
+
+/**
  * Compute per-file class diff and update an in-memory registry.
  *
  * - `file_path`: absolute/normalized file path key.
@@ -1662,6 +1680,16 @@ export interface StaleCheckEntry {
  * Kembalikan `handle_id` untuk menghentikan watcher.
  */
 export declare function startWatch(rootDir: string): WatchStartResult
+
+/** Hasil pregenerate_states_napi — siap di-serialize ke TypeScript lookup table. */
+export interface StatesLookupResult {
+  /** JSON string: Record<number, string> — bitmask → merged class string */
+  lookupJson: string
+  /** Ordered list of state keys — urutan ini menentukan bit position */
+  stateKeys: Array<string>
+  /** Jumlah kombinasi yang di-generate (2^n) */
+  combinations: number
+}
 
 /** Hentikan watcher dengan `handle_id`. */
 export declare function stopWatch(handleId: number): boolean

@@ -1,11 +1,9 @@
 import { defineConfig } from "tsup"
-import type { BuildOptions } from "esbuild"
 import { existsSync } from "fs"
 import path from "node:path"
 
-// import.meta.url selalu tersedia di ESM — tidak butuh @types/node
 const projectRoot = new URL(".", import.meta.url).pathname
-  .replace(/^\/([A-Z]:)/, "$1") // fix Windows path: /C:/... → C:/...
+  .replace(/^\/([A-Z]:)/, "$1")
 const root = (p: string) => `${projectRoot}${p}`
 
 const entries = {
@@ -72,36 +70,53 @@ const sharedConfig = {
   },
 }
 
-// Fix #1: guard pakai existsSync, tidak tergantung nama folder.
 const hasBrowserEntry = existsSync("src/umbrella/index.browser.ts")
 
-// Path absolut ke native.browser.ts — target redirect untuk semua import native.
+// Path ke native.browser.ts — stub tanpa Node built-ins.
 const nativeBrowserPath = root("packages/domain/core/src/native.browser.ts")
   .replace(/\\/g, "/")
 
-// Fix #2: esbuild options.alias tidak bisa pakai absolute path sebagai key.
-// Solusi: esbuild plugin onResolve.
+// Path ke shared.browser.ts — stub untuk @tailwind-styled/shared (Node-only).
+const sharedBrowserStubPath = root("src/stubs/shared.browser.ts")
+  .replace(/\\/g, "/")
+
+// Plugin ini di-inject via esbuildPlugins (bukan esbuildOptions) supaya
+// jalan SEBELUM tsup's internal noExternal resolver.
 //
-// Fix #3: filter sebelumnya /(native|compatibility)\.ts$/ tidak match import
-// tanpa ekstensi seperti `import { getNativeBinding } from "./native"`.
-// Semua file di @tailwind-styled/core (cv.ts, createComponent.ts, merge.ts,
-// cx.ts, containerQuery.ts, stateEngine.ts, twProxy.ts) mengimport "./native"
-// tanpa ekstensi — harus di-redirect ke native.browser.ts agar tidak bundle
-// fs/module/crypto ke browser output.
+// Kenapa esbuildPlugins, bukan esbuildOptions?
+// - esbuildOptions dipanggil setelah tsup sudah setup internal plugins-nya.
+//   Append/prepend di sana tidak cukup karena tsup bisa override lagi.
+// - esbuildPlugins adalah tsup top-level option yang inject plugin sebelum
+//   tsup mendaftarkan internal resolver-nya.
+//
+// Fix #3: ./native -> native.browser.ts
+//   cv.ts, twProxy.ts, createComponent.ts, stateEngine.ts semua import
+//   "./native" tanpa ekstensi. Harus di-redirect ke stub agar fs/module
+//   tidak ikut terbundle.
+//
+// Fix #5: @tailwind-styled/shared -> shared.browser.ts
+//   Shared import fs/crypto/module di top-level. Kalau ikut terbundle
+//   ke browser output, Next.js langsung error "Can't resolve 'fs'".
+//   index.browser.ts sudah pakai relative import langsung ke TS source
+//   (bukan package import), jadi shared tidak masuk lewat @tailwind-styled/core.
+//   Tapi kalau ada file lain yang import shared, plugin ini menangkapnya.
 const nativeBrowserPlugin = {
   name: "native-to-browser-alias",
   setup(build: { onResolve: Function }) {
-    // Filter match "./native" dan "./compatibility" dengan atau TANPA ekstensi .ts
+    // Fix #5: @tailwind-styled/shared -> no-op browser stub.
+    build.onResolve(
+      { filter: /^@tailwind-styled\/shared$/ },
+      (_args: { path: string }) => ({ path: sharedBrowserStubPath })
+    )
+
+    // Fix #3: ./native dan ./compatibility -> native.browser.ts.
     build.onResolve(
       { filter: /\/(native|compatibility)(\.ts)?$/ },
       (args: { path: string; resolveDir: string }) => {
-        // Resolve ke path absolut dulu, baru compare — hindari false positive
         const abs = path.resolve(args.resolveDir, args.path).replace(/\\/g, "/")
         if (
-          // Tanpa ekstensi (import "./native") — kasus paling umum di source
           abs.endsWith("packages/domain/core/src/native") ||
           abs.endsWith("packages/domain/core/src/compatibility") ||
-          // Dengan ekstensi (import "./native.ts") — jaga-jaga
           abs.endsWith("packages/domain/core/src/native.ts") ||
           abs.endsWith("packages/domain/core/src/compatibility.ts")
         ) {
@@ -113,7 +128,7 @@ const nativeBrowserPlugin = {
 }
 
 export default defineConfig([
-  // ── Server / Node.js bundle ────────────────────────────────────────────────
+  // Server / Node.js bundle
   {
     ...sharedConfig,
     entry: entries,
@@ -123,27 +138,19 @@ export default defineConfig([
     external: [...sharedExternal, ...nodeBuiltins],
   },
 
-  // ── Browser bundle ─────────────────────────────────────────────────────────
-  // Zero node built-ins — safe untuk Next.js Client Components.
-  // native.ts / compatibility.ts → native.browser.ts via onResolve plugin.
+  // Browser bundle — zero Node built-ins, safe untuk Next.js Client Components.
+  // index.browser.ts pakai relative import langsung ke TS source core
+  // (bukan "@tailwind-styled/core/browser") sehingga tidak lewat exports map
+  // dan dist compiled. Plugin ./native lalu bisa redirect dengan benar.
   ...(hasBrowserEntry
     ? [{
         ...sharedConfig,
-        entry: {
-          "index.browser": "src/umbrella/index.browser.ts",
-        },
+        entry: { "index.browser": "src/umbrella/index.browser.ts" },
         target: "es2020" as const,
         platform: "browser" as const,
         format: ["esm" as const],
-        // Node built-ins tetap di-external agar esbuild tidak coba bundle-nya
-        // kalau ada import yang luput dari redirect plugin
         external: [...sharedExternal, ...nodeBuiltins],
-        esbuildOptions(options: BuildOptions) {
-          options.plugins = [
-            ...(options.plugins ?? []),
-            nativeBrowserPlugin,
-          ]
-        },
+        esbuildPlugins: [nativeBrowserPlugin],
       }]
     : []),
 ])
