@@ -5,8 +5,7 @@
  * Uses @tailwind-styled/shared for native resolution.
  */
 
-import * as fs from "node:fs"
-import Module from "node:module"
+import { createRequire } from "node:module"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { resolveNativeBinary } from "@tailwind-styled/shared"
@@ -16,17 +15,8 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-const _loadNative = (path: string): unknown => {
-  if (!fs.existsSync(path)) {
-    throw new Error(`Native binding file not found: ${path}`)
-  }
-
-  const mod = new Module(path) as Module & { filename: string; paths: string[]; exports: unknown }
-  mod.filename = path
-  mod.paths = Module._nodeModulePaths(dirname(path))
-  process.dlopen(mod as unknown as NodeModule, path)
-  return mod.exports
-}
+const _nodeRequire = createRequire(import.meta.url)
+const _loadNative = (path: string): unknown => _nodeRequire(path)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
