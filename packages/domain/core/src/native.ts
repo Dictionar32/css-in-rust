@@ -5,6 +5,8 @@
  * Uses @tailwind-styled/shared for native resolution.
  */
 
+import * as fs from "node:fs"
+import Module from "node:module"
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { resolveNativeBinary } from "@tailwind-styled/shared"
@@ -14,9 +16,17 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-// require() is safe here — tsup banner injects CJS-compatible require into ESM output.
-// See tsup.config.ts esbuildOptions banner for how this is set up.
-const _loadNative = (path: string): unknown => require(path)
+const _loadNative = (path: string): unknown => {
+  if (!fs.existsSync(path)) {
+    throw new Error(`Native binding file not found: ${path}`)
+  }
+
+  const mod = new Module(path) as Module & { filename: string; paths: string[]; exports: unknown }
+  mod.filename = path
+  mod.paths = Module._nodeModulePaths(dirname(path))
+  process.dlopen(mod as unknown as NodeModule, path)
+  return mod.exports
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
