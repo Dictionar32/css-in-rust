@@ -1,5 +1,7 @@
 import { defineConfig } from "tsup"
 import type { BuildOptions } from "esbuild"
+import { existsSync } from "fs"
+import path from "node:path"
 
 // import.meta.url selalu tersedia di ESM — tidak butuh @types/node
 const projectRoot = new URL(".", import.meta.url).pathname
@@ -70,6 +72,46 @@ const sharedConfig = {
   },
 }
 
+// Fix #1: guard pakai existsSync, tidak tergantung nama folder.
+const hasBrowserEntry = existsSync("src/umbrella/index.browser.ts")
+
+// Path absolut ke native.browser.ts — target redirect untuk semua import native.
+const nativeBrowserPath = root("packages/domain/core/src/native.browser.ts")
+  .replace(/\\/g, "/")
+
+// Fix #2: esbuild options.alias tidak bisa pakai absolute path sebagai key.
+// Solusi: esbuild plugin onResolve.
+//
+// Fix #3: filter sebelumnya /(native|compatibility)\.ts$/ tidak match import
+// tanpa ekstensi seperti `import { getNativeBinding } from "./native"`.
+// Semua file di @tailwind-styled/core (cv.ts, createComponent.ts, merge.ts,
+// cx.ts, containerQuery.ts, stateEngine.ts, twProxy.ts) mengimport "./native"
+// tanpa ekstensi — harus di-redirect ke native.browser.ts agar tidak bundle
+// fs/module/crypto ke browser output.
+const nativeBrowserPlugin = {
+  name: "native-to-browser-alias",
+  setup(build: { onResolve: Function }) {
+    // Filter match "./native" dan "./compatibility" dengan atau TANPA ekstensi .ts
+    build.onResolve(
+      { filter: /\/(native|compatibility)(\.ts)?$/ },
+      (args: { path: string; resolveDir: string }) => {
+        // Resolve ke path absolut dulu, baru compare — hindari false positive
+        const abs = path.resolve(args.resolveDir, args.path).replace(/\\/g, "/")
+        if (
+          // Tanpa ekstensi (import "./native") — kasus paling umum di source
+          abs.endsWith("packages/domain/core/src/native") ||
+          abs.endsWith("packages/domain/core/src/compatibility") ||
+          // Dengan ekstensi (import "./native.ts") — jaga-jaga
+          abs.endsWith("packages/domain/core/src/native.ts") ||
+          abs.endsWith("packages/domain/core/src/compatibility.ts")
+        ) {
+          return { path: nativeBrowserPath }
+        }
+      }
+    )
+  },
+}
+
 export default defineConfig([
   // ── Server / Node.js bundle ────────────────────────────────────────────────
   {
@@ -82,10 +124,9 @@ export default defineConfig([
   },
 
   // ── Browser bundle ─────────────────────────────────────────────────────────
-  // native.ts → native.browser.ts via esbuild alias
-  // Zero node built-ins — safe untuk Next.js client components
-  // Guard: hanya jalankan dari root project, bukan dari sub-package
-  ...(projectRoot.replace(/\\/g, "/").endsWith("css-in-rust-tailwnd-js-css/")
+  // Zero node built-ins — safe untuk Next.js Client Components.
+  // native.ts / compatibility.ts → native.browser.ts via onResolve plugin.
+  ...(hasBrowserEntry
     ? [{
         ...sharedConfig,
         entry: {
@@ -94,15 +135,14 @@ export default defineConfig([
         target: "es2020" as const,
         platform: "browser" as const,
         format: ["esm" as const],
-        external: sharedExternal,
+        // Node built-ins tetap di-external agar esbuild tidak coba bundle-nya
+        // kalau ada import yang luput dari redirect plugin
+        external: [...sharedExternal, ...nodeBuiltins],
         esbuildOptions(options: BuildOptions) {
-          options.alias = {
-            ...options.alias,
-            [root("packages/domain/core/src/native.ts")]:
-              root("packages/domain/core/src/native.browser.ts"),
-            [root("packages/domain/core/src/compatibility.ts")]:
-              root("packages/domain/core/src/native.browser.ts"),
-          }
+          options.plugins = [
+            ...(options.plugins ?? []),
+            nativeBrowserPlugin,
+          ]
         },
       }]
     : []),
