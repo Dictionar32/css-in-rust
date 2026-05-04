@@ -7,6 +7,7 @@
 
 import { dirname } from "node:path"
 import { fileURLToPath } from "node:url"
+import { createRequire } from "node:module"
 import { resolveNativeBinary } from "@tailwind-styled/shared"
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
@@ -14,9 +15,10 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-// require() is safe here — tsup banner injects CJS-compatible require into ESM output.
-// See tsup.config.ts esbuildOptions banner for how this is set up.
-const _loadNative = (path: string): unknown => require(path)
+// Use createRequire to avoid direct dynamic require() usage that breaks
+// strict ESM bundlers (e.g., Next.js Turbopack module evaluation).
+const _require = createRequire(import.meta.url)
+const _loadNative = (path: string): unknown => _require(path)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Type Definitions
