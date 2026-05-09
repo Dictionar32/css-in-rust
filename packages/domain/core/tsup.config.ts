@@ -3,6 +3,7 @@ import { defineConfig } from "tsup"
 export default defineConfig({
   entry: {
     index: "src/index.ts",
+    "index.browser": "src/index.browser.ts",
     animate: "src/animate.ts",
     compiler: "src/compiler.ts",
     css: "src/css.ts",

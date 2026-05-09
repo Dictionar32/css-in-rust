@@ -342,6 +342,20 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
           })
         }
       },
+      serverExternalPackages: [
+        ...new Set([
+          ...(nextConfig.serverExternalPackages ?? []),
+          "tailwind-styled-v4",
+          "@tailwind-styled/core",
+          "@tailwind-styled/shared",
+          "@tailwind-styled/compiler",
+          "@tailwind-styled/engine",
+          "@tailwind-styled/analyzer",
+          "@tailwind-styled/scanner",
+          "@tailwind-styled/plugin",
+          "@tailwind-styled/runtime-css",
+        ]),
+      ],
       turbopack: {
         ...(nextConfig.turbopack ?? {}),
         rules: mergeTurbopackRules(

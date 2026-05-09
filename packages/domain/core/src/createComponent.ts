@@ -13,18 +13,39 @@ const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "container
 // ── Sub-component auto-registration ──────────────────────────────────────────
 
 /**
+ * JS fallback: parse sub-component block syntax dari template string.
+ * Matches `Name { class1 class2 }` atau `[name] { class1 class2 }`.
+ */
+function parseSubComponentBlocksJS(template: string): Map<string, string> {
+  const map = new Map<string, string>()
+  const regex = /((?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
+  let match
+  while ((match = regex.exec(template)) !== null) {
+    const rawName = match[1]
+    const name = rawName.startsWith("[") ? rawName.slice(1, -1) : rawName
+    const classes = match[2].trim().replace(/\s+/g, " ")
+    if (classes) map.set(name, classes)
+  }
+  return map
+}
+
+/**
  * Extract sub-component blocks dari template → Map<name, classes>
  * Native-first: delegates ke Rust `parse_subcomponent_blocks_napi`.
- * No JS fallback — native binding required.
+ * JS fallback: regex-based parser untuk browser/client context.
  */
 function parseSubComponentBlocks(template: string): Map<string, string> {
-  const native = getNativeBinding()
-  if (!native?.parseSubcomponentBlocksNapi) {
-    throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
+  try {
+    const native = getNativeBinding()
+    if (native?.parseSubcomponentBlocksNapi) {
+      const result = native.parseSubcomponentBlocksNapi(template, "tw")
+      const raw = JSON.parse(result.subMapJson) as Record<string, string>
+      return new Map(Object.entries(raw))
+    }
+  } catch {
+    // fall through to JS fallback
   }
-  const result = native.parseSubcomponentBlocksNapi(template, "tw")
-  const raw = JSON.parse(result.subMapJson) as Record<string, string>
-  return new Map(Object.entries(raw))
+  return parseSubComponentBlocksJS(template)
 }
 
 /**
@@ -191,15 +212,26 @@ function resolveVariants(
   props: Record<string, unknown>,
   defaults: Record<string, string>
 ): string {
-  const binding = getNativeBinding()
-  if (!binding?.resolveSimpleVariants) {
-    throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
-  }
   const cleanProps: Record<string, string> = {}
   for (const [k, v] of Object.entries(props)) {
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
-  return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+
+  const binding = getNativeBinding()
+  if (binding?.resolveSimpleVariants) {
+    return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+  }
+
+  // JS fallback for browser/client context
+  const resolved = { ...defaults, ...cleanProps }
+  const classes: string[] = []
+  for (const [variantKey, variantMap] of Object.entries(variants)) {
+    const selected = resolved[variantKey]
+    if (selected !== undefined && variantMap[selected] !== undefined) {
+      classes.push(variantMap[selected])
+    }
+  }
+  return classes.filter(Boolean).join(" ")
 }
 
 /**

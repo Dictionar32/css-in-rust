@@ -1,7 +1,7 @@
 {
     "name": "@tailwind-styled/core",
     "version": "5.0.4",
-    "description": "Zero-config, zero-runtime, compiler-driven Tailwind styling — tw.div, variants, RSC-aware",
+    "description": "Zero-config, zero-runtime, compiler-driven Tailwind styling \u2014 tw.div, variants, RSC-aware",
     "author": "Dictionar32",
     "license": "MIT",
     "type": "module",
@@ -14,6 +14,7 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "browser": "./dist/index.browser.js",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
