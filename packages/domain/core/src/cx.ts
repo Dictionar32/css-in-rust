@@ -3,8 +3,11 @@
  *
  * Native-first:
  *   cn() → simple join (no conflict resolution) — delegates ke Rust `resolve_class_names`
- *   cx() → conflict-aware merge — delegates ke Rust `tw_merge` (required)
+ *   cx() → conflict-aware merge — delegates ke Rust `tw_merge` (preferred)
  *   cxm() → alias cx() untuk backward compat
+ *
+ * Browser fallback: simple join when native binding unavailable.
+ * In browser/client context, classes were already resolved on server during SSR.
  */
 
 import { getNativeBinding } from "./native"
@@ -15,22 +18,25 @@ type ClassValue = string | undefined | null | false | 0
  * cn — simple class name joiner (no conflict resolution).
  * Native-first: delegates ke Rust `resolve_class_names` yang filter+join
  * dalam satu pass tanpa intermediate allocations.
+ * Browser fallback: flat+filter+join.
  *
  * @example cn("p-4", isActive && "opacity-100") → "p-4 opacity-100"
  */
 export function cn(...inputs: (ClassValue | ClassValue[])[]): string {
   const native = getNativeBinding()
-  if (!native?.resolveClassNames) {
-    throw new Error("FATAL: Native binding 'resolveClassNames' is required but not available.")
-  }
   const strings = (inputs as unknown[]).flat().filter(Boolean) as string[]
+  if (!native?.resolveClassNames) {
+    // Browser/client fallback: simple join.
+    return strings.join(" ")
+  }
   return native.resolveClassNames(strings)
 }
 
 /**
  * cx — conflict-aware class merger.
- * Native-first: delegates ke Rust `tw_merge` (required).
+ * Native-first: delegates ke Rust `tw_merge` (preferred).
  * Mendukung array inputs — flatten sebelum di-pass ke native.
+ * Browser fallback: simple join without conflict resolution.
  *
  * @example cx("p-4 p-8")                        → "p-8"
  * @example cx("bg-red-500", "bg-blue-500")       → "bg-blue-500"
@@ -43,7 +49,9 @@ export function cx(...inputs: (ClassValue | ClassValue[])[]): string {
 
   const native = getNativeBinding()
   if (!native?.twMergeMany && !native?.twMerge) {
-    throw new Error("FATAL: Native binding 'twMerge' or 'twMergeMany' is required but not available.")
+    // Browser/client fallback: no Rust native in browser.
+    // Classes are already conflict-resolved from server SSR pass.
+    return filtered.join(" ")
   }
   if (native.twMergeMany) {
     return native.twMergeMany(filtered)

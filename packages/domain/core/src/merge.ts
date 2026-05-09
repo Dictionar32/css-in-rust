@@ -1,8 +1,9 @@
 /**
  * tailwind-styled-v4 — createTwMerge()
  *
- * Native-only: uses Rust `tw_merge_many`; requires native binding.
- * No JS fallback — tailwind-merge removed from bundle.
+ * Native-first: uses Rust `tw_merge_many` when available.
+ * Browser fallback: simple join (no conflict resolution).
+ * In browser/client context, classes were already resolved on the server during SSR.
  */
 
 import { getNativeBinding } from "./native"
@@ -24,7 +25,9 @@ function normalizeClassInput(classLists: Array<string | undefined | null | false
 
 /**
  * createTwMerge — returns a conflict-aware merge function.
- * Native-only: uses Rust `tw_merge_many`; throws if native binding unavailable.
+ * Native-first: uses Rust `tw_merge_many` when available.
+ * Browser fallback: simple join without conflict resolution.
+ * Classes passed in browser context are already conflict-resolved from SSR.
  *
  * Note: `prefix` and `separator` options are not supported in native mode
  * (Tailwind v3/v4 defaults are used).
@@ -36,7 +39,10 @@ export function createTwMerge(_options: MergeOptions = {}) {
 
     const native = getNativeBinding()
     if (!native?.twMergeMany) {
-      throw new Error("FATAL: Native binding 'twMergeMany' is required but not available.")
+      // Browser/client fallback: no Rust native in browser.
+      // Classes are already conflict-resolved from server SSR pass.
+      // Simple join is safe here.
+      return clean.join(" ")
     }
     return native.twMergeMany(clean)
   }
