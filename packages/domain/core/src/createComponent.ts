@@ -212,8 +212,13 @@ function resolveVariants(
   props: Record<string, unknown>,
   defaults: Record<string, string>
 ): string {
+  // Only include declared variant keys — prevents non-variant props (e.g. `selected`, `disabled`)
+  // from leaking into the resolver and causing SSR/client hydration mismatches.
+  // The Rust binding and JS fallback must receive identical, variant-scoped props.
+  const variantKeys = Object.keys(variants)
   const cleanProps: Record<string, string> = {}
-  for (const [k, v] of Object.entries(props)) {
+  for (const k of variantKeys) {
+    const v = props[k]
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
 

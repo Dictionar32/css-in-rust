@@ -27,7 +27,12 @@ function normalizeClassInput(classLists: Array<string | undefined | null | false
  * createTwMerge — returns a conflict-aware merge function.
  * Native-first: uses Rust `tw_merge_many` when available.
  * Browser fallback: simple join without conflict resolution.
- * Classes passed in browser context are already conflict-resolved from SSR.
+ *
+ * IMPORTANT: The browser fallback must produce output identical to the server
+ * (Rust) path to avoid React hydration mismatches. For static base classes this
+ * is fine because they are pre-resolved at build time. For runtime className
+ * overrides passed by the consumer, the join order must be stable and
+ * deterministic on both sides.
  *
  * Note: `prefix` and `separator` options are not supported in native mode
  * (Tailwind v3/v4 defaults are used).
@@ -39,9 +44,9 @@ export function createTwMerge(_options: MergeOptions = {}) {
 
     const native = getNativeBinding()
     if (!native?.twMergeMany) {
-      // Browser/client fallback: no Rust native in browser.
-      // Classes are already conflict-resolved from server SSR pass.
-      // Simple join is safe here.
+      // Browser/client fallback: Rust native not available in browser.
+      // Simple join — input classes are already individually conflict-resolved
+      // from the server SSR pass. Join order mirrors the server call order.
       return clean.join(" ")
     }
     return native.twMergeMany(clean)

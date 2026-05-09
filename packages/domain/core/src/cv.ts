@@ -32,15 +32,20 @@ export function registerVariantTable(
 function lookupGenerated(
   componentId: string,
   props: Record<string, unknown>,
-  defaultVariants?: Record<string, string>
+  defaultVariants?: Record<string, string>,
+  variantKeys?: string[]
 ): string | undefined {
   const table = __generatedRegistry[componentId]
   if (!table) return undefined
 
   const merged = { ...defaultVariants, ...props }
-  const key = Object.keys(merged)
+  // Filter to declared variant keys only to prevent non-variant props (e.g. onClick, selected)
+  // from corrupting the lookup key and causing cache misses.
+  const keysToUse = variantKeys
+    ? variantKeys
+    : Object.keys(merged).filter((k) => k !== "className")
+  const key = keysToUse
     .sort()
-    .filter((k) => k !== "className")
     .map((k) => `${k}:${String(merged[k])}`)
     .join("|")
 
@@ -54,18 +59,23 @@ function resolveVariantsNative<C extends ComponentConfig>(
 ): string {
   const { base = "", variants = {}, compoundVariants = [], defaultVariants = {} } = config
 
+  // Only pass declared variant keys to the resolver — prevents non-variant props
+  // (e.g. selected, disabled, onClick) from leaking into Rust and causing
+  // SSR/client hydration mismatches. Mirrors the JS fallback scope exactly.
+  const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
+
   const binding = getNativeBinding()
   if (binding?.resolveSimpleVariants) {
     // Pre-merge di JS: defaultVariants sebagai base, user props override
-    // Ini lebih reliable daripada bergantung pada Rust untuk merge priority
+    // Filter to declared variant keys only — ensures Rust and JS produce identical output.
     const mergedProps: Record<string, string> = {}
-    for (const [k, v] of Object.entries(defaultVariants as Record<string, string>)) {
-      if (v !== undefined && v !== null) mergedProps[k] = String(v)
+    for (const k of variantKeys) {
+      const dv = (defaultVariants as Record<string, string>)[k]
+      if (dv !== undefined && dv !== null) mergedProps[k] = String(dv)
     }
-    for (const [k, v] of Object.entries(props)) {
-      if (v !== undefined && v !== null && k !== "className") {
-        mergedProps[k] = String(v)
-      }
+    for (const k of variantKeys) {
+      const v = (props as Record<string, unknown>)[k]
+      if (v !== undefined && v !== null) mergedProps[k] = String(v)
     }
 
     let result = binding.resolveSimpleVariants(
@@ -91,8 +101,40 @@ function resolveVariantsNative<C extends ComponentConfig>(
     return result
   }
 
-  // binding not available — throw
-  throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
+  // JS fallback — used in browser where Rust native binding is unavailable.
+  // Must produce output identical to the Rust path for SSR hydration to succeed.
+  const resolved: Record<string, string> = {}
+  for (const k of variantKeys) {
+    const dv = (defaultVariants as Record<string, string>)[k]
+    if (dv !== undefined) resolved[k] = dv
+  }
+  for (const k of variantKeys) {
+    const v = (props as Record<string, unknown>)[k]
+    if (v !== undefined && v !== null) resolved[k] = String(v)
+  }
+
+  const classes: string[] = []
+  if (base) classes.push(base)
+  for (const k of variantKeys) {
+    const variantMap = (variants as Record<string, Record<string, string>>)[k]
+    const selected = resolved[k]
+    if (selected !== undefined && variantMap?.[selected] !== undefined) {
+      classes.push(variantMap[selected])
+    }
+  }
+
+  // compound variants
+  const resolvedFull: Record<string, unknown> = { ...defaultVariants, ...props }
+  for (const compound of compoundVariants) {
+    const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+    const matches = Object.entries(conditions).every(([key, val]) => resolvedFull[key] === val)
+    if (matches) {
+      if (compoundClass) classes.push(String(compoundClass))
+      if (compoundClassName) classes.push(String(compoundClassName))
+    }
+  }
+
+  return classes.filter(Boolean).join(" ")
 }
 
 export function cv<C extends ComponentConfig>(config: C, componentId?: string): CvFn<C> {
@@ -109,13 +151,15 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
     props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>> = {} as never
   ): string => {
     let result: string
+    const variantKeys = Object.keys(config.variants ?? {})
 
     // Mode 1: generated lookup table (O(1), hasil compile-variants)
     if (componentId) {
       const generated = lookupGenerated(
         componentId,
         props as Record<string, unknown>,
-        config.defaultVariants as Record<string, string>
+        config.defaultVariants as Record<string, string>,
+        variantKeys
       )
       result = generated ?? resolveVariantsNative(config, props)
     } else {
