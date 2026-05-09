@@ -31,8 +31,10 @@ static RE_STILL_TW: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(server\.)?\w+
 static RE_OBJ_CONFIG_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(\w+)\s*\(").unwrap());
 static RE_OBJ_COMP_NAME: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)(?:const|let|var)\s+(\w+)\s*=\s*tw\.\w+\s*\(").unwrap());
-static RE_FLAT_BACKTICK: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(\w[\w-]*)\s*:\s*`([^`]*)` *").unwrap());
+/// Matches key: `...`, key: "...", or key: '...' — captures the string value in group 2/3/4.
+static RE_FLAT_STRING: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"(\w[\w-]*)\s*:\s*(?:`([^`]*)`|"([^"]*)"|'([^']*)')"#).unwrap()
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types exposed to N-API
@@ -151,16 +153,21 @@ fn extract_brace_inner(content: &str, inner_start: usize) -> Option<&str> {
     None
 }
 
-/// Extract the backtick string value for `key: \`...\`` inside an object literal.
-fn extract_backtick_for_key(content: &str, key: &str) -> Option<String> {
+/// Extract the string value for `key: \`...\``, `key: "..."`, or `key: '...'` inside an object literal.
+fn extract_string_for_key(content: &str, key: &str) -> Option<String> {
     let search = format!("{}:", key);
     let pos = content.find(&search)?;
     let after = content[pos + search.len()..].trim_start();
-    if !after.starts_with('`') {
+    let (delim, inner) = if after.starts_with('`') {
+        ('`', &after[1..])
+    } else if after.starts_with('"') {
+        ('"', &after[1..])
+    } else if after.starts_with('\'') {
+        ('\'', &after[1..])
+    } else {
         return None;
-    }
-    let inner = &after[1..];
-    let end = inner.find('`')?;
+    };
+    let end = inner.find(delim)?;
     Some(inner[..end].to_string())
 }
 
@@ -178,21 +185,25 @@ fn find_obj_section<'a>(content: &'a str, key: &str) -> Option<&'a str> {
     extract_brace_inner(content, abs_after_brace)
 }
 
-/// Parse `{ key: \`classes\` }` → HashMap<key, normalised classes>.
-fn parse_flat_backtick_map(content: &str) -> HashMap<String, String> {
+/// Parse `{ key: \`classes\` }` (or regular quotes) → HashMap<key, normalised classes>.
+fn parse_flat_string_map(content: &str) -> HashMap<String, String> {
     let mut map = HashMap::new();
-    for cap in RE_FLAT_BACKTICK.captures_iter(content) {
-        let classes = normalise_classes(&cap[2]).join(" ");
+    for cap in RE_FLAT_STRING.captures_iter(content) {
+        // group 2 = backtick, 3 = double-quote, 4 = single-quote
+        let value = cap.get(2).or(cap.get(3)).or(cap.get(4))
+            .map(|m| m.as_str())
+            .unwrap_or("");
+        let classes = normalise_classes(value).join(" ");
         map.insert(cap[1].to_string(), classes);
     }
     map
 }
 
-/// Parse `{ outerKey: { innerKey: \`classes\` } }` → nested HashMap.
-fn parse_nested_backtick_map(content: &str) -> HashMap<String, HashMap<String, String>> {
+/// Parse `{ outerKey: { innerKey: \`classes\` } }` (or regular quotes) → nested HashMap.
+fn parse_nested_string_map(content: &str) -> HashMap<String, HashMap<String, String>> {
     let mut result = HashMap::new();
-    // RE_FLAT_BACKTICK would match inner keys; we need to walk top-level keys manually.
-    let re_key = Regex::new(r"(\w[\w-]*)\s*:\s*\{").expect("parse_nested_backtick_map regex");
+    // Walk top-level keys manually to find nested blocks.
+    let re_key = Regex::new(r"(\w[\w-]*)\s*:\s*\{").expect("parse_nested_string_map regex");
     let mut search_from = 0usize;
     loop {
         let slice = &content[search_from..];
@@ -205,7 +216,7 @@ fn parse_nested_backtick_map(content: &str) -> HashMap<String, HashMap<String, S
         let abs_inner_start = search_from + rel_end;
         match extract_brace_inner(content, abs_inner_start) {
             Some(inner) => {
-                let flat = parse_flat_backtick_map(inner);
+                let flat = parse_flat_string_map(inner);
                 let inner_len = inner.len();
                 result.insert(outer_key, flat);
                 search_from = abs_inner_start + inner_len + 1; // +1 for `}`
@@ -216,30 +227,70 @@ fn parse_nested_backtick_map(content: &str) -> HashMap<String, HashMap<String, S
     result
 }
 
-/// Emit a forwardRef component for `tw.tag({ base, variants, sizes, states })`.
+/// A single sub-component entry: `header: { tag: "header", base: \`...\` }`
+struct SubEntry {
+    tag: String,
+    base: String,
+}
+
+/// Parse the `sub: { key: { tag: "...", base: \`...\` }, ... }` block.
+fn parse_sub_map(content: &str) -> HashMap<String, SubEntry> {
+    let mut result = HashMap::new();
+    let re_key = Regex::new(r"(\w[\w-]*)\s*:\s*\{").expect("parse_sub_map regex");
+    let mut search_from = 0usize;
+    loop {
+        let slice = &content[search_from..];
+        let cap = match re_key.captures(slice) {
+            Some(c) => c,
+            None => break,
+        };
+        let sub_name = cap[1].to_string();
+        let rel_end = cap.get(0).unwrap().end();
+        let abs_inner_start = search_from + rel_end;
+        match extract_brace_inner(content, abs_inner_start) {
+            Some(inner) => {
+                let inner_len = inner.len();
+                let tag = extract_string_for_key(inner, "tag")
+                    .unwrap_or_else(|| "div".to_string());
+                let base_raw = extract_string_for_key(inner, "base").unwrap_or_default();
+                let base = normalise_classes(&base_raw).join(" ");
+                result.insert(sub_name, SubEntry { tag, base });
+                search_from = abs_inner_start + inner_len + 1;
+            }
+            None => break,
+        }
+    }
+    result
+}
+
+
+/// Emit a forwardRef component for `tw.tag({ base, variants, sizes, states, sub })`.
 /// Variants: `props[variantName] === "value"` → apply classes.
 /// Sizes:    `props.size === "sizeName"` → apply classes.
 /// States:   `props[stateName]` (boolean) → apply classes.
+/// Sub:      named child components attached via Object.assign (emits IIFE when non-empty).
 fn render_object_config_component(
     tag: &str,
     fn_name: &str,
+    comp_name: &str,
     base_classes: &str,
     variants: &HashMap<String, HashMap<String, String>>,
     sizes: &HashMap<String, String>,
     states: &HashMap<String, String>,
+    sub: &HashMap<String, SubEntry>,
 ) -> String {
-    let mut lines: Vec<String> = Vec::new();
-    lines.push(format!(
+    // ── Build the forwardRef body lines ──────────────────────────────────────
+    let mut body: Vec<String> = Vec::new();
+    body.push(format!(
         "React.forwardRef(function {fn_name}(props, ref) {{"
     ));
-    lines.push(format!(
+    body.push(format!(
         "  var _cls = [{}];",
         serde_json_string(base_classes)
     ));
 
     // Variant prop checks
     let mut variant_keys: Vec<String> = Vec::new();
-    // Sort for deterministic output
     let mut sorted_variants: Vec<_> = variants.iter().collect();
     sorted_variants.sort_by_key(|(k, _)| k.as_str());
     for (variant_name, variant_values) in &sorted_variants {
@@ -247,7 +298,7 @@ fn render_object_config_component(
         let mut sorted_values: Vec<_> = variant_values.iter().collect();
         sorted_values.sort_by_key(|(k, _)| k.as_str());
         for (value, classes) in sorted_values {
-            lines.push(format!(
+            body.push(format!(
                 "  if (props.{} === {}) _cls.push({});",
                 variant_name,
                 serde_json_string(value),
@@ -261,7 +312,7 @@ fn render_object_config_component(
         let mut sorted_sizes: Vec<_> = sizes.iter().collect();
         sorted_sizes.sort_by_key(|(k, _)| k.as_str());
         for (size_name, classes) in sorted_sizes {
-            lines.push(format!(
+            body.push(format!(
                 "  if (props.size === {}) _cls.push({});",
                 serde_json_string(size_name),
                 serde_json_string(classes),
@@ -275,15 +326,15 @@ fn render_object_config_component(
     sorted_states.sort_by_key(|(k, _)| k.as_str());
     for (state_name, classes) in sorted_states {
         state_keys.push(state_name.clone());
-        lines.push(format!(
+        body.push(format!(
             "  if (props.{}) _cls.push({});",
             state_name,
             serde_json_string(classes),
         ));
     }
 
-    lines.push("  if (props.className) _cls.push(props.className);".to_string());
-    lines.push("  var _p = Object.assign({}, props);".to_string());
+    body.push("  if (props.className) _cls.push(props.className);".to_string());
+    body.push("  var _p = Object.assign({}, props);".to_string());
 
     // Delete custom props so they don't reach the DOM element
     let mut deletes: Vec<String> = vec!["delete _p.className;".to_string()];
@@ -296,15 +347,47 @@ fn render_object_config_component(
     for k in &state_keys {
         deletes.push(format!("delete _p.{};", k));
     }
-    lines.push(format!("  {}", deletes.join(" ")));
+    body.push(format!("  {}", deletes.join(" ")));
 
-    lines.push(format!(
+    body.push(format!(
         "  return React.createElement(\"{tag}\", Object.assign({{ref: ref}}, _p, {{className: _cls.filter(Boolean).join(\" \")}}));",
         tag = tag,
     ));
-    lines.push("})".to_string());
-    lines.join("\n")
+    body.push("})".to_string());
+
+    // ── If no sub-components, return the forwardRef directly ─────────────────
+    if sub.is_empty() {
+        return body.join("\n");
+    }
+
+    // ── Wrap in IIFE, attach sub-components via Object.assign ─────────────────
+    // (function() {
+    //   var _c = React.forwardRef(...);
+    //   _c.header = React.forwardRef(function _Tw_Card_header(props, ref) { ... });
+    //   return _c;
+    // })()
+    let mut iife: Vec<String> = Vec::new();
+    iife.push("(function() {".to_string());
+    iife.push(format!("  var _c = {};", body.join("\n  ")));
+
+    let mut sorted_sub: Vec<_> = sub.iter().collect();
+    sorted_sub.sort_by_key(|(k, _)| k.as_str());
+    for (sub_name, entry) in sorted_sub {
+        let sub_fn = format!("_Tw_{}_{}", comp_name, sub_name);
+        iife.push(format!(
+            "  _c.{sub_name} = React.forwardRef(function {sub_fn}(props, ref) {{\n    var _sc = [{base_json}];\n    if (props.className) _sc.push(props.className);\n    var _sp = Object.assign({{}}, props); delete _sp.className;\n    return React.createElement(\"{tag}\", Object.assign({{ref: ref}}, _sp, {{className: _sc.filter(Boolean).join(\" \")}}));\n  }});",
+            sub_name = sub_name,
+            sub_fn = sub_fn,
+            base_json = serde_json_string(&entry.base),
+            tag = entry.tag,
+        ));
+    }
+
+    iife.push("  return _c;".to_string());
+    iife.push("})()" .to_string());
+    iife.join("\n")
 }
+
 
 // ─ OPTIMIZATION (Phase 1.3): Pre-compute component name index for O(1) lookups
 // Replaces O(n×m) RE_COMP_NAME.captures_iter().find() pattern with HashMap
@@ -712,19 +795,23 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
             };
 
             // Parse fields
-            let base_raw = extract_backtick_for_key(&obj_content, "base").unwrap_or_default();
+            let base_raw = extract_string_for_key(&obj_content, "base").unwrap_or_default();
             let base_classes = normalise_classes(&base_raw).join(" ");
 
             let variants = find_obj_section(&obj_content, "variants")
-                .map(parse_nested_backtick_map)
+                .map(parse_nested_string_map)
                 .unwrap_or_default();
 
             let sizes = find_obj_section(&obj_content, "sizes")
-                .map(parse_flat_backtick_map)
+                .map(parse_flat_string_map)
                 .unwrap_or_default();
 
             let states = find_obj_section(&obj_content, "states")
-                .map(parse_flat_backtick_map)
+                .map(parse_flat_string_map)
+                .unwrap_or_default();
+
+            let sub = find_obj_section(&obj_content, "sub")
+                .map(|s| parse_sub_map(s))
                 .unwrap_or_default();
 
             // Skip if the object is empty / not a TwConfig
@@ -732,6 +819,7 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 && variants.is_empty()
                 && sizes.is_empty()
                 && states.is_empty()
+                && sub.is_empty()
             {
                 search_from = paren_end + 1;
                 continue;
@@ -750,6 +838,9 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
             for cls in states.values() {
                 all_classes.extend(normalise_classes(cls));
             }
+            for entry in sub.values() {
+                all_classes.extend(normalise_classes(&entry.base));
+            }
 
             // Resolve component name from declaration
             let comp_name = obj_comp_index
@@ -764,10 +855,12 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
             let replacement = render_object_config_component(
                 &tag,
                 &fn_name,
+                &comp_name,
                 &base_classes,
                 &variants,
                 &sizes,
                 &states,
+                &sub,
             );
 
             replacements.push((full_match, replacement));

@@ -178,7 +178,7 @@ const buildTurbopackRules = (
   const extensions = ["js", "jsx", "ts", "tsx", "mjs", "cjs"]
   return Object.fromEntries(
     extensions.map((ext) => [
-      `*.${ext}`,
+      `**/*.${ext}`,  // ← recursive glob: match semua subdirectory, bukan hanya root
       { loaders: [{ loader: loaderPath, options: loaderOptions }] },
     ])
   ) as TurboRules
@@ -312,6 +312,22 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
         config: NextWebpackConfig,
         webpackOptions: NextWebpackOptions
       ): ReturnType<NextWebpackFn> {
+        // ── Dev mode guard ──────────────────────────────────────────────────────
+        // Next.js 15+ default: Turbopack bundling client, webpack hanya SSR.
+        // Custom loaders Turbopack tidak support .tsx → transform hanya jalan di SSR.
+        // Hasil: className static di server, raw proxy di client → hydration mismatch.
+        //
+        // Fix: skip webpack transform di dev mode sepenuhnya.
+        // Proxy runtime handle SSR + client secara seragam → identical output → no mismatch.
+        // Production (next build): webpack handle keduanya → transform aman, optimal.
+        if (webpackOptions.dev) {
+          if (typeof previousWebpack !== "function") return config
+          try {
+            const r = previousWebpack(config, webpackOptions)
+            return r instanceof Promise ? r : r
+          } catch { return config }
+        }
+
         const apply = (resolvedConfig: NextWebpackConfig) => {
           const finalConfig = applyWebpackRule(resolvedConfig, normalizedOptions, webpackLoaderPath)
           if (!finalConfig.externals) {
