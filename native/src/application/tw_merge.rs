@@ -825,53 +825,6 @@ pub fn build_dependency_chain(class_name: String) -> Vec<String> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// parse_subcomponent_blocks — NAPI wrapper
-// Wraps the pub(crate) impl in transform_components.rs
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Parse sub-component blocks from a tw`` template string.
-///
-/// Input:  `"flex gap-2 [icon] { w-4 h-4 } [label] { text-sm font-medium }"`
-/// Output: JSON object string `{"icon":"w-4 h-4","label":"text-sm font-medium"}`
-///
-/// Returns both the base classes (blocks stripped) and sub-component map.
-#[napi(object)]
-pub struct SubcomponentParseResult {
-    /// Base classes with all block syntax stripped
-    pub base_classes: String,
-    /// JSON string: Record<name, classes>
-    pub sub_map_json: String,
-}
-
-#[napi]
-pub fn parse_subcomponent_blocks_napi(
-    template: String,
-    component_name: String,
-) -> SubcomponentParseResult {
-    use crate::domain::transform_components::parse_subcomponent_blocks;
-
-    let (base, subs) = parse_subcomponent_blocks(&template, &component_name);
-
-    // Build { name: classes } map as JSON
-    let mut entries: Vec<String> = subs
-        .iter()
-        .map(|s| {
-            format!(
-                "\"{}\":\"{}\"",
-                s.name.replace('"', "\\\""),
-                s.classes.replace('"', "\\\"")
-            )
-        })
-        .collect();
-    entries.sort(); // deterministic output
-    let sub_map_json = format!("{{{}}}", entries.join(","));
-
-    SubcomponentParseResult {
-        base_classes: base.split_whitespace().collect::<Vec<_>>().join(" "),
-        sub_map_json,
-    }
-}
-// ─────────────────────────────────────────────────────────────────────────────
 // tw_merge_with_separator — Batch G feature
 // ─────────────────────────────────────────────────────────────────────────────
 

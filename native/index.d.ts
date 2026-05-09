@@ -1222,8 +1222,6 @@ export interface ParsedTemplateResult {
   hasSubs: boolean
 }
 
-export declare function parseSubcomponentBlocksNapi(template: string, componentName: string): SubcomponentParseResult
-
 /**
  * Parse sub-component blocks dari template literal.
  * Menggantikan JS regex parser di createComponent.ts.
@@ -1699,21 +1697,6 @@ export interface SubComponent {
   tag: string
   classes: string
   scopedClass: string
-}
-
-/**
- * Parse sub-component blocks from a tw`` template string.
- *
- * Input:  `"flex gap-2 [icon] { w-4 h-4 } [label] { text-sm font-medium }"`
- * Output: JSON object string `{"icon":"w-4 h-4","label":"text-sm font-medium"}`
- *
- * Returns both the base classes (blocks stripped) and sub-component map.
- */
-export interface SubcomponentParseResult {
-  /** Base classes with all block syntax stripped */
-  baseClasses: string
-  /** JSON string: Record<name, classes> */
-  subMapJson: string
 }
 
 /** Result type untuk parse_subcomponent_blocks_napi */
