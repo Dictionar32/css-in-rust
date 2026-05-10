@@ -99,7 +99,7 @@ export interface ComponentConfig {
  * - string value  → key langsung: { icon: "..." } → "icon"
  * - nested object → nested keys: { h2: { title: "..." } } → "title"
  */
-type InferSubFromConfig<C extends ComponentConfig> =
+export type InferSubFromConfig<C extends ComponentConfig> =
   C extends { sub: infer S extends Record<string, SubValue> }
     ? {
         [K in keyof S]: S[K] extends string

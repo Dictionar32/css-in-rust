@@ -47,16 +47,16 @@ export function cx(...inputs: (ClassValue | ClassValue[])[]): string {
   const filtered = (inputs as unknown[]).flat().filter(Boolean) as string[]
   if (filtered.length === 0) return ""
 
-  const native = getNativeBinding()
-  if (!native?.twMergeMany && !native?.twMerge) {
-    // Browser/client fallback: no Rust native in browser.
-    // Classes are already conflict-resolved from server SSR pass.
-    return filtered.join(" ")
+  try {
+    const native = getNativeBinding()
+    if (native?.twMergeMany) return native.twMergeMany(filtered)
+    if (native?.twMerge) return native.twMerge(filtered.join(" "))
+  } catch {
+    // Native binding unavailable in browser — fall through
   }
-  if (native.twMergeMany) {
-    return native.twMergeMany(filtered)
-  }
-  return native.twMerge!(filtered.join(" "))
+
+  // Browser/client fallback: simple join
+  return filtered.join(" ")
 }
 
 /**
@@ -95,7 +95,11 @@ function flattenInputs(inputs: unknown[]): string[] {
 export function cxn(inputs: unknown[]): string {
   const flat = flattenInputs(inputs)
   if (flat.length === 0) return ""
-  const native = getNativeBinding()
-  if (native?.resolveClassNames) return native.resolveClassNames(flat)
+  try {
+    const native = getNativeBinding()
+    if (native?.resolveClassNames) return native.resolveClassNames(flat)
+  } catch {
+    // Native binding unavailable in browser
+  }
   return flat.join(" ")
 }

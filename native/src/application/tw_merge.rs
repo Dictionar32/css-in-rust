@@ -417,8 +417,34 @@ fn conflict_group(base: &str) -> Option<String> {
     if base.starts_with("ring-offset-") {
         return Some("ring-offset".to_string());
     }
-    if base == "ring" || base.starts_with("ring-") {
-        return Some("ring".to_string());
+    if base.starts_with("ring-offset-") {
+        // ring-offset-color vs ring-offset-width — split further
+        let rest = &base["ring-offset-".len()..];
+        let is_width = rest == "0" || rest == "1" || rest == "2" || rest == "4" || rest == "8"
+            || rest.parse::<f64>().is_ok();
+        if is_width {
+            return Some("ring-offset-width".to_string());
+        }
+        return Some("ring-offset-color".to_string());
+    }
+    if base == "ring" {
+        return Some("ring-width".to_string());
+    }
+    if base.starts_with("ring-") {
+        let rest = &base["ring-".len()..];
+        // ring-width: ring-0, ring-1, ring-2, ring-4, ring-8, ring-[n]
+        let is_width = rest == "0" || rest == "1" || rest == "2" || rest == "4" || rest == "8"
+            || rest.parse::<f64>().is_ok()
+            || (rest.starts_with('[') && rest.ends_with(']'));
+        if is_width {
+            return Some("ring-width".to_string());
+        }
+        // ring-inset is its own thing
+        if rest == "inset" {
+            return Some("ring-inset".to_string());
+        }
+        // everything else is ring-color
+        return Some("ring-color".to_string());
     }
 
     // ── Transform utilities ───────────────────────────────────────────────
@@ -950,12 +976,9 @@ pub fn pregenerate_states_napi(
             .collect::<Vec<_>>()
             .join(" ");
 
-        // Resolve conflicts via merge_class_string (e.g. opacity-60 + opacity-50 → last wins)
-        let resolved = if combined.is_empty() {
-            String::new()
-        } else {
-            merge_class_string(&combined)
-        };
+        // States are additive — no conflict resolution needed.
+        // User defines the combination intentionally (e.g. ring-2 + ring-blue-500 both needed).
+        let resolved = combined;
 
         lookup.insert(mask, resolved);
     }

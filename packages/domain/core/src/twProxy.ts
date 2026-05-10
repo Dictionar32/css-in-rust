@@ -108,7 +108,7 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
 type RuntimeTagFactory = ((
   stringsOrConfig: TemplateStringsArray | ComponentConfig,
   ...exprs: unknown[]
-) => TwStyledComponent<Record<string, unknown>>) &
+) => TwStyledComponent<ComponentConfig, string>) &
   TwTagFactoryAny
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
   return ((
     stringsOrConfig: TemplateStringsArray | ComponentConfig,
     ...exprs: unknown[]
-  ): TwStyledComponent<Record<string, unknown>> => {
+  ): TwStyledComponent<ComponentConfig, string> => {
     // Object config path
     if (
       !Array.isArray(stringsOrConfig) &&
@@ -127,7 +127,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
       stringsOrConfig !== null &&
       !("raw" in stringsOrConfig)
     ) {
-      return createComponent(tag, stringsOrConfig as ComponentConfig)
+      return createComponent(tag, stringsOrConfig as ComponentConfig) as unknown as TwStyledComponent<ComponentConfig, string>
     }
 
     // Template literal path
@@ -154,7 +154,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
       }
     }
 
-    return component
+    return component as unknown as TwStyledComponent<ComponentConfig, string>
   }) as RuntimeTagFactory
 }
 
@@ -192,7 +192,7 @@ function makeServerTag(tag: React.ElementType): RuntimeTagFactory {
     return ((
       stringsOrConfig: TemplateStringsArray | ComponentConfig,
       ...exprs: unknown[]
-    ): TwStyledComponent<Record<string, unknown>> => {
+    ): TwStyledComponent<ComponentConfig, string> => {
       const tagName =
         typeof tag === "string"
           ? tag

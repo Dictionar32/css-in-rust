@@ -6,7 +6,7 @@ import { processContainer } from "./containerQuery"
 import { twMerge } from "./merge"
 import { getNativeBinding } from "./native"
 import { processState } from "./stateEngine"
-import type { ComponentConfig, SubValue, TwStyledComponent } from "./types"
+import type { ComponentConfig, InferSubFromConfig, SubValue, TwStyledComponent } from "./types"
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
@@ -187,7 +187,14 @@ function registerSubComponents<P extends object>(
   }
 }
 
-type RuntimeProps = Record<string, unknown> & { className?: string }
+import type { InferVariantProps, InferStatesProps } from "./types"
+
+// Props yang diterima component saat render — typed dari config user
+type RuntimeProps<TConfig extends ComponentConfig> =
+  InferVariantProps<TConfig> &
+  InferStatesProps<TConfig> &
+  { className?: string; children?: React.ReactNode } &
+  Record<string, unknown>  // HTML attrs dan props lainnya tetap diterima
 
 function normalizeClassName(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
@@ -198,7 +205,7 @@ function makeFilterProps(variantKeys: Set<string>, stateKeys: Set<string> = new 
     const out: Record<string, unknown> = {}
     for (const key in props) {
       if (variantKeys.has(key)) continue
-      if (stateKeys.has(key)) continue
+      if (stateKeys.has(key)) continue   // states dari config user — tidak diteruskan ke DOM
       if (key.startsWith("$")) continue
       if (ALWAYS_BLOCKED.has(key)) continue
       out[key] = props[key]
@@ -222,18 +229,28 @@ function resolveVariants(
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
 
-  const binding = getNativeBinding()
-  if (binding?.resolveSimpleVariants) {
-    return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+  try {
+    const binding = getNativeBinding()
+    if (binding?.resolveSimpleVariants) {
+      return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+    }
+  } catch {
+    // Native binding unavailable (browser/client context) — fall through to JS fallback
   }
 
   // JS fallback for browser/client context
   const resolved = { ...defaults, ...cleanProps }
   const classes: string[] = []
-  for (const [variantKey, variantMap] of Object.entries(variants)) {
+  // Sort keys — Rust HashMap tidak punya insertion order, kita sort alphabetically
+  // agar output JS fallback identik dengan Rust output
+  const sortedVariantEntries = Object.entries(variants).sort(([a], [b]) => a.localeCompare(b))
+  for (const [variantKey, variantMap] of sortedVariantEntries) {
     const selected = resolved[variantKey]
     if (selected !== undefined && variantMap[selected] !== undefined) {
-      classes.push(variantMap[selected])
+      // Normalize whitespace — Rust strips leading/trailing spaces and collapses
+      // newlines in template literals. JS fallback must produce identical output.
+      const normalized = variantMap[selected].trim().replace(/\s+/g, " ")
+      classes.push(normalized)
     }
   }
   return classes.filter(Boolean).join(" ")
@@ -251,7 +268,9 @@ function resolveStates(
   statesLookup: Record<number, string> | null,
   props: Record<string, unknown>
 ): string {
-  // Fast path: pre-generated lookup tersedia
+  // Fast path: pre-generated bitmask lookup (Rust) — O(1)
+  // Rust binary v5.0.6-canary.0.0.51+ uses join (not twMerge) so ring-2 + ring-blue-500
+  // are both preserved correctly.
   if (statesLookup && stateKeys.length > 0) {
     let mask = 0
     for (let i = 0; i < stateKeys.length; i++) {
@@ -260,20 +279,12 @@ function resolveStates(
     return statesLookup[mask] ?? ""
   }
 
-  // Fallback: runtime concat → native tw_merge_many
+  // Fallback: runtime join — additive, no conflict resolution
   const activeClasses = stateKeys
     .filter(k => props[k])
     .map(k => statesConfig[k])
     .filter(Boolean)
 
-  if (activeClasses.length === 0) return ""
-
-  const native = getNativeBinding()
-  if (native?.twMergeMany) {
-    return native.twMergeMany(activeClasses)
-  }
-
-  // Last resort: join saja tanpa merge (native unavailable — seharusnya tidak terjadi)
   return activeClasses.join(" ")
 }
 
@@ -308,19 +319,19 @@ function carryOverSubComponents<P extends object>(
   }
 }
 
-function attachExtend<P extends object>(
-  component: TwStyledComponent<P>,
+function attachExtend<TConfig extends ComponentConfig>(
+  component: TwStyledComponent<TConfig, string>,
   originalTag: React.ElementType,
   base: string,
-  config: string | ComponentConfig
-): TwStyledComponent<P> {
+  config: ComponentConfig
+): TwStyledComponent<TConfig, string> {
   /**
    * Extend component dengan extra classes (template literal).
    *
    * @example
    * const PrimaryBtn = Button.extend`bg-blue-500 text-white`
    */
-  function extendWithClasses(strings: TemplateStringsArray): TwStyledComponent<P>
+  function extendWithClasses(strings: TemplateStringsArray): TwStyledComponent<TConfig, string>
   /**
    * Extend component dengan extra classes + variant overrides (object).
    * Ini menyelesaikan gap desain yang disebutkan di CRITIQUE-20 #2.
@@ -338,7 +349,7 @@ function attachExtend<P extends object>(
     variants?: ComponentConfig["variants"]
     defaultVariants?: ComponentConfig["defaultVariants"]
     compoundVariants?: ComponentConfig["compoundVariants"]
-  }): TwStyledComponent<P>
+  }): TwStyledComponent<TConfig, string>
   function extendWithClasses(
     stringsOrConfig: TemplateStringsArray | {
       classes?: string
@@ -346,18 +357,18 @@ function attachExtend<P extends object>(
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
     }
-  ): TwStyledComponent<P> {
+  ): TwStyledComponent<TConfig, string> {
     // Template literal path
     if (Array.isArray(stringsOrConfig) && "raw" in stringsOrConfig) {
       const rawExtra = (stringsOrConfig as TemplateStringsArray).raw.join("").trim().replace(/\s+/g, " ")
       // Strip sub-blocks from both sides before merging base classes
       const merged = twMerge(extractBaseClasses(base), extractBaseClasses(rawExtra))
-      const extended = createComponent<P>(
+      const extended = createComponent(
         originalTag,
         typeof config === "string" ? merged : { ...config, base: merged }
       )
       // Carry over parent sub-components first, then apply overrides from extend template
-      carryOverSubComponents(extended, component)
+      carryOverSubComponents(extended as unknown as TwStyledComponent<ComponentConfig, string>, component as unknown as TwStyledComponent<ComponentConfig, string>)
       const extendSubBlocks = parseSubComponentBlocks(rawExtra)
       if (extendSubBlocks.size > 0) {
         const extComp = extended as unknown as Record<string, unknown>
@@ -366,7 +377,7 @@ function attachExtend<P extends object>(
           extComp[subName] = createSubComponentAccessor(displayName, subName, subClasses)
         }
       }
-      return extended
+      return extended as unknown as TwStyledComponent<TConfig, string>
     }
 
     // Object config path — support extend + withVariants in one call
@@ -379,7 +390,7 @@ function attachExtend<P extends object>(
     const extraClasses = extCfg.classes ?? ""
     const merged = twMerge(extractBaseClasses(base), extraClasses)
     const existing = typeof config === "object" ? config : {}
-    const extended = createComponent<P>(originalTag, {
+    const extended = createComponent(originalTag, {
       ...existing,
       base: merged,
       variants: { ...(existing.variants ?? {}), ...(extCfg.variants ?? {}) },
@@ -392,15 +403,15 @@ function attachExtend<P extends object>(
         ...(extCfg.defaultVariants ?? {}),
       },
     })
-    carryOverSubComponents(extended, component)
-    return extended
+    carryOverSubComponents(extended as unknown as TwStyledComponent<ComponentConfig, string>, component as unknown as TwStyledComponent<ComponentConfig, string>)
+    return extended as unknown as TwStyledComponent<TConfig, string>
   }
 
-  component.extend = extendWithClasses as TwStyledComponent<P>["extend"]
+  component.extend = extendWithClasses as TwStyledComponent<TConfig, string>["extend"]
 
   component.withVariants = (newConfig: Partial<ComponentConfig>) => {
     const existing = typeof config === "object" ? config : {}
-    return createComponent<P>(originalTag, {
+    return createComponent(originalTag, {
       ...existing,
       base,
       variants: { ...(existing.variants ?? {}), ...(newConfig.variants ?? {}) },
@@ -412,7 +423,7 @@ function attachExtend<P extends object>(
         ...(existing.defaultVariants ?? {}),
         ...(newConfig.defaultVariants ?? {}),
       },
-    })
+    }) as unknown as TwStyledComponent<TConfig, string>
   }
 
   // .animate() dipindah ke tailwind-styled-v4/animate agar tidak bundle @tailwind-styled/animate
@@ -427,15 +438,15 @@ function attachExtend<P extends object>(
 
   // .withSub<"icon" | "badge">() — declare sub-component names untuk TypeScript
   // Runtime: no-op, hanya untuk type inference
-  component.withSub = (() => component) as TwStyledComponent<P>["withSub"]
+  component.withSub = (() => component) as TwStyledComponent<TConfig, string>["withSub"]
 
   return component
 }
 
-export function createComponent<P extends object = Record<string, unknown>>(
+export function createComponent<TConfig extends ComponentConfig>(
   tag: React.ElementType,
-  config: string | ComponentConfig
-): TwStyledComponent<P> {
+  config: TConfig | string
+): TwStyledComponent<TConfig, InferSubFromConfig<TConfig>> {
   const isStatic = typeof config === "string"
   const base = typeof config === "string" ? config : (config.base ?? "")
   const variants = typeof config === "string" ? {} : (config.variants ?? {}) as Record<string, Record<string, string>>
@@ -451,12 +462,15 @@ export function createComponent<P extends object = Record<string, unknown>>(
   let statesLookup: Record<number, string> | null = null
   let stateKeys: string[] = []
   if (statesConfig && Object.keys(statesConfig).length > 0) {
+    // Always populate stateKeys from config — ensures filterProps blocks state
+    // props from leaking to DOM even when native binding is unavailable (browser)
+    stateKeys = Object.keys(statesConfig)
     try {
       const native = getNativeBinding()
       if (native?.pregenerateStatesNapi) {
         const result = native.pregenerateStatesNapi(statesConfig)
         statesLookup = JSON.parse(result.lookupJson) as Record<number, string>
-        stateKeys = result.stateKeys
+        stateKeys = result.stateKeys  // use Rust-ordered keys if available
       }
     } catch (e) {
       console.warn("[tailwind-styled-v4] states pre-generation failed, falling back to runtime cx()", e)
@@ -479,24 +493,31 @@ export function createComponent<P extends object = Record<string, unknown>>(
     typeof tag === "string" ? tag : ((tag as { displayName?: string }).displayName ?? "Component")
 
   if (isStatic || Object.keys(variants).length === 0) {
-    const baseComponent = React.forwardRef<unknown, RuntimeProps>((props, ref) => {
+    const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig>>((props, ref) => {
       const { className, ...rest } = props
       const runtimeClassName = normalizeClassName(className)
+      const statesClasses = statesConfig
+        ? resolveStates(statesConfig, stateKeys, statesLookup, props)
+        : ""
+      // statesClasses appended AFTER twMerge to prevent conflict resolution
+      // from removing valid class combinations like ring-2 + ring-blue-500
+      const mergedBase = twMerge(extractBaseClasses(base), engineClasses, runtimeClassName)
+      const className2 = statesClasses ? `${mergedBase} ${statesClasses}`.trim() : mergedBase
       return React.createElement(tag, {
         ref,
         ...filterProps(rest),
-        className: twMerge(extractBaseClasses(base), engineClasses, runtimeClassName),
+        className: className2,
       })
     })
 
-    const component = baseComponent as unknown as TwStyledComponent<P>
+    const component = baseComponent as unknown as TwStyledComponent<TConfig, InferSubFromConfig<TConfig>>
     component.displayName = `tw.${tagLabel}`
-    const result = attachExtend<P>(component, tag, base, config)
+    const result = attachExtend<TConfig>(component, tag, base, config as ComponentConfig)
     registerSubComponents(result, base, configSub)
     return wrapWithSubProxy(result, tagLabel)
   }
 
-  const baseComponent = React.forwardRef<unknown, RuntimeProps>((props, ref) => {
+  const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig>>((props, ref) => {
     const { className, ...rest } = props
     const runtimeClassName = normalizeClassName(className)
     const variantClasses = resolveVariants(variants, props, defaultVariants)
@@ -505,16 +526,21 @@ export function createComponent<P extends object = Record<string, unknown>>(
       ? resolveStates(statesConfig, stateKeys, statesLookup, props)
       : ""
 
+    // statesClasses appended AFTER twMerge — prevents conflict resolution
+    // from removing valid combinations like ring-2 + ring-blue-500
+    const mergedBase = twMerge(extractBaseClasses(base), variantClasses, compoundClasses, engineClasses, runtimeClassName)
+    const className2 = statesClasses ? `${mergedBase} ${statesClasses}`.trim() : mergedBase
+
     return React.createElement(tag, {
       ref,
       ...filterProps(rest),
-      className: twMerge(extractBaseClasses(base), variantClasses, compoundClasses, statesClasses, engineClasses, runtimeClassName),
+      className: className2,
     })
   })
 
-  const component = baseComponent as unknown as TwStyledComponent<P>
+  const component = baseComponent as unknown as TwStyledComponent<TConfig, InferSubFromConfig<TConfig>>
   component.displayName = `tw.${tagLabel}`
-  const result = attachExtend<P>(component, tag, base, config)
+  const result = attachExtend<TConfig>(component, tag, base, config as ComponentConfig)
   registerSubComponents(result, base, configSub)
   return wrapWithSubProxy(result, tagLabel)
 }

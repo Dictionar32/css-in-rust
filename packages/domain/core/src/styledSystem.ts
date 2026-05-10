@@ -162,7 +162,7 @@ function resolveComponentConfig(
 
 export type SystemComponentFactory<C extends SystemComponentConfig> = (
   overrides?: Partial<C>
-) => TwStyledComponent<Record<string, unknown>>
+) => TwStyledComponent<ComponentConfig, string>
 
 export type StyledSystemInstance<
   T extends SystemTokenMap,
@@ -233,7 +233,7 @@ export function createStyledSystem<
       const runtimeTag = tag as React.ElementType
 
       if (!overrides || Object.keys(overrides).length === 0) {
-        return createComponent(runtimeTag, baseResolved)
+        return createComponent(runtimeTag, baseResolved) as unknown as TwStyledComponent<ComponentConfig, string>
       }
 
       // Merge overrides into resolved config
@@ -262,7 +262,7 @@ export function createStyledSystem<
         containerName: overrideResolved.containerName ?? baseResolved.containerName,
       }
 
-      return createComponent(runtimeTag, merged)
+      return createComponent(runtimeTag, merged) as unknown as TwStyledComponent<ComponentConfig, string>
     }
   }
 

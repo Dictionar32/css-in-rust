@@ -64,41 +64,45 @@ function resolveVariantsNative<C extends ComponentConfig>(
   // SSR/client hydration mismatches. Mirrors the JS fallback scope exactly.
   const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
 
-  const binding = getNativeBinding()
-  if (binding?.resolveSimpleVariants) {
-    // Pre-merge di JS: defaultVariants sebagai base, user props override
-    // Filter to declared variant keys only — ensures Rust and JS produce identical output.
-    const mergedProps: Record<string, string> = {}
-    for (const k of variantKeys) {
-      const dv = (defaultVariants as Record<string, string>)[k]
-      if (dv !== undefined && dv !== null) mergedProps[k] = String(dv)
-    }
-    for (const k of variantKeys) {
-      const v = (props as Record<string, unknown>)[k]
-      if (v !== undefined && v !== null) mergedProps[k] = String(v)
-    }
-
-    let result = binding.resolveSimpleVariants(
-      base || null,
-      variants as Record<string, Record<string, string>>,
-      {}, // already merged into mergedProps
-      mergedProps
-    )
-
-    // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)
-    const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
-    const extra: string[] = []
-    for (const compound of compoundVariants) {
-      const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
-      const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
-      if (matches) {
-        if (compoundClass) extra.push(String(compoundClass))
-        if (compoundClassName) extra.push(String(compoundClassName))
+  try {
+    const binding = getNativeBinding()
+    if (binding?.resolveSimpleVariants) {
+      // Pre-merge di JS: defaultVariants sebagai base, user props override
+      // Filter to declared variant keys only — ensures Rust and JS produce identical output.
+      const mergedProps: Record<string, string> = {}
+      for (const k of variantKeys) {
+        const dv = (defaultVariants as Record<string, string>)[k]
+        if (dv !== undefined && dv !== null) mergedProps[k] = String(dv)
       }
+      for (const k of variantKeys) {
+        const v = (props as Record<string, unknown>)[k]
+        if (v !== undefined && v !== null) mergedProps[k] = String(v)
+      }
+  
+      let result = binding.resolveSimpleVariants(
+        base || null,
+        variants as Record<string, Record<string, string>>,
+        {}, // already merged into mergedProps
+        mergedProps
+      )
+  
+      // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)
+      const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
+      const extra: string[] = []
+      for (const compound of compoundVariants) {
+        const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+        const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
+        if (matches) {
+          if (compoundClass) extra.push(String(compoundClass))
+          if (compoundClassName) extra.push(String(compoundClassName))
+        }
+      }
+  
+      if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
+      return result
     }
-
-    if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
-    return result
+  } catch {
+    // Native binding unavailable in browser
   }
 
   // JS fallback — used in browser where Rust native binding is unavailable.

@@ -118,7 +118,14 @@ pub fn resolve_simple_variants(
                 acc
             });
 
-    for (key, values) in &variants {
+    // Sort variant keys to ensure deterministic output order.
+    // JS Object.entries() preserves insertion order — Rust HashMap does not.
+    // Sorting by key name gives a stable, reproducible class order on both sides.
+    let mut variant_keys: Vec<&String> = variants.keys().collect();
+    variant_keys.sort();
+
+    for key in variant_keys {
+        let values = &variants[key];
         if let Some(value) = merged.get(key) {
             if let Some(class) = values.get(value) {
                 classes.extend(class.split_whitespace().map(String::from));

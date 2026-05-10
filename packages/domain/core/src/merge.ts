@@ -42,14 +42,18 @@ export function createTwMerge(_options: MergeOptions = {}) {
     const clean = normalizeClassInput(classLists)
     if (clean.length === 0) return ""
 
-    const native = getNativeBinding()
-    if (!native?.twMergeMany) {
-      // Browser/client fallback: Rust native not available in browser.
-      // Simple join — input classes are already individually conflict-resolved
-      // from the server SSR pass. Join order mirrors the server call order.
-      return clean.join(" ")
+    try {
+      const native = getNativeBinding()
+      if (native?.twMergeMany) {
+        return native.twMergeMany(clean)
+      }
+    } catch {
+      // Native binding unavailable in browser — fall through to JS fallback
     }
-    return native.twMergeMany(clean)
+
+    // Browser/client fallback: simple join — input classes are already
+    // individually conflict-resolved from the server SSR pass.
+    return clean.join(" ")
   }
 }
 
