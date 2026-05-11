@@ -5,6 +5,7 @@
  * NO JavaScript fallback is provided.
  */
 
+import fs from "node:fs"
 import path from "node:path"
 import {
   cachePriorityNative,
@@ -41,10 +42,6 @@ export interface NativeCacheEntry {
 /** Default stale threshold — 7 hari */
 const STALE_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000
 
-/**
- * Hapus entri cache yang sudah stale (file sudah tidak ada atau lastSeenMs terlalu lama).
- * QA #5a: stale entry cleanup
- */
 /**
  * Hapus entri cache yang sudah stale (file sudah tidak ada atau lastSeenMs terlalu lama).
  *
@@ -84,9 +81,15 @@ export function pruneStaleEntries(
 /**
  * Read scanner cache from disk using Rust parser.
  * REQUIRES native binding - throws if unavailable.
+ *
+ * FIX: Pastikan folder cache ada sebelum Rust coba baca file,
+ * supaya tidak error "os error 3 (path not found)" pada first run.
  */
 export function readCache(rootDir: string, cacheDir?: string): NativeCacheEntry[] {
   const cachePath = defaultCachePath(rootDir, cacheDir)
+
+  // Buat folder cache jika belum ada — cegah "os error 3" pada first run
+  fs.mkdirSync(path.dirname(cachePath), { recursive: true })
 
   const result = cacheReadNative(cachePath)
   if (!result) return []
@@ -105,9 +108,14 @@ export function readCache(rootDir: string, cacheDir?: string): NativeCacheEntry[
 /**
  * Write scanner cache to disk using Rust serialiser.
  * REQUIRES native binding - throws if unavailable.
+ *
+ * FIX: Pastikan folder cache ada sebelum Rust coba tulis file.
  */
 export function writeCache(rootDir: string, entries: NativeCacheEntry[], cacheDir?: string): void {
   const cachePath = defaultCachePath(rootDir, cacheDir)
+
+  // Buat folder cache jika belum ada — cegah write gagal pada first run
+  fs.mkdirSync(path.dirname(cachePath), { recursive: true })
 
   const success = cacheWriteNative(cachePath, entries)
   if (!success) {
@@ -165,10 +173,6 @@ export function getHotCacheStats(): { size: number } {
   return scanCacheStats()
 }
 
-/**
- * Compute disk cache stats dari entries (diperlukan untuk mostUsedClasses).
- * Native scanCacheStats hanya return size — detail stats tetap dari disk cache entries.
- */
 /**
  * Compute disk cache stats dari entries (diperlukan untuk mostUsedClasses).
  *
