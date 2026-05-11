@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.6-canary.0.0.52",
+  "version": "5.0.6-canary.0.0.53",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -113,6 +113,7 @@
     },
     "./runtime-css": {
       "types": "./dist/runtime-css.d.ts",
+      "browser": "./dist/runtime-css.mjs",
       "import": "./dist/runtime-css.mjs",
       "require": "./dist/runtime-css.js"
     },
