@@ -336,8 +336,9 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
               ].join("\n")
               fs.writeFileSync(path.join(twClassesDir, "_initial-scan.css"), css, "utf-8")
             }
-          } catch {
-            // Scanner not available — Turbopack loader will handle per-file as fallback
+          } catch (e) {
+            // Scanner unavailable on this platform — styles will be generated at build time
+            console.warn("[tailwind-styled] Initial scan skipped:", (e as Error).message?.split("\n")[0])
           }
         }
       }
