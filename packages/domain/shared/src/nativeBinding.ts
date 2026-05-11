@@ -140,6 +140,22 @@ export function resolveNativeBindingCandidates(
     out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))
+
+    // Lookup dari tailwind-styled-v4 main package — penting untuk sub-packages
+    // (@tailwind-styled/scanner, @tailwind-styled/core, dll) yang binary-nya
+    // di-bundle di tailwind-styled-v4/native/, bukan di package masing-masing.
+    try {
+      const nodeModule = getNodeModule()
+      const req = nodeModule.createRequire(nodePath.join(runtimeDir, "noop.cjs"))
+      const mainPkgJsonPath = req.resolve("tailwind-styled-v4/package.json")
+      const mainPkgDir = nodePath.dirname(mainPkgJsonPath)
+      out.push(nodePath.join(mainPkgDir, "native", `tailwind-styled-native${ext}`))
+      out.push(nodePath.join(mainPkgDir, "native", `tailwind-styled-native.${platform}${ext}`))
+      out.push(nodePath.join(mainPkgDir, "native", `tailwind-styled-native.${platformGnu}${ext}`))
+      out.push(nodePath.join(mainPkgDir, "native", `tailwind_styled_parser${ext}`))
+    } catch {
+      // tailwind-styled-v4 tidak terinstall atau tidak bisa di-resolve — skip
+    }
   }
 
   return Array.from(new Set(out))

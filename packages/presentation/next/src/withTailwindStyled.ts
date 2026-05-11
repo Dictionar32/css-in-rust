@@ -223,6 +223,7 @@ const applyWebpackRule = (
   }
 
   const externalPackages = [
+    "tailwind-styled-v4",
     "@tailwind-styled/shared",
     "@tailwind-styled/compiler", 
     "@tailwind-styled/engine",
@@ -322,6 +323,18 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
           "utf-8"
         )
 
+        // Pastikan scanner bisa menemukan native binary — set TW_NATIVE_PATH
+        // dari runtimeDir withTailwindStyled (tailwind-styled-v4/dist/) sebelum
+        // scanWorkspace dipanggil, karena scanner memakai getDirname() sendiri
+        // yang mungkin resolve berbeda.
+        if (!process.env.TW_NATIVE_PATH) {
+          const runtimeDir = resolveRuntimeDir()
+          const nativePath = path.resolve(runtimeDir, "..", "native", "tailwind-styled-native.node")
+          if (fs.existsSync(nativePath)) {
+            process.env.TW_NATIVE_PATH = nativePath
+          }
+        }
+
         // Initial scan using Rust scanner — walk src/ and extract tw classes
         const srcDir = path.join(process.cwd(), "src")
         if (fs.existsSync(srcDir)) {
@@ -399,6 +412,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
       serverExternalPackages: [
         ...new Set([
           ...(nextConfig.serverExternalPackages ?? []),
+          "tailwind-styled-v4",
           "@tailwind-styled/core",
           "@tailwind-styled/shared",
           "@tailwind-styled/compiler",
