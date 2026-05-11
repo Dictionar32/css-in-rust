@@ -76,9 +76,19 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
     static RE_HIT: Lazy<Regex> = Lazy::new(|| Regex::new(r#""hitCount"\s*:\s*(\d+)"#).unwrap());
     static RE_HASH: Lazy<Regex> = Lazy::new(|| Regex::new(r#""hash"\s*:\s*"([^"]*)""#).unwrap());
 
-    let content = std::fs::read_to_string(&cache_path).map_err(|e| {
-        napi::Error::from_reason(format!("Cannot read cache file {}: {}", cache_path, e))
-    })?;
+    let content = match std::fs::read_to_string(&cache_path) {
+        Ok(c) => c,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            // File belum ada (first run) — return empty, bukan error
+            return Ok(CacheReadResult { entries: vec![], version: 0 });
+        }
+        Err(e) => {
+            return Err(napi::Error::from_reason(format!(
+                "Cannot read cache file {}: {}",
+                cache_path, e
+            )));
+        }
+    };
 
     let mut entries: Vec<CacheEntry> = Vec::new();
 
