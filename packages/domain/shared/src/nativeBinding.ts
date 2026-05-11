@@ -119,10 +119,15 @@ export function resolveNativeBindingCandidates(
       : platform
 
     // binaryName baru: tailwind-styled-native
+    // 1 level: dist/ → package-root/native/ (published npm package)
+    out.push(nodePath.resolve(runtimeDir, "..", "native", `tailwind-styled-native${ext}`))
+    out.push(nodePath.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${platform}${ext}`))
+    out.push(nodePath.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${platformGnu}${ext}`))
+    // cwd fallback (user project root)
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native${ext}`))
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platform}${ext}`))
     out.push(nodePath.resolve(process.cwd(), "native", `tailwind-styled-native.${platformGnu}${ext}`))
-    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/
+    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/ (monorepo dev)
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native${ext}`))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${platformGnu}${ext}`))
     // 3 level fallback
@@ -131,6 +136,7 @@ export function resolveNativeBindingCandidates(
 
     // binaryName lama: tailwind_styled_parser (backward compat)
     const defaultBindingName = `tailwind_styled_parser${ext}`
+    out.push(nodePath.resolve(runtimeDir, "..", "native", defaultBindingName))
     out.push(nodePath.resolve(process.cwd(), "native", defaultBindingName))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "..", "native", defaultBindingName))
     out.push(nodePath.resolve(runtimeDir, "..", "..", "..", "native", defaultBindingName))

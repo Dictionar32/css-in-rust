@@ -20,6 +20,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 }
 
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
+import { scanWorkspace } from "@tailwind-styled/scanner"
 
 import { parseNextAdapterOptions } from "./schemas"
 
@@ -325,7 +326,6 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
         const srcDir = path.join(process.cwd(), "src")
         if (fs.existsSync(srcDir)) {
           try {
-            const { scanWorkspace } = require("tailwind-styled-v4/scanner") as typeof import("tailwind-styled-v4/scanner")
             const result = scanWorkspace(srcDir)
             if (result.uniqueClasses.length > 0) {
               const css = [

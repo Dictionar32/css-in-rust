@@ -240,13 +240,17 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
   for (const bin of BINARY_NAMES) {
     candidates.push(path.resolve(runtimeDir, `${bin}.node`))
     candidates.push(path.resolve(runtimeDir, `${bin}.${napiPlatform}.node`))
-    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/
+    // 1 level: dist/ → package-root/native/ (published npm package)
+    candidates.push(path.resolve(runtimeDir, "..", "native", `${bin}.node`))
+    candidates.push(path.resolve(runtimeDir, "..", "native", `${bin}.${napiPlatform}.node`))
+    // cwd fallback (user project root)
+    candidates.push(path.resolve(process.cwd(), "native", `${bin}.node`))
+    candidates.push(path.resolve(process.cwd(), "native", `${bin}.${napiPlatform}.node`))
+    // 4 level: dist/ → package/ → domain/ → packages/ → repo-root/ (monorepo dev)
     candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", `${bin}.node`))
     candidates.push(path.resolve(runtimeDir, "..", "..", "..", "..", "native", `${bin}.${napiPlatform}.node`))
     // 3 level fallback
     candidates.push(path.resolve(runtimeDir, "..", "..", "..", "native", `${bin}.node`))
-    candidates.push(path.resolve(process.cwd(), "native", `${bin}.node`))
-    candidates.push(path.resolve(process.cwd(), "native", `${bin}.${napiPlatform}.node`))
   }
 
   return Array.from(new Set(candidates))

@@ -7,7 +7,8 @@
     "declarationDir": "dist",
     "types": ["node"],
     "paths": {
-      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"]
+      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
+      "@tailwind-styled/scanner": ["../../domain/scanner/dist/index.d.ts"]
     }
   },
   "include": ["src"],
