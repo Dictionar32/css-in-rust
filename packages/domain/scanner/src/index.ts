@@ -69,21 +69,34 @@ const createNativeParserLoader = () => {
     const runtimeDir = getRuntimeDir()
     const req = createRequire(path.join(runtimeDir, "noop.cjs"))
 
+    const _platform = process.platform
+    const _arch = process.arch
+    const _platformArch = `${_platform}-${_arch}`
+    const _platformArchGnu = _platformArch === "linux-x64" ? "linux-x64-gnu"
+      : _platformArch === "linux-arm64" ? "linux-arm64-gnu"
+      : _platformArch
+
     const candidates = [
       // ── binaryName baru: tailwind-styled-native (napi-rs naming) ──
       // cwd = repo root saat run dari root, atau package dir saat workspaces
       path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
-      path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}.node`),
-      path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
-      // runtimeDir = dist/ → naik 4 level ke repo root
+      path.resolve(process.cwd(), "native", `tailwind-styled-native.${_platformArch}.node`),
+      path.resolve(process.cwd(), "native", `tailwind-styled-native.${_platformArchGnu}.node`),
+      // runtimeDir = dist/ → naik 1 level ke package root (npm install case)
+      // e.g. node_modules/tailwind-styled-v4/dist/ → node_modules/tailwind-styled-v4/native/
+      path.resolve(runtimeDir, "..", "native", "tailwind-styled-native.node"),
+      path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_platformArch}.node`),
+      path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_platformArchGnu}.node`),
+      // runtimeDir = dist/ → naik 4 level ke repo root (monorepo dev case)
       path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind-styled-native.node"),
-      path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+      path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${_platformArchGnu}.node`),
       // 3 level fallback (jika package di-nest lebih dangkal)
       path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
-      path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+      path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${_platformArchGnu}.node`),
       // ── binaryName lama: tailwind_styled_parser (backward compat) ──
       path.resolve(process.cwd(), "native/tailwind_styled_parser.node"),
       path.resolve(process.cwd(), "native/build/Release/tailwind_styled_parser.node"),
+      path.resolve(runtimeDir, "..", "native", "tailwind_styled_parser.node"),
       path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind_styled_parser.node"),
       path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind_styled_parser.node"),
       path.resolve(

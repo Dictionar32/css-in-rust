@@ -39,8 +39,24 @@ const getBinding = (): NativeWatchBinding => {
   const runtimeDir = typeof __dirname === "string" ? __dirname : process.cwd()
   const req = createRequire(import.meta.url)
 
+  const _pa = `${process.platform}-${process.arch}`
+  const _paGnu = _pa === "linux-x64" ? "linux-x64-gnu" : _pa === "linux-arm64" ? "linux-arm64-gnu" : _pa
   const candidates = [
+    // new binary name: tailwind-styled-native
+    path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
+    path.resolve(process.cwd(), "native", `tailwind-styled-native.${_pa}.node`),
+    // npm install case: dist/../native/
+    path.resolve(runtimeDir, "..", "native", "tailwind-styled-native.node"),
+    path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_pa}.node`),
+    path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_paGnu}.node`),
+    // monorepo dev: 4-level up
+    path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind-styled-native.node"),
+    path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${_paGnu}.node`),
+    // 3-level fallback
+    path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
+    // backward compat: tailwind_styled_parser
     path.resolve(process.cwd(), "native", "tailwind_styled_parser.node"),
+    path.resolve(runtimeDir, "..", "native", "tailwind_styled_parser.node"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind_styled_parser.node"),
     path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind_styled_parser.node"),
   ]

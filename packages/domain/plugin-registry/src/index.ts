@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
-import { join } from "node:path"
+import { createRequire } from "node:module"
+import { join, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 
 // ── Native bridge (lazy-loaded to avoid circular deps) ──────────────────────
 type NativePluginRegistry = {
@@ -15,14 +17,33 @@ let _native: NativePluginRegistry | null | undefined = undefined
 function getNative(): NativePluginRegistry | null {
   if (_native !== undefined) return _native
   try {
+    const runtimeDir = typeof __dirname === "string" && __dirname.length > 0
+      ? __dirname
+      : typeof import.meta !== "undefined" && import.meta.url
+        ? fileURLToPath(new URL(".", import.meta.url))
+        : process.cwd()
+    const req = createRequire(join(runtimeDir, "noop.cjs"))
+    const _pa = `${process.platform}-${process.arch}`
+    const _paGnu = _pa === "linux-x64" ? "linux-x64-gnu" : _pa === "linux-arm64" ? "linux-arm64-gnu" : _pa
     const candidates = [
-      "../../native/tailwind_styled_parser.node",
-      "../native/tailwind_styled_parser.node",
+      // npm install case: dist/../native/
+      resolve(runtimeDir, "..", "native", "tailwind-styled-native.node"),
+      resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_pa}.node`),
+      resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_paGnu}.node`),
+      resolve(runtimeDir, "..", "native", "tailwind_styled_parser.node"),
+      // cwd fallback
+      resolve(process.cwd(), "native", "tailwind-styled-native.node"),
+      resolve(process.cwd(), "native", "tailwind_styled_parser.node"),
+      // monorepo dev: 4-level up
+      resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind-styled-native.node"),
+      resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind_styled_parser.node"),
+      // 3-level fallback
+      resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
+      resolve(runtimeDir, "..", "..", "..", "native", "tailwind_styled_parser.node"),
     ]
     for (const c of candidates) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const mod = require(c) as Record<string, unknown>
+        const mod = req(c) as Record<string, unknown>
         if (typeof mod?.pluginSearch === "function") {
           return (_native = mod as unknown as NativePluginRegistry)
         }

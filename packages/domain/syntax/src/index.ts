@@ -44,22 +44,34 @@ function getNativeBridge(): NativeSyntaxBridge {
   }
 
   const runtimeDir = getRuntimeDir()
+  const _platform = process.platform
+  const _arch = process.arch
+  const _pa = `${_platform}-${_arch}`
+  const _paGnu = _pa === "linux-x64" ? "linux-x64-gnu" : _pa === "linux-arm64" ? "linux-arm64-gnu" : _pa
   const candidates = [
     "@tailwind-styled/native",
-    // runtimeDir = dist/ → naik 4 level ke repo root
+    // cwd fallback (project root)
     path.resolve(process.cwd(), "native", "tailwind-styled-native.node"),
-    path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}.node`),
-    path.resolve(process.cwd(), "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    path.resolve(process.cwd(), "native", `tailwind-styled-native.${_pa}.node`),
+    path.resolve(process.cwd(), "native", `tailwind-styled-native.${_paGnu}.node`),
+    // runtimeDir = dist/ → naik 1 level ke package root (npm install case)
+    path.resolve(runtimeDir, "..", "native", "tailwind-styled-native.node"),
+    path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_pa}.node`),
+    path.resolve(runtimeDir, "..", "native", `tailwind-styled-native.${_paGnu}.node`),
+    path.resolve(runtimeDir, "..", "native", "tailwind_styled_parser.node"),
+    // runtimeDir → naik 4 level ke repo root (monorepo dev case)
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "tailwind-styled-native.node"),
-    path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    path.resolve(runtimeDir, "..", "..", "..", "..", "native", `tailwind-styled-native.${_paGnu}.node`),
     // 3 level fallback
     path.resolve(runtimeDir, "..", "..", "..", "native", "tailwind-styled-native.node"),
-    path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${process.platform}-${process.arch}-gnu.node`),
+    path.resolve(runtimeDir, "..", "..", "..", "native", `tailwind-styled-native.${_paGnu}.node`),
     // backward compat
     path.resolve(process.cwd(), "native", "index.mjs"),
+    path.resolve(runtimeDir, "..", "native", "index.mjs"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "index.mjs"),
     path.resolve(runtimeDir, "..", "..", "..", "native", "index.mjs"),
     path.resolve(process.cwd(), "native", "index.node"),
+    path.resolve(runtimeDir, "..", "native", "index.node"),
     path.resolve(runtimeDir, "..", "..", "..", "..", "native", "index.node"),
     path.resolve(runtimeDir, "..", "..", "..", "native", "index.node"),
   ]
