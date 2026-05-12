@@ -37,6 +37,12 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
         Lazy::new(|| Regex::new(r#"\b(?:cn|cx|clsx|classnames)\(["'`]([^"'`]+)["'`]\)"#).unwrap());
     static RE_BASE_FIELD: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"base\s*:\s*["'`]([^"'`]+)["'`]"#).unwrap());
+    // Object config: any key: "..." — covers variants, states, sub (double/single quote)
+    static RE_OBJ_STRING_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"\w+\s*:\s*["']([^"'\n]{2,500})["']"#).unwrap());
+    // Object config: any key: `...` — covers backtick multiline values
+    static RE_OBJ_BACKTICK_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"\w+\s*:\s*`([\s\S]{2,2000}?)`"#).unwrap());
     static RE_COMP_ASSIGN: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"(?:const|let|var)\s+(\w+)\s*=\s*tw"#).unwrap());
     static RE_IMPORT: Lazy<Regex> =
@@ -81,11 +87,32 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
         }
     }
 
-    // Extract from object config base: "..."
+    // Extract from object config base: "..." (kept for specificity)
     for cap in RE_BASE_FIELD.captures_iter(&source) {
         for token in cap[1].split_whitespace() {
             if token.len() >= 2 {
                 classes.insert(token.to_string());
+            }
+        }
+    }
+
+    // Extract ALL object config string values: variants, states, sub, etc.
+    // Guard: only run on files using tw.tag({...}) object syntax
+    if source.contains("tw.") && source.contains("({") {
+        for cap in RE_OBJ_STRING_VALUE.captures_iter(&source) {
+            for token in cap[1].split_whitespace() {
+                let t = token.trim();
+                if t.len() >= 2 {
+                    classes.insert(t.to_string());
+                }
+            }
+        }
+        for cap in RE_OBJ_BACKTICK_VALUE.captures_iter(&source) {
+            for token in cap[1].split_whitespace() {
+                let t = token.trim();
+                if t.len() >= 2 {
+                    classes.insert(t.to_string());
+                }
             }
         }
     }
