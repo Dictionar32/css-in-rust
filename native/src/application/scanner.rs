@@ -191,12 +191,31 @@ pub fn extract_classes_from_source(source: String) -> Vec<String> {
         Lazy::new(|| Regex::new(r#"(?:className|class)=["']([^"']+)["']"#).unwrap());
     static RE_CX_CALL: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"\bcx\(["']([^"']+)["']\)"#).unwrap());
+
+    // ── Object config syntax: tw.tag({ base: "...", variants: { k: { v: "..." } }, ... })
+    //
+    // Strategy: detect files that contain tw.<tag>({ and extract ALL string values
+    // that appear as JS object property values (i.e. after `:` or `=`).
+    // This covers: base, variants.*.*, states.*, sub.*, defaultVariants.*.
+    //
+    // Pattern: matches string literals that follow a colon (object value position).
+    // Intentionally broad — the collect() tokenizer filters for valid Tailwind tokens.
+    static RE_TW_OBJECT_CALL: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"\btw\.\w+\s*\("#).unwrap());
+    // Matches: key: "class1 class2" or key: 'class1 class2' (single/double quoted)
+    static RE_OBJECT_STRING_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"(?:^|[,{;\n])\s*\w+\s*:\s*["']([^"'\n]{1,500})["']"#).unwrap());
+    // Matches: key: `class1 class2` (backtick — multiline template literal values in object)
+    static RE_OBJECT_BACKTICK_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"(?:^|[,{;\n])\s*\w+\s*:\s*`([\s\S]{1,2000}?)`"#).unwrap());
+
     // Known single-word Tailwind utilities (no hyphen needed)
     static RE_SINGLE_WORD: Lazy<Regex> = Lazy::new(|| {
         Regex::new(r"\b(flex|grid|block|inline|hidden|static|fixed|absolute|relative|sticky|overflow|truncate|italic|underline|lowercase|uppercase|capitalize|visible|invisible|collapse|prose|rounded|shadow|container|contents|flow|grow|shrink|basis|auto|full|screen|fit|min|max|none|normal|bold|semibold|medium|light|thin|extrabold|black|antialiased|subpixel|smooth|sharp|transparent|current|inherit|initial|revert|unset|leading|tracking|break|decoration|list|table|float|clear|isolate|isolation|mix|touch|pointer|select|resize|scroll|snap|appearance|cursor|outline|ring|border|divide|space|place|self|justify|content|items|order|col|row|gap|object|aspect|basis|not)\b").unwrap()
     });
+    // # added for arbitrary color values like hover:bg-[#383838]
     static RE_CLASS_TOKEN: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"[a-zA-Z0-9_\-:/\[\]\.!@]+").unwrap());
+        Lazy::new(|| Regex::new(r"[a-zA-Z0-9_\-:/\[\]\.!@#]+").unwrap());
 
     let collect = |text: &str| -> Vec<String> {
         let mut classes: Vec<String> = Vec::new();
@@ -215,35 +234,51 @@ pub fn extract_classes_from_source(source: String) -> Vec<String> {
         classes
     };
 
-    // ─ OPTIMIZATION (Phase 2.3): Collect results from three regex patterns in parallel
+    // ─ Pattern 1: tw.tag`...` template literals
     let tw_strings: Vec<String> = RE_TW_TEMPLATE
         .captures_iter(&source)
         .flat_map(|cap| collect(&cap[1]))
         .collect();
 
+    // ─ Pattern 2: className="..." JSX attributes
     let classname_strings: Vec<String> = RE_CLASSNAME
         .captures_iter(&source)
         .flat_map(|cap| collect(&cap[1]))
         .collect();
 
+    // ─ Pattern 3: cx("...") calls
     let cx_strings: Vec<String> = RE_CX_CALL
         .captures_iter(&source)
         .flat_map(|cap| collect(&cap[1]))
         .collect();
 
-    // ─ OPTIMIZATION (Phase 2.3): Merge results and deduplicate
+    // ─ Pattern 4: tw.tag({ base: "...", variants: { k: { v: "..." } }, states: {...}, sub: {...} })
+    //
+    // Only activate when the file actually contains a tw object config call — avoids
+    // running the broader object-value scan on non-tw files (e.g. styled-components).
+    let object_strings: Vec<String> = if RE_TW_OBJECT_CALL.is_match(&source) {
+        let mut obj_classes: HashSet<String> = HashSet::new();
+        // Single/double quoted values
+        for cap in RE_OBJECT_STRING_VALUE.captures_iter(&source) {
+            obj_classes.extend(collect(&cap[1]));
+        }
+        // Backtick (template literal) values — multiline, e.g. primary: `bg-foreground\n  text-bg`
+        for cap in RE_OBJECT_BACKTICK_VALUE.captures_iter(&source) {
+            obj_classes.extend(collect(&cap[1]));
+        }
+        obj_classes.into_iter().collect()
+    } else {
+        vec![]
+    };
+
+    // ─ Merge and deduplicate
     use std::collections::HashSet;
     let mut classes_set: HashSet<String> = HashSet::new();
 
-    for cls in tw_strings {
-        classes_set.insert(cls);
-    }
-    for cls in classname_strings {
-        classes_set.insert(cls);
-    }
-    for cls in cx_strings {
-        classes_set.insert(cls);
-    }
+    for cls in tw_strings       { classes_set.insert(cls); }
+    for cls in classname_strings { classes_set.insert(cls); }
+    for cls in cx_strings        { classes_set.insert(cls); }
+    for cls in object_strings    { classes_set.insert(cls); }
 
     let mut result: Vec<String> = classes_set.into_iter().collect();
     result.sort();
@@ -335,6 +370,39 @@ fn extract_tw_classes_from_source(source: &str) -> Vec<String> {
                 if !token.is_empty() {
                     classes.insert(token.to_string());
                 }
+            }
+        }
+    }
+
+    // 3. Object config syntax: tw.tag({ base: "...", variants: { k: { v: "..." } }, states: {...} })
+    //
+    // Only activated for files containing tw object config calls.
+    // Pattern matches: key: "class1 class2" or key: 'class1 class2'
+    static RE_TW_OBJECT_CALL: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"\btw\.\w+\s*\("#).unwrap());
+    static RE_OBJECT_STRING_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"(?:^|[,{;\n])\s*\w+\s*:\s*["']([^"'\n]{1,500})["']"#).unwrap());
+    static RE_OBJECT_BACKTICK_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#"(?:^|[,{;\n])\s*\w+\s*:\s*`([\s\S]{1,2000}?)`"#).unwrap());
+    // # included for arbitrary color values like hover:bg-[#383838]
+    static RE_CLASS_TOKEN_INNER: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"[a-zA-Z0-9_\-:/\[\]\.!@#]+").unwrap());
+
+    if RE_TW_OBJECT_CALL.is_match(source) {
+        let extract_tokens = |text: &str| {
+            RE_CLASS_TOKEN_INNER.find_iter(text)
+                .map(|m| m.as_str().to_string())
+                .filter(|t| t.len() >= 2 && (t.contains('-') || t.contains(':') || t.contains('[')))
+                .collect::<Vec<_>>()
+        };
+        for cap in RE_OBJECT_STRING_VALUE.captures_iter(source) {
+            if let Some(m) = cap.get(1) {
+                classes.extend(extract_tokens(m.as_str()));
+            }
+        }
+        for cap in RE_OBJECT_BACKTICK_VALUE.captures_iter(source) {
+            if let Some(m) = cap.get(1) {
+                classes.extend(extract_tokens(m.as_str()));
             }
         }
     }
