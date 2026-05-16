@@ -58,7 +58,9 @@ function extractBaseClasses(template: string): string {
     const native = getNativeBinding()
     if (native?.parseSubcomponentBlocksNapi) {
       const result = native.parseSubcomponentBlocksNapi(template, "tw")
-      return result.baseClasses
+      // Normalize whitespace — JS fallback dan Rust harus produce output identik
+      // supaya SSR className === CSR className (no hydration mismatch)
+      return result.baseClasses.trim().replace(/\s+/g, " ")
     }
   } catch {
     // fall through
@@ -232,7 +234,10 @@ function resolveVariants(
   try {
     const binding = getNativeBinding()
     if (binding?.resolveSimpleVariants) {
-      return binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+      const result = binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+      // Normalize whitespace — Rust dan JS fallback harus produce output identik
+      // Variant strings dari backtick templates punya newlines yang harus di-collapse
+      return result.trim().replace(/\s+/g, " ")
     }
   } catch {
     // Native binding unavailable (browser/client context) — fall through to JS fallback

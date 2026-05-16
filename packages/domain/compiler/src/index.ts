@@ -80,10 +80,12 @@ export const compileCssNative = (classes: string[], prefix: string | null = null
 export const generateCssForClasses = async (
   classes: string[],
   _tailwindConfig?: Record<string, unknown>,
-  _root?: string
+  root?: string,
+  cssEntryContent?: string,
+  minify = false
 ): Promise<string> => {
   const { runCssPipeline } = await import("./tailwindEngine")
-  const result = await runCssPipeline(classes)
+  const result = await runCssPipeline(classes, cssEntryContent, root, minify)
   return result.css
 }
 

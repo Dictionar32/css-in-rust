@@ -19,9 +19,14 @@ const require = createRequire(import.meta.url)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface TailwindV4Engine {
-  compile: (input: string, options?: { loadPlugin?: () => unknown }) => {
-    build: (candidates: string[]) => string
-  }
+  compile: (
+    input: string,
+    options?: {
+      loadPlugin?: () => unknown
+      loadStylesheet?: (id: string, base: string) => Promise<{ content: string; base: string }>
+      loadModule?: (id: string, base: string) => Promise<{ module: unknown; base: string }>
+    }
+  ) => Promise<{ build: (candidates: string[]) => string }> | { build: (candidates: string[]) => string }
 }
 
 let _twEngine: TailwindV4Engine | null = null
@@ -58,13 +63,47 @@ function loadTailwindEngine(): TailwindV4Engine {
  *   generateRawCss(["flex", "items-center", "hover:bg-blue-500"])
  *   // → ".flex{display:flex}.items-center{align-items:center}..."
  */
-export function generateRawCss(classes: string[]): string {
+export async function generateRawCss(classes: string[], cssEntryContent?: string, root?: string): Promise<string> {
   if (classes.length === 0) return ""
 
   const tw = loadTailwindEngine()
+  const input = cssEntryContent ?? "@import 'tailwindcss';"
 
-  // Tailwind v4: compile() returns a compiler instance, build() takes candidates
-  const compiler = tw.compile("@import 'tailwindcss';")
+  const { readFileSync, existsSync } = await import("node:fs")
+  const { dirname, resolve } = await import("node:path")
+
+  // Resolve dari project root user (process.cwd()) bukan dari lokasi library
+  // Lebih robust di monorepo — tailwindcss mungkin di-hoist ke root monorepo
+  const projectRoot = root ?? process.cwd()
+  const req = createRequire(resolve(projectRoot, "package.json"))
+
+  const loadStylesheet = async (id: string, base: string) => {
+    try {
+      // Tailwind v4: @import "tailwindcss" harus resolve ke CSS entry, bukan JS entry
+      // req.resolve("tailwindcss") → JS main ("use strict") → invalid sebagai CSS
+      const cssId = id === "tailwindcss" ? "tailwindcss/index.css"
+        : id === "tailwindcss/preflight" ? "tailwindcss/preflight.css"
+        : id === "tailwindcss/utilities" ? "tailwindcss/utilities.css"
+        : id === "tailwindcss/theme" ? "tailwindcss/theme.css"
+        : id
+
+      const pkgPath = req.resolve(cssId)
+      return {
+        content: readFileSync(pkgPath, "utf-8"),
+        base: dirname(pkgPath),
+      }
+    } catch {
+      try {
+        const absPath = resolve(base, id)
+        if (existsSync(absPath)) {
+          return { content: readFileSync(absPath, "utf-8"), base: dirname(absPath) }
+        }
+      } catch { /* ignore */ }
+      return { content: "", base }
+    }
+  }
+
+  const compiler = await Promise.resolve(tw.compile(input, { loadStylesheet }))
   return compiler.build(classes)
 }
 
@@ -110,20 +149,24 @@ export interface CssPipelineResult {
  *   const result = await runCssPipeline(["flex", "p-4", "hover:bg-blue-500"])
  *   // inject result.css ke <head>
  */
-export async function runCssPipeline(classes: string[]): Promise<CssPipelineResult> {
+export async function runCssPipeline(
+  classes: string[],
+  cssEntryContent?: string,
+  root?: string,
+  minify = true
+): Promise<CssPipelineResult> {
   const unique = [...new Set(classes.filter(Boolean))]
 
   if (unique.length === 0) {
     return { css: "", classes: [], sizeBytes: 0, optimized: false }
   }
 
-  // Step 1: Tailwind JS → raw CSS
-  const rawCss = generateRawCss(unique)
+  // Step 1: Tailwind JS → raw CSS (resolve dari project root untuk monorepo support)
+  const rawCss = await generateRawCss(unique, cssEntryContent, root)
 
-  // Step 2: Rust LightningCSS → optimized CSS
+  // Step 2: Rust LightningCSS → optimized CSS (hanya kalau minify=true)
   const native = getNativeBridge()
-  const hasLightning = typeof native.processTailwindCssLightning === "function"
-
+  const hasLightning = minify && typeof native.processTailwindCssLightning === "function"
   const finalCss = hasLightning ? postProcessWithLightning(rawCss) : rawCss
 
   return {
@@ -135,28 +178,13 @@ export async function runCssPipeline(classes: string[]): Promise<CssPipelineResu
 }
 
 /**
- * Sync version — untuk konteks yang tidak support async (webpack loader).
- * Tanpa async karena Tailwind v4 compile() sync.
+ * @deprecated Tidak dipakai di Tailwind v4.
+ * Webpack loader di-skip di dev mode (Turbopack), dan semua CSS generation
+ * sudah via runCssPipeline() yang async dengan full loadStylesheet support.
+ * Ditinggal untuk backward compatibility — akan dihapus di major version berikutnya.
  */
-export function runCssPipelineSync(classes: string[]): CssPipelineResult {
-  const unique = [...new Set(classes.filter(Boolean))]
-
-  if (unique.length === 0) {
-    return { css: "", classes: [], sizeBytes: 0, optimized: false }
-  }
-
-  const rawCss = generateRawCss(unique)
-
-  const native = getNativeBridge()
-  const hasLightning = typeof native.processTailwindCssLightning === "function"
-  const finalCss = hasLightning ? postProcessWithLightning(rawCss) : rawCss
-
-  return {
-    css: finalCss,
-    classes: unique,
-    sizeBytes: finalCss.length,
-    optimized: hasLightning,
-  }
+export function runCssPipelineSync(_classes: string[]): CssPipelineResult {
+  return { css: "", classes: [], sizeBytes: 0, optimized: false }
 }
 /**
  * Minify dan vendor-prefix CSS dengan explicit browser targets.

@@ -264,20 +264,6 @@ fn parse_sub_map(content: &str) -> HashMap<String, SubEntry> {
 }
 
 
-/// Parse `defaultVariants: { intent: "primary", size: "md" }` → HashMap<key, value>
-fn parse_default_variants(content: &str) -> HashMap<String, String> {
-    let mut map = HashMap::new();
-    let section = match find_obj_section(content, "defaultVariants") {
-        Some(s) => s.to_string(),
-        None => return map,
-    };
-    let re = Regex::new(r#"(\w[\w-]*)\s*:\s*["']([^"']+)["']"#).expect("parse_default_variants");
-    for cap in re.captures_iter(&section) {
-        map.insert(cap[1].to_string(), cap[2].to_string());
-    }
-    map
-}
-
 /// Emit a forwardRef component for `tw.tag({ base, variants, sizes, states, sub })`.
 /// Variants: `props[variantName] === "value"` → apply classes.
 /// Sizes:    `props.size === "sizeName"` → apply classes.
@@ -289,10 +275,10 @@ fn render_object_config_component(
     comp_name: &str,
     base_classes: &str,
     variants: &HashMap<String, HashMap<String, String>>,
+    default_variants: &HashMap<String, String>,
     sizes: &HashMap<String, String>,
     states: &HashMap<String, String>,
     sub: &HashMap<String, SubEntry>,
-    default_variants: &HashMap<String, String>,
 ) -> String {
     // ── Build the forwardRef body lines ──────────────────────────────────────
     let mut body: Vec<String> = Vec::new();
@@ -304,57 +290,47 @@ fn render_object_config_component(
         serde_json_string(base_classes)
     ));
 
-    // Variant prop checks — with defaultVariants fallback
+    // Variant prop checks — inject ?? "defaultValue" if defaultVariants is set
     let mut variant_keys: Vec<String> = Vec::new();
     let mut sorted_variants: Vec<_> = variants.iter().collect();
     sorted_variants.sort_by_key(|(k, _)| k.as_str());
     for (variant_name, variant_values) in &sorted_variants {
         variant_keys.push(variant_name.to_string());
-        // Resolve default value for this variant (if any)
-        let default_val = default_variants.get(*variant_name).map(|s| s.as_str()).unwrap_or("");
         let mut sorted_values: Vec<_> = variant_values.iter().collect();
         sorted_values.sort_by_key(|(k, _)| k.as_str());
+        // Use nullish coalescing if this variant has a default
+        let prop_expr = if let Some(default_val) = default_variants.get(*variant_name) {
+            format!("(props.{} ?? {})", variant_name, serde_json_string(default_val))
+        } else {
+            format!("props.{}", variant_name)
+        };
         for (value, classes) in sorted_values {
-            if !default_val.is_empty() && value.as_str() == default_val {
-                // Has default: use nullish coalescing so prop omission falls back to default
-                body.push(format!(
-                    "  if ((props.{variant} ?? {default_json}) === {value_json}) _cls.push({classes_json});",
-                    variant = variant_name,
-                    default_json = serde_json_string(default_val),
-                    value_json = serde_json_string(value),
-                    classes_json = serde_json_string(classes),
-                ));
-            } else {
-                body.push(format!(
-                    "  if (props.{} === {}) _cls.push({});",
-                    variant_name,
-                    serde_json_string(value),
-                    serde_json_string(classes),
-                ));
-            }
+            body.push(format!(
+                "  if ({} === {}) _cls.push({});",
+                prop_expr,
+                serde_json_string(value),
+                serde_json_string(classes),
+            ));
         }
     }
 
-    // Size prop checks — with defaultVariants fallback
+    // Size prop checks — inject ?? "defaultSize" if present
     if !sizes.is_empty() {
-        let default_size = default_variants.get("size").map(|s| s.as_str()).unwrap_or("");
+        let default_size = default_variants.get("size");
+        let size_expr = if let Some(default_val) = default_size {
+            format!("(props.size ?? {})", serde_json_string(default_val))
+        } else {
+            "props.size".to_string()
+        };
         let mut sorted_sizes: Vec<_> = sizes.iter().collect();
         sorted_sizes.sort_by_key(|(k, _)| k.as_str());
         for (size_name, classes) in sorted_sizes {
-            if !default_size.is_empty() && size_name.as_str() == default_size {
-                body.push(format!(
-                    "  if ((props.size ?? {default_json}) === {size_json}) _cls.push({classes_json});",
-                    default_json = serde_json_string(default_size),
-                    size_json = serde_json_string(size_name),
-                    classes_json = serde_json_string(classes),
-                ));
-            } else {
-                body.push(format!(
-                    "  if (props.size === {}) _cls.push({});",
-                    serde_json_string(size_name),
-                    serde_json_string(classes),
-                ));
-            }
+            body.push(format!(
+                "  if ({} === {}) _cls.push({});",
+                size_expr,
+                serde_json_string(size_name),
+                serde_json_string(classes),
+            ));
         }
     }
 
@@ -840,6 +816,10 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 .map(parse_nested_string_map)
                 .unwrap_or_default();
 
+            let default_variants = find_obj_section(&obj_content, "defaultVariants")
+                .map(parse_flat_string_map)
+                .unwrap_or_default();
+
             let sizes = find_obj_section(&obj_content, "sizes")
                 .map(parse_flat_string_map)
                 .unwrap_or_default();
@@ -851,9 +831,6 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
             let sub = find_obj_section(&obj_content, "sub")
                 .map(|s| parse_sub_map(s))
                 .unwrap_or_default();
-
-            // Parse defaultVariants — used by render to emit ?? fallback in generated JS
-            let default_variants = parse_default_variants(&obj_content);
 
             // Skip if the object is empty / not a TwConfig
             if base_classes.is_empty()
@@ -899,10 +876,10 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 &comp_name,
                 &base_classes,
                 &variants,
+                &default_variants,
                 &sizes,
                 &states,
                 &sub,
-                &default_variants,
             );
 
             replacements.push((full_match, replacement));

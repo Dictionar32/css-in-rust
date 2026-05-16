@@ -24,6 +24,8 @@ pub struct AstExtractResult {
 /// and object configs. Implements the same interface as the oxc-based scanner.
 #[napi]
 pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult {
+    // filename dipakai untuk heuristics per-file — .styled.ts scan lebih agresif
+    let is_styled_file = filename.ends_with(".styled.ts") || filename.ends_with(".styled.tsx");
     // Static patterns for AST-level extraction
     static RE_TW_TEMPLATE: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"\btw(?:\.server)?\.(\w+)`([^`]*)`"#).unwrap());
@@ -37,12 +39,15 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
         Lazy::new(|| Regex::new(r#"\b(?:cn|cx|clsx|classnames)\(["'`]([^"'`]+)["'`]\)"#).unwrap());
     static RE_BASE_FIELD: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"base\s*:\s*["'`]([^"'`]+)["'`]"#).unwrap());
-    // Object config: any key: "..." — covers variants, states, sub (double/single quote)
+    // Capture ALL quoted string values inside object config (variants, states, sub, sizes)
+    // Matches: anyKey: "class-list" | anyKey: 'class-list' | anyKey: `class-list`
+    // Minimum 4 chars to avoid capturing short non-class strings like "sm", "md"
     static RE_OBJ_STRING_VALUE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r#"\w+\s*:\s*["']([^"'\n]{2,500})["']"#).unwrap());
-    // Object config: any key: `...` — covers backtick multiline values
-    static RE_OBJ_BACKTICK_VALUE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r#"\w+\s*:\s*`([\s\S]{2,2000}?)`"#).unwrap());
+        Lazy::new(|| Regex::new(r#":\s*`([^`]{4,})`"#).unwrap());
+    static RE_OBJ_QUOTED_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#":\s*"([^"]{4,})""#).unwrap());
+    static RE_OBJ_SINGLE_VALUE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r#":\s*'([^']{4,})'"#).unwrap());
     static RE_COMP_ASSIGN: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#"(?:const|let|var)\s+(\w+)\s*=\s*tw"#).unwrap());
     static RE_IMPORT: Lazy<Regex> =
@@ -87,7 +92,7 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
         }
     }
 
-    // Extract from object config base: "..." (kept for specificity)
+    // Extract from object config base: "..."
     for cap in RE_BASE_FIELD.captures_iter(&source) {
         for token in cap[1].split_whitespace() {
             if token.len() >= 2 {
@@ -96,21 +101,36 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
         }
     }
 
-    // Extract ALL object config string values: variants, states, sub, etc.
-    // Guard: only run on files using tw.tag({...}) object syntax
-    if source.contains("tw.") && source.contains("({") {
+    // Extract from ALL object string values: variants, states, sub, sizes
+    // .styled.ts files: scan tanpa guard — convention file ini berisi tw() object config
+    // File lain: hanya scan kalau ada tw() object config syntax
+    let has_obj_config = is_styled_file
+        || (source.contains("tw.")
+            && (source.contains("variants:")
+                || source.contains("states:")
+                || source.contains("sub:")
+                || source.contains("sizes:")));
+    if has_obj_config {
         for cap in RE_OBJ_STRING_VALUE.captures_iter(&source) {
             for token in cap[1].split_whitespace() {
                 let t = token.trim();
-                if t.len() >= 2 {
+                if t.len() >= 2 && !t.ends_with('{') && t != "}" {
                     classes.insert(t.to_string());
                 }
             }
         }
-        for cap in RE_OBJ_BACKTICK_VALUE.captures_iter(&source) {
+        for cap in RE_OBJ_QUOTED_VALUE.captures_iter(&source) {
             for token in cap[1].split_whitespace() {
                 let t = token.trim();
-                if t.len() >= 2 {
+                if t.len() >= 2 && !t.ends_with('{') && t != "}" {
+                    classes.insert(t.to_string());
+                }
+            }
+        }
+        for cap in RE_OBJ_SINGLE_VALUE.captures_iter(&source) {
+            for token in cap[1].split_whitespace() {
+                let t = token.trim();
+                if t.len() >= 2 && !t.ends_with('{') && t != "}" {
                     classes.insert(t.to_string());
                 }
             }
@@ -141,10 +161,28 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
     }
 
     // Filter: only keep tokens that look like Tailwind classes
-    let _ = &filename; // used for future per-file heuristics
+    // Valid Tailwind variant prefixes yang boleh muncul sebelum ':'
+    // Token seperti "div:action" (sub-component key) harus difilter
+    const VALID_VARIANT_PREFIXES: &[&str] = &[
+        "hover", "focus", "active", "disabled", "visited", "checked", "first", "last",
+        "odd", "even", "focus-within", "focus-visible", "placeholder", "before", "after",
+        "dark", "sm", "md", "lg", "xl", "2xl", "motion-reduce", "motion-safe",
+        "group", "peer", "aria", "data", "supports", "not", "has", "is", "where",
+        "rtl", "ltr", "open", "print", "portrait", "landscape",
+    ];
+
     let classes: Vec<String> = classes
         .into_iter()
         .filter(|c| {
+            // Token dengan ':' harus punya valid Tailwind variant prefix sebelum ':'
+            // Filter "div:action", "header:topBar" dll (sub-component keys)
+            if c.contains(':') {
+                let prefix = c.split(':').next().unwrap_or("");
+                // Allow multi-variant chaining: "dark:hover:bg-..." → prefix = "dark" ✓
+                if !VALID_VARIANT_PREFIXES.contains(&prefix) {
+                    return false;
+                }
+            }
             c.contains('-')
                 || c.contains(':')
                 || c.contains('[')
@@ -171,6 +209,23 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
                         | "invisible"
                         | "prose"
                         | "container"
+                        | "border"
+                        | "antialiased"
+                        | "subpixel-antialiased"
+                        | "rounded"
+                        | "shadow"
+                        | "ring"
+                        | "grow"
+                        | "shrink"
+                        | "basis"
+                        | "order"
+                        | "col"
+                        | "row"
+                        | "float"
+                        | "clear"
+                        | "contents"
+                        | "flow"
+                        | "table"
                 )
         })
         .collect::<std::collections::BTreeSet<_>>()

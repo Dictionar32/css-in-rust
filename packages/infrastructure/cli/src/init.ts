@@ -39,7 +39,8 @@ export async function runInitCli(rawArgs: string[]): Promise<void> {
     `${JSON.stringify(
       {
         version: 1,
-        cssEntry: "src/tailwind.css",
+        compiler: { engine: "rust" },
+        css: { entry: "src/tailwind.css" },
       },
       null,
       2

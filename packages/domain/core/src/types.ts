@@ -95,15 +95,26 @@ export interface ComponentConfig {
 }
 
 /**
+ * Strip tag prefix dari "tag:name" format sub key.
+ * "div:action" → "action"
+ * "header"     → "header" (tidak berubah)
+ */
+type ExtractSubName<K extends string> =
+  K extends `${string}:${infer Name}` ? Name : K
+
+/**
  * Infer semua sub-component names dari config.sub:
- * - string value  → key langsung: { icon: "..." } → "icon"
- * - nested object → nested keys: { h2: { title: "..." } } → "title"
+ * - string value plain   → key langsung: { icon: "..." } → "icon"
+ * - string value tag:name → strip tag: { "div:action": "..." } → "action"
+ * - nested object        → nested keys: { h2: { title: "..." } } → "title"
  */
 export type InferSubFromConfig<C extends ComponentConfig> =
   C extends { sub: infer S extends Record<string, SubValue> }
     ? {
         [K in keyof S]: S[K] extends string
-          ? K                           // string value → key langsung
+          ? K extends string
+            ? ExtractSubName<K>         // strip "tag:name" → "name"
+            : never
           : S[K] extends Record<infer N extends string, string>
             ? N                         // nested object → nested keys
             : never

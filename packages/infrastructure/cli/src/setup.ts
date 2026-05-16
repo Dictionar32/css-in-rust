@@ -190,6 +190,23 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
       setupFlags,
       logger
     )
+
+    // Write/update tailwind-styled.config.json with detected css.entry
+    const detectedCssEntry = path.relative(cwd, cssFile).replace(/\\/g, "/")
+    const twConfigPath = path.join(cwd, "tailwind-styled.config.json")
+    const twConfig = {
+      version: 1,
+      compiler: { engine: "rust" },
+      css: { entry: detectedCssEntry },
+    }
+    await writeFileWithDryRun(
+      cwd,
+      twConfigPath,
+      JSON.stringify(twConfig, null, 2) + "\n",
+      "tailwind-styled.config.json",
+      setupFlags,
+      logger
+    )
   } else {
     logger.warn("CSS entry tidak ditemukan — tambahkan @import \"tailwindcss\" manual ke globals.css")
   }
@@ -202,6 +219,25 @@ export const runSetupCli = async (rawArgs: string[]): Promise<void> => {
     await patchFileWithDryRun(tsCfg, patchTsConfig, "tsconfig.json", setupFlags, logger)
   } else {
     logger.skip("tsconfig.json tidak ditemukan — skip")
+  }
+
+  // Pre-warm scanner cache supaya dev pertama tidak cache MISS semua file.
+  // scanWorkspaceAsync dengan useCache: true sudah handle writeCache() internal
+  // via Rust — termasuk mtimeMs, size, hash yang benar dari fs.stat.
+  output.writeText("\n" + pc.bold("  [+]") + pc.cyan("  pre-warming scanner cache"))
+  if (!setupFlags.isDryRun) {
+    try {
+      const { scanWorkspaceAsync } = await import("@tailwind-styled/scanner")
+      const scanSpinner = output.spinner()
+      scanSpinner.start("Scanning workspace...")
+      const scanned = await scanWorkspaceAsync(cwd, { useCache: true })
+      scanSpinner.stop(`Scanned ${scanned.totalFiles} file(s), ${scanned.uniqueClasses.length} unique classes`)
+      logger.ok(".cache/tailwind-styled/scanner-cache.json")
+    } catch {
+      logger.warn("Pre-warm cache gagal — tidak masalah, cache akan dibangun saat npm run dev")
+    }
+  } else {
+    logger.dry("pre-warm scanner cache")
   }
 
   output.writeText("")

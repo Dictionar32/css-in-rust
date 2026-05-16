@@ -108,11 +108,15 @@ pub fn resolve_simple_variants(
         .map(|b| b.split_whitespace().map(String::from).collect())
         .unwrap_or_default();
 
-    // Merge props with defaults, props take precedence
+    // Merge defaults with props — props take precedence.
+    // Chain props first (inserted first → win via or_insert_with),
+    // defaults second (only fill in missing keys).
+    // Bug lama: defaults.iter().chain(props.iter()) — defaults menang karena
+    // or_insert_with skip key yang sudah ada, padahal props harus override defaults.
     let merged: HashMap<String, String> =
-        defaults
+        props
             .iter()
-            .chain(props.iter())
+            .chain(defaults.iter())
             .fold(HashMap::new(), |mut acc, (k, v)| {
                 acc.entry(k.clone()).or_insert_with(|| v.clone());
                 acc

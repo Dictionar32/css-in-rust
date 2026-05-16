@@ -71,10 +71,84 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
     static RE_MTIME: Lazy<Regex> =
         Lazy::new(|| Regex::new(r#""mtimeMs"\s*:\s*([0-9.]+)"#).unwrap());
     static RE_SIZE: Lazy<Regex> = Lazy::new(|| Regex::new(r#""size"\s*:\s*(\d+)"#).unwrap());
-    static RE_CLASSES: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r#""classes"\s*:\s*\[([^\]]*)\]"#).unwrap());
+    // RE_CLASSES dihapus — diganti dengan extract_classes_array() di bawah
+    // Bug lama: r#""classes"\s*:\s*\[([^\]]*)\]"# berhenti di ] pertama —
+    // arbitrary values seperti hover:bg-[#383838] memotong array sehingga
+    // class setelahnya hilang dari cache read.
     static RE_HIT: Lazy<Regex> = Lazy::new(|| Regex::new(r#""hitCount"\s*:\s*(\d+)"#).unwrap());
     static RE_HASH: Lazy<Regex> = Lazy::new(|| Regex::new(r#""hash"\s*:\s*"([^"]*)""#).unwrap());
+
+    /// Extract classes array dari JSON object string dengan benar.
+    /// Bracket-aware: tidak berhenti di ] yang ada di dalam string value.
+    fn extract_classes_array(obj: &str) -> Vec<String> {
+        // Cari "classes": [
+        let start = match obj.find("\"classes\"") {
+            Some(p) => p,
+            None => return vec![],
+        };
+        let rest = &obj[start + 9..]; // skip "classes"
+        // Skip whitespace dan ':'
+        let rest = rest.trim_start();
+        let rest = rest.strip_prefix(':').unwrap_or(rest).trim_start();
+        // Harus dimulai dengan '['
+        if !rest.starts_with('[') {
+            return vec![];
+        }
+        // Scan sampai closing ']' dari array, bukan dari dalam string value
+        let chars: Vec<char> = rest.chars().collect();
+        let mut depth = 0i32;
+        let mut in_string = false;
+        let mut escaped = false;
+        let mut array_end = 0;
+        for (idx, &ch) in chars.iter().enumerate() {
+            if escaped {
+                escaped = false;
+                continue;
+            }
+            if ch == '\\' && in_string {
+                escaped = true;
+                continue;
+            }
+            if ch == '"' {
+                in_string = !in_string;
+                continue;
+            }
+            if in_string { continue; }
+            match ch {
+                '[' => depth += 1,
+                ']' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        array_end = idx;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+        if array_end == 0 { return vec![]; }
+        // Parse isi array — kumpulkan semua string values
+        let array_content: String = chars[1..array_end].iter().collect();
+        let mut classes = Vec::new();
+        let mut in_str = false;
+        let mut esc = false;
+        let mut current = String::new();
+        for ch in array_content.chars() {
+            if esc { esc = false; current.push(ch); continue; }
+            if ch == '\\' && in_str { esc = true; current.push(ch); continue; }
+            if ch == '"' {
+                if in_str {
+                    let s = json_unescape(current.trim());
+                    if !s.is_empty() { classes.push(s); }
+                    current = String::new();
+                }
+                in_str = !in_str;
+                continue;
+            }
+            if in_str { current.push(ch); }
+        }
+        classes
+    }
 
     let content = match std::fs::read_to_string(&cache_path) {
         Ok(c) => c,
@@ -175,15 +249,7 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
                 .captures(&obj)
                 .map(|c| json_unescape(&c[1]))
                 .unwrap_or_else(|| short_hash(&key));
-            let classes: Vec<String> = RE_CLASSES
-                .captures(&obj)
-                .map(|c| {
-                    c[1].split(',')
-                        .map(|s| json_unescape(s.trim().trim_matches('"')))
-                        .filter(|s| !s.is_empty())
-                        .collect()
-                })
-                .unwrap_or_default();
+            let classes: Vec<String> = extract_classes_array(&obj);
 
             entries.push(CacheEntry {
                 file: key,
