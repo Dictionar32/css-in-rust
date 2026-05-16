@@ -1,17 +1,16 @@
-<!-- markdownlint-disable -->
 <div align="center">
 
-# ⚡ tailwind-styled-v4
+# tailwind-styled-v4
 
-### Rust-powered Tailwind CSS v4 untuk React
-
+### ⚡ Rust-powered Tailwind CSS v4 untuk React
 **Build-time compiler · Zero runtime overhead · RSC-aware · Next.js / Vite / Rspack**
 
-[![npm](https://img.shields.io/npm/v/tailwind-styled-v4?color=e8612a&style=flat-square)](https://npmjs.com/package/tailwind-styled-v4)
-[![license](https://img.shields.io/npm/l/tailwind-styled-v4?style=flat-square)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.75+-orange?style=flat-square&logo=rust)](https://rust-lang.org)
-[![Node](https://img.shields.io/badge/Node.js-20+-green?style=flat-square&logo=node.js)](https://nodejs.org)
-[![runtime](https://img.shields.io/badge/runtime-~4.5kb-brightgreen?style=flat-square)](https://bundlephobia.com/package/tailwind-styled-v4)
+[![npm](https://img.shields.io/npm/v/tailwind-styled-v4?color=blue)](https://npmjs.com/package/tailwind-styled-v4)
+[![license](https://img.shields.io/npm/l/tailwind-styled-v4)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.75+-orange?logo=rust)](https://rust-lang.org)
+[![Node](https://img.shields.io/badge/Node.js-20+-green?logo=node.js)](https://nodejs.org)
+[![test](https://img.shields.io/badge/tests-84%2F86%20passing-brightgreen)](#)
+[![bundle](https://img.shields.io/badge/runtime-~4.5kb-green)](https://bundlephobia.com/package/tailwind-styled-v4)
 
 </div>
 
@@ -21,252 +20,461 @@
 
 `tailwind-styled-v4` adalah library styling untuk React yang menggabungkan **DX styled-components** dengan **performa Tailwind CSS v4** dan **engine berbasis Rust**. Tulis komponen dengan `tw.button` atau `tw.div({ variants })` — compiler extract dan optimasi CSS di build time, bukan runtime.
 
-<style>
-/* GitHub-friendly dark/light mode */
-:root {
-  --tw-bg: #0d1117;
-  --tw-bg2: #161b22;
-  --tw-border: #30363d;
-  --tw-text: #c9d1d9;
-  --tw-text2: #8b949e;
-  --tw-rust: #e8612a;
-  --tw-rust-dim: rgba(232,97,42,0.15);
-  --tw-green: #2ea043;
-  --tw-red: #f85149;
-  --tw-yellow: #d29922;
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --tw-bg: #ffffff;
-    --tw-bg2: #f6f8fa;
-    --tw-border: #d0d7de;
-    --tw-text: #24292f;
-    --tw-text2: #57606a;
-    --tw-rust: #e8612a;
-    --tw-rust-dim: rgba(232,97,42,0.1);
-    --tw-green: #2c974b;
-    --tw-red: #cf222e;
-    --tw-yellow: #9a6700;
-  }
-}
-.tw-section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 2rem 0;
-}
-.tw-feature-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1px;
-  background: var(--tw-border);
-  border: 1px solid var(--tw-border);
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 1.5rem 0;
-}
-.tw-feature-card {
-  background: var(--tw-bg);
-  padding: 1.5rem;
-}
-.tw-feature-card:hover { background: var(--tw-bg2); }
-.tw-feature-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
-.tw-feature-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--tw-text); }
-.tw-feature-desc { font-size: 0.875rem; color: var(--tw-text2); line-height: 1.5; }
-.tw-table-wrap { overflow-x: auto; border: 1px solid var(--tw-border); border-radius: 12px; margin: 1rem 0; }
-.tw-table { width: 100%; border-collapse: collapse; }
-.tw-table th, .tw-table td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--tw-border); }
-.tw-table th { background: var(--tw-bg2); color: var(--tw-text2); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; }
-.tw-table td { color: var(--tw-text2); }
-.tw-table td:first-child { color: var(--tw-text); font-weight: 500; }
-.tw-check { color: var(--tw-green); font-weight: bold; }
-.tw-cross { color: var(--tw-red); font-weight: bold; }
-.tw-warn { color: var(--tw-yellow); font-weight: bold; }
-.tw-code-block { background: var(--tw-bg2); border: 1px solid var(--tw-border); border-radius: 8px; margin: 1rem 0; overflow-x: auto; }
-.tw-code-header { padding: 0.5rem 1rem; border-bottom: 1px solid var(--tw-border); font-family: monospace; font-size: 0.75rem; color: var(--tw-text2); display: flex; justify-content: space-between; }
-.tw-code-pre { padding: 1rem; margin: 0; font-family: 'SF Mono', 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.6; color: var(--tw-text); }
-.tw-pipeline { margin: 2rem 0; }
-.tw-pipeline-step { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-.tw-pipeline-num { width: 2.2rem; height: 2.2rem; background: var(--tw-bg2); border: 1px solid var(--tw-border); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: monospace; font-weight: bold; color: var(--tw-rust); flex-shrink: 0; }
-.tw-pipeline-step:first-child .tw-pipeline-num { background: var(--tw-rust); color: #fff; border-color: var(--tw-rust); }
-.tw-bench-item { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0.8rem 0; }
-.tw-bench-label { width: 160px; font-family: monospace; font-size: 0.8rem; color: var(--tw-text2); }
-.tw-bench-bar { flex: 2; height: 8px; background: var(--tw-bg2); border-radius: 10px; overflow: hidden; }
-.tw-bench-fill { height: 100%; background: linear-gradient(90deg, var(--tw-rust), #f97316); width: 0%; border-radius: 10px; }
-.tw-install-box { background: var(--tw-bg2); border: 1px solid var(--tw-border); border-radius: 12px; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; }
-.tw-install-cmd { font-family: monospace; font-size: 1rem; background: var(--tw-bg); padding: 0.25rem 0.8rem; border-radius: 6px; border: 1px solid var(--tw-border); }
-</style>
+**Perbandingan singkat:**
 
-<div class="tw-section">
-
-## Perbandingan
-
-| Fitur | tailwind-styled-v4 | styled-components | Tailwind CSS biasa |
-|-------|--------------------|-------------------|--------------------|
-| Build-time CSS | <span class="tw-check">✓</span> via Rust | <span class="tw-cross">✗</span> runtime inject | <span class="tw-check">✓</span> |
-| Runtime overhead | <span class="tw-check">✓</span> ~0 | <span class="tw-cross">✗</span> ~15KB | <span class="tw-check">✓</span> ~0 |
-| Variants API | <span class="tw-check">✓</span> type-safe | <span class="tw-warn">⚠</span> terbatas | <span class="tw-cross">✗</span> |
-| SSR/RSC support | <span class="tw-check">✓</span> zero config | <span class="tw-warn">⚠</span> butuh ServerStyleSheet | <span class="tw-check">✓</span> manual |
-| Hydration mismatch | <span class="tw-check">✓</span> tidak ada | <span class="tw-warn">⚠</span> hash bisa beda | <span class="tw-check">✓</span> tidak ada |
-| DevTools readable | <span class="tw-check">✓</span> class jelas | <span class="tw-cross">✗</span> `sc-abc123` | <span class="tw-check">✓</span> |
-| Dark mode | <span class="tw-check">✓</span> `dark:` prefix | <span class="tw-warn">⚠</span> manual | <span class="tw-check">✓</span> |
+| | tailwind-styled-v4 | styled-components | Tailwind CSS biasa |
+|---|---|---|---|
+| Build-time CSS | ✅ | ❌ (runtime inject) | ✅ |
+| Runtime overhead | ~0 | ~15KB | ~0 |
+| Variants API | ✅ type-safe | terbatas | ❌ |
+| SSR/RSC support | ✅ zero config | ⚠️ butuh ServerStyleSheet | ✅ manual |
+| Hydration mismatch | ✅ tidak ada | ⚠️ hash bisa beda | ✅ tidak ada |
+| DevTools readable | ✅ class name jelas | ❌ hash (`sc-abc123`) | ✅ |
 | Engine | 🦀 Rust | JS | JS |
+| Dark mode | ✅ `dark:` prefix | manual | ✅ |
+| TypeScript | ✅ full inference | partial | ✅ |
 
-</div>
+---
 
-<hr>
+## Instalasi
 
-<div class="tw-section">
+```bash
+npm install tailwind-styled-v4
 
-## Fitur Unggulan
+# Setup otomatis
+npx tw setup
+```
 
-<div class="tw-feature-grid">
-<div class="tw-feature-card"><div class="tw-feature-icon">🦀</div><div class="tw-feature-title">Rust Scanner Engine</div><div class="tw-feature-desc">Class scanner berbasis Rust via NAPI-RS — 425× lebih cepat dari scanner JS. Cache persistent antara dev server restart.</div></div>
-<div class="tw-feature-card"><div class="tw-feature-icon">🎨</div><div class="tw-feature-title">Variants API</div><div class="tw-feature-desc">Object config dengan `variants`, `defaultVariants`, `compoundVariants`, dan `states` — semua fully typed di TypeScript.</div></div>
-<div class="tw-feature-card"><div class="tw-feature-icon">🧩</div><div class="tw-feature-title">Sub-components</div><div class="tw-feature-desc">Definisikan `header`, `main`, `footer` langsung di config. Akses via `Card.header` — TypeScript infer nama otomatis.</div></div>
-<div class="tw-feature-card"><div class="tw-feature-icon">⚡</div><div class="tw-feature-title">Real CSS Pipeline</div><div class="tw-feature-desc">Tailwind JS + LightningCSS generate real CSS dari class list — custom `@theme` ikut di-compile, bukan empty rules.</div></div>
-<div class="tw-feature-card"><div class="tw-feature-icon">🌙</div><div class="tw-feature-title">Dark Mode</div><div class="tw-feature-desc">Pakai prefix `dark:` langsung — support `prefers-color-scheme` dan custom theme via CSS variables.</div></div>
-<div class="tw-feature-card"><div class="tw-feature-icon">🚀</div><div class="tw-feature-title">Next.js App Router</div><div class="tw-feature-desc">Bekerja dengan RSC, Turbopack, dan App Router tanpa konfigurasi tambahan. Auto-detect CSS entry, inject plugin otomatis.</div></div>
-</div>
+`npx tw setup` akan otomatis:
+- Mendeteksi bundler (Next.js / Vite / Rspack)
+- Meng-inject plugin ke `next.config.ts` / `vite.config.ts`
+- Membuat `tailwind-styled.config.json` dengan CSS entry yang terdeteksi otomatis
+- Menambahkan `@import "tailwindcss"` ke CSS entry
+- Pre-warming scanner cache supaya dev pertama tidak cache miss
 
-</div>
+---
 
-<hr>
+## Quick Start
 
-<div class="tw-section">
+### 1. Template Literal
 
-## Contoh Kode
+```tsx
+import { tw } from "tailwind-styled-v4"
 
-**Button dengan variants & states**
+const Button = tw.button`
+  inline-flex items-center rounded-lg px-4 py-2
+  bg-blue-600 text-white font-medium
+  hover:bg-blue-700 transition
+`
 
-<div class="tw-code-block">
-<div class="tw-code-header"><span>button.tsx</span><span>tsx</span></div>
-<pre class="tw-code-pre"><code>import { tw } from "tailwind-styled-v4"
+<Button onClick={handleClick}>Klik saya</Button>
+```
 
-export const Button = tw.button({
-  base: `
-    inline-flex items-center justify-center gap-2
-    font-medium transition-all rounded-full
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `,
+### 2. Object Config + Variants
+
+```tsx
+const Button = tw.button({
+  base: "inline-flex items-center rounded-full px-5 py-2 font-medium transition-all",
   variants: {
     intent: {
       primary:   "bg-foreground text-background hover:bg-[#383838]",
       secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
-      outline:   "bg-transparent border-2 border-foreground text-foreground",
+      outline:   "bg-transparent border-2 border-foreground text-foreground hover:bg-foreground hover:text-background",
       ghost:     "bg-transparent text-foreground hover:bg-gray-100",
     },
-    size: { sm: "h-10 px-4 text-sm", md: "h-12 px-5", lg: "h-14 px-6" },
+    size: {
+      sm: "h-10 px-4 text-sm rounded-lg",
+      md: "h-12 px-5 text-base rounded-full",
+      lg: "h-14 px-6 text-lg rounded-full",
+    },
   },
   defaultVariants: { intent: "primary", size: "md" },
-  states: { loading: "opacity-60 cursor-wait", fullWidth: "w-full" },
+  states: {
+    loading:   "opacity-60 cursor-wait pointer-events-none",
+    disabled:  "opacity-50 cursor-not-allowed",
+    fullWidth: "w-full",
+  },
 })
 
-// Penggunaan — TypeScript autocomplete ✅
-&lt;Button&gt;Default&lt;/Button&gt;
-&lt;Button intent="ghost"&gt;Batal&lt;/Button&gt;
-&lt;Button intent="outline" size="sm"&gt;Edit&lt;/Button&gt;
-&lt;Button loading fullWidth&gt;Memproses...&lt;/Button&gt;</code></pre>
-</div>
+// TypeScript tahu variant apa yang valid — autocomplete ✅
+<Button intent="primary" size="lg">Submit</Button>
+<Button intent="ghost">Batal</Button>
+<Button intent="outline" size="sm">Edit</Button>
+<Button loading>Memproses...</Button>
+```
 
-**Card dengan sub-components**
+### 3. Sub-components
 
-<div class="tw-code-block">
-<div class="tw-code-header"><span>card.tsx</span><span>tsx</span></div>
-<pre class="tw-code-pre"><code>const Card = tw.div({
+```tsx
+const Card = tw.div({
   base: "rounded-xl bg-white shadow-md overflow-hidden",
   sub: {
-    header:       "px-6 py-4 border-b font-semibold",
-    main:         "px-6 py-4",
-    footer:       "px-6 py-4 border-t text-xs text-gray-400",
-    "div:action": "px-6 py-4 flex gap-3", // → Card.action
+    header:        "px-6 py-4 border-b font-semibold",
+    main:          "px-6 py-4",
+    footer:        "px-6 py-4 border-t text-sm text-gray-400",
+    "div:action":  "px-6 py-4 flex gap-3",  // render <div>, akses Card.action
   },
-  states: { selected: "ring-2 ring-blue-500" },
+  states: {
+    selected: "ring-2 ring-blue-500",
+    disabled: "opacity-50 pointer-events-none",
+  },
 })
 
-&lt;Card selected&gt;
-  &lt;Card.header&gt;Judul&lt;/Card.header&gt;
-  &lt;Card.main&gt;Konten&lt;/Card.main&gt;
-  &lt;Card.action&gt;&lt;Button&gt;OK&lt;/Button&gt;&lt;/Card.action&gt;
-  &lt;Card.footer&gt;Updated 2 hours ago&lt;/Card.footer&gt;
-&lt;/Card&gt;</code></pre>
-</div>
+// Penggunaan
+<Card selected>
+  <Card.header>Judul Card</Card.header>
+  <Card.main>Konten card di sini.</Card.main>
+  <Card.action>
+    <Button>Lihat Detail</Button>
+    <Button intent="ghost">Batal</Button>
+  </Card.action>
+  <Card.footer>Updated 2 hours ago</Card.footer>
+</Card>
+```
 
-**Integrasi Next.js**
+Format `"tag:name"` untuk sub-components — misalnya `"div:action"` render sebagai `<div>` dengan akses via `Card.action`. TypeScript otomatis strip prefix tag dari type inference.
 
-<div class="tw-code-block">
-<div class="tw-code-header"><span>next.config.ts</span><span>ts</span></div>
-<pre class="tw-code-pre"><code>import { withTailwindStyled } from "tailwind-styled-v4/next"
+### 4. `.extend()` — Inheritance
+
+```tsx
+const PrimaryButton = Button.extend`text-lg px-8`
+const DangerButton = Button.extend({
+  classes: "bg-red-600 hover:bg-red-700",
+  defaultVariants: { intent: "primary" }
+})
+```
+
+### 5. States — Boolean Props
+
+```tsx
+// states di-resolve via Rust bitmask lookup — O(1), tidak ada runtime overhead
+const Badge = tw.span({
+  base: "inline-flex px-2 py-1 rounded text-sm font-medium",
+  states: {
+    active:   "bg-green-100 text-green-800",
+    warning:  "bg-yellow-100 text-yellow-800",
+    error:    "bg-red-100 text-red-800",
+  },
+})
+
+<Badge active>Online</Badge>
+<Badge error>Error</Badge>
+```
+
+### 6. Dark Mode
+
+Dark mode bekerja otomatis via `prefers-color-scheme` — tidak perlu konfigurasi tambahan:
+
+```tsx
+const Card = tw.div({
+  base: "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
+  sub: {
+    header: "border-b border-gray-200 dark:border-gray-700",
+  },
+})
+```
+
+### 7. Compound Variants
+
+```tsx
+const Button = tw.button({
+  base: "...",
+  variants: {
+    intent: { primary: "...", outline: "..." },
+    size: { sm: "...", lg: "..." },
+  },
+  compoundVariants: [
+    // Kalau intent=primary AND size=lg → tambah class ini
+    { intent: "primary", size: "lg", class: "shadow-lg" },
+  ],
+})
+```
+
+### 8. .withSub — Strict TypeScript untuk Template Literals
+
+```tsx
+const Button = tw.button`
+  flex h-12 px-5 rounded-full
+  icon { flex h-4 w-4 }
+  badge { absolute -top-1 -right-1 }
+`.withSub<"icon" | "badge">()
+
+Button.icon   // ✅ autocomplete
+Button.badge  // ✅ autocomplete
+Button.xyz    // ❌ TypeScript error
+```
+
+---
+
+## Bagaimana CSS Di-generate?
+
+Pipeline baru di v5 — tidak lagi pakai empty rules:
+
+```
+1. withTailwindStyled (Next.js startup)
+   └─> scanWorkspace() via Rust scanner
+         └─> ast_extract_classes() per file
+               └─> extract semua classes dari variants, states, sub, base
+
+2. generateCssForClasses(classes, globals.css)
+   └─> Tailwind JS compile(globals.css, { loadStylesheet })
+         └─> Tailwind baca @theme inline user (custom colors, fonts, dll)
+               └─> Generate real CSS untuk semua classes
+                     └─> LightningCSS post-process (production only)
+                           └─> tulis .next/tw-classes/_initial-scan.css
+
+3. globals.css: @source "../.next/tw-classes/**"
+   └─> Tailwind scan class names dari _initial-scan.css
+         └─> Generate CSS di bundle akhir
+```
+
+Hasilnya `_initial-scan.css` berisi real CSS (bukan empty rules):
+
+```css
+/* tw-classes: initial scan — auto-generated by withTailwindStyled */
+@layer utilities {
+  .bg-foreground {
+    background-color: var(--foreground);
+  }
+  .text-foreground {
+    color: var(--foreground);
+  }
+  .hover\:bg-foreground {
+    &:hover {
+      background-color: var(--foreground);
+    }
+  }
+  /* ... */
+}
+```
+
+Custom colors dari `@theme inline` di `globals.css` otomatis ter-generate — tidak perlu konfigurasi tambahan.
+
+---
+
+## Setup Next.js
+
+### next.config.ts
+
+```ts
+import { withTailwindStyled } from "tailwind-styled-v4/next"
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {}
-export default withTailwindStyled()(nextConfig)</code></pre>
-</div>
 
-<div class="tw-code-block">
-<div class="tw-code-header"><span>globals.css</span><span>css</span></div>
-<pre class="tw-code-pre"><code>@import "tailwindcss";
+export default withTailwindStyled({ verbose: true })(nextConfig)
+```
+
+### globals.css
+
+```css
+@import "tailwindcss";
 @source "../.next/tw-classes/**";
 
-:root { --background: #ffffff; --foreground: #171717; }
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-}</code></pre>
-</div>
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
 
-</div>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+```
 
-<hr>
+---
 
-<div class="tw-section">
+## Bundler Integration
 
-## Cara Kerja (Pipeline v5)
+### Vite
 
-<div class="tw-pipeline">
-<div class="tw-pipeline-step"><div class="tw-pipeline-num">1</div><div><strong>Rust scanner extract classes</strong> – Scan semua file `.tsx/.ts` di `src/`, extract class dari `base`, `variants`, `states`, `sub`.</div></div>
-<div class="tw-pipeline-step"><div class="tw-pipeline-num">2</div><div><strong>Tailwind JS compile dengan user theme</strong> – Baca `@theme inline` dari CSS, generate real CSS untuk semua class.</div></div>
-<div class="tw-pipeline-step"><div class="tw-pipeline-num">3</div><div><strong>LightningCSS post-process</strong> – Minify, vendor prefix, dead code elimination di production.</div></div>
-<div class="tw-pipeline-step"><div class="tw-pipeline-num">4</div><div><strong>Output ke `_initial-scan.css`</strong> – File berisi `@layer utilities` dan di-scan oleh Tailwind via `@source`.</div></div>
-<div class="tw-pipeline-step"><div class="tw-pipeline-num">5</div><div><strong>Persistent cache</strong> – Cache disimpan, startup berikutnya &lt;200ms.</div></div>
-</div>
+```ts
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { tailwindStyled } from "tailwind-styled-v4/vite"
 
-</div>
+export default defineConfig({
+  plugins: [react(), tailwindStyled()],
+})
+```
 
-<hr>
+### Rspack
 
-<div class="tw-section">
+```js
+import { defineConfig } from "@rspack/cli"
+import { tailwindStyled } from "tailwind-styled-v4/rspack"
+
+export default defineConfig({
+  entry: "./src/index.ts",
+  plugins: [tailwindStyled()],
+})
+```
+
+---
+
+## CLI
+
+```bash
+# Setup otomatis (detect bundler, patch config, pre-warm cache)
+npx tw setup
+
+# Verifikasi setup
+npx tw preflight
+
+# Analisis workspace
+npx tw audit
+
+# Benchmark performa
+npx tw benchmark
+```
+
+---
+
+## Kenapa Bukan styled-components?
+
+styled-components inject `<style>` tag ke DOM saat runtime — setiap component punya hash class (`sc-abc123 dEfGhI`) yang di-generate di browser. Masalahnya:
+
+- **Runtime overhead** — ~15KB JS untuk generate + inject CSS
+- **SSR mismatch** — hash bisa berbeda antara server dan client → hydration warning
+- **DevTools susah dibaca** — `sc-abc123` tidak informatif
+- **Butuh setup khusus** — `ServerStyleSheet`, `StyledEngineProvider`, dll untuk Next.js App Router
+
+`tailwind-styled-v4` tidak punya masalah ini karena CSS sudah di-bundle sebelum browser buka halaman. Class name readable, SSR dan CSR identik, tidak ada runtime overhead.
+
+---
 
 ## Benchmark
 
 Diukur di Node.js 22, Rust 1.75.
 
-<div class="tw-bench-item"><div class="tw-bench-label">Scan 1000 files</div><div class="tw-bench-bar"><div class="tw-bench-fill" style="width:100%"></div></div><code>0.8 ms</code> <span style="color:var(--tw-rust)">425× faster</span></div>
-<div class="tw-bench-item"><div class="tw-bench-label">Compile 500 classes</div><div class="tw-bench-bar"><div class="tw-bench-fill" style="width:14%"></div></div><code>0.02 ms</code> <span style="color:var(--tw-rust)">60× faster</span></div>
-<div class="tw-bench-item"><div class="tw-bench-label">Parse class string</div><div class="tw-bench-bar"><div class="tw-bench-fill" style="width:19%"></div></div><code>0.010 ms</code> <span style="color:var(--tw-rust)">80× faster</span></div>
-<div class="tw-bench-item"><div class="tw-bench-label">Cache read/write</div><div class="tw-bench-bar"><div class="tw-bench-fill" style="width:13%"></div></div><code>0.009 ms</code> <span style="color:var(--tw-rust)">55× faster</span></div>
-<div class="tw-bench-item"><div class="tw-bench-label">Watch mode rebuild</div><div class="tw-bench-bar"><div class="tw-bench-fill" style="width:4%"></div></div><code>&lt;5 ms</code> <span style="color:var(--tw-rust)">17× faster</span></div>
+| Operasi | tailwind-styled-v4 | Tailwind CSS (JS) | Speedup |
+|---|---|---|---|
+| Scan 1000 file | **0.8 ms** | ~340 ms | **~425×** |
+| Compile 500 class | **0.02 ms** | ~1.2 ms | **~60×** |
+| Parse class string | **0.010 ms** | ~0.8 ms | **~80×** |
+| Cache read/write | **0.009 ms** | ~0.5 ms | **~55×** |
+| Watch mode rebuild | **< 5 ms** | ~85 ms | **~17×** |
 
-</div>
+---
 
-<hr>
+## Arsitektur
 
-<div class="tw-section">
+```
+tailwind-styled-v4/
+├── native/                    # Rust engine (NAPI-RS)
+│   ├── src/application/
+│   │   └── ast_extract.rs     # Extract Tailwind classes dari source files
+│   ├── src/domain/
+│   │   ├── variants.rs        # Variant resolution (props override defaults)
+│   │   └── transform.rs       # Transform object config → JS component
+│   └── src/infrastructure/
+│       └── cache_store.rs     # Persistent cache dengan bracket-aware parser
+│
+├── packages/
+│   ├── domain/
+│   │   ├── core/              # tw, cx, cv, cn — core API + createComponent
+│   │   ├── compiler/          # Tailwind JS + LightningCSS pipeline
+│   │   └── scanner/           # File scanner (Rust-backed)
+│   ├── presentation/
+│   │   └── next/              # Next.js plugin (withTailwindStyled)
+│   └── infrastructure/
+│       └── cli/               # CLI (tw setup, tw audit, dll)
+```
 
-## Instalasi
+---
 
-<div class="tw-install-box">
-<div>
-<div class="tw-install-cmd">npm install tailwind-styled-v4</div>
-<div style="margin-top:0.5rem"><div class="tw-install-cmd">npx tw setup</div></div>
-</div>
-<div><strong>✨ Setup otomatis</strong><br>Deteksi bundler, inject plugin, pre-warm cache.</div>
-<a href="https://github.com/Dictionar32/tailwind-styled-v4" target="_blank" rel="noopener" style="background:var(--tw-rust); color:#fff; padding:0.5rem 1rem; border-radius:8px; text-decoration:none;">GitHub →</a>
-</div>
+## TypeScript
 
-</div>
+Library ini fully typed — tidak ada `any` di public API:
 
-<hr>
+```tsx
+// Type inference otomatis dari config
+const Button = tw.button({
+  variants: {
+    intent: { primary: "...", ghost: "...", outline: "..." },
+    size: { sm: "...", md: "...", lg: "..." },
+  },
+  defaultVariants: { intent: "primary", size: "md" },
+})
 
-<div align="center">
-  <sub>© Dictionar32 · Built dengan 🦀 Rust + ⚡ Tailwind CSS v4 · <a href="https://npmjs.com/package/tailwind-styled-v4" target="_blank" rel="noopener">npm</a> · <a href="https://github.com/Dictionar32/tailwind-styled-v4/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></sub>
-</div>
+// TypeScript tahu props yang valid
+<Button intent="invalid" />  // ❌ Type error
+<Button intent="primary" />  // ✅
+
+// Sub-components — ExtractSubName type inference
+const Card = tw.div({
+  sub: {
+    header: "font-bold",
+    "div:action": "flex gap-3",  // → Card.action (tag prefix di-strip otomatis)
+  },
+})
+
+Card.action  // ✅ autocomplete
+Card.xyz     // ❌ TypeScript error
+```
+
+---
+
+## Environment Variables
+
+| Variable | Default | Deskripsi |
+|---|---|---|
+| `TWS_LOG_LEVEL` | `info` | `debug\|info\|warn\|error\|silent` |
+| `TWS_DEBUG_SCANNER` | `0` | `1` = aktifkan scanner debug logs |
+| `STUDIO_PORT` | `3030` | Port studio server |
+
+---
+
+## Development
+
+```bash
+git clone https://github.com/Dictionar32/tailwind-styled-v4.git
+cd tailwind-styled-v4
+
+npm install
+
+# Build Rust binary + semua packages
+npm run build
+
+# Build Rust only
+npm run build:rust
+
+# Test
+npm run test
+
+# Dev mode
+npm run dev
+
+# Benchmark
+npm run bench
+```
+
+**Requirements:**
+- Node.js 20+
+- Rust 1.75+ (untuk build dari source)
+
+---
+
+## Contributing
+
+PR dan issue sangat welcome!
+
+Prioritas saat ini:
+- [ ] macOS & Windows pre-built binary
+- [ ] Docs website (VitePress)
+- [ ] More bundler adapters
+
+---
+
+## License
+
+[MIT](LICENSE) © Dictionar32
