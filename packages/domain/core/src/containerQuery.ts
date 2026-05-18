@@ -70,10 +70,30 @@ if (typeof window !== "undefined") {
 // Hash
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Cache untuk hashContainer — container config tidak berubah antar render.
+// Sama dengan _hashStateCache di stateEngine.ts.
+const _hashContainerCache = new Map<string, string>()
+
 function hashContainer(tag: string, container: ContainerConfig, name?: string): string {
-  const key = tag + (name ?? "") + JSON.stringify(Object.entries(container).sort())
-  const hash = key.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
-  return `tw-cq-${Math.abs(hash).toString(36).slice(0, 6)}`
+  const sortedKey = tag + (name ?? "") + JSON.stringify(Object.entries(container).sort())
+  const cached = _hashContainerCache.get(sortedKey)
+  if (cached) return cached
+
+  let id: string
+  try {
+    const native = getNativeBinding()
+    if (native?.hashContent) {
+      id = `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
+    } else {
+      throw new Error("no hashContent")
+    }
+  } catch {
+    const hash = sortedKey.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
+    id = `tw-cq-${Math.abs(hash).toString(36).slice(0, 6)}`
+  }
+
+  _hashContainerCache.set(sortedKey, id)
+  return id
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +210,14 @@ function buildContainerRules(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Batched injector — resolve sekali di module load
+let _cqBatchedInjectFn: ((css: string) => void) | null = null
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require("@tailwind-styled/runtime-css/batched") as { batchedInject: (css: string) => void }
+  if (typeof mod?.batchedInject === "function") _cqBatchedInjectFn = mod.batchedInject
+} catch { /* runtime-css tidak terinstall */ }
+
 // Style injection
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -205,15 +233,10 @@ function injectContainerStyles(
   const css = buildContainerRules(id, container, containerName)
   if (!css) return
 
-  // Try batched injector first (available when runtime-css is installed)
-  try {
-    const { batchedInject } = require("@tailwind-styled/runtime-css/batched") as {
-      batchedInject: (css: string) => void
-    }
-    for (const rule of css.split("\n").filter(Boolean)) batchedInject(rule)
+  // _batchedInjectFn di-resolve sekali di module level (lihat deklarasi di atas)
+  if (_cqBatchedInjectFn) {
+    for (const rule of css.split("\n").filter(Boolean)) _cqBatchedInjectFn(rule)
     return
-  } catch {
-    // Fallback: per-element style tag
   }
 
   const style = document.createElement("style")

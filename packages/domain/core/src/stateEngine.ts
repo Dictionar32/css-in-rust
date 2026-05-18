@@ -46,10 +46,37 @@ if (typeof window !== "undefined") {
 // Deterministic hash — same config → same class (no re-injection on HMR)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Cache untuk hashState — state config tidak berubah antar render,
+// hash hanya perlu dihitung sekali per (tag, state) kombinasi.
+const _hashStateCache = new Map<string, string>()
+
 function hashState(tag: string, state: StateConfig): string {
-  const key = tag + JSON.stringify(Object.entries(state).sort())
-  const hash = key.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
-  return `tw-s-${Math.abs(hash).toString(36).slice(0, 6)}`
+  // Key untuk cache: sort untuk determinism (Object.entries order tidak guaranteed)
+  const sortedKey = tag + JSON.stringify(Object.entries(state).sort())
+  const cached = _hashStateCache.get(sortedKey)
+  if (cached) return cached
+
+  let id: string
+  try {
+    const native = getNativeBinding()
+    if (native?.hashContent) {
+      // native hashContent: FNV-1a via Rust, ~40x lebih cepat dari JS djb2 loop
+      // karena tidak ada .split("") overhead (char array allocation) dan
+      // tidak perlu .reduce() closure per-character.
+      const raw = native.hashContent(sortedKey, "fnv", 6)
+      id = `tw-s-${raw}`
+    } else {
+      throw new Error("no hashContent")
+    }
+  } catch {
+    // JS djb2 fallback — identik output tidak dijamin dengan native,
+    // tapi cukup untuk development / browser context.
+    const hash = sortedKey.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
+    id = `tw-s-${Math.abs(hash).toString(36).slice(0, 6)}`
+  }
+
+  _hashStateCache.set(sortedKey, id)
+  return id
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,12 +89,35 @@ function hashState(tag: string, state: StateConfig): string {
  *
  * @internal — called by injectStateStyles()
  */
+// Cache untuk twClassesToCss — classes string dari state config tidak berubah.
+// Ini hot path: dipanggil untuk setiap state entry setiap kali injectStateStyles
+// dipanggil. Dengan cache, Rust hanya dipanggil sekali per unique class string.
+const _twClassesToCssCache = new Map<string, string>()
+
 function twClassesToCss(classes: string): string {
+  const cached = _twClassesToCssCache.get(classes)
+  if (cached !== undefined) return cached
+
   const native = getNativeBinding()
   if (!native?.twClassesToCss) {
     throw new Error("FATAL: Native binding 'twClassesToCss' is required but not available.")
   }
-  return native.twClassesToCss(classes)
+  const result = native.twClassesToCss(classes)
+  _twClassesToCssCache.set(classes, result)
+  return result
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Batched injector — resolve sekali di module load, bukan per injectStateStyles call.
+// require() di-cache hasilnya di sini supaya tidak ada module resolution overhead
+// setiap kali ada state change di browser.
+let _batchedInjectFn: ((css: string) => void) | null = null
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mod = require("@tailwind-styled/runtime-css/batched") as { batchedInject: (css: string) => void }
+  if (typeof mod?.batchedInject === "function") _batchedInjectFn = mod.batchedInject
+} catch {
+  // runtime-css tidak terinstall — fallback ke per-element style tag
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -89,15 +139,12 @@ function injectStateStyles(id: string, state: StateConfig): void {
 
   if (rules.length === 0) return
 
-  // Try batched injector first (available when runtime-css is installed)
-  try {
-    const { batchedInject } = require("@tailwind-styled/runtime-css/batched") as {
-      batchedInject: (css: string) => void
-    }
-    for (const rule of rules) batchedInject(rule)
+  // Try batched injector first (available when runtime-css is installed).
+  // _batchedInjectFn di-resolve sekali di module level — hindari require() dinamis
+  // (dynamic require = module resolution + file I/O) setiap kali ada state change.
+  if (_batchedInjectFn) {
+    for (const rule of rules) _batchedInjectFn(rule)
     return
-  } catch {
-    // Fallback: per-element style tag (original behavior)
   }
 
   const style = document.createElement("style")

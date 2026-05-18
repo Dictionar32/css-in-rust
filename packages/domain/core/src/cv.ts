@@ -29,6 +29,10 @@ export function registerVariantTable(
   __generatedRegistry[componentId] = table
 }
 
+// Cache untuk sorted variant keys per componentId — sort() hanya dilakukan sekali
+// per componentId karena variantKeys tidak berubah selama runtime
+const _sortedVariantKeysCache = new Map<string, string[]>()
+
 function lookupGenerated(
   componentId: string,
   props: Record<string, unknown>,
@@ -39,36 +43,78 @@ function lookupGenerated(
   if (!table) return undefined
 
   const merged = { ...defaultVariants, ...props }
-  // Filter to declared variant keys only to prevent non-variant props (e.g. onClick, selected)
-  // from corrupting the lookup key and causing cache misses.
-  const keysToUse = variantKeys
-    ? variantKeys
-    : Object.keys(merged).filter((k) => k !== "className")
-  const key = keysToUse
-    .sort()
-    .map((k) => `${k}:${String(merged[k])}`)
-    .join("|")
+
+  // Cached sorted keys — sort() hanya dilakukan sekali per componentId
+  let sortedKeys = _sortedVariantKeysCache.get(componentId)
+  if (!sortedKeys) {
+    const keysToUse = variantKeys
+      ? variantKeys
+      : Object.keys(merged).filter((k) => k !== "className")
+    sortedKeys = [...keysToUse].sort()
+    _sortedVariantKeysCache.set(componentId, sortedKeys)
+  }
+
+  // Build lookup key — hot path, hindari array allocation dengan string concat
+  let key = ""
+  for (let i = 0; i < sortedKeys.length; i++) {
+    if (i > 0) key += "|"
+    key += sortedKeys[i] + ":" + String(merged[sortedKeys[i]])
+  }
 
   return table[key]
 }
 
-// Native Rust variant resolution — O(1) HashMap lookup, zero JS allocation
+// Cache config JSON per config object reference — menghindari JSON.stringify ulang
+// untuk config yang sama. WeakMap dipakai agar GC bisa collect config jika
+// komponen di-unmount (tidak ada strong reference leak).
+const _configJsonCache = new WeakMap<object, string>()
+
+function _getConfigJson(config: object): string {
+  let json = _configJsonCache.get(config)
+  if (!json) {
+    json = JSON.stringify(config)
+    _configJsonCache.set(config, json)
+  }
+  return json
+}
+
+// Native Rust variant resolution
+// Path 1 (optimal): resolveVariants — full resolution termasuk compound variants di Rust
+// Path 2 (fallback): resolveSimpleVariants + JS compound variants
+// Path 3 (browser): pure JS fallback
 function resolveVariantsNative<C extends ComponentConfig>(
   config: C,
   props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>>
 ): string {
   const { base = "", variants = {}, compoundVariants = [], defaultVariants = {} } = config
-
-  // Only pass declared variant keys to the resolver — prevents non-variant props
-  // (e.g. selected, disabled, onClick) from leaking into Rust and causing
-  // SSR/client hydration mismatches. Mirrors the JS fallback scope exactly.
   const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
 
   try {
     const binding = getNativeBinding()
+
+    // Path 1: resolveVariants — full resolution termasuk compound variants
+    // Lebih cepat dari resolveSimpleVariants + JS compound loop karena
+    // tidak ada round-trip JS untuk compound resolution
+    if (binding?.resolveVariants) {
+      const configJson = _getConfigJson(config as object)
+      // Build props JSON hanya dari variant keys yang relevan — hindari mengirim
+      // semua props (onClick, ref, dll) ke Rust yang akan diabaikan
+      const cleanProps: Record<string, string> = {}
+      for (const k of variantKeys) {
+        const dv = (defaultVariants as Record<string, string>)[k]
+        if (dv !== undefined && dv !== null) cleanProps[k] = String(dv)
+      }
+      for (const k of variantKeys) {
+        const v = (props as Record<string, unknown>)[k]
+        if (v !== undefined && v !== null) cleanProps[k] = String(v)
+      }
+      const propsJson = JSON.stringify(cleanProps)
+      const result = binding.resolveVariants(configJson, propsJson)
+      return result.classes
+    }
+
+    // Path 2: resolveSimpleVariants + JS compound variants (fallback)
     if (binding?.resolveSimpleVariants) {
-      // Pre-merge di JS: defaultVariants sebagai base, user props override
-      // Filter to declared variant keys only — ensures Rust and JS produce identical output.
       const mergedProps: Record<string, string> = {}
       for (const k of variantKeys) {
         const dv = (defaultVariants as Record<string, string>)[k]
@@ -78,35 +124,36 @@ function resolveVariantsNative<C extends ComponentConfig>(
         const v = (props as Record<string, unknown>)[k]
         if (v !== undefined && v !== null) mergedProps[k] = String(v)
       }
-  
+
       let result = binding.resolveSimpleVariants(
         base || null,
         variants as Record<string, Record<string, string>>,
-        {}, // already merged into mergedProps
+        {},
         mergedProps
       )
-  
-      // compound variants — still resolved in JS (Rust resolveSimpleVariants tidak handle compound)
-      const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
-      const extra: string[] = []
-      for (const compound of compoundVariants) {
-        const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
-        const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
-        if (matches) {
-          if (compoundClass) extra.push(String(compoundClass))
-          if (compoundClassName) extra.push(String(compoundClassName))
+
+      // Compound variants — JS loop (hanya masuk sini jika resolveVariants tidak tersedia)
+      if (compoundVariants.length > 0) {
+        const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
+        const extra: string[] = []
+        for (const compound of compoundVariants) {
+          const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+          const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
+          if (matches) {
+            if (compoundClass) extra.push(String(compoundClass))
+            if (compoundClassName) extra.push(String(compoundClassName))
+          }
         }
+        if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
       }
-  
-      if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
+
       return result
     }
   } catch {
-    // Native binding unavailable in browser
+    // Native binding unavailable — browser context, fall through ke JS
   }
 
-  // JS fallback — used in browser where Rust native binding is unavailable.
-  // Must produce output identical to the Rust path for SSR hydration to succeed.
+  // Path 3: pure JS fallback (browser)
   const resolved: Record<string, string> = {}
   for (const k of variantKeys) {
     const dv = (defaultVariants as Record<string, string>)[k]
@@ -127,7 +174,6 @@ function resolveVariantsNative<C extends ComponentConfig>(
     }
   }
 
-  // compound variants
   const resolvedFull: Record<string, unknown> = { ...defaultVariants, ...props }
   for (const compound of compoundVariants) {
     const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>

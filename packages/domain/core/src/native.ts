@@ -94,6 +94,12 @@ interface NativeBinding {
   twMergeMany?: (classStrings: string[]) => string
   /** Tailwind classes → semicolon-separated inline CSS declarations. (state_css.rs) */
   twClassesToCss?: (classes: string) => string
+  /**
+   * Hash a content string — menggantikan JS djb2 loop di hashState() dan hashContainer().
+   * algorithm: "md5" | "sha256" | "fnv" | "ahash" (default: "md5")
+   * length: potong output hex ke N karakter (mis. 6 untuk short ID)
+   */
+  hashContent?: (content: string, algorithm?: "md5" | "sha256" | "fnv" | "ahash", length?: number) => string
   /** Iterative CSS var() chain resolver. (theme.rs) */
   resolveThemeValue?: (key: string, rawMapJson: string) => string
   /** Parse sub-component block syntax from tw`` template. (tw_merge.rs) */

@@ -129,19 +129,62 @@ function readSentinel(filePath: string): string {
   try { return fs.readFileSync(filePath, "utf-8").trim() } catch { return "" }
 }
 
+// Lock untuk serialisasi clearAndMarkCycle di dalam satu worker process.
+// Turbopack bisa spawn multiple concurrent loader calls — tanpa lock,
+// dua worker bisa clear tw-classes/ bersamaan → window dimana semua file
+// hilang → Tailwind scan → CSS output kosong → FLICKER.
+// Lock ini hanya efektif dalam satu Node.js process (per worker), tapi itu cukup
+// karena Turbopack menggunakan single-threaded Node.js per worker.
+let _clearLock = false
+
 function clearAndMarkCycle(twClassesDir: string, startId: string): void {
+  // Sudah ada clear yang sedang berjalan di worker ini — skip, biarkan yang pertama selesai.
+  // Worker lain yang mungkin sudah clear duluan akan tulis _cycle.txt → kita akan
+  // melihat cachedCycle === startId di iterasi berikutnya dan skip juga.
+  if (_clearLock) return
+  _clearLock = true
   try {
     if (fs.existsSync(twClassesDir)) {
-      for (const file of fs.readdirSync(twClassesDir)) {
-        if (file === START_SENTINEL || file === "_webpack-merged.css") continue
-        try { fs.unlinkSync(path.join(twClassesDir, file)) } catch { /* non-fatal */ }
+      // Rename-then-recreate strategy: rename folder lama dulu, lalu buat folder baru kosong,
+      // baru hapus folder lama. Ini memastikan tidak ada window dimana tw-classes/ tidak ada
+      // atau kosong (yang akan bikin Tailwind re-scan dan generate CSS tanpa classes → flicker).
+      const tempDir = `${twClassesDir}_clearing_${Date.now()}`
+      try {
+        fs.renameSync(twClassesDir, tempDir)
+        fs.mkdirSync(twClassesDir, { recursive: true })
+        // Copy _start.txt ke folder baru sebelum hapus folder lama
+        const startFile = path.join(tempDir, START_SENTINEL)
+        if (fs.existsSync(startFile)) {
+          fs.copyFileSync(startFile, path.join(twClassesDir, START_SENTINEL))
+        }
+        // Copy _webpack-merged.css kalau ada
+        const mergedFile = path.join(tempDir, "_webpack-merged.css")
+        if (fs.existsSync(mergedFile)) {
+          fs.copyFileSync(mergedFile, path.join(twClassesDir, "_webpack-merged.css"))
+        }
+        // Tulis _cycle.txt di folder baru SEBELUM hapus folder lama
+        // Ini pastikan tw-classes/ selalu punya content valid
+        fs.writeFileSync(path.join(twClassesDir, CYCLE_SENTINEL), startId, "utf-8")
+        _workerCache.set(twClassesDir, startId)
+        // Baru hapus folder lama secara async — tidak blokir compile
+        fs.rmSync(tempDir, { recursive: true, force: true })
+      } catch {
+        // Fallback ke cara lama jika rename gagal (mis. cross-device)
+        for (const file of fs.readdirSync(twClassesDir)) {
+          if (file === START_SENTINEL || file === "_webpack-merged.css") continue
+          try { fs.unlinkSync(path.join(twClassesDir, file)) } catch { /* non-fatal */ }
+        }
+        fs.writeFileSync(path.join(twClassesDir, CYCLE_SENTINEL), startId, "utf-8")
+        _workerCache.set(twClassesDir, startId)
       }
     } else {
       fs.mkdirSync(twClassesDir, { recursive: true })
+      fs.writeFileSync(path.join(twClassesDir, CYCLE_SENTINEL), startId, "utf-8")
+      _workerCache.set(twClassesDir, startId)
     }
-    fs.writeFileSync(path.join(twClassesDir, CYCLE_SENTINEL), startId, "utf-8")
-    _workerCache.set(twClassesDir, startId)
-  } catch { /* non-fatal */ }
+  } catch { /* non-fatal */ } finally {
+    _clearLock = false
+  }
 }
 
 function getPerFileSafelistPath(safelistDir: string, resourcePath: string): string {
@@ -190,7 +233,19 @@ function writePerFileSafelist(
       if (fs.readFileSync(outPath, "utf-8") === css) return
     } catch { /* file belum ada, lanjut write */ }
 
-    fs.writeFileSync(outPath, css, "utf-8")
+    // Atomic write: tulis ke temp file dulu, lalu rename ke path final.
+    // Ini mencegah Tailwind scanner membaca file yang sedang ditulis (partial read)
+    // yang akan menghasilkan CSS incomplete → FLICKER.
+    // rename() dijamin atomic di semua OS modern (POSIX dan Windows NTFS).
+    const tmpPath = `${outPath}.tmp`
+    try {
+      fs.writeFileSync(tmpPath, css, "utf-8")
+      fs.renameSync(tmpPath, outPath)
+    } catch {
+      // Fallback kalau rename gagal (mis. cross-device, Windows lock)
+      try { fs.unlinkSync(tmpPath) } catch { /* ignore */ }
+      fs.writeFileSync(outPath, css, "utf-8")
+    }
   } catch {
     // Non-fatal
   }

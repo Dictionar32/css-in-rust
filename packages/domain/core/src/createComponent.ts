@@ -10,66 +10,81 @@ import type { ComponentConfig, InferSubFromConfig, SubValue, TwStyledComponent }
 
 const ALWAYS_BLOCKED = new Set(["base", "_ref", "state", "container", "containerName"])
 
-// ── Sub-component auto-registration ──────────────────────────────────────────
+// ── Template parse cache ──────────────────────────────────────────────────────
+// parseSubcomponentBlocksNapi + JSON.parse sebelumnya dipanggil ulang setiap
+// render (extractBaseClasses + parseSubComponentBlocks dipanggil dari render path).
+// Cache ini memastikan Rust hanya dipanggil SEKALI per unique template string.
+// Template string dari tw.div({ base: "..." }) tidak berubah antar render,
+// jadi cache ini practically never evicted selama app berjalan.
+interface _ParsedTemplate {
+  baseClasses: string
+  subMap: Map<string, string>
+}
+const _templateParseCache = new Map<string, _ParsedTemplate>()
 
-/**
- * JS fallback: parse sub-component block syntax dari template string.
- * Matches `Name { class1 class2 }` atau `[name] { class1 class2 }`.
- */
-function parseSubComponentBlocksJS(template: string): Map<string, string> {
-  const map = new Map<string, string>()
+// Cache untuk statesLookup — key: JSON.stringify(statesConfig sorted)
+// Menghindari Rust pregenerateStatesNapi + JSON.parse ulang untuk config identik
+interface _StatesLookupEntry { lookup: Record<number, string>; keys: string[] }
+const _statesLookupCache = new Map<string, _StatesLookupEntry>()
+
+function _getParsedTemplate(template: string): _ParsedTemplate {
+  const cached = _templateParseCache.get(template)
+  if (cached) return cached
+
+  let result: _ParsedTemplate
+
+  try {
+    const native = getNativeBinding()
+    if (native?.parseSubcomponentBlocksNapi) {
+      const r = native.parseSubcomponentBlocksNapi(template, "tw")
+      // JSON.parse sekali di sini, hasil disimpan sebagai Map<string,string>.
+      // Tidak pernah di-parse ulang — semua caller pakai cache entry ini.
+      const raw = JSON.parse(r.subMapJson) as Record<string, string>
+      result = {
+        baseClasses: r.baseClasses.trim().replace(/\s+/g, " "),
+        subMap: new Map(Object.entries(raw)),
+      }
+      _templateParseCache.set(template, result)
+      return result
+    }
+  } catch {
+    // Native tidak tersedia (browser) — fall through ke JS fallback
+  }
+
+  // JS fallback — identik output dengan Rust path untuk hydration consistency
+  const subMap = new Map<string, string>()
   const regex = /((?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
   let match
   while ((match = regex.exec(template)) !== null) {
     const rawName = match[1]
     const name = rawName.startsWith("[") ? rawName.slice(1, -1) : rawName
     const classes = match[2].trim().replace(/\s+/g, " ")
-    if (classes) map.set(name, classes)
+    if (classes) subMap.set(name, classes)
   }
-  return map
+  const baseClasses = template
+    .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  result = { baseClasses, subMap }
+  _templateParseCache.set(template, result)
+  return result
 }
 
 /**
  * Extract sub-component blocks dari template → Map<name, classes>
- * Native-first: delegates ke Rust `parse_subcomponent_blocks_napi`.
- * JS fallback: regex-based parser untuk browser/client context.
+ * Cache-first: Rust + JSON.parse hanya dipanggil SEKALI per template string.
  */
 function parseSubComponentBlocks(template: string): Map<string, string> {
-  try {
-    const native = getNativeBinding()
-    if (native?.parseSubcomponentBlocksNapi) {
-      const result = native.parseSubcomponentBlocksNapi(template, "tw")
-      const raw = JSON.parse(result.subMapJson) as Record<string, string>
-      return new Map(Object.entries(raw))
-    }
-  } catch {
-    // fall through to JS fallback
-  }
-  return parseSubComponentBlocksJS(template)
+  return _getParsedTemplate(template).subMap
 }
 
 /**
- * Strip semua sub-component blocks dari template string.
- * Native-first: uses result dari parse_subcomponent_blocks_napi.base_classes.
- * JS fallback: regex strip.
+ * Strip semua sub-component blocks dari template string → base class string.
+ * Cache-first: Rust hanya dipanggil SEKALI per template string.
  */
 function extractBaseClasses(template: string): string {
-  try {
-    const native = getNativeBinding()
-    if (native?.parseSubcomponentBlocksNapi) {
-      const result = native.parseSubcomponentBlocksNapi(template, "tw")
-      // Normalize whitespace — JS fallback dan Rust harus produce output identik
-      // supaya SSR className === CSR className (no hydration mismatch)
-      return result.baseClasses.trim().replace(/\s+/g, " ")
-    }
-  } catch {
-    // fall through
-  }
-
-  return template
-    .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
+  return _getParsedTemplate(template).baseClasses
 }
 
 // Valid HTML semantic tags yang otomatis di-detect dari key name
@@ -463,22 +478,32 @@ export function createComponent<TConfig extends ComponentConfig>(
   const configSub = typeof config === "string" ? undefined : config.sub
   const statesConfig = typeof config === "string" ? undefined : config.states
 
-  // Pre-generate states bitmask lookup via Rust (build time)
+  // Pre-generate states bitmask lookup via Rust (build time).
+  // Cache key: sorted JSON dari statesConfig — statesConfig tidak berubah antar
+  // createComponent calls dengan config yang sama (mis. HMR), jadi cache ini
+  // menghindari JSON.parse + Rust call ulang untuk config identik.
   let statesLookup: Record<number, string> | null = null
   let stateKeys: string[] = []
   if (statesConfig && Object.keys(statesConfig).length > 0) {
-    // Always populate stateKeys from config — ensures filterProps blocks state
-    // props from leaking to DOM even when native binding is unavailable (browser)
     stateKeys = Object.keys(statesConfig)
-    try {
-      const native = getNativeBinding()
-      if (native?.pregenerateStatesNapi) {
-        const result = native.pregenerateStatesNapi(statesConfig)
-        statesLookup = JSON.parse(result.lookupJson) as Record<number, string>
-        stateKeys = result.stateKeys  // use Rust-ordered keys if available
+    const statesCacheKey = JSON.stringify(statesConfig, Object.keys(statesConfig).sort())
+    const cachedStates = _statesLookupCache.get(statesCacheKey)
+    if (cachedStates) {
+      statesLookup = cachedStates.lookup
+      stateKeys = cachedStates.keys
+    } else {
+      try {
+        const native = getNativeBinding()
+        if (native?.pregenerateStatesNapi) {
+          const result = native.pregenerateStatesNapi(statesConfig)
+          // JSON.parse sekali — disimpan di cache, tidak pernah di-parse ulang
+          statesLookup = JSON.parse(result.lookupJson) as Record<number, string>
+          stateKeys = result.stateKeys
+          _statesLookupCache.set(statesCacheKey, { lookup: statesLookup, keys: stateKeys })
+        }
+      } catch (e) {
+        console.warn("[tailwind-styled-v4] states pre-generation failed, falling back to runtime cx()", e)
       }
-    } catch (e) {
-      console.warn("[tailwind-styled-v4] states pre-generation failed, falling back to runtime cx()", e)
     }
   }
 

@@ -17,10 +17,17 @@ export interface MergeOptions {
 }
 
 function normalizeClassInput(classLists: Array<string | undefined | null | false>): string[] {
-  return classLists
-    .filter(Boolean)
-    .map((v) => String(v).trim())
-    .filter((v) => v.length > 0)
+  // Single-pass: gabungkan filter + trim + length check dalam satu loop.
+  // Sebelumnya: 3 array traversals (.filter → .map → .filter) → 3 intermediate arrays.
+  // Sesudah: 1 traversal, 1 output array, zero intermediate allocations.
+  const result: string[] = []
+  for (let i = 0; i < classLists.length; i++) {
+    const v = classLists[i]
+    if (!v) continue
+    const s = String(v).trim()
+    if (s.length > 0) result.push(s)
+  }
+  return result
 }
 
 /**

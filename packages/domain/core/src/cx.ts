@@ -23,13 +23,25 @@ type ClassValue = string | undefined | null | false | 0
  * @example cn("p-4", isActive && "opacity-100") → "p-4 opacity-100"
  */
 export function cn(...inputs: (ClassValue | ClassValue[])[]): string {
-  const native = getNativeBinding()
-  const strings = (inputs as unknown[]).flat().filter(Boolean) as string[]
-  if (!native?.resolveClassNames) {
-    // Browser/client fallback: simple join.
-    return strings.join(" ")
+  // Single-pass flatten+filter: hindari .flat().filter() 2 intermediate arrays
+  const strings: string[] = []
+  for (const item of inputs) {
+    if (Array.isArray(item)) {
+      for (const v of item) { if (v) strings.push(String(v)) }
+    } else if (item) {
+      strings.push(String(item))
+    }
   }
-  return native.resolveClassNames(strings)
+  if (strings.length === 0) return ""
+
+  try {
+    const native = getNativeBinding()
+    if (native?.resolveClassNames) return native.resolveClassNames(strings)
+  } catch {
+    // getNativeBinding() throw di browser — fall through ke JS fallback
+  }
+
+  return strings.join(" ")
 }
 
 /**
@@ -77,10 +89,18 @@ export const cxm = cx
  * Internal helper untuk cxn().
  */
 function flattenInputs(inputs: unknown[]): string[] {
+  // Iterative stack — tidak ada risiko stack overflow untuk input deeply nested.
+  // Sebelumnya: rekursif dengan spread (...flattenInputs()) → banyak intermediate arrays.
+  // Sesudah: satu stack array + satu result array, zero spread overhead.
   const result: string[] = []
-  for (const item of inputs) {
+  const stack: unknown[] = [...inputs]
+  while (stack.length > 0) {
+    const item = stack.pop()
     if (typeof item === "string" && item) result.push(item)
-    else if (Array.isArray(item)) result.push(...flattenInputs(item as unknown[]))
+    else if (Array.isArray(item)) {
+      // Push ke stack dalam urutan terbalik agar pop() menghasilkan urutan asli
+      for (let i = item.length - 1; i >= 0; i--) stack.push(item[i])
+    }
     // null, false, 0, undefined — skip
   }
   return result

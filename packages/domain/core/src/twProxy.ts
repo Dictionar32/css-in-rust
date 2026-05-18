@@ -56,28 +56,45 @@ function parseTemplateFallback(strings: TemplateStringsArray, exprs: unknown[]):
   SUB_RE.lastIndex = 0
   while ((match = SUB_RE.exec(raw)) !== null) {
     const name = match[1] ?? match[2]
-    const inner = match[3]
-      .replace(COMMENT_RE, "")
-      .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
-      .replace(/\s+/g, " ").trim()
+    // Single pass: replace comment → split → trim → filter → join
+    // Sebelumnya 4 method chain = 4 intermediate arrays.
+    // Sesudah: satu loop dengan result string accumulation.
+    const rawInner = match[3].replace(COMMENT_RE, "")
+    let inner = ""
+    for (const line of rawInner.split("\n")) {
+      const t = line.trim()
+      if (t) inner += (inner ? " " : "") + t
+    }
+    inner = inner.replace(/\s+/g, " ").trim()
 
     subs[name] = inner
     base = base.replace(match[0], "")
   }
 
-  const cleanBase = base
-    .replace(COMMENT_RE, "")
-    .split("\n").map((l) => l.trim()).filter(Boolean).join(" ")
-    .replace(/\s+/g, " ").trim()
+  // Same single-pass optimization for base string
+  const rawBase = base.replace(COMMENT_RE, "")
+  let cleanBase = ""
+  for (const line of rawBase.split("\n")) {
+    const t = line.trim()
+    if (t) cleanBase += (cleanBase ? " " : "") + t
+  }
+  cleanBase = cleanBase.replace(/\s+/g, " ").trim()
 
   return { base: cleanBase, subs, hasSubs: Object.keys(subs).length > 0 }
 }
 
+// Cache untuk parseTemplate — raw template string tidak berubah antar hot reloads
+// (string literal di source code adalah konstanta). Cache ini memastikan
+// Rust parseTemplate + JSON.parse hanya dipanggil SEKALI per unique template.
+// Key: raw string hasil join (bukan TemplateStringsArray — tidak bisa dijadikan Map key).
+const _parsedTemplateCache = new Map<string, ParsedTemplate>()
+
 /**
- * parseTemplate — native-first.
+ * parseTemplate — native-first, cache-first.
  *
  * Join strings+exprs di JS (TemplateStringsArray tidak bisa di-serialize ke NAPI),
  * lalu kirim raw string ke Rust untuk parsing.
+ * Cache: Rust + JSON.parse hanya dipanggil SEKALI per unique template string.
  * Fallback ke pure-JS jika native tidak tersedia (browser / test env).
  */
 function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
@@ -88,21 +105,29 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
     return acc + str + String(exprStr)
   }, "")
 
+  // Cache lookup — template literal di source code adalah konstanta
+  const cached = _parsedTemplateCache.get(raw)
+  if (cached) return cached
+
+  let result: ParsedTemplate
+
   try {
     const binding = getNativeBinding()
     if (binding?.parseTemplate) {
-      const result = binding.parseTemplate(raw)
-      // Parse subsJson → Record<string, string>
-      const subs: Record<string, string> = result.hasSubs
-        ? JSON.parse(result.subsJson)
-        : {}
-      return { base: result.base, subs, hasSubs: result.hasSubs }
+      const r = binding.parseTemplate(raw)
+      // JSON.parse sekali — disimpan di cache, tidak pernah di-parse ulang
+      const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
+      result = { base: r.base, subs, hasSubs: r.hasSubs }
+      _parsedTemplateCache.set(raw, result)
+      return result
     }
   } catch {
     // binding unavailable — fall through to JS
   }
 
-  return parseTemplateFallback(strings, exprs)
+  result = parseTemplateFallback(strings, exprs)
+  _parsedTemplateCache.set(raw, result)
+  return result
 }
 
 type RuntimeTagFactory = ((
