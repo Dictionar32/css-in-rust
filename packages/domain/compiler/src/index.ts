@@ -14,6 +14,8 @@ export type LoaderOutput = {
   code: string
   changed: boolean
   classes: string[]
+  rsc?: { isServer?: boolean; needsClientDirective?: boolean; clientReasons?: string[] }
+  engine?: string
 }
 
 // =============================================================================

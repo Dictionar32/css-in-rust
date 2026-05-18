@@ -89,8 +89,8 @@ export default function webpackLoader(this: WebpackContext, source: string): voi
     }
 
     if (options.verbose && output.changed) {
-      const rsc = (output as any).rsc
-      const engine = (output as any).engine ?? "js"
+      const rsc = output.rsc
+      const engine = output.engine ?? "js"
       const env = rsc?.isServer ? "server" : "client"
       const name = path.basename(filepath)
       process.stdout.write(

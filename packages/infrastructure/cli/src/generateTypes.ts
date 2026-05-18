@@ -103,7 +103,7 @@ async function loadNativeBinding(cwd: string): Promise<Record<string, (...args: 
     if (fs.existsSync(candidate)) {
       try {
         return require(candidate)
-      } catch {}
+      } catch { /* non-fatal: binary candidate not loadable, try next */ }
     }
   }
   return null

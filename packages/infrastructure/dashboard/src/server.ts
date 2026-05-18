@@ -27,14 +27,14 @@ function watchMetricsFile() {
   if (!fs.existsSync(dir)) {
     try {
       fs.mkdirSync(dir, { recursive: true })
-    } catch {}
+    } catch { /* non-fatal: dir may already exist */ }
   }
 
   if (fs.existsSync(METRICS_FILE)) {
     try {
       const data = JSON.parse(fs.readFileSync(METRICS_FILE, "utf8"))
       updateMetrics(data)
-    } catch {}
+    } catch { /* non-fatal: malformed JSON, keep last known metrics */ }
   }
 
   try {
@@ -43,16 +43,16 @@ function watchMetricsFile() {
         try {
           const data = JSON.parse(fs.readFileSync(METRICS_FILE, "utf8"))
           updateMetrics(data)
-        } catch {}
+        } catch { /* non-fatal: malformed JSON on change event */ }
       }
     })
-  } catch {
+  } catch { /* non-fatal: fs.watch not supported, fall back to polling */
     setInterval(() => {
       if (fs.existsSync(METRICS_FILE)) {
         try {
           const data = JSON.parse(fs.readFileSync(METRICS_FILE, "utf8"))
           if (data.generatedAt !== currentMetrics.generatedAt) updateMetrics(data)
-        } catch {}
+        } catch { /* non-fatal: malformed JSON in polling interval */ }
       }
     }, 2000)
   }

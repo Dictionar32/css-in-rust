@@ -472,7 +472,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
               void (async () => {
                 try {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const compiler = await import("@tailwind-styled/compiler") as any
+                  const compiler = await import("@tailwind-styled/compiler") as { generateCssForClasses?: (...args: unknown[]) => unknown; [key: string]: unknown }
                   const generateCssForClasses = compiler.generateCssForClasses as (
                     classes: string[],
                     config?: Record<string, unknown>,

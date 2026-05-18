@@ -64,7 +64,7 @@ function safeToString(value: unknown): string {
       try {
         const result = toStr.call(value)
         if (typeof result === "string" && result !== "[object Object]") return result
-      } catch {}
+      } catch { /* non-fatal: toString() threw, fall through to "?" */ }
     }
     return "?"
   }

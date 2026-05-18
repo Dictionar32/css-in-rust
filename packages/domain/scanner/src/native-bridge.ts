@@ -124,6 +124,14 @@ interface NativeScannerBinding {
    rebuildWorkspaceResult?: (
      files: Array<{ file: string; classes: readonly string[] }>
    ) => { files: Array<{ file: string; classes: string[] }>; totalFiles: number; uniqueClasses: string[] }
+
+  // ── Watch API (QA #12) ──────────────────────────────────────────────────
+  /** Mulai native file watcher via `notify` crate. Returns handleId. */
+  startWatch?: (rootDir: string) => { status: string; handleId: number }
+  /** Poll events yang terkumpul sejak poll terakhir. Queue dikosongkan setelah dipoll. */
+  pollWatchEvents?: (handleId: number) => Array<{ kind: string; path: string }>
+  /** Hentikan watcher dengan handleId. */
+  stopWatch?: (handleId: number) => boolean
 }
 
 const isValidScannerBinding = (module: unknown): module is NativeScannerBinding => {
@@ -531,4 +539,60 @@ export function computeCacheStatsNative(
   const binding = scannerGetBinding()
   if (!binding.computeCacheStats) return null
   return binding.computeCacheStats(filesClasses, sizes, top ?? null)
+}
+// ─────────────────────────────────────────────────────────────────────────────
+// Watch API — native wrappers (QA #12)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Mulai native file watcher menggunakan `notify` crate (Rust).
+ * Returns `null` jika binding tidak tersedia — fallback ke fs.watch JS.
+ */
+export function startWatchNative(rootDir: string): { status: string; handleId: number } | null {
+  try {
+    const binding = scannerGetBinding()
+    if (!binding.startWatch) return null
+    return binding.startWatch(rootDir)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Poll events dari native watcher queue. Queue dikosongkan setelah dipoll.
+ * Returns array kosong jika tidak ada events atau binding tidak tersedia.
+ */
+export function pollWatchEventsNative(handleId: number): Array<{ kind: string; path: string }> {
+  try {
+    const binding = scannerGetBinding()
+    if (!binding.pollWatchEvents) return []
+    return binding.pollWatchEvents(handleId)
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Hentikan native watcher dengan handleId.
+ */
+export function stopWatchNative(handleId: number): boolean {
+  try {
+    const binding = scannerGetBinding()
+    if (!binding.stopWatch) return false
+    return binding.stopWatch(handleId)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Cek apakah native watch API tersedia.
+ */
+export function hasNativeWatchBinding(): boolean {
+  try {
+    const binding = scannerGetBinding()
+    return !!(binding.startWatch && binding.pollWatchEvents && binding.stopWatch)
+  } catch {
+    return false
+  }
 }

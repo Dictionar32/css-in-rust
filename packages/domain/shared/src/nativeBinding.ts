@@ -1,6 +1,14 @@
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-const nodeRequire = typeof require !== "undefined" ? require : (typeof globalThis !== "undefined" ? (globalThis as any).require : null)
+const _rawRequire: NodeRequire | null =
+  typeof require !== "undefined"
+    ? require
+    : (typeof globalThis !== "undefined" ? (globalThis as { require?: NodeRequire }).require ?? null : null)
+
+function nodeRequire(id: string): unknown {
+  if (!_rawRequire) throw new Error(`[tailwind-styled] require() not available in this environment (tried to load: ${id})`)
+  return _rawRequire(id)
+}
 
 let _nodeFs: any = null
 let _nodeModule: any = null
