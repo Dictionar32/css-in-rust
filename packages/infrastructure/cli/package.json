@@ -14,10 +14,6 @@
     "./bin": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./utils/staticStateExtractor": {
-      "types": "./dist/utils/staticStateExtractor.d.ts",
-      "import": "./dist/utils/staticStateExtractor.js"
     }
   },
   "bin": {

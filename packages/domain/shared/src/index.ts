@@ -459,3 +459,12 @@ export {
   type DashboardSummary,
   type ObservabilityClient,
 } from "./observability"
+
+export {
+  extractStaticStateCss,
+  appendStaticStateCssToSafelist,
+  type TwStateConfigEntry,
+  type StaticStateCssInput,
+  type GeneratedStateRule,
+  type StaticStateExtractionResult,
+} from "./staticStateExtractor"
