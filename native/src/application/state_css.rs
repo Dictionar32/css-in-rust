@@ -8,6 +8,7 @@
 //!   Returns semicolon-separated CSS declarations (e.g. `"display:none;opacity:0.5"`)
 
 use napi_derive::napi;
+use serde_json;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 
@@ -462,4 +463,138 @@ mod tests {
         assert_eq!(css(""), "");
         assert_eq!(css("   "), "");
     }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Build-time static CSS pre-generation
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Satu CSS rule yang di-generate untuk satu state entry.
+#[napi(object)]
+#[derive(Clone)]
+pub struct GeneratedStateRule {
+    /// CSS selector — misalnya `.tw-s-abc123[data-loading="true"]`
+    pub selector: String,
+    /// CSS declarations — misalnya `opacity:0.6;cursor:wait`
+    pub declarations: String,
+    /// Full CSS rule — selector + declarations dalam `{}`
+    pub css_rule: String,
+    /// Component name dari source
+    pub component_name: String,
+    /// State name — misalnya "loading", "selected"
+    pub state_name: String,
+}
+
+/// Input untuk `generate_static_state_css()`.
+#[napi(object)]
+#[derive(Clone)]
+pub struct StaticStateCssInput {
+    /// HTML tag — misalnya "button", "div"
+    pub tag: String,
+    /// Component name — untuk debugging
+    pub component_name: String,
+    /// JSON string dari state config — misalnya `{"loading":"opacity-60","selected":"ring-2"}`
+    /// Format harus **identical** dengan output dari `extract_tw_state_configs()`.
+    pub states_json: String,
+}
+
+/// Pre-generate semua CSS rules untuk state configs yang di-extract dari source files.
+///
+/// Menggunakan hash algorithm yang **identik** dengan `hashState()` di `stateEngine.ts`,
+/// sehingga class names yang di-generate build-time == yang di-generate runtime.
+/// Ini memungkinkan CSS di-load sebagai static file tanpa runtime injection.
+///
+/// Flow build-time:
+/// ```
+/// extract_tw_state_configs(source, filename)
+///   → Vec<TwStateConfigEntry>
+///   → map ke Vec<StaticStateCssInput>
+///   → generate_static_state_css(inputs)
+///   → Vec<GeneratedStateRule>
+///   → join css_rule → append ke safelist.css
+/// ```
+///
+/// ```ts
+/// const rules = generateStaticStateCss([
+///   { tag: "button", componentName: "Button", statesJson: '{"loading":"opacity-60"}' }
+/// ])
+/// // rules[0].cssRule === '.tw-s-abc123[data-loading="true"]{opacity:0.6}'
+/// // — selector identik dengan yang dibuat stateEngine.ts di runtime!
+/// ```
+#[napi]
+pub fn generate_static_state_css(inputs: Vec<StaticStateCssInput>) -> Vec<GeneratedStateRule> {
+    let mut results: Vec<GeneratedStateRule> = Vec::new();
+
+    for input in &inputs {
+        // Parse states_json
+        let state_map: std::collections::BTreeMap<String, String> =
+            match serde_json::from_str(&input.states_json) {
+                Ok(m) => m,
+                Err(_) => continue,
+            };
+
+        // Compute component hash — identik dengan hashState() di TypeScript:
+        //   const key = `${tag}${JSON.stringify(Object.entries(state).sort())}`
+        //   const hash = hashContent(key, "fnv", 6)
+        // BTreeMap sudah sorted by key, jadi JSON-nya sorted entries.
+        let sorted_entries: Vec<(&String, &String)> = state_map.iter().collect();
+        let entries_json = match serde_json::to_string(&sorted_entries) {
+            Ok(j) => j,
+            Err(_) => continue,
+        };
+        let hash_key = format!("{}{}", input.tag, entries_json);
+        let component_hash = crate::shared::utils::fnv1a_6(&hash_key);
+        let base_class = format!("tw-s-{}", component_hash);
+
+        // Generate satu CSS rule per state entry
+        for (state_name, classes) in &state_map {
+            let declarations = classes_to_css_inner(classes);
+            if declarations.is_empty() {
+                // Skip — class tidak ter-resolve (mungkin perlu Tailwind full pipeline)
+                // Ini akan tetap di-handle oleh runtime injection sebagai fallback
+                continue;
+            }
+
+            // Selector: `.tw-s-abc123[data-stateName="true"]`
+            // Sama dengan yang di-generate stateEngine.ts:
+            //   `.${baseClass}[data-${stateName}="true"]`
+            let selector = format!(".{}[data-{}=\"true\"]", base_class, state_name);
+            let css_rule = format!("{}{{{}}}", selector, declarations);
+
+            results.push(GeneratedStateRule {
+                selector: selector.clone(),
+                declarations: declarations.clone(),
+                css_rule,
+                component_name: input.component_name.clone(),
+                state_name: state_name.clone(),
+            });
+        }
+    }
+
+    results
+}
+
+/// Convenience: extract + generate dalam satu call.
+/// Ekuivalen dengan `extract_tw_state_configs()` → `generate_static_state_css()`.
+///
+/// Dipakai oleh build pipeline untuk memproses satu source file sekaligus.
+#[napi]
+pub fn extract_and_generate_state_css(source: String, filename: String) -> Vec<GeneratedStateRule> {
+    use crate::application::ast_extract::extract_tw_state_configs;
+
+    let configs = extract_tw_state_configs(source, filename);
+    if configs.is_empty() {
+        return vec![];
+    }
+
+    let inputs: Vec<StaticStateCssInput> = configs
+        .into_iter()
+        .map(|c| StaticStateCssInput {
+            tag: c.tag,
+            component_name: c.component_name,
+            states_json: c.states_json,
+        })
+        .collect();
+
+    generate_static_state_css(inputs)
 }

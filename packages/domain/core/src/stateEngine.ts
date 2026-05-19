@@ -130,6 +130,34 @@ function injectStateStyles(id: string, state: StateConfig): void {
   const styleId = `tw-state-${id}`
   if (document.getElementById(styleId)) return // already injected
 
+  // ── Static CSS check ──────────────────────────────────────────────────────
+  // Cek apakah CSS untuk component ini sudah ada dari static file
+  // (di-generate oleh staticStateExtractor.ts saat build time).
+  //
+  // Cara detect: cari selector `.{id}[data-` di semua stylesheets yang ada.
+  // Kalau ketemu, berarti static pre-generation sudah cover component ini
+  // → skip runtime injection sepenuhnya (zero batchedInject call).
+  if (typeof document.styleSheets !== "undefined") {
+    const selectorPrefix = `.${id}[data-`
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      try {
+        const sheet = document.styleSheets[i]
+        // sheet.cssRules bisa throw SecurityError untuk cross-origin sheets
+        const rules = sheet.cssRules
+        for (let j = 0; j < rules.length; j++) {
+          const rule = rules[j]
+          if (rule instanceof CSSStyleRule && rule.selectorText.startsWith(selectorPrefix)) {
+            // Static CSS sudah mencakup component ini — tidak perlu inject
+            return
+          }
+        }
+      } catch {
+        // Cross-origin atau CSSOM tidak accessible — skip sheet ini
+        continue
+      }
+    }
+  }
+
   const rules = Object.entries(state)
     .map(([stateName, classes]) => {
       const css = twClassesToCss(classes)
@@ -170,9 +198,22 @@ export interface StateEngineResult {
 /**
  * Process a StateConfig for a component.
  * Returns the state class and injects CSS (client-side only).
+ *
+ * @param tag HTML tag name
+ * @param state State config object
+ * @param precomputedHash Optional pre-computed hash dari `inject_state_hash()` Rust transform.
+ *   Kalau ada, skip runtime `hashState()` sepenuhnya → zero hashing overhead.
  */
-export function processState(tag: string, state: StateConfig): StateEngineResult {
-  const id = hashState(tag, state)
+export function processState(
+  tag: string,
+  state: StateConfig,
+  precomputedHash?: string
+): StateEngineResult {
+  // Pakai pre-computed hash kalau tersedia (di-inject oleh turbopackLoader via Rust)
+  // Format: 6-char FNV-1a hex — identik dengan output hashState()
+  const id = precomputedHash
+    ? `tw-s-${precomputedHash}`
+    : hashState(tag, state)
   const stateNames = Object.keys(state)
 
   // Register for devtools

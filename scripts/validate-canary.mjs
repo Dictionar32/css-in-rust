@@ -65,7 +65,7 @@ function checkPackage(pkgDir) {
   const hasTest = pkg.scripts?.test && !pkg.scripts.test.includes("No tests yet")
   if (hasTest) {
     const r = run(
-      `TWS_DISABLE_NATIVE=1 npm test 2>&1 | tail -5`,
+      `TWS_NO_NATIVE=1 TWS_NO_RUST=1 npm test 2>&1 | tail -5`,
       path.join(root, pkgDir)
     )
     results.push({ check: "tests", ok: r.ok, note: r.ok ? "" : r.output.slice(-200) })

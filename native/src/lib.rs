@@ -35,8 +35,10 @@ pub use application::animate_utils::{
     animation_cache_key, keyframes_cache_key, normalize_iterations, normalize_number,
     split_animate_classes, stable_keyframes_entries,
 };
-pub use application::ast_extract::ast_extract_classes;
-pub use application::atomic::{
+pub use application::ast_extract::{
+    ast_extract_classes, extract_tw_state_configs, inject_state_hash, InjectHashResult,
+    TwStateConfigEntry,
+};pub use application::atomic::{
     atomic_registry_size, clear_atomic_registry, generate_atomic_css, parse_atomic_class,
     to_atomic_classes,
 };
@@ -81,7 +83,10 @@ pub use application::scanner::{
     batch_extract_classes, check_against_safelist, collect_files, extract_classes_from_source,
     generate_sub_component_types, scan_file, scan_workspace,
 };
-pub use application::state_css::tw_classes_to_css;
+pub use application::state_css::{
+    extract_and_generate_state_css, generate_static_state_css, tw_classes_to_css,
+    GeneratedStateRule, StaticStateCssInput,
+};
 pub use application::template_parser::parse_template;
 pub use application::tw_merge::{
     build_dependency_chain, tw_merge, tw_merge_many, tw_merge_many_with_separator,

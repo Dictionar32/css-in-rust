@@ -1,13 +1,13 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "dist",
     "declarationDir": "dist",
     "types": ["node"],
     "paths": {
       "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
-      "@tailwind-styled/scanner": ["../../domain/scanner/dist/index.d.ts"]
+      "@tailwind-styled/scanner": ["../../domain/scanner/dist/index.d.ts"],
+      "@tailwind-styled/cli/utils/staticStateExtractor": ["../../infrastructure/cli/src/utils/staticStateExtractor.ts"]
     }
   },
   "include": ["src"],

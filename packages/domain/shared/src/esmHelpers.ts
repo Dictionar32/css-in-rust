@@ -14,13 +14,13 @@
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
 // Safe check for require availability - works in both CJS and ESM
-let nodeModuleRef: any = null
-function getNodeModuleRef() {
+let nodeModuleRef: typeof import("node:module") | null = null
+function getNodeModuleRef(): typeof import("node:module") | null {
   if (isBrowser) return null
   if (nodeModuleRef !== null) return nodeModuleRef
   try {
     // Test if require actually works
-    const test = typeof require === 'function' ? require('node:module') : null
+    const test = typeof require === 'function' ? (require('node:module') as typeof import("node:module")) : null
     nodeModuleRef = test
     return test
   } catch {
@@ -29,45 +29,45 @@ function getNodeModuleRef() {
   }
 }
 
-let _nodePath: any = null
-let _nodeUrl: any = null
-let _nodeFs: any = null
-let _nodeCrypto: any = null
-let _nodeOs: any = null
+let _nodePath: typeof import("node:path") | null = null
+let _nodeUrl: typeof import("node:url") | null = null
+let _nodeFs: typeof import("node:fs") | null = null
+let _nodeCrypto: typeof import("node:crypto") | null = null
+let _nodeOs: typeof import("node:os") | null = null
 
-function getNodePath() {
+function getNodePath(): typeof import("node:path") {
   if (isBrowser) throw new Error("node:path not available in browser")
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
-  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path")
+  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path") as typeof import("node:path")
   return _nodePath!
 }
-function getNodeUrl() {
+function getNodeUrl(): typeof import("node:url") {
   if (isBrowser) throw new Error("node:url not available in browser")
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url")
+  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url") as typeof import("node:url")
   return _nodeUrl!
 }
-function getNodeFs() {
+function getNodeFs(): typeof import("node:fs") {
   if (isBrowser) throw new Error("node:fs not available in browser")
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs")
+  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs") as typeof import("node:fs")
   return _nodeFs!
 }
-function getNodeCrypto() {
+function getNodeCrypto(): typeof import("node:crypto") {
   if (isBrowser) throw new Error("node:crypto not available in browser")
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto")
+  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto") as typeof import("node:crypto")
   return _nodeCrypto!
 }
-function getNodeOs() {
+function getNodeOs(): typeof import("node:os") {
   if (isBrowser) throw new Error("node:os not available in browser")
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeOs) _nodeOs = nodeRequire.createRequire(import.meta.url)("node:os")
+  if (!_nodeOs) _nodeOs = nodeRequire.createRequire(import.meta.url)("node:os") as typeof import("node:os")
   return _nodeOs!
 }
 

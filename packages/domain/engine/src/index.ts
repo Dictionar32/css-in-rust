@@ -229,7 +229,8 @@ function countWorkspacePackages(root: string): number {
         (entry) =>
           entry.isDirectory() && fs.existsSync(path.join(packagesDir, entry.name, "package.json"))
       ).length
-  } catch {
+  } catch (err) {
+    log.debug(`countWorkspacePackages: ${err instanceof Error ? err.message : String(err)}`)
     return 0
   }
 }
@@ -457,7 +458,9 @@ export async function createEngine(rawOptions: EngineOptions = {}): Promise<Tail
             metrics.markSkippedLargeFile()
             return true
           }
-        } catch {
+        } catch (statErr) {
+          // File mungkin sudah dihapus antara event dan stat — non-fatal
+          log.debug(`stat failed for ${event.filePath}: ${statErr instanceof Error ? statErr.message : String(statErr)}`)
           return false
         }
         return false
@@ -709,7 +712,8 @@ export async function traceClass(
     }
 
     return trace(className, resolver)
-  } catch {
+  } catch (traceErr) {
+    log.debug(`traceClass("${className}"): ${traceErr instanceof Error ? traceErr.message : String(traceErr)}`)
     return null
   }
 }

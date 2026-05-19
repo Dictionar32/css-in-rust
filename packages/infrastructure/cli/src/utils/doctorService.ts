@@ -103,7 +103,12 @@ function readJsonFile(filePath: string): Record<string, unknown> | null {
   if (!fs.existsSync(filePath)) return null
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf8")) as Record<string, unknown>
-  } catch {
+  } catch (parseErr) {
+    // Malformed JSON — non-fatal, caller handles null
+    if (process.env.TWS_DEBUG === "1") {
+      const msg = parseErr instanceof Error ? parseErr.message : String(parseErr)
+      process.stderr.write(`[tw:doctor] malformed JSON: ${filePath} — ${msg}\n`)
+    }
     return null
   }
 }
@@ -131,7 +136,12 @@ function findFiles(dir: string, ext: string): string[] {
         files.push(fullPath)
       }
     }
-  } catch {
+  } catch (dirErr) {
+    // Directory not readable — return partial results
+    if (process.env.TWS_DEBUG === "1") {
+      const msg = dirErr instanceof Error ? dirErr.message : String(dirErr)
+      process.stderr.write(`[tw:doctor] findFiles error in ${dir}: ${msg}\n`)
+    }
     return files
   }
   return files

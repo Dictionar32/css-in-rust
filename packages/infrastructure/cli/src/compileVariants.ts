@@ -100,6 +100,10 @@ function extractCvConfigs(source: string, filepath: string): CvConfig[] {
       })
     } catch {
       // Skip jika config tidak bisa di-parse (dynamic values, dll)
+      // Gunakan TWS_DEBUG=1 atau DEBUG=tw:compile-variants untuk melihat detail
+      if (process.env.TWS_DEBUG === "1" || process.env.DEBUG?.includes("tw:compile-variants")) {
+        process.stderr.write(`[tw:compile-variants] skip non-literal cv() in ${filepath}\n`)
+      }
     }
   }
 
@@ -260,12 +264,20 @@ export async function runCompileVariantsCli(rawArgs: string[]): Promise<void> {
           allConfigs.push(...configs)
           fileCount++
         }
-      } catch {
-        // Skip unreadable files
+      } catch (readErr) {
+        // Skip unreadable files — biasanya binary atau permission denied
+        if (process.env.TWS_DEBUG === "1") {
+          const msg = readErr instanceof Error ? readErr.message : String(readErr)
+          process.stderr.write(`[tw:compile-variants] skip unreadable: ${fullPath} — ${msg}\n`)
+        }
       }
     }
-  } catch {
-    // ignore walk errors
+  } catch (walkErr) {
+    // Walk error — directory mungkin dihapus saat scan
+    if (process.env.TWS_DEBUG === "1") {
+      const msg = walkErr instanceof Error ? walkErr.message : String(walkErr)
+      process.stderr.write(`[tw:compile-variants] walk error: ${msg}\n`)
+    }
   }
 
   spinner.stop(`Scanned — ${fileCount} files dengan cv()`)

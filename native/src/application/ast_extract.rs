@@ -242,3 +242,230 @@ pub fn ast_extract_classes(source: String, filename: String) -> AstExtractResult
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
+// Static state config extraction — untuk build-time CSS pre-generation
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Satu entry state config yang di-extract dari source file.
+/// Mirrors struktur yang diproses oleh `hashState()` di `stateEngine.ts`.
+#[napi(object)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
+pub struct TwStateConfigEntry {
+    /// HTML tag dari tw.tag() call — misalnya "button", "div", "span"
+    pub tag: String,
+    /// Component name — misalnya "Button", "Card" (dari `const Button = tw.button(...)`)
+    pub component_name: String,
+    /// JSON string dari state config object — misalnya `{"selected":"ring-2 ring-blue-500"}`
+    /// Sudah dalam format yang sama dengan input ke `hashState()`:
+    ///   `tag + JSON.stringify(Object.entries(state).sort())`
+    pub states_json: String,
+    /// Source file path — untuk debugging dan incremental rebuild
+    pub source_file: String,
+}
+
+/// Extract semua `tw.tag({ states: {...} })` configs dari source file.
+///
+/// Return array of `TwStateConfigEntry` — satu per komponen yang punya `states` config.
+/// Hasilnya dipakai oleh `generate_static_state_css()` untuk pre-generate CSS di build time.
+///
+/// ```ts
+/// // Input source:
+/// const Button = tw.button({ states: { loading: "opacity-60", fullWidth: "w-full" } })
+/// const Card = tw.div({ states: { selected: "ring-2 ring-blue-500" } })
+///
+/// // Output:
+/// [
+///   { tag: "button", componentName: "Button", statesJson: '{"loading":"opacity-60","fullWidth":"w-full"}', sourceFile: "..." },
+///   { tag: "div", componentName: "Card", statesJson: '{"selected":"ring-2 ring-blue-500"}', sourceFile: "..." }
+/// ]
+/// ```
+#[napi]
+pub fn extract_tw_state_configs(source: String, filename: String) -> Vec<TwStateConfigEntry> {
+    // Cepat: skip file yang tidak punya states config
+    if !source.contains("states:") && !source.contains("states :") {
+        return vec![];
+    }
+    if !source.contains("tw.") && !source.contains("from \"tailwind-styled") && !source.contains("from 'tailwind-styled") {
+        return vec![];
+    }
+
+    // Regex: `const ComponentName = tw.tag({`
+    // Capture: (ComponentName, tag)
+    static RE_COMPONENT_DECL: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"(?m)(?:const|let|var)\s+([A-Z][a-zA-Z0-9]*)\s*=\s*tw(?:\.server)?\.(\w+)\s*\(").unwrap()
+    });
+
+    // Regex: cari `states:` block dalam object config
+    // Pattern: `states: {` sampai closing `}`
+    // Note: tidak support nested braces dalam values — cukup untuk literal string values
+    static RE_STATES_BLOCK: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"states\s*:\s*\{([^}]*)\}").unwrap()
+    });
+
+    // Regex: parse key-value di dalam states block
+    // Capture: (key, value) dimana value adalah quoted string
+    static RE_STATE_ENTRY: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r#"(\w+)\s*:\s*(?:["`'])((?:[^"`'\\]|\\.)*)(?:["`'])"#).unwrap()
+    });
+
+    let mut results: Vec<TwStateConfigEntry> = Vec::new();
+
+    // Scan semua component declarations
+    for comp_cap in RE_COMPONENT_DECL.captures_iter(&source) {
+        let component_name = comp_cap[1].to_string();
+        let tag = comp_cap[2].to_string();
+        let comp_start = comp_cap.get(0).unwrap().end();
+
+        // Ambil substring setelah declaration sampai ~2000 chars ke depan
+        // untuk cari states block (hindari scan seluruh file)
+        let search_window = &source[comp_start..std::cmp::min(comp_start + 2000, source.len())];
+
+        // Cari states block di dalam window ini
+        if let Some(states_cap) = RE_STATES_BLOCK.captures(search_window) {
+            let states_body = &states_cap[1];
+
+            // Parse semua key-value pairs
+            let mut state_map: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+            for entry_cap in RE_STATE_ENTRY.captures_iter(states_body) {
+                let key = entry_cap[1].to_string();
+                let value = entry_cap[2].to_string();
+                // Normalize whitespace dalam value (sama seperti TypeScript side)
+                let normalized = value.split_whitespace().collect::<Vec<_>>().join(" ");
+                if !normalized.is_empty() {
+                    state_map.insert(key, normalized);
+                }
+            }
+
+            if state_map.is_empty() {
+                continue;
+            }
+
+            // Serialize ke JSON — BTreeMap sudah sorted by key
+            // Format: { "key": "value", ... } — sama dengan JSON.stringify(Object.entries(state).sort())
+            // di TypeScript (karena BTreeMap sorted = entries sorted)
+            let states_json = match serde_json::to_string(&state_map) {
+                Ok(j) => j,
+                Err(_) => continue,
+            };
+
+            results.push(TwStateConfigEntry {
+                tag: tag.clone(),
+                component_name: component_name.clone(),
+                states_json,
+                source_file: filename.clone(),
+            });
+        }
+    }
+
+    results
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Hash pre-embedding — inject __hash ke tw() config saat build/load time
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Result dari `inject_state_hash()`.
+#[napi(object)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
+pub struct InjectHashResult {
+    /// Source code yang sudah di-transform (dengan __hash embedded)
+    pub code: String,
+    /// True jika ada perubahan yang dilakukan
+    pub changed: bool,
+    /// Jumlah komponen yang di-inject hash-nya
+    pub injected_count: u32,
+}
+
+/// Inject `__hash: "abc123"` ke semua `tw.tag({ states: {...} })` calls dalam source.
+///
+/// Dipanggil oleh `turbopackLoader.ts` sebelum source di-pass ke webpack/turbopack.
+/// Hasilnya: `stateEngine.ts` bisa langsung pakai `__hash` tanpa perlu
+/// compute `hashState()` di runtime → zero runtime hashing.
+///
+/// Hash yang di-inject identik dengan yang dihitung `hashState()` di TypeScript:
+///   `fnv1a_6(tag + JSON.stringify(Object.entries(state).sort()))`
+///
+/// ```ts
+/// // Input:
+/// const Button = tw.button({ states: { loading: "opacity-60" } })
+///
+/// // Output:
+/// const Button = tw.button({ __hash: "a3f9c1", states: { loading: "opacity-60" } })
+/// ```
+#[napi]
+pub fn inject_state_hash(source: String, _filename: String) -> InjectHashResult {
+    // Quick bail jika tidak ada tw() calls dengan states
+    if !source.contains("states:") && !source.contains("states :") {
+        return InjectHashResult { code: source, changed: false, injected_count: 0 };
+    }
+    if source.contains("__hash:") {
+        // Sudah di-inject sebelumnya (cached transform) — skip
+        return InjectHashResult { code: source, changed: false, injected_count: 0 };
+    }
+
+    // Regex: `tw.tag({` atau `tw.server.tag({`
+    static RE_TW_OPEN: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"(?m)(tw(?:\.server)?\.(\w+)\s*\()(\s*\{)").unwrap()
+    });
+
+    // Regex: states block — `states: { key: "val", ... }`
+    static RE_STATES_BLOCK: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"states\s*:\s*\{([^}]*)\}").unwrap()
+    });
+
+    static RE_STATE_ENTRY: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r#"(\w+)\s*:\s*(?:["`'])((?:[^"`'\\]|\\.)*)(?:["`'])"#).unwrap()
+    });
+
+    let mut result = source.clone();
+    let mut injected_count = 0u32;
+    // Track offset karena setiap inject menggeser posisi karakter
+    let mut offset: i64 = 0;
+
+    for cap in RE_TW_OPEN.captures_iter(&source) {
+        let tag = cap[2].to_string();
+        let open_brace_match = cap.get(3).unwrap();
+        let search_start = open_brace_match.end();
+
+        // Cari states block mulai dari `{` opening
+        let search_window = &source[search_start..std::cmp::min(search_start + 2000, source.len())];
+
+        if let Some(states_cap) = RE_STATES_BLOCK.captures(search_window) {
+            let states_body = &states_cap[1];
+
+            // Parse states → BTreeMap (sorted)
+            let mut state_map: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+            for entry_cap in RE_STATE_ENTRY.captures_iter(states_body) {
+                let key = entry_cap[1].to_string();
+                let value = entry_cap[2].split_whitespace().collect::<Vec<_>>().join(" ");
+                if !value.is_empty() {
+                    state_map.insert(key, value);
+                }
+            }
+
+            if state_map.is_empty() { continue; }
+
+            // Compute hash — identik dengan hashState() di TypeScript
+            let sorted_entries: Vec<(&String, &String)> = state_map.iter().collect();
+            let entries_json = match serde_json::to_string(&sorted_entries) {
+                Ok(j) => j,
+                Err(_) => continue,
+            };
+            let hash_key = format!("{}{}", tag, entries_json);
+            let hash = crate::shared::utils::fnv1a_6(&hash_key);
+
+            // Inject `__hash: "abc123", ` setelah `{`
+            let inject_str = format!(" __hash: \"{}\",", hash);
+            let inject_pos = (open_brace_match.end() as i64 + offset) as usize;
+
+            result.insert_str(inject_pos, &inject_str);
+            offset += inject_str.len() as i64;
+            injected_count += 1;
+        }
+    }
+
+    InjectHashResult {
+        changed: injected_count > 0,
+        code: result,
+        injected_count,
+    }
+}

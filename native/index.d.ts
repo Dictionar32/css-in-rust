@@ -781,6 +781,14 @@ export declare function diffClassLists(previous: Array<string>, current: Array<s
 export declare function extractAllClasses(source: string): Array<string>
 
 /**
+ * Convenience: extract + generate dalam satu call.
+ * Ekuivalen dengan `extract_tw_state_configs()` → `generate_static_state_css()`.
+ *
+ * Dipakai oleh build pipeline untuk memproses satu source file sekaligus.
+ */
+export declare function extractAndGenerateStateCss(source: string, filename: string): Array<GeneratedStateRule>
+
+/**
  * Extract Tailwind classes from a single source file's content.
  * Handles tw`...`, tw.tag`...`, className="...", class="..." patterns.
  * ─ OPTIMIZATION (Phase 2.3): Parallel regex pattern matching
@@ -818,6 +826,26 @@ export declare function extractCssVars(source: string): Array<string>
  */
 export declare function extractThemeFromCss(css: string): Array<CssThemeVar>
 
+/**
+ * Extract semua `tw.tag({ states: {...} })` configs dari source file.
+ *
+ * Return array of `TwStateConfigEntry` — satu per komponen yang punya `states` config.
+ * Hasilnya dipakai oleh `generate_static_state_css()` untuk pre-generate CSS di build time.
+ *
+ * ```ts
+ * // Input source:
+ * const Button = tw.button({ states: { loading: "opacity-60", fullWidth: "w-full" } })
+ * const Card = tw.div({ states: { selected: "ring-2 ring-blue-500" } })
+ *
+ * // Output:
+ * [
+ *   { tag: "button", componentName: "Button", statesJson: '{"loading":"opacity-60","fullWidth":"w-full"}', sourceFile: "..." },
+ *   { tag: "div", componentName: "Card", statesJson: '{"selected":"ring-2 ring-blue-500"}', sourceFile: "..." }
+ * ]
+ * ```
+ */
+export declare function extractTwStateConfigs(source: string, filename: string): Array<TwStateConfigEntry>
+
 export interface FileChangeDiff {
   added: Array<string>
   removed: Array<string>
@@ -846,6 +874,47 @@ export declare function generateAtomicCss(rulesJson: string): string
  * Input JSON: `[{ twClass, atomicName, property, value, modifier? }, ...]`
  */
 export declare function generateAtomicCss(rulesJson: string): string
+
+/** Satu CSS rule yang di-generate untuk satu state entry. */
+export interface GeneratedStateRule {
+  /** CSS selector — misalnya `.tw-s-abc123[data-loading="true"]` */
+  selector: string
+  /** CSS declarations — misalnya `opacity:0.6;cursor:wait` */
+  declarations: string
+  /** Full CSS rule — selector + declarations dalam `{}` */
+  cssRule: string
+  /** Component name dari source */
+  componentName: string
+  /** State name — misalnya "loading", "selected" */
+  stateName: string
+}
+
+/**
+ * Pre-generate semua CSS rules untuk state configs yang di-extract dari source files.
+ *
+ * Menggunakan hash algorithm yang **identik** dengan `hashState()` di `stateEngine.ts`,
+ * sehingga class names yang di-generate build-time == yang di-generate runtime.
+ * Ini memungkinkan CSS di-load sebagai static file tanpa runtime injection.
+ *
+ * Flow build-time:
+ * ```
+ * extract_tw_state_configs(source, filename)
+ *   → Vec<TwStateConfigEntry>
+ *   → map ke Vec<StaticStateCssInput>
+ *   → generate_static_state_css(inputs)
+ *   → Vec<GeneratedStateRule>
+ *   → join css_rule → append ke safelist.css
+ * ```
+ *
+ * ```ts
+ * const rules = generateStaticStateCss([
+ *   { tag: "button", componentName: "Button", statesJson: '{"loading":"opacity-60"}' }
+ * ])
+ * // rules[0].cssRule === '.tw-s-abc123[data-loading="true"]{opacity:0.6}'
+ * // — selector identik dengan yang dibuat stateEngine.ts di runtime!
+ * ```
+ */
+export declare function generateStaticStateCss(inputs: Array<StaticStateCssInput>): Array<GeneratedStateRule>
 
 /**
  * Scan workspace untuk semua sub-component names yang dipakai,
@@ -997,6 +1066,36 @@ export interface IncrementalFileEntry {
   file: string
   classes: Array<string>
 }
+
+/** Result dari `inject_state_hash()`. */
+export interface InjectHashResult {
+  /** Source code yang sudah di-transform (dengan __hash embedded) */
+  code: string
+  /** True jika ada perubahan yang dilakukan */
+  changed: boolean
+  /** Jumlah komponen yang di-inject hash-nya */
+  injectedCount: number
+}
+
+/**
+ * Inject `__hash: "abc123"` ke semua `tw.tag({ states: {...} })` calls dalam source.
+ *
+ * Dipanggil oleh `turbopackLoader.ts` sebelum source di-pass ke webpack/turbopack.
+ * Hasilnya: `stateEngine.ts` bisa langsung pakai `__hash` tanpa perlu
+ * compute `hashState()` di runtime → zero runtime hashing.
+ *
+ * Hash yang di-inject identik dengan yang dihitung `hashState()` di TypeScript:
+ *   `fnv1a_6(tag + JSON.stringify(Object.entries(state).sort()))`
+ *
+ * ```ts
+ * // Input:
+ * const Button = tw.button({ states: { loading: "opacity-60" } })
+ *
+ * // Output:
+ * const Button = tw.button({ __hash: "a3f9c1", states: { loading: "opacity-60" } })
+ * ```
+ */
+export declare function injectStateHash(source: string, filename: string): InjectHashResult
 
 export declare function isAlreadyTransformed(source: string): boolean | null
 
@@ -1689,6 +1788,19 @@ export interface StatesLookupResult {
   combinations: number
 }
 
+/** Input untuk `generate_static_state_css()`. */
+export interface StaticStateCssInput {
+  /** HTML tag — misalnya "button", "div" */
+  tag: string
+  /** Component name — untuk debugging */
+  componentName: string
+  /**
+   * JSON string dari state config — misalnya `{"loading":"opacity-60","selected":"ring-2"}`
+   * Format harus **identical** dengan output dari `extract_tw_state_configs()`.
+   */
+  statesJson: string
+}
+
 /** Hentikan watcher dengan `handle_id`. */
 export declare function stopWatch(handleId: number): boolean
 
@@ -1815,6 +1927,25 @@ export interface TwMergeOptions {
  * ```
  */
 export declare function twMergeWithSeparator(classString: string, opts: TwMergeOptions): string
+
+/**
+ * Satu entry state config yang di-extract dari source file.
+ * Mirrors struktur yang diproses oleh `hashState()` di `stateEngine.ts`.
+ */
+export interface TwStateConfigEntry {
+  /** HTML tag dari tw.tag() call — misalnya "button", "div", "span" */
+  tag: string
+  /** Component name — misalnya "Button", "Card" (dari `const Button = tw.button(...)`) */
+  componentName: string
+  /**
+   * JSON string dari state config object — misalnya `{"selected":"ring-2 ring-blue-500"}`
+   * Sudah dalam format yang sama dengan input ke `hashState()`:
+   *   `tag + JSON.stringify(Object.entries(state).sort())`
+   */
+  statesJson: string
+  /** Source file path — untuk debugging dan incremental rebuild */
+  sourceFile: string
+}
 
 export interface UpdateCheckResult {
   name: string

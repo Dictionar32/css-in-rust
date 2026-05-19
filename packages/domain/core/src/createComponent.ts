@@ -508,7 +508,13 @@ export function createComponent<TConfig extends ComponentConfig>(
   }
 
   const stateResult = stateConfig
-    ? processState(typeof tag === "string" ? tag : "component", stateConfig)
+    ? processState(
+        typeof tag === "string" ? tag : "component",
+        stateConfig,
+        // Pakai pre-computed hash dari turbopackLoader (Rust inject_state_hash)
+        // kalau tersedia — skip runtime hashState() computation sepenuhnya
+        (config as { __hash?: string }).__hash
+      )
     : null
   const containerResult = containerConfig
     ? processContainer(typeof tag === "string" ? tag : "component", containerConfig, containerName)

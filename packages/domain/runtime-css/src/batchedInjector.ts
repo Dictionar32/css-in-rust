@@ -10,7 +10,19 @@
  *   - Semua CSS rules dari render cycle yang sama dikumpulkan
  *   - Satu requestAnimationFrame = satu DOM style update
  *   - Deduplication via Set<string> — rule yang sama tidak diinjeksi dua kali
- *   - Fallback synchronous untuk SSR / server context
+ *   - Injection via CSSStyleSheet.insertRule() — TIDAK menghapus rules yang ada
+ *   - Fallback ke textContent += jika CSSOM API tidak tersedia
+ *
+ * PENTING — Kenapa insertRule() bukan textContent +=:
+ *   `el.textContent += css` terlihat additive tapi sebenarnya:
+ *     1. Browser baca semua textContent yang ada
+ *     2. HAPUS semua rules dari stylesheet
+ *     3. Concat string baru
+ *     4. Parse ulang dan re-add semua rules
+ *   Di step 2-3, ada window singkat dimana SEMUA styles hilang → FLICKER.
+ *
+ *   `sheet.insertRule()` benar-benar additive — hanya menambah rule baru
+ *   tanpa menyentuh rules yang sudah ada. Zero flicker.
  *
  * Usage (internal, dipakai oleh stateEngine dan containerQuery):
  *   import { batchedInject, flushBatchedCss } from "./batchedInjector"
@@ -44,8 +56,46 @@ function getStyleElement(): HTMLStyleElement {
   _state.styleEl = document.createElement("style")
   _state.styleEl.id = "__tw-runtime-css"
   _state.styleEl.setAttribute("data-tw-batched", "true")
+  // Harus diappend ke DOM sebelum .sheet bisa diakses
   document.head.appendChild(_state.styleEl)
   return _state.styleEl
+}
+
+/**
+ * Inject satu CSS rule via CSSStyleSheet.insertRule().
+ *
+ * Ini benar-benar additive — tidak menyentuh rules yang sudah ada.
+ * Fallback ke textContent append jika sheet belum siap (edge case).
+ *
+ * @internal
+ */
+function insertRuleToSheet(cssRule: string): void {
+  const trimmed = cssRule.trim()
+  if (!trimmed) return
+
+  const el = getStyleElement()
+  const sheet = el.sheet
+
+  if (sheet) {
+    try {
+      // insertRule() di akhir — urutan tidak kritis untuk utility CSS
+      sheet.insertRule(trimmed, sheet.cssRules.length)
+      return
+    } catch {
+      // insertRule() bisa throw jika:
+      // 1. Rule syntax tidak valid
+      // 2. Multi-rule string (insertRule() hanya terima satu rule)
+      // Fallback ke textContent append untuk kasus ini.
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[tw] insertRule failed, falling back to textContent append for rule:", trimmed.slice(0, 80))
+      }
+    }
+  }
+
+  // Fallback: textContent append.
+  // Lebih jarang terjadi sekarang karena stateEngine sudah loop per-rule,
+  // tapi tetap perlu sebagai safety net.
+  el.textContent = (el.textContent ?? "") + `\n${trimmed}`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,6 +106,8 @@ function getStyleElement(): HTMLStyleElement {
  * Queue a CSS rule for batched injection.
  * Multiple rules accumulated during one event loop tick are flushed together
  * in one requestAnimationFrame → one style recalculation.
+ *
+ * Rules diinjeksi via insertRule() — zero flicker, truly additive.
  */
 export function batchedInject(cssRule: string): void {
   if (typeof window === "undefined") return // SSR — no-op
@@ -73,30 +125,36 @@ export function batchedInject(cssRule: string): void {
  * Immediately flush all pending CSS rules to the DOM.
  * Called automatically by RAF each frame. Can also be called manually
  * after synchronous component setup where RAF timing is too late.
+ *
+ * Setiap rule diinjeksi secara individual via insertRule() — tidak ada
+ * window dimana existing rules hilang.
  */
 export function flushBatchedCss(): void {
   _state.rafHandle = null
 
   if (pending.length === 0 || typeof document === "undefined") return
 
-  const el = getStyleElement()
-  const css = pending.join("\n")
-  pending.length = 0
-
-  // Append rather than replace — preserves previously injected rules
-  el.textContent += `\n${css}`
+  // Flush semua rules sekaligus — satu per satu via insertRule()
+  // insertRule() atomic per-rule: rule lama tidak pernah dihapus
+  const rules = pending.splice(0)
+  for (const rule of rules) {
+    insertRuleToSheet(rule)
+  }
 }
 
 /**
  * Synchronous inject — skips batching.
  * Use for SSR / critical path where RAF is not available.
+ *
+ * Menggunakan insertRule() — tidak ada flicker meskipun dipanggil
+ * di tengah render cycle.
  */
 export function syncInject(cssRule: string): void {
   if (typeof document === "undefined") return
   if (!cssRule || injected.has(cssRule)) return
 
   injected.add(cssRule)
-  getStyleElement().textContent += `\n${cssRule}`
+  insertRuleToSheet(cssRule)
 }
 
 /**

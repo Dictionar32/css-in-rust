@@ -10,35 +10,35 @@ function nodeRequire(id: string): unknown {
   return _rawRequire(id)
 }
 
-let _nodeFs: any = null
-let _nodeModule: any = null
-let _nodeOs: any = null
-let _nodePath: any = null
-let _nodeUrl: any = null
+let _nodeFs: typeof import("node:fs") | null = null
+let _nodeModule: typeof import("node:module") | null = null
+let _nodeOs: typeof import("node:os") | null = null
+let _nodePath: typeof import("node:path") | null = null
+let _nodeUrl: typeof import("node:url") | null = null
 
-function getNodeFs() {
+function getNodeFs(): typeof import("node:fs") {
   if (isBrowser) throw new Error("node:fs not available in browser")
-  if (!_nodeFs) _nodeFs = nodeRequire("node:fs")
+  if (!_nodeFs) _nodeFs = nodeRequire("node:fs") as typeof import("node:fs")
   return _nodeFs!
 }
-function getNodeModule() {
+function getNodeModule(): typeof import("node:module") {
   if (isBrowser) throw new Error("node:module not available in browser")
-  if (!_nodeModule) _nodeModule = nodeRequire("node:module")
+  if (!_nodeModule) _nodeModule = nodeRequire("node:module") as typeof import("node:module")
   return _nodeModule!
 }
-function getNodeOs() {
+function getNodeOs(): typeof import("node:os") {
   if (isBrowser) throw new Error("node:os not available in browser")
-  if (!_nodeOs) _nodeOs = nodeRequire("node:os")
+  if (!_nodeOs) _nodeOs = nodeRequire("node:os") as typeof import("node:os")
   return _nodeOs!
 }
-function getNodePath() {
+function getNodePath(): typeof import("node:path") {
   if (isBrowser) throw new Error("node:path not available in browser")
-  if (!_nodePath) _nodePath = nodeRequire("node:path")
+  if (!_nodePath) _nodePath = nodeRequire("node:path") as typeof import("node:path")
   return _nodePath!
 }
-function getNodeUrl() {
+function getNodeUrl(): typeof import("node:url") {
   if (isBrowser) throw new Error("node:url not available in browser")
-  if (!_nodeUrl) _nodeUrl = nodeRequire("node:url")
+  if (!_nodeUrl) _nodeUrl = nodeRequire("node:url") as typeof import("node:url")
   return _nodeUrl!
 }
 

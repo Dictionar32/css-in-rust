@@ -12,7 +12,7 @@ const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 function run(cmd, args = [], opts = {}) {
   const result = spawnSync(cmd, args, {
     cwd: ROOT, stdio: "pipe", encoding: "utf-8",
-    env: { ...process.env, TWS_DISABLE_NATIVE: "1" },
+    env: { ...process.env, TWS_NO_NATIVE: "1", TWS_NO_RUST: "1" },
     ...opts,
   })
   return { ok: result.status === 0, out: result.stdout + result.stderr, status: result.status }

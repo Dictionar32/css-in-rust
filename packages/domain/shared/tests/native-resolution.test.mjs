@@ -39,7 +39,15 @@ describe("resolveNativeBinary() — QA #1", () => {
     assert.ok(result.tried.some(t => t.includes("nonexistent")))
   })
 
-  it("returns not-found result when disabled", () => {
+  it("returns not-found result when disabled via TWS_NO_NATIVE (canonical)", () => {
+    process.env.TWS_NO_NATIVE = "1"
+    const result = resolveNativeBinary()
+    assert.equal(result.source, "not-found")
+    assert.equal(result.path, null)
+    delete process.env.TWS_NO_NATIVE
+  })
+
+  it("returns not-found result when disabled via TWS_DISABLE_NATIVE (backward compat)", () => {
     process.env.TWS_DISABLE_NATIVE = "1"
     const result = resolveNativeBinary()
     assert.equal(result.source, "not-found")

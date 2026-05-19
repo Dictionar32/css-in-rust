@@ -59,7 +59,8 @@ export function resolveNativeBinary(runtimeDir?: string): NativeResolutionResult
   }
 
   // 0. Disabled flag — always short-circuit before any I/O
-  if (process.env.TWS_DISABLE_NATIVE === "1") {
+  // TWS_NO_NATIVE adalah nama canonical; TWS_DISABLE_NATIVE diterima untuk backward compat
+  if (process.env.TWS_NO_NATIVE === "1" || process.env.TWS_DISABLE_NATIVE === "1") {
     return { path: null, source: "not-found", platform, tried: [] }
   }
 

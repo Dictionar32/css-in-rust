@@ -92,6 +92,13 @@ export interface ComponentConfig {
   states?: StatesConfig
   /** Sub-component definitions — string atau nested { tag: { name: classes } } */
   sub?: Record<string, SubValue>
+  /**
+   * Pre-computed hash — di-inject oleh turbopackLoader via `inject_state_hash()` (Rust).
+   * Kalau ada, `stateEngine.ts` skip runtime `hashState()` computation sepenuhnya.
+   * Format: 6-char FNV-1a hex string, identik dengan output `hashState()`.
+   * @internal — jangan set manual, ini di-inject otomatis saat build/dev.
+   */
+  __hash?: string
 }
 
 /**

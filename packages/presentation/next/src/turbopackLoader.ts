@@ -287,10 +287,32 @@ export default function turbopackLoader(
   // Preserve directive (use client / use server)
   const { directive, stripped } = extractDirective(source)
 
+  // ── Hash pre-embedding (build-time optimization) ────────────────────────
+  // Inject `__hash: "abc123"` ke semua tw() calls yang punya states config.
+  // stateEngine.ts akan pakai __hash langsung — skip runtime hashState() computation.
+  // Zero dependency baru: pakai Rust NAPI yang sama dengan compiler.
+  let processedSource = stripped
+  try {
+    const compilerMod = require("@tailwind-styled/compiler/internal") as {
+      injectStateHash?: (source: string, filename: string) => { code: string; changed: boolean; injectedCount: number }
+    }
+    if (typeof compilerMod?.injectStateHash === "function" && stripped.includes("states:")) {
+      const hashResult = compilerMod.injectStateHash(stripped, this.resourcePath)
+      if (hashResult.changed) {
+        processedSource = hashResult.code
+        if (debug) {
+          console.debug(`[tw-loader] ${filename}: injected __hash for ${hashResult.injectedCount} component(s)`)
+        }
+      }
+    }
+  } catch {
+    // injectStateHash tidak tersedia (binary belum di-rebuild) — skip, tidak fatal
+  }
+
   try {
     const output = runLoaderTransform({
       filepath: this.resourcePath,
-      source: stripped,
+      source: processedSource,
       options: effective,
     })
 
