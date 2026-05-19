@@ -21,7 +21,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 import { scanWorkspace } from "@tailwind-styled/scanner"
-import { appendStaticStateCssToSafelist } from "@tailwind-styled/cli/utils/staticStateExtractor"
+import { appendStaticStateCssToSafelist } from "create-tailwind-styled/utils/staticStateExtractor" // FIX: pakai nama package asli
 
 import { parseNextAdapterOptions } from "./schemas"
 
@@ -150,7 +150,7 @@ const DEFAULT_EXCLUDE = /node_modules/
  * semuanya adalah Next.js segment conventions yang tidak boleh disentuh loader pihak ketiga.
  */
 const NEXT_RSC_ENTRIES =
-  /(?:^|[\\/])(?:layout|page|loading|error|not-found|template|default)\.[jt]sx?$/
+  /(?:^|[\\\/])(?:layout|page|loading|error|not-found|template|default)\.[jt]sx?$/
 
 /**
  * Gabungkan user-supplied exclude dengan NEXT_RSC_ENTRIES.
@@ -226,7 +226,7 @@ const applyWebpackRule = (
   const externalPackages = [
     "tailwind-styled-v4",
     "@tailwind-styled/shared",
-    "@tailwind-styled/compiler", 
+    "@tailwind-styled/compiler",
     "@tailwind-styled/engine",
     "@tailwind-styled/plugin",
     "@tailwind-styled/core",
