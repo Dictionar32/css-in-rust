@@ -67,6 +67,10 @@ import {
   detectConflicts,
   bucketSort,
   generateCssForClasses,
+  // Static state CSS pre-generation
+  extractTwStateConfigs,
+  generateStaticStateCss,
+  extractAndGenerateStateCss,
 } from "./index"
 
 export {
@@ -126,6 +130,10 @@ export {
   detectConflicts,
   bucketSort,
   generateCssForClasses,
+  // Static state CSS pre-generation
+  extractTwStateConfigs,
+  generateStaticStateCss,
+  extractAndGenerateStateCss,
 }
 
 export { type NativeBridge, type NativeTransformResult, type ComponentMetadata, type NativeRscResult, type LoaderOutput }

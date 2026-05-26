@@ -21,7 +21,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 import { scanWorkspace } from "@tailwind-styled/scanner"
-import { appendStaticStateCssToSafelist } from "@tailwind-styled/shared"
+import { appendStaticStateCssToSafelist, TW_STATE_STATIC_FILENAME } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
 
@@ -324,6 +324,17 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
           "utf-8"
         )
 
+        // Tulis placeholder _tw-state-static.css agar @import di globals.css
+        // tidak error saat cold start (sebelum staticStateExtractor jalan)
+        const stateStaticPath = path.join(path.dirname(safelistPath), TW_STATE_STATIC_FILENAME)
+        if (!fs.existsSync(stateStaticPath)) {
+          fs.writeFileSync(
+            stateStaticPath,
+            "/* tw-state-static.css — placeholder, akan di-generate setelah scan */\n",
+            "utf-8"
+          )
+        }
+
         // Pastikan scanner bisa menemukan native binary — set TW_NATIVE_PATH
         // dari runtimeDir withTailwindStyled (tailwind-styled-v4/dist/) sebelum
         // scanWorkspace dipanggil, karena scanner memakai getDirname() sendiri
@@ -501,7 +512,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                     // ── Static state CSS pre-generation (build-time, no fallback) ──
                     // Wajib berhasil — runtime injection sudah dihapus.
                     // Kalau gagal di sini, build harus berhenti supaya bug tidak tersembunyi.
-                    const summary = appendStaticStateCssToSafelist(srcDir, initialScanPath, {
+                    const summary = appendStaticStateCssToSafelist(srcDir, safelistPath, {
                       verbose: options.verbose ?? false,
                     })
                     if (options.verbose) console.log(summary)

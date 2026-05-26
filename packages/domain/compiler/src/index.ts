@@ -618,3 +618,77 @@ export const detectConflicts = (classes: string[]): string[] => {
 export const bucketSort = (classes: string[]): string[] => {
   return classifyAndSortClasses(classes).map((c) => (c as { raw?: string; class?: string }).raw ?? (c as unknown as string))
 }
+
+// =============================================================================
+// STATIC STATE CSS PRE-GENERATION
+// =============================================================================
+
+export interface TwStateConfigEntry {
+  tag: string
+  componentName: string
+  statesJson: string
+  sourceFile: string
+}
+
+export interface StaticStateCssInput {
+  tag: string
+  componentName: string
+  statesJson: string
+}
+
+export interface GeneratedStateRule {
+  selector: string
+  declarations: string
+  cssRule: string
+  componentName: string
+  stateName: string
+}
+
+/**
+ * Extract semua `tw.tag({ states: {...} })` configs dari source file.
+ * Dipanggil oleh staticStateExtractor.ts via @tailwind-styled/compiler/internal.
+ */
+export const extractTwStateConfigs = (
+  source: string,
+  filename: string
+): TwStateConfigEntry[] => {
+  const native = getNativeBridge()
+  if (!native?.extractTwStateConfigs) {
+    throw new Error("FATAL: Native binding 'extractTwStateConfigs' is required but not available.")
+  }
+  return native.extractTwStateConfigs(source, filename)
+}
+
+/**
+ * Generate static CSS rules dari kumpulan state configs.
+ * Selector format: `.tw-s-[hash][data-stateName="true"] { ... }`
+ */
+export const generateStaticStateCss = (
+  inputs: StaticStateCssInput[]
+): GeneratedStateRule[] => {
+  const native = getNativeBridge()
+  if (!native?.generateStaticStateCss) {
+    throw new Error("FATAL: Native binding 'generateStaticStateCss' is required but not available.")
+  }
+  return native.generateStaticStateCss(inputs)
+}
+
+/**
+ * Shortcut: extract + generate dalam satu call per file.
+ * Ekuivalen dengan `extractTwStateConfigs` → `generateStaticStateCss`.
+ */
+export const extractAndGenerateStateCss = (
+  source: string,
+  filename: string
+): GeneratedStateRule[] => {
+  const native = getNativeBridge()
+  if (!native?.extractAndGenerateStateCss) {
+    // Fallback manual jika native belum export fungsi shortcut ini
+    const configs = extractTwStateConfigs(source, filename)
+    if (configs.length === 0) return []
+    return generateStaticStateCss(
+      configs.map((c) => ({ tag: c.tag, componentName: c.componentName, statesJson: c.statesJson }))
+    )
+  }
+  return native.extractAndGenerateStateCss(source, filename)
+}

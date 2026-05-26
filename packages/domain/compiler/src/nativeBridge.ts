@@ -94,6 +94,31 @@ export interface NativeBridge {
   calculateImpact?: (impactJson: string) => string
   calculateRisk?: (className: string, totalComponents: number) => string
   calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
+  // Static state CSS pre-generation (state_css.rs)
+  extractTwStateConfigs?: (source: string, filename: string) => Array<{
+    tag: string
+    componentName: string
+    statesJson: string
+    sourceFile: string
+  }>
+  generateStaticStateCss?: (inputs: Array<{
+    tag: string
+    componentName: string
+    statesJson: string
+  }>) => Array<{
+    selector: string
+    declarations: string
+    cssRule: string
+    componentName: string
+    stateName: string
+  }>
+  extractAndGenerateStateCss?: (source: string, filename: string) => Array<{
+    selector: string
+    declarations: string
+    cssRule: string
+    componentName: string
+    stateName: string
+  }>
 }
 
 export interface NativeTransformResult {

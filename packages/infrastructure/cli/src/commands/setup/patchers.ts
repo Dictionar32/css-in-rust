@@ -141,6 +141,28 @@ export function computeSafelistSourcePath(cssFilePath: string, cwd: string): str
   }
 }
 
+/**
+ * Hitung path relatif dari cssFilePath ke `.next/_tw-state-static.css`.
+ * Contoh:
+ *   cssFile = "src/app/globals.css" → "../../.next/_tw-state-static.css"
+ *   cssFile = "src/globals.css"     → "../.next/_tw-state-static.css"
+ */
+export function computeStateStaticImportPath(cssFilePath: string, cwd: string): string {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require("node:path") as typeof import("node:path")
+    const cssAbs = nodePath.resolve(cwd, cssFilePath)
+    const cssDir = nodePath.dirname(cssAbs)
+    const stateStaticAbs = nodePath.resolve(cwd, ".next", "_tw-state-static.css")
+    const rel = nodePath.relative(cssDir, stateStaticAbs).replace(/\\/g, "/")
+    return rel.startsWith(".") ? rel : `./${rel}`
+  } catch {
+    const depth = cssFilePath.split("/").length - 1
+    const ups = Array(depth).fill("..").join("/")
+    return `${ups}/.next/_tw-state-static.css`
+  }
+}
+
 export function patchTailwindCssImpl(
   src: string,
   bundler?: "next" | "vite" | "rspack",
@@ -150,27 +172,65 @@ export function patchTailwindCssImpl(
   const hasTailwindImport =
     src.includes('@import "tailwindcss"') || src.includes("@import 'tailwindcss'")
 
-  const hasSafelistSource = src.includes("tailwind-styled-safelist.css")
+  const hasSafelistSource = src.includes("tw-classes")
+  const hasStateImport = src.includes("_tw-state-static.css")
   const needsSafelistSource = bundler === "next" && !hasSafelistSource
+  const needsStateImport = bundler === "next" && !hasStateImport
 
   const safelistRelPath =
     needsSafelistSource && cssFilePath && cwd
       ? computeSafelistSourcePath(cssFilePath, cwd)
-      : "../.next/tailwind-styled-safelist.css"
+      : "../.next/tw-classes/**"
+
+  const stateImportRelPath =
+    needsStateImport && cssFilePath && cwd
+      ? computeStateStaticImportPath(cssFilePath, cwd)
+      : "../.next/_tw-state-static.css"
 
   const safelistSource = `@source "${safelistRelPath}";`
+  // @import state CSS harus tanpa layer() — berisi raw CSS selector, bukan utilities
+  const stateImport = `@import "${stateImportRelPath}";`
 
   if (hasTailwindImport) {
-    if (!needsSafelistSource) return null
-    const patched = src.replace(
-      /(@import\s+['"]tailwindcss['"];?)/,
-      `$1\n${safelistSource}`
-    )
+    if (!needsSafelistSource && !needsStateImport) return null
+
+    let patched = src
+
+    // Inject @source setelah @import "tailwindcss" jika belum ada
+    if (needsSafelistSource) {
+      patched = patched.replace(
+        /(@import\s+['"]tailwindcss['"];?)/,
+        `$1\n${safelistSource}`
+      )
+    }
+
+    // Inject @import state CSS setelah @source (atau setelah @import tailwindcss jika tidak ada @source)
+    if (needsStateImport) {
+      if (patched.includes("tw-classes")) {
+        // Tambah setelah baris @source
+        patched = patched.replace(
+          /(@source\s+["'][^"']+["'];?)/,
+          `$1\n${stateImport}`
+        )
+      } else {
+        // Fallback: tambah setelah @import "tailwindcss"
+        patched = patched.replace(
+          /(@import\s+['"]tailwindcss['"];?)/,
+          `$1\n${stateImport}`
+        )
+      }
+    }
+
     return patched === src ? null : patched
   }
 
-  const base = `@import "tailwindcss";\n${needsSafelistSource ? `${safelistSource}\n` : ""}\n${src}`
-  return base
+  // Tidak ada @import "tailwindcss" sama sekali — tulis dari awal
+  const lines: string[] = [`@import "tailwindcss";`]
+  if (needsSafelistSource) lines.push(safelistSource)
+  if (needsStateImport) lines.push(stateImport)
+  lines.push("", src)
+
+  return lines.join("\n")
 }
 
 export function patchTsConfigImpl(src: string): string | null {

@@ -307,13 +307,20 @@ export function extractStaticStateCss(
   return result
 }
 
+/** Nama file output untuk static state CSS — di-import langsung dari globals.css */
+export const TW_STATE_STATIC_FILENAME = "_tw-state-static.css"
+
 /**
- * Extract static state CSS dan append ke safelist file.
+ * Extract static state CSS dan tulis ke file terpisah `_tw-state-static.css`
+ * di direktori yang sama dengan `safelistPath`.
+ *
+ * File ini harus di-`@import` langsung dari globals.css karena berisi raw CSS
+ * (bukan Tailwind class names), sehingga tidak bisa di-pickup oleh `@source`.
  *
  * Dipanggil dari `withTailwindStyled.ts` setelah initial Tailwind scan.
  *
  * @param srcDir Source directory untuk scan
- * @param safelistPath Path ke safelist CSS file (akan di-append, bukan di-replace)
+ * @param safelistPath Path ke safelist CSS file — dipakai untuk derive direktori output
  * @param options Optional config
  * @returns Summary string untuk logging
  */
@@ -324,22 +331,37 @@ export function appendStaticStateCssToSafelist(
 ): string {
   const result = extractStaticStateCss(srcDir, options)
 
+  // Selalu tulis file (kosong jika tidak ada rules) supaya @import di globals.css
+  // tidak error saat cold start sebelum ada komponen dengan states.
+  const stateFilePath = path.join(path.dirname(safelistPath), TW_STATE_STATIC_FILENAME)
+
   if (result.rulesGenerated === 0) {
+    try {
+      // Tulis file kosong agar @import globals.css tidak error
+      fs.writeFileSync(
+        stateFilePath,
+        "/* tw-state-static.css — tidak ada state rules yang di-generate */\n",
+        "utf-8"
+      )
+    } catch { /* non-fatal */ }
     return `[tw:static-state] tidak ada state rules yang di-generate (${result.filesScanned} files di-scan)`
   }
 
   try {
-    // Append ke safelist — TIDAK replace — supaya Tailwind classes yang sudah ada tetap ada
-    fs.appendFileSync(safelistPath, `\n\n${result.generatedCss}`, "utf-8")
+    // Tulis ke file terpisah — REPLACE setiap build supaya selalu fresh.
+    // File ini di-@import langsung dari globals.css (bukan @source),
+    // karena berisi raw CSS selector (.tw-s-[hash][data-state="true"]),
+    // bukan Tailwind class names yang bisa di-scan oleh @source.
+    fs.writeFileSync(stateFilePath, result.generatedCss, "utf-8")
 
     return [
       `[tw:static-state] ${result.rulesGenerated} static state rules di-generate`,
       `  → ${result.filesScanned} files scanned, ${result.filesWithStates} dengan states`,
       `  → ${result.componentsFound} components, ${result.rulesSkipped} rules skipped (fallback ke runtime)`,
-      `  → appended ke ${path.basename(safelistPath)}`,
+      `  → ditulis ke ${TW_STATE_STATIC_FILENAME}`,
     ].join("\n")
   } catch (writeErr) {
     const msg = writeErr instanceof Error ? writeErr.message : String(writeErr)
-    return `[tw:static-state] gagal append ke safelist: ${msg}`
+    return `[tw:static-state] gagal tulis state CSS: ${msg}`
   }
 }

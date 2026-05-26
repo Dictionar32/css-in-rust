@@ -461,6 +461,7 @@ export {
 } from "./observability"
 
 export {
+  TW_STATE_STATIC_FILENAME,
   extractStaticStateCss,
   appendStaticStateCssToSafelist,
   type TwStateConfigEntry,
