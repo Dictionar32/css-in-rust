@@ -225,7 +225,8 @@ const applyWebpackRule = (
     loaderOptions.safelistPath ?? path.join(process.cwd(), ".next", "tailwind-styled-safelist.css")
 
   const pluginAlreadyRegistered = (config.plugins ?? []).some(
-    (p) => p?.constructor?.name === StaticCssWebpackPlugin.PLUGIN_NAME
+    (p: { constructor?: { name?: string } } | null | undefined) =>
+      p?.constructor?.name === StaticCssWebpackPlugin.PLUGIN_NAME
   )
 
   const plugins = pluginAlreadyRegistered

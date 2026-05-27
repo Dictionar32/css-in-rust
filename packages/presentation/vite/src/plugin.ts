@@ -52,6 +52,7 @@ interface ViteLoaderOutput {
   code: string
   changed: boolean
   classes: string[]
+  staticCss?: string
 }
 
 interface ScanWorkspaceResult {

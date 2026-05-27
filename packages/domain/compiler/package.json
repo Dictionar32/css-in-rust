@@ -17,9 +17,9 @@
       "require": "./dist/index.cjs"
     },
     "./internal": {
-      "types": "./dist/internal.d.ts",
-      "import": "./dist/internal.js",
-      "require": "./dist/internal.cjs"
+    "types": "./dist/internal.d.ts",
+    "import": "./dist/internal.js",
+    "default": "./dist/internal.js"
     }
   },
   "files": [

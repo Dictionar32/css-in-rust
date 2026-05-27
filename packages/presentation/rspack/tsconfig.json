@@ -4,9 +4,8 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@tailwind-styled/compiler": [
-        "../compiler/dist/index.d.ts"
-      ]
+      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
+      "@tailwind-styled/compiler/internal": ["../compiler/dist/internal.d.ts"]
     },
     "types": [
       "node"

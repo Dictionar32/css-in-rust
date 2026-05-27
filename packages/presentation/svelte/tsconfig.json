@@ -7,6 +7,9 @@
     "paths": {
       "@tailwind-styled/shared": [
         "../../domain/shared/dist/index.d.ts"
+      ],
+      "@tailwind-styled/core": [
+        "../../domain/core/dist/index.d.ts"
       ]
     }
   },
