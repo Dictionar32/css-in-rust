@@ -15,3 +15,4 @@ export {
 } from "./schemas"
 export type { TailwindStyledNextOptions } from "./withTailwindStyled"
 export { withTailwindStyled } from "./withTailwindStyled"
+export { StaticCssWebpackPlugin, setFileStaticCss } from "./staticCssWebpackPlugin"

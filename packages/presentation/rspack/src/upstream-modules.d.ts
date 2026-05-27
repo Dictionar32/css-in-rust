@@ -32,6 +32,15 @@ declare module "@tailwind-styled/compiler" {
     [key: string]: unknown
   }
 
+  export interface LoaderOutput {
+    code: string
+    changed: boolean
+    classes: string[]
+    staticCss?: string
+    rsc?: { isServer: boolean; needsClientDirective: boolean }
+    engine?: string
+  }
+
   export function getNativeBridge(): NativeBridge
   export function resetNativeBridgeCache(): void
   export function adaptNativeResult(result: unknown): unknown
@@ -41,11 +50,12 @@ declare module "@tailwind-styled/compiler" {
     source: string
     options?: Record<string, unknown>
     isDev?: boolean
-  }): { code: string; changed: boolean; classes: string[] }
-  export function transformSource(source: string, opts?: Record<string, unknown>): { code: string; changed: boolean; classes: string[] }
+  }): { code: string; changed: boolean; classes: string[]; staticCss?: string }
+  export function transformSource(source: string, opts?: Record<string, unknown>): { code: string; changed: boolean; classes: string[]; staticCss?: string }
   export function hasTwUsage(source: string): boolean
   export function isAlreadyTransformed(source: string): boolean
   export function extractAllClasses(source: string): string[]
+  export function extractContainerCssFromSource(source: string): string
   export function compileCssFromClasses(classes: string[], prefix?: string | null): unknown
   export function normalizeAndDedupClasses(raw: string): { normalized: string; duplicatesRemoved: number; uniqueCount: number }
   export function classifyAndSortClasses(classes: string[]): unknown[]

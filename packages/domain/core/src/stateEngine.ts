@@ -108,7 +108,12 @@ function twClassesToCss(classes: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Batched injector — resolve sekali di module load, bukan per injectStateStyles call.
+// Static CSS detection cache — per component ID
+// ─────────────────────────────────────────────────────────────────────────────
+// Kalau ID sudah ketemu di stylesheet statis, simpan ke Set ini supaya
+// iterasi `document.styleSheets` hanya terjadi SEKALI per component ID,
+// bukan setiap kali komponen mount.
+const _staticCssDetected = new Set<string>()
 // require() di-cache hasilnya di sini supaya tidak ada module resolution overhead
 // setiap kali ada state change di browser.
 let _batchedInjectFn: ((css: string) => void) | null = null
@@ -137,6 +142,10 @@ function injectStateStyles(id: string, state: StateConfig): void {
   // Cara detect: cari selector `.{id}[data-` di semua stylesheets yang ada.
   // Kalau ketemu, berarti static pre-generation sudah cover component ini
   // → skip runtime injection sepenuhnya (zero batchedInject call).
+  //
+  // `_staticCssDetected` cache: iterasi styleSheets hanya sekali per ID.
+  if (_staticCssDetected.has(id)) return
+
   if (typeof document.styleSheets !== "undefined") {
     const selectorPrefix = `.${id}[data-`
     for (let i = 0; i < document.styleSheets.length; i++) {
@@ -148,6 +157,7 @@ function injectStateStyles(id: string, state: StateConfig): void {
           const rule = rules[j]
           if (rule instanceof CSSStyleRule && rule.selectorText.startsWith(selectorPrefix)) {
             // Static CSS sudah mencakup component ini — tidak perlu inject
+            _staticCssDetected.add(id)
             return
           }
         }

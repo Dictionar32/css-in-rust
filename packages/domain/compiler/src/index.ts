@@ -14,6 +14,18 @@ export type LoaderOutput = {
   code: string
   changed: boolean
   classes: string[]
+  /**
+   * Static CSS rules extracted from this file at build time.
+   *
+   * Berisi CSS untuk:
+   *  - `state:` config  → `.tw-s-[hash][data-stateName="true"] { ... }`
+   *  - `container:` config → `@container (min-width: ...) { .tw-cq-[hash] { ... } }`
+   *
+   * Plugin (Vite / webpack) mengumpulkan field ini dari semua file dan
+   * menulisnya ke `_tw-state-static.css` / safelist file — sehingga
+   * `stateEngine.ts` + `containerQuery.ts` TIDAK perlu inject CSS di browser.
+   */
+  staticCss?: string
   rsc?: { isServer?: boolean; needsClientDirective?: boolean; clientReasons?: string[] }
   engine?: string
 }
@@ -484,13 +496,262 @@ export const getContentPaths = (cwd: string = process.cwd()) => {
 // LOADER
 // =============================================================================
 
+// =============================================================================
+// CONTAINER CSS — JS EXTRACTOR
+// (Rust belum export extractTwContainerConfigs — JS fallback ini handles common patterns)
+// =============================================================================
+
+const _CONTAINER_BREAKPOINTS: Record<string, string> = {
+  xs: "240px",
+  sm: "320px",
+  md: "640px",
+  lg: "1024px",
+  xl: "1280px",
+  "2xl": "1536px",
+}
+
+// Tabel lookup CSS declarations — identik dengan containerQuery.ts di core
+const _LAYOUT_MAP: Record<string, string> = {
+  "flex-col": "flex-direction:column",
+  "flex-row": "flex-direction:row",
+  "flex-wrap": "flex-wrap:wrap",
+  "flex-nowrap": "flex-wrap:nowrap",
+  "flex-1": "flex:1 1 0%",
+  hidden: "display:none",
+  block: "display:block",
+  flex: "display:flex",
+  grid: "display:grid",
+  "grid-cols-1": "grid-template-columns:repeat(1,minmax(0,1fr))",
+  "grid-cols-2": "grid-template-columns:repeat(2,minmax(0,1fr))",
+  "grid-cols-3": "grid-template-columns:repeat(3,minmax(0,1fr))",
+  "grid-cols-4": "grid-template-columns:repeat(4,minmax(0,1fr))",
+  "grid-cols-6": "grid-template-columns:repeat(6,minmax(0,1fr))",
+  "grid-cols-12": "grid-template-columns:repeat(12,minmax(0,1fr))",
+  "text-xs": "font-size:0.75rem;line-height:1rem",
+  "text-sm": "font-size:0.875rem;line-height:1.25rem",
+  "text-base": "font-size:1rem;line-height:1.5rem",
+  "text-lg": "font-size:1.125rem;line-height:1.75rem",
+  "text-xl": "font-size:1.25rem;line-height:1.75rem",
+  "text-2xl": "font-size:1.5rem;line-height:2rem",
+  "p-2": "padding:0.5rem",
+  "p-4": "padding:1rem",
+  "p-6": "padding:1.5rem",
+  "p-8": "padding:2rem",
+  "px-2": "padding-left:0.5rem;padding-right:0.5rem",
+  "px-4": "padding-left:1rem;padding-right:1rem",
+  "px-6": "padding-left:1.5rem;padding-right:1.5rem",
+  "py-2": "padding-top:0.5rem;padding-bottom:0.5rem",
+  "py-4": "padding-top:1rem;padding-bottom:1rem",
+  "gap-2": "gap:0.5rem",
+  "gap-4": "gap:1rem",
+  "gap-6": "gap:1.5rem",
+  "gap-8": "gap:2rem",
+  "w-full": "width:100%",
+  "w-1/2": "width:50%",
+  "w-1/3": "width:33.333333%",
+  "w-2/3": "width:66.666667%",
+  "max-w-sm": "max-width:24rem",
+  "max-w-md": "max-width:28rem",
+  "max-w-lg": "max-width:32rem",
+  "max-w-xl": "max-width:36rem",
+  "items-center": "align-items:center",
+  "items-start": "align-items:flex-start",
+  "items-end": "align-items:flex-end",
+  "justify-center": "justify-content:center",
+  "justify-between": "justify-content:space-between",
+  "justify-start": "justify-content:flex-start",
+  "justify-end": "justify-content:flex-end",
+}
+
+function _layoutClassesToCss(classes: string): string {
+  const native = getNativeBridge()
+  if (native?.layoutClassesToCss) {
+    try { return native.layoutClassesToCss(classes) } catch { /* fallback */ }
+  }
+  return classes.trim().split(/\s+/).map(cls => _LAYOUT_MAP[cls] ?? "").filter(Boolean).join(";")
+}
+
+function _djb2Hash(s: string): string {
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i)
+  return Math.abs(h).toString(36).slice(0, 6)
+}
+
+function _hashContainer(tag: string, containerJson: string, name?: string): string {
+  const sortedKey = tag + (name ?? "") + containerJson
+  const native = getNativeBridge()
+  if (native?.hashContent) {
+    try {
+      const raw = native.hashContent(sortedKey, "fnv", 6)
+      return `tw-cq-${raw}`
+    } catch { /* fallback */ }
+  }
+  return `tw-cq-${_djb2Hash(sortedKey)}`
+}
+
+/**
+ * Extract container configs dari source dan generate static `@container` CSS.
+ *
+ * Handles pola:
+ *   tw.div({ container: { md: "flex-row", lg: "grid-cols-3" }, containerName: "card" })
+ *   tw.div({ base: "p-4", container: { sm: "flex-col" } })
+ *
+ * Untuk pola yang lebih kompleks (dynamic expressions, multi-line computed),
+ * Rust-level extraction akan menanganinya di versi berikutnya.
+ *
+ * @internal
+ */
+export function extractContainerCssFromSource(source: string): string {
+  // Quick pre-filter
+  if (!source.includes("container") || (!source.includes("tw.") && !source.includes("tw("))) {
+    return ""
+  }
+
+  const rules: string[] = []
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  /** Extract content inside balanced braces starting at source[startIdx]. */
+  function extractBraceContent(src: string, startIdx: number): [string, number] | null {
+    if (src[startIdx] !== "{") return null
+    let depth = 1
+    let i = startIdx + 1
+    while (i < src.length && depth > 0) {
+      const ch = src[i]
+      // Skip string literals to avoid false brace matches inside strings
+      if (ch === '"' || ch === "'" || ch === "`") {
+        i++
+        while (i < src.length && src[i] !== ch) {
+          if (src[i] === "\\") i++ // escaped char
+          i++
+        }
+      } else if (ch === "{") { depth++ }
+      else if (ch === "}") { depth-- }
+      i++
+    }
+    if (depth !== 0) return null
+    return [src.slice(startIdx + 1, i - 1), i]
+  }
+
+  /** Parse { key: "value" } — handles quoted/unquoted keys, multi-line. */
+  function parseSimpleKvObject(objContent: string): Record<string, string> {
+    const result: Record<string, string> = {}
+    const entryRe = /["']?([\w-]+)["']?\s*:\s*(?:"([^"]*?)"|'([^']*?)'|`([^`]*?)`)/g
+    let m: RegExpExecArray | null
+    while ((m = entryRe.exec(objContent)) !== null) {
+      const key = m[1]
+      const val = m[2] ?? m[3] ?? m[4] ?? ""
+      if (key) result[key] = val
+    }
+    return result
+  }
+
+  // ── Main scan ──────────────────────────────────────────────────────────────
+  // Match: tw.TAG(  /  tw.TAG<Generic>(  /  tw(Comp)(  /  tw(Comp)<Generic>(
+  const twCallRe = /tw(?:\.(\w+)|\((\w[\w.]*)\))(?:\s*<[^>]*>)?\s*\(/g
+  let twMatch: RegExpExecArray | null
+
+  while ((twMatch = twCallRe.exec(source)) !== null) {
+    const tag = twMatch[1] ?? twMatch[2] ?? "div"
+
+    // Advance to opening `{` of config object arg
+    let argsStart = twMatch.index + twMatch[0].length
+    while (argsStart < source.length && source[argsStart] !== "{") {
+      if (source[argsStart] === ")" || source[argsStart] === ";") { argsStart = -1; break }
+      argsStart++
+    }
+    if (argsStart < 0 || source[argsStart] !== "{") continue
+
+    const extracted = extractBraceContent(source, argsStart)
+    if (!extracted) continue
+    const [objContent] = extracted
+
+    // Must contain `container` key
+    if (!objContent.includes("container")) continue
+
+    // Find `container:` key — skip `containerName:` key
+    const containerKeyMatch = objContent.match(/(?<![a-zA-Z])container\s*:/)
+    if (!containerKeyMatch || containerKeyMatch.index === undefined) continue
+
+    // Find position of the value (after colon)
+    let valueStart = containerKeyMatch.index + containerKeyMatch[0].length
+    while (valueStart < objContent.length && /\s/.test(objContent[valueStart])) valueStart++
+
+    // Value must be an object `{ ... }`
+    if (objContent[valueStart] !== "{") continue
+
+    const containerExtracted = extractBraceContent(objContent, valueStart)
+    if (!containerExtracted) continue
+    const [containerObjContent] = containerExtracted
+
+    // Parse optional containerName
+    const nameMatch = objContent.match(
+      /\bcontainerName\s*:\s*(?:"([^"]*?)"|'([^']*?)'|`([^`]*?)`)/
+    )
+    const containerName = nameMatch?.[1] ?? nameMatch?.[2] ?? nameMatch?.[3]
+
+    // Parse breakpoint → classes mapping
+    const containerConfig = parseSimpleKvObject(containerObjContent)
+    if (Object.keys(containerConfig).length === 0) continue
+
+    // Deterministic sort for hash (must match runtime _hashContainer)
+    const sortedEntries = Object.entries(containerConfig).sort(([a], [b]) => a.localeCompare(b))
+    const sortedJson = JSON.stringify(Object.fromEntries(sortedEntries))
+    const id = _hashContainer(tag, sortedJson, containerName)
+
+    // Emit @container rules
+    for (const [key, classes] of sortedEntries) {
+      const minWidth = _CONTAINER_BREAKPOINTS[key] ?? key
+      const css = _layoutClassesToCss(classes)
+      if (!css) continue
+      const query = containerName
+        ? `@container ${containerName} (min-width: ${minWidth})`
+        : `@container (min-width: ${minWidth})`
+      rules.push(`${query}{.${id}{${css}}}`)
+    }
+  }
+
+  return rules.join("\n")
+}
+
+// =============================================================================
+// LOADER
+// =============================================================================
+
 export const runLoaderTransform = (ctx: { filepath: string; source: string; options?: Record<string, unknown> }) => {
   const { filepath, source, options } = ctx
   const result = transformSource(source, { filename: filepath, ...options })
+
+  // ── Static CSS extraction (non-fatal) ──────────────────────────────────────
+  // Extract state + container CSS dari source asli (sebelum transform).
+  // Digabungkan dan di-return sebagai `staticCss` agar plugin layer bisa
+  // mengumpulkan dan menulisnya ke file statis — zero runtime injection.
+  let staticCss: string | undefined
+  try {
+    const cssChunks: string[] = []
+
+    // 1. State CSS via Rust (extractAndGenerateStateCss)
+    const stateRules = extractAndGenerateStateCss(source, filepath)
+    if (stateRules.length > 0) {
+      cssChunks.push(stateRules.map((r) => r.cssRule).join("\n"))
+    }
+
+    // 2. Container CSS via JS extractor (Rust support belum ada)
+    const containerCss = extractContainerCssFromSource(source)
+    if (containerCss) cssChunks.push(containerCss)
+
+    const combined = cssChunks.join("\n").trim()
+    if (combined) staticCss = combined
+  } catch {
+    // Non-fatal — static CSS extraction gagal tidak boleh break transform pipeline.
+    // stateEngine + containerQuery masih bisa inject runtime sebagai fallback.
+  }
+
   return {
     code: result?.code || "",
     changed: result?.changed || false,
     classes: result?.classes || [],
+    staticCss,
   } as LoaderOutput
 }
 

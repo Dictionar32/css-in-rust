@@ -218,6 +218,9 @@ try {
   if (typeof mod?.batchedInject === "function") _cqBatchedInjectFn = mod.batchedInject
 } catch { /* runtime-css tidak terinstall */ }
 
+// Static CSS detection cache — skip injection kalau @container rule sudah ada di stylesheet
+const _cqStaticDetected = new Set<string>()
+
 // Style injection
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -229,6 +232,27 @@ function injectContainerStyles(
   if (typeof document === "undefined") return
   const styleId = `tw-cq-${id}`
   if (document.getElementById(styleId)) return
+
+  // ── Static CSS guard ─────────────────────────────────────────────────────
+  // Skip injection kalau @container rule untuk ID ini sudah ada di stylesheet statis.
+  if (_cqStaticDetected.has(id)) return
+  if (typeof document.styleSheets !== "undefined") {
+    // Cari @container rule yang mengandung selector `.{id}` di dalamnya
+    const selectorTarget = `.${id}`
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      try {
+        const rules = document.styleSheets[i].cssRules
+        for (let j = 0; j < rules.length; j++) {
+          const rule = rules[j]
+          // CSSContainerRule (instanceof CSSRule type 12) atau CSSMediaRule
+          if (rule.cssText.includes(selectorTarget)) {
+            _cqStaticDetected.add(id)
+            return
+          }
+        }
+      } catch { continue }
+    }
+  }
 
   const css = buildContainerRules(id, container, containerName)
   if (!css) return

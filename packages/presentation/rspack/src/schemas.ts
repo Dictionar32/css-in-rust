@@ -36,6 +36,8 @@ export const RspackPluginOptionsSchema = z.object({
   addDataAttr: z.boolean().optional(),
   analyze: z.boolean().optional(),
   cssEntry: z.string().optional(),
+  /** Path ke safelist CSS file. Default: <cwd>/__tw_safelist.css */
+  safelistPath: z.string().optional(),
 })
 
 export type RspackPluginOptionsInput = z.infer<typeof RspackPluginOptionsSchema>

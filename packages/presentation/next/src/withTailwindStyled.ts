@@ -24,6 +24,7 @@ import { scanWorkspace } from "@tailwind-styled/scanner"
 import { appendStaticStateCssToSafelist, TW_STATE_STATIC_FILENAME } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
+import { StaticCssWebpackPlugin } from "./staticCssWebpackPlugin"
 
 const require = createRequire(import.meta.url)
 
@@ -211,17 +212,32 @@ const applyWebpackRule = (
 
   const tailwindStyledRule: NextWebpackRule = {
     test: options.include ?? DEFAULT_INCLUDE,
-    // Selalu kecualikan Next.js RSC entry files (layout, page, dll) bahkan jika
-    // user menyuplai exclude pattern sendiri — lihat buildExcludePattern.
     exclude: buildExcludePattern(options.exclude),
     enforce: "pre",
     use: [{ loader: loaderPath, options: loaderOptions }],
   }
 
+  // ── Register StaticCssWebpackPlugin ────────────────────────────────────────
+  // Plugin ini rebuild _tw-state-static.css di setiap `compiler.hooks.done`.
+  // Dengan cara ini, HMR yang menghapus / mengubah state config di file
+  // otomatis ter-reflect di output CSS — tidak ada stale rules.
+  const safelistPath =
+    loaderOptions.safelistPath ?? path.join(process.cwd(), ".next", "tailwind-styled-safelist.css")
+
+  const pluginAlreadyRegistered = (config.plugins ?? []).some(
+    (p) => p?.constructor?.name === StaticCssWebpackPlugin.PLUGIN_NAME
+  )
+
+  const plugins = pluginAlreadyRegistered
+    ? (config.plugins ?? [])
+    : [...(config.plugins ?? []), new StaticCssWebpackPlugin(safelistPath)]
+
   config.module = {
     ...(config.module ?? {}),
     rules: [...rules, tailwindStyledRule],
   }
+
+  config.plugins = plugins
 
   const externalPackages = [
     "tailwind-styled-v4",
@@ -334,6 +350,58 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
             "utf-8"
           )
         }
+
+        // ── Auto-inject @import "_tw-state-static.css" ke globals.css ─────────
+        // Kalau globals.css belum import file ini, inject otomatis supaya
+        // state + container CSS statis benar-benar di-load oleh browser.
+        // Injeksi HANYA terjadi sekali — idempoten, tidak duplicate.
+        try {
+          const CSS_CANDIDATES = [
+            "src/app/globals.css",
+            "src/globals.css",
+            "src/styles/globals.css",
+            "src/tailwind.css",
+            "src/index.css",
+            "styles/globals.css",
+          ]
+          // Resolve import path relatif terhadap safelistPath → globals.css
+          const safelistDir = path.dirname(safelistPath)
+
+          for (const candidate of CSS_CANDIDATES) {
+            const candidatePath = path.join(process.cwd(), candidate)
+            if (!fs.existsSync(candidatePath)) continue
+
+            const content = fs.readFileSync(candidatePath, "utf-8")
+
+            // Sudah ada @import untuk _tw-state-static? Skip.
+            if (content.includes("_tw-state-static.css")) break
+
+            // Hitung relative path dari globals.css → _tw-state-static.css
+            const globalsDir = path.dirname(candidatePath)
+            const rel = path.relative(globalsDir, stateStaticPath).replace(/\\/g, "/")
+            const importLine = `@import "./${rel}";`
+
+            // Inject SETELAH baris @import "tailwindcss" jika ada, atau di awal file
+            const tailwindImportRe = /(@import\s+["']tailwindcss["']\s*;[^\n]*\n?)/
+            let updated: string
+            if (tailwindImportRe.test(content)) {
+              updated = content.replace(
+                tailwindImportRe,
+                `$1${importLine}\n`
+              )
+            } else {
+              updated = `${importLine}\n${content}`
+            }
+
+            fs.writeFileSync(candidatePath, updated, "utf-8")
+            if (options.verbose) {
+              console.log(
+                `[tailwind-styled] Auto-injected "${importLine}" into ${candidate}`
+              )
+            }
+            break
+          }
+        } catch { /* non-fatal — user bisa tambah manual */ }
 
         // Pastikan scanner bisa menemukan native binary — set TW_NATIVE_PATH
         // dari runtimeDir withTailwindStyled (tailwind-styled-v4/dist/) sebelum

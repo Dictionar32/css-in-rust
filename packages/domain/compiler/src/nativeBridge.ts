@@ -119,6 +119,16 @@ export interface NativeBridge {
     componentName: string
     stateName: string
   }>
+  /**
+   * Convert layout/utility class string ke CSS declarations.
+   * Dipakai oleh extractContainerCssFromSource sebagai Rust-accelerated fallback.
+   */
+  layoutClassesToCss?: (classes: string) => string
+  /**
+   * Hash string dengan algoritma tertentu, return n karakter pertama.
+   * Dipakai untuk generate deterministic container CSS IDs.
+   */
+  hashContent?: (input: string, algo: string, length: number) => string
 }
 
 export interface NativeTransformResult {

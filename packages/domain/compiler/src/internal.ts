@@ -71,6 +71,7 @@ import {
   extractTwStateConfigs,
   generateStaticStateCss,
   extractAndGenerateStateCss,
+  extractContainerCssFromSource,
 } from "./index"
 
 export {
@@ -130,10 +131,11 @@ export {
   detectConflicts,
   bucketSort,
   generateCssForClasses,
-  // Static state CSS pre-generation
+  // Static state + container CSS pre-generation
   extractTwStateConfigs,
   generateStaticStateCss,
   extractAndGenerateStateCss,
+  extractContainerCssFromSource,
 }
 
 export { type NativeBridge, type NativeTransformResult, type ComponentMetadata, type NativeRscResult, type LoaderOutput }

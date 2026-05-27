@@ -9,7 +9,7 @@ declare module "@tailwind-styled/compiler/internal" {
     source: string
     options?: Record<string, unknown>
     isDev?: boolean
-  }): { code: string; changed: boolean; classes: string[] }
+  }): { code: string; changed: boolean; classes: string[]; staticCss?: string }
 
   export function shouldSkipFile(filepath: string): boolean
 
@@ -27,12 +27,13 @@ declare module "@tailwind-styled/compiler/internal" {
   export function transformSource(
     source: string,
     opts?: Record<string, unknown>
-  ): { code: string; changed: boolean; classes: string[] }
+  ): { code: string; changed: boolean; classes: string[]; staticCss?: string }
 
   export function hasTwUsage(source: string): boolean
   export function isAlreadyTransformed(source: string): boolean
   export function extractAllClasses(source: string): string[]
   export function extractClassesFromSource(source: string): string[]
+  export function extractContainerCssFromSource(source: string): string
   export function hoistComponents(source: string): { code: string; hoisted: string[]; warnings: string[] }
   export function normalizeAndDedupClasses(raw: string): { normalized: string; duplicatesRemoved: number; uniqueCount: number }
 
@@ -85,6 +86,7 @@ declare module "@tailwind-styled/compiler/internal" {
     code: string
     changed: boolean
     classes: string[]
+    staticCss?: string
     rsc?: { isServer: boolean; needsClientDirective: boolean }
     engine?: string
   }
@@ -155,8 +157,8 @@ declare module "@tailwind-styled/compiler" {
     source: string
     options?: Record<string, unknown>
     isDev?: boolean
-  }): { code: string; changed: boolean; classes: string[] }
-  export function transformSource(source: string, opts?: Record<string, unknown>): { code: string; changed: boolean; classes: string[] }
+  }): { code: string; changed: boolean; classes: string[]; staticCss?: string }
+  export function transformSource(source: string, opts?: Record<string, unknown>): { code: string; changed: boolean; classes: string[]; staticCss?: string }
   export function hasTwUsage(source: string): boolean
   export function isAlreadyTransformed(source: string): boolean
   export function extractAllClasses(source: string): string[]
