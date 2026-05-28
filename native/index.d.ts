@@ -914,7 +914,7 @@ export interface GeneratedStateRule {
  * // — selector identik dengan yang dibuat stateEngine.ts di runtime!
  * ```
  */
-export declare function generateStaticStateCss(inputs: Array<StaticStateCssInput>): Array<GeneratedStateRule>
+export declare function generateStaticStateCss(inputs: Array<StaticStateCssInput>, resolvedCss?: string | undefined | null): Array<GeneratedStateRule>
 
 /**
  * Scan workspace untuk semua sub-component names yang dipakai,

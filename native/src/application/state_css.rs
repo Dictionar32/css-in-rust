@@ -742,6 +742,29 @@ fn classes_to_css_with_map(classes: &str, class_map: &HashMap<String, String>) -
     decls.join(";")
 }
 
+/// Pre-generate semua CSS rules untuk state configs yang di-extract dari source files.
+///
+/// Menggunakan hash algorithm yang **identik** dengan `hashState()` di `stateEngine.ts`,
+/// sehingga class names yang di-generate build-time == yang di-generate runtime.
+/// Ini memungkinkan CSS di-load sebagai static file tanpa runtime injection.
+///
+/// Flow build-time:
+/// ```
+/// extract_tw_state_configs(source, filename)
+///   → Vec<TwStateConfigEntry>
+///   → map ke Vec<StaticStateCssInput>
+///   → generate_static_state_css(inputs)
+///   → Vec<GeneratedStateRule>
+///   → join css_rule → append ke safelist.css
+/// ```
+///
+/// ```ts
+/// const rules = generateStaticStateCss([
+///   { tag: "button", componentName: "Button", statesJson: '{"loading":"opacity-60"}' }
+/// ])
+/// // rules[0].cssRule === '.tw-s-abc123[data-loading="true"]{opacity:0.6}'
+/// // — selector identik dengan yang dibuat stateEngine.ts di runtime!
+/// ```
 #[napi]
 pub fn generate_static_state_css(
     inputs: Vec<StaticStateCssInput>,

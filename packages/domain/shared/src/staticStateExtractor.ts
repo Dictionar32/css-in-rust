@@ -72,7 +72,7 @@ const IGNORE_PATTERNS = ["node_modules", ".next", "dist", "build", ".git", "cove
 
 let _native: {
   extractTwStateConfigs: (source: string, filename: string) => TwStateConfigEntry[]
-  generateStaticStateCss: (inputs: StaticStateCssInput[]) => GeneratedStateRule[]
+  generateStaticStateCss: (inputs: StaticStateCssInput[], resolvedCss?: string | null) => GeneratedStateRule[]
   extractAndGenerateStateCss: (source: string, filename: string) => GeneratedStateRule[]
 } | null = null
 

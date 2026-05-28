@@ -4,14 +4,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
-      "@tailwind-styled/compiler/internal": ["../compiler/dist/internal.d.ts"]
+    "@tailwind-styled/shared": ["../shared/dist/index.d.ts"],
+    "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
+    "@tailwind-styled/compiler/internal": ["../compiler/dist/internal.d.ts"]
     },
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
