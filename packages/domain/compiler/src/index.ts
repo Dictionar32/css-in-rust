@@ -923,15 +923,21 @@ export const extractTwStateConfigs = (
 /**
  * Generate static CSS rules dari kumpulan state configs.
  * Selector format: `.tw-s-[hash][data-stateName="true"] { ... }`
+ *
+ * @param inputs State configs dari extractTwStateConfigs
+ * @param resolvedCss CSS output dari Tailwind pipeline (_initial-scan.css content).
+ *   Kalau di-provide, Rust parse CSS ini → class map → resolve SEMUA Tailwind class
+ *   termasuk `w-full`, `ring-2`, dll. Kalau null, fallback ke TW_MAP statis.
  */
 export const generateStaticStateCss = (
-  inputs: StaticStateCssInput[]
+  inputs: StaticStateCssInput[],
+  resolvedCss: string | null = null
 ): GeneratedStateRule[] => {
   const native = getNativeBridge()
   if (!native?.generateStaticStateCss) {
     throw new Error("FATAL: Native binding 'generateStaticStateCss' is required but not available.")
   }
-  return native.generateStaticStateCss(inputs)
+  return native.generateStaticStateCss(inputs, resolvedCss)
 }
 
 /**

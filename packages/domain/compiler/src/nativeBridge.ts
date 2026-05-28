@@ -105,7 +105,7 @@ export interface NativeBridge {
     tag: string
     componentName: string
     statesJson: string
-  }>) => Array<{
+  }>, resolvedCss: string | null) => Array<{
     selector: string
     declarations: string
     cssRule: string

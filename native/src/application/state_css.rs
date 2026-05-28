@@ -454,7 +454,6 @@ mod tests {
     #[test]
     fn test_unknown_skipped() {
         assert_eq!(css("p-4 unknown-class m-2"), "");
-        // p-4, m-2 are NOT in TW_MAP (only arbitrary values handled for spacing)
         assert_eq!(css("hidden unknown-class"), "display:none");
     }
 
@@ -462,6 +461,62 @@ mod tests {
     fn test_empty() {
         assert_eq!(css(""), "");
         assert_eq!(css("   "), "");
+    }
+
+    #[test]
+    fn test_parse_tailwind_css_to_class_map() {
+        let css_input = r#"
+@layer utilities {
+  .w-full {
+    width: 100%;
+  }
+  .opacity-60 {
+    opacity: 60%;
+  }
+  .pointer-events-none {
+    pointer-events: none;
+  }
+  .hover\:bg-red-500 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: red;
+      }
+    }
+  }
+}
+"#;
+        let map = parse_tailwind_css_to_class_map(css_input);
+        assert_eq!(map.get("w-full").map(|s| s.as_str()), Some("width:100%"));
+        assert_eq!(map.get("opacity-60").map(|s| s.as_str()), Some("opacity:60%"));
+        assert_eq!(map.get("pointer-events-none").map(|s| s.as_str()), Some("pointer-events:none"));
+        // Variant rule harus di-skip
+        assert!(map.get("hover:bg-red-500").is_none());
+    }
+
+    #[test]
+    fn test_w_full_resolved_via_css() {
+        let tailwind_css = r#"
+.w-full { width: 100%; }
+.opacity-60 { opacity: 60%; }
+.cursor-wait { cursor: wait; }
+.pointer-events-none { pointer-events: none; }
+"#;
+        let inputs = vec![StaticStateCssInput {
+            tag: "button".to_string(),
+            component_name: "Button".to_string(),
+            states_json: r#"{"fullWidth":"w-full","loading":"opacity-60 cursor-wait pointer-events-none"}"#.to_string(),
+        }];
+
+        let rules = generate_static_state_css(inputs, Some(tailwind_css.to_string()));
+
+        // fullWidth sekarang harus ter-resolve (w-full → width:100%)
+        let full_width_rule = rules.iter().find(|r| r.state_name == "fullWidth");
+        assert!(full_width_rule.is_some(), "fullWidth harus ter-resolve");
+        assert!(full_width_rule.unwrap().declarations.contains("width:100%"));
+
+        // loading tetap ter-resolve
+        let loading_rule = rules.iter().find(|r| r.state_name == "loading");
+        assert!(loading_rule.is_some());
     }
 }
 
@@ -521,22 +576,192 @@ pub struct StaticStateCssInput {
 /// // rules[0].cssRule === '.tw-s-abc123[data-loading="true"]{opacity:0.6}'
 /// // — selector identik dengan yang dibuat stateEngine.ts di runtime!
 /// ```
+/// Normalize satu CSS declaration — trim whitespace, normalize spasi di sekitar ':'.
+/// `"  width : 100%  "` → `"width:100%"`
+fn normalize_declaration(decl: &str) -> String {
+    let decl = decl.trim();
+    if let Some(colon_pos) = decl.find(':') {
+        let prop = decl[..colon_pos].trim();
+        let val = decl[colon_pos + 1..].trim();
+        format!("{}:{}", prop, val)
+    } else {
+        decl.to_string()
+    }
+}
+
+/// Parse Tailwind-generated CSS ke `HashMap<class_name, declarations>`.
+///
+/// Hanya extract top-level declarations — skip nested rules seperti:
+///   `.hover\:bg-red { &:hover { @media (hover:hover) { ... } } }`
+///
+/// Input biasanya isi dari `_initial-scan.css` yang sudah di-generate
+/// oleh Tailwind JS pipeline.
+///
+/// Contoh:
+/// ```css
+/// .w-full { width: 100%; }
+/// .opacity-60 { opacity: 60%; }
+/// .ring-2 { --tw-ring-shadow: ...; box-shadow: ...; }
+/// ```
+/// → `{ "w-full": "width:100%", "opacity-60": "opacity:60%", "ring-2": "..." }`
+fn parse_tailwind_css_to_class_map(css: &str) -> HashMap<String, String> {
+    let mut map: HashMap<String, String> = HashMap::new();
+    let chars: Vec<char> = css.chars().collect();
+    let len = chars.len();
+    let mut i = 0;
+
+    while i < len {
+        // Skip whitespace
+        while i < len && chars[i].is_whitespace() {
+            i += 1;
+        }
+        if i >= len {
+            break;
+        }
+
+        // Skip non-class rules (@layer, @media, @supports, :root, *, dll)
+        if chars[i] != '.' {
+            // Skip seluruh block kalau ada '{', atau skip karakter
+            if chars[i] == '}' {
+                i += 1;
+                continue;
+            }
+            while i < len && chars[i] != '{' && chars[i] != '}' {
+                i += 1;
+            }
+            if i < len && chars[i] == '{' {
+                // Skip nested block sepenuhnya
+                let mut depth = 1;
+                i += 1;
+                while i < len && depth > 0 {
+                    if chars[i] == '{' {
+                        depth += 1;
+                    } else if chars[i] == '}' {
+                        depth -= 1;
+                    }
+                    i += 1;
+                }
+            }
+            continue;
+        }
+
+        // Baca selector sampai '{'
+        let sel_start = i;
+        while i < len && chars[i] != '{' {
+            i += 1;
+        }
+        let selector: String = chars[sel_start..i].iter().collect::<String>();
+        let selector = selector.trim();
+        if i >= len {
+            break;
+        }
+        i += 1; // skip '{'
+
+        // Baca isi block — tracking depth untuk skip nested rules
+        let mut depth: usize = 1;
+        let mut top_decls: Vec<String> = Vec::new();
+        let mut current_decl = String::new();
+
+        while i < len && depth > 0 {
+            let ch = chars[i];
+            if ch == '{' {
+                depth += 1;
+                current_decl.clear(); // ini selector nested, bukan declaration
+            } else if ch == '}' {
+                depth -= 1;
+            } else if depth == 1 {
+                if ch == ';' {
+                    let d = current_decl.trim().to_string();
+                    if !d.is_empty() {
+                        top_decls.push(d);
+                    }
+                    current_decl.clear();
+                } else {
+                    current_decl.push(ch);
+                }
+            }
+            i += 1;
+        }
+
+        // Hanya proses simple class selectors — skip variants (:hover, :focus, dll)
+        let is_simple = selector.starts_with('.')
+            && !selector.contains(':')
+            && !selector.contains('@')
+            && !selector.contains('&')
+            && !top_decls.is_empty();
+
+        if is_simple {
+            // Unescape class name: `.top-\[200px\]` → `top-[200px]`
+            let class_name = selector[1..] // hapus leading '.'
+                .replace('\\', "")
+                .trim()
+                .to_string();
+
+            if !class_name.is_empty() {
+                let normalized: Vec<String> = top_decls
+                    .iter()
+                    .map(|d| normalize_declaration(d))
+                    .collect();
+                let declarations = normalized.join(";");
+
+                // Kalau ada duplikat, append
+                let entry = map.entry(class_name).or_default();
+                if entry.is_empty() {
+                    *entry = declarations;
+                } else {
+                    entry.push(';');
+                    entry.push_str(&declarations);
+                }
+            }
+        }
+    }
+
+    map
+}
+
+/// Resolve class names ke CSS declarations menggunakan class_map (primary) + TW_MAP (fallback).
+fn classes_to_css_with_map(classes: &str, class_map: &HashMap<String, String>) -> String {
+    let mut decls: Vec<String> = Vec::new();
+
+    for cls in classes.split_whitespace() {
+        if let Some(decl) = class_map.get(cls) {
+            // Primary: resolved dari Tailwind CSS output
+            decls.push(decl.clone());
+        } else if let Some(css) = TW_MAP.get(cls) {
+            // Fallback: TW_MAP statis
+            decls.push((*css).to_string());
+        } else if cls.contains('[') && cls.contains(']') {
+            // Fallback: arbitrary value handler
+            if let Some(css) = arbitrary_to_css(cls) {
+                decls.push(css);
+            }
+        }
+        // Unknown: silent skip
+    }
+
+    decls.join(";")
+}
+
 #[napi]
-pub fn generate_static_state_css(inputs: Vec<StaticStateCssInput>) -> Vec<GeneratedStateRule> {
+pub fn generate_static_state_css(
+    inputs: Vec<StaticStateCssInput>,
+    resolved_css: Option<String>,
+) -> Vec<GeneratedStateRule> {
+    // Build class map dari Tailwind CSS output kalau tersedia
+    let class_map: Option<HashMap<String, String>> = resolved_css
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .map(parse_tailwind_css_to_class_map);
+
     let mut results: Vec<GeneratedStateRule> = Vec::new();
 
     for input in &inputs {
-        // Parse states_json
         let state_map: std::collections::BTreeMap<String, String> =
             match serde_json::from_str(&input.states_json) {
                 Ok(m) => m,
                 Err(_) => continue,
             };
 
-        // Compute component hash — identik dengan hashState() di TypeScript:
-        //   const key = `${tag}${JSON.stringify(Object.entries(state).sort())}`
-        //   const hash = hashContent(key, "fnv", 6)
-        // BTreeMap sudah sorted by key, jadi JSON-nya sorted entries.
         let sorted_entries: Vec<(&String, &String)> = state_map.iter().collect();
         let entries_json = match serde_json::to_string(&sorted_entries) {
             Ok(j) => j,
@@ -546,18 +771,16 @@ pub fn generate_static_state_css(inputs: Vec<StaticStateCssInput>) -> Vec<Genera
         let component_hash = crate::shared::utils::fnv1a_6(&hash_key);
         let base_class = format!("tw-s-{}", component_hash);
 
-        // Generate satu CSS rule per state entry
         for (state_name, classes) in &state_map {
-            let declarations = classes_to_css_inner(classes);
+            let declarations = match &class_map {
+                Some(map) => classes_to_css_with_map(classes, map),
+                None => classes_to_css_inner(classes),
+            };
+
             if declarations.is_empty() {
-                // Skip — class tidak ter-resolve (mungkin perlu Tailwind full pipeline)
-                // Ini akan tetap di-handle oleh runtime injection sebagai fallback
                 continue;
             }
 
-            // Selector: `.tw-s-abc123[data-stateName="true"]`
-            // Sama dengan yang di-generate stateEngine.ts:
-            //   `.${baseClass}[data-${stateName}="true"]`
             let selector = format!(".{}[data-{}=\"true\"]", base_class, state_name);
             let css_rule = format!("{}{{{}}}", selector, declarations);
 
@@ -596,5 +819,5 @@ pub fn extract_and_generate_state_css(source: String, filename: String) -> Vec<G
         })
         .collect();
 
-    generate_static_state_css(inputs)
+    generate_static_state_css(inputs, None)
 }

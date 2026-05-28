@@ -173,6 +173,15 @@ export function extractStaticStateCss(
     verbose?: boolean
     /** Max files untuk di-scan (default: unlimited) */
     maxFiles?: number
+    /**
+     * CSS output dari Tailwind pipeline (isi `_initial-scan.css`).
+     *
+     * Kalau di-provide, dipakai untuk resolve class names via `parseTailwindCssToClassMap`
+     * → semua Tailwind class (termasuk `w-full`, `ring-2`, dll) bisa di-resolve dengan benar.
+     *
+     * Kalau tidak di-provide, fallback ke Rust resolver (hanya class sederhana yang ter-resolve).
+     */
+    resolvedCss?: string
   } = {}
 ): StaticStateExtractionResult {
   const { verbose = false, maxFiles = Infinity } = options
@@ -259,18 +268,18 @@ export function extractStaticStateCss(
   }
 
   // ── Step 3: Generate CSS rules ─────────────────────────────────────────────
+  // Rust handles everything: parse resolvedCss → class map → build rules.
+  // Pass resolvedCss (Tailwind pipeline output) agar Rust bisa resolve semua
+  // Tailwind class termasuk `w-full`, `ring-2`, dll yang tidak ada di TW_MAP statis.
 
-  const allRules = native.generateStaticStateCss(uniqueConfigs)
-
+  const allRules = native.generateStaticStateCss(uniqueConfigs, options.resolvedCss ?? null)
   // Count skipped: state entries yang tidak ter-resolve
   // (rules yang declarations-nya kosong sudah di-filter oleh Rust)
   const rulesSkipped = uniqueConfigs.reduce((total, cfg) => {
     try {
       const stateMap = JSON.parse(cfg.statesJson) as Record<string, string>
       return total + Object.keys(stateMap).length
-    } catch {
-      return total
-    }
+    } catch { return total }
   }, 0) - allRules.length
 
   // ── Step 4: Build CSS output ───────────────────────────────────────────────
@@ -327,7 +336,16 @@ export const TW_STATE_STATIC_FILENAME = "_tw-state-static.css"
 export function appendStaticStateCssToSafelist(
   srcDir: string,
   safelistPath: string,
-  options: { verbose?: boolean } = {}
+  options: {
+    verbose?: boolean
+    /**
+     * CSS output dari Tailwind pipeline — isi dari `_initial-scan.css`.
+     *
+     * Wajib di-provide untuk resolve semua Tailwind class dengan benar.
+     * Kalau tidak di-provide, fallback ke Rust resolver (class sederhana saja).
+     */
+    resolvedCss?: string
+  } = {}
 ): string {
   const result = extractStaticStateCss(srcDir, options)
 
