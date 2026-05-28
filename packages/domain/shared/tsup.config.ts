@@ -15,5 +15,18 @@ export default defineConfig({
     "node:module",
     "node:url",
     "node:os",
+    "@tailwind-styled/compiler",
+    "@tailwind-styled/compiler/internal",
   ],
+  esbuildOptions(options, context) {
+    if (context.format === "cjs") {
+      options.define = {
+        ...options.define,
+        "import.meta.url": "__importMetaUrl",
+      }
+      options.banner = {
+        js: `const __importMetaUrl = require("node:url").pathToFileURL(__filename).href;`,
+      }
+    }
+  },
 })

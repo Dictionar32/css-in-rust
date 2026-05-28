@@ -469,3 +469,4 @@ export {
   type GeneratedStateRule,
   type StaticStateExtractionResult,
 } from "./staticStateExtractor"
+export { setGlobalLogFile } from "./logger"

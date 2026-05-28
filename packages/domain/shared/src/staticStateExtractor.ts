@@ -321,7 +321,7 @@ export const TW_STATE_STATIC_FILENAME = "_tw-state-static.css"
 
 /**
  * Extract static state CSS dan tulis ke file terpisah `_tw-state-static.css`
- * di direktori yang sama dengan `safelistPath`.
+ * di `.next/tw-classes/_tw-state-static.css` — grouped bersama `_initial-scan.css`.
  *
  * File ini harus di-`@import` langsung dari globals.css karena berisi raw CSS
  * (bukan Tailwind class names), sehingga tidak bisa di-pickup oleh `@source`.
@@ -351,7 +351,9 @@ export function appendStaticStateCssToSafelist(
 
   // Selalu tulis file (kosong jika tidak ada rules) supaya @import di globals.css
   // tidak error saat cold start sebelum ada komponen dengan states.
-  const stateFilePath = path.join(path.dirname(safelistPath), TW_STATE_STATIC_FILENAME)
+  const twClassesDir = path.join(path.dirname(safelistPath), "tw-classes")
+  fs.mkdirSync(twClassesDir, { recursive: true })
+  const stateFilePath = path.join(twClassesDir, TW_STATE_STATIC_FILENAME)
 
   if (result.rulesGenerated === 0) {
     try {
@@ -376,7 +378,7 @@ export function appendStaticStateCssToSafelist(
       `[tw:static-state] ${result.rulesGenerated} static state rules di-generate`,
       `  → ${result.filesScanned} files scanned, ${result.filesWithStates} dengan states`,
       `  → ${result.componentsFound} components, ${result.rulesSkipped} rules skipped (fallback ke runtime)`,
-      `  → ditulis ke ${TW_STATE_STATIC_FILENAME}`,
+      `  → ditulis ke tw-classes/${TW_STATE_STATIC_FILENAME}`,
     ].join("\n")
   } catch (writeErr) {
     const msg = writeErr instanceof Error ? writeErr.message : String(writeErr)

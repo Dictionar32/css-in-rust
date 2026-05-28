@@ -21,7 +21,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 import { scanWorkspace } from "@tailwind-styled/scanner"
-import { appendStaticStateCssToSafelist, TW_STATE_STATIC_FILENAME } from "@tailwind-styled/shared"
+import { appendStaticStateCssToSafelist, TW_STATE_STATIC_FILENAME, setGlobalLogFile } from "@tailwind-styled/shared"
 
 import { parseNextAdapterOptions } from "./schemas"
 import { StaticCssWebpackPlugin } from "./staticCssWebpackPlugin"
@@ -335,6 +335,8 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
       if (safelistPath) {
         const twClassesDir = path.join(path.dirname(safelistPath), "tw-classes")
         fs.mkdirSync(twClassesDir, { recursive: true })
+        // Arahkan semua logger output ke file di .next/tw-classes/
+        setGlobalLogFile(path.join(twClassesDir, "_tw-build.log"))
         fs.writeFileSync(
           path.join(twClassesDir, "_start.txt"),
           String(Date.now()),
@@ -343,7 +345,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
 
         // Tulis placeholder _tw-state-static.css agar @import di globals.css
         // tidak error saat cold start (sebelum staticStateExtractor jalan)
-        const stateStaticPath = path.join(path.dirname(safelistPath), TW_STATE_STATIC_FILENAME)
+        const stateStaticPath = path.join(twClassesDir, TW_STATE_STATIC_FILENAME)
         if (!fs.existsSync(stateStaticPath)) {
           fs.writeFileSync(
             stateStaticPath,
