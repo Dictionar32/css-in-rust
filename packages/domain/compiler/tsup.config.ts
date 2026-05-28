@@ -10,6 +10,7 @@ export default defineConfig({
   clean: true,
   target: "node20",
   platform: "node",
+  tsconfig: "tsconfig.dts.json",
   external: [
     "typescript",
     "tailwindcss",

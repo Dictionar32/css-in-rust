@@ -1872,10 +1872,9 @@ export declare function transformSource(source: string, opts?: Record<string, st
  * Convert Tailwind utility classes → semicolon-separated inline CSS declarations.
  *
  * Mirrors `twClassesToCss()` from `stateEngine.ts`.
- * Handles static lookup (TW_MAP) and common arbitrary values `[…]`.
+ * Handles arbitrary values `[…]` dan resolusi dinamis dari Tailwind pipeline CSS.
  *
  * ```
- * tw_classes_to_css("hidden opacity-50")      // "display:none;opacity:0.5"
  * tw_classes_to_css("bg-[#f00] w-[200px]")   // "background-color:#f00;width:200px"
  * tw_classes_to_css("unknown-class")           // ""
  * ```

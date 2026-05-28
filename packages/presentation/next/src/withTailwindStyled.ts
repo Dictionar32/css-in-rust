@@ -583,6 +583,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                     // Kalau gagal di sini, build harus berhenti supaya bug tidak tersembunyi.
                     const summary = appendStaticStateCssToSafelist(srcDir, safelistPath, {
                       verbose: options.verbose ?? false,
+                      resolvedCss: css,
                     })
                     if (options.verbose) console.log(summary)
                   }

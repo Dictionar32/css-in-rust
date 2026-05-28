@@ -17,24 +17,24 @@
       "require": "./dist/index.cjs"
     },
     "./internal": {
-    "types": "./dist/internal.d.ts",
-    "import": "./dist/internal.js",
-    "default": "./dist/internal.js"
+      "types": "./dist/internal.d.ts",
+      "import": "./dist/internal.js",
+      "default": "./dist/internal.js"
     }
   },
   "files": [
     "dist",
     "README.md"
   ],
-   "dependencies": {
-     "@tailwind-styled/plugin-api": "^5.0.4",
-     "@tailwind-styled/shared": "^5.0.4",
-     "@tailwind-styled/syntax": "^5.0.4",
-     "inversify": "^8.1.0",
-     "postcss": "^8",
-     "reflect-metadata": "^0.2.2",
-     "zod": "^4.3.6"
-   },
+  "dependencies": {
+    "@tailwind-styled/plugin-api": "^5.0.4",
+    "@tailwind-styled/shared": "^5.0.4",
+    "@tailwind-styled/syntax": "^5.0.4",
+    "inversify": "^8.1.0",
+    "postcss": "^8",
+    "reflect-metadata": "^0.2.2",
+    "zod": "^4.3.6"
+  },
   "optionalDependencies": {
     "oxc-parser": "^0.120.0"
   },
@@ -42,14 +42,14 @@
     "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4"
   },
-   "devDependencies": {
-     "@types/node": "^20",
-     "@types/react": "^19",
-     "tsup": "^8",
-     "typescript": "^6"
-   },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "tsup": "^8",
+    "typescript": "^6"
+  },
   "scripts": {
-    "build": "tsup src/index.ts src/internal.ts --format esm --dts --out-dir dist --clean",
+    "build": "tsup --config tsup.config.ts",
     "dev": "tsup src/index.ts src/internal.ts --format esm --dts --out-dir dist --watch",
     "check": "tsc --noEmit",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
