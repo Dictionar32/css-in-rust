@@ -11,6 +11,7 @@ pub mod css_analysis;
 pub mod engine;
 pub mod hashing;
 pub mod id_registry;
+pub mod ir_assembler;
 pub mod impact_analysis;
 pub mod impact_scorer;
 pub mod incremental;

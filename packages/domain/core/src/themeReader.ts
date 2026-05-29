@@ -11,6 +11,9 @@ export interface ThemeConfig {
 
 const cache = new Map<string, ThemeConfig>()
 
+// ─── Legacy helpers — hanya dipakai oleh JS fallback path ────────────────────
+// Dipertahankan agar tidak ada breaking change kalau native binding tidak tersedia.
+
 function createEmptyTheme(): ThemeConfig {
   return { colors: {}, spacing: {}, fonts: {}, breakpoints: {}, animations: {}, raw: {} }
 }
@@ -24,12 +27,16 @@ function setToken(theme: ThemeConfig, key: string, value: string): void {
   if (key.startsWith("animate-")) { theme.animations[key.slice(8)] = value }
 }
 
+// ─── resolveThemeValue — dipertahankan untuk backward-compat ─────────────────
+// Masih bisa dipanggil dari kode lain yang butuh resolve satu token secara
+// on-demand (misalnya dari styledSystem.ts atau plugin consumer).
+// Di hot path extractThemeFromCSS(), fungsi ini sudah TIDAK dipanggil lagi.
+
 export function resolveThemeValue(
   key: string,
   theme: ThemeConfig,
   visited: Set<string> = new Set()
 ): string {
-  // Native-first: Rust iterative resolver (no JS recursion overhead)
   const binding = getNativeBinding()
   if (binding?.resolveThemeValue) {
     return binding.resolveThemeValue(key, JSON.stringify(theme.raw))
@@ -46,11 +53,24 @@ export function resolveThemeValue(
   return resolveThemeValue(nested[1], theme, visited)
 }
 
+// ─── extractThemeFromCSS — hot path ──────────────────────────────────────────
+
 export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   const hit = cache.get(cssContent)
   if (hit) return hit
 
   const binding = getNativeBinding()
+
+  // ── Fast path: new Rust fn yang classify + resolve semuanya dalam satu call ──
+  if (binding?.extractThemeFromCssClassified) {
+    // 1 NAPI call menggantikan: extractThemeFromCss() + N × resolveThemeValue()
+    const result = binding.extractThemeFromCssClassified(cssContent) as ThemeConfig
+    cache.set(cssContent, result)
+    return result
+  }
+
+  // ── Fallback: pola lama (dua-stage: parse → classify → resolve per-token) ──
+  // Dipertahankan untuk kompatibilitas kalau binary belum di-rebuild.
   if (!binding?.extractThemeFromCss) {
     throw new Error(
       "FATAL: Native binding 'extractThemeFromCss' is required but not available.\n" +
@@ -58,15 +78,13 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
     )
   }
 
-  // Native Rust: parse @theme { --key: value; } blocks
   const vars = binding.extractThemeFromCss(cssContent) as Array<{ key: string; value: string }>
-
   const theme = createEmptyTheme()
+
   for (const { key, value } of vars) {
     setToken(theme, key, value)
   }
 
-  // Resolve var() references
   for (const key of Object.keys(theme.raw)) {
     const resolved = resolveThemeValue(`--${key}`, theme)
     theme.raw[key] = resolved
@@ -81,7 +99,19 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   return theme
 }
 
+// ─── generateTypeDefinitions — build-time CLI codegen ────────────────────────
+
 export function generateTypeDefinitions(theme: ThemeConfig): string {
+  const binding = getNativeBinding()
+
+  // ── Fast path: Rust codegen (CLI path — build-time only) ─────────────────
+  if (binding?.generateTypeDefinitions) {
+    // Omit 'raw' dari JSON — tidak masuk ke interface output
+    const { raw: _raw, ...rest } = theme
+    return binding.generateTypeDefinitions(JSON.stringify(rest)) as string
+  }
+
+  // ── Fallback: JS string building ──────────────────────────────────────────
   const toRecordType = (name: string, obj: Record<string, string>) => {
     const keys = Object.keys(obj)
     if (keys.length === 0) return `  ${name}: Record<string, string>`

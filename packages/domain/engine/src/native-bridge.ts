@@ -116,6 +116,26 @@ interface NativeEngineBinding {
   resolveCascade?: (rulesJson: string) => string
   /** FNV-1a fingerprint over ordered string parts — replaces createFingerprint() in ir.ts */
   createFingerprint?: (parts: string[]) => string
+  /**
+   * Parse CSS + assign semua IDs + fingerprint + assemble RuleIR — satu pass di Rust.
+   *
+   * Menggantikan JS loop di parseCssToIr() yang memanggil createFingerprint(),
+   * registerPropertyName(), registerValueName() per-rule (N × NAPI calls → 1 call).
+   *
+   * Return AssembledIrResult: { rules, classToRuleIds, layers }
+   * JS hanya wrap numerik IDs ke typed RuleId/PropertyId/dll objects.
+   */
+  assembleCssIr?: (css: string, prefix?: string | null) => {
+    rules: Array<{
+      ruleId: number; selectorId: number; propertyId: number; valueId: number
+      layerId: number; conditionId: number
+      propertyName: string; valueName: string; layerName: string
+      origin: number; importance: number; layerOrder: number; specificity: number
+      conditionResult: number; insertionOrder: number; fingerprint: string; className: string
+    }>
+    classToRuleIds: Array<{ className: string; ruleIds: number[] }>
+    layers: Array<{ name: string; layerId: number; order: number }>
+  }
   /** DashMap-backed CSS reverse lookup — replaces ReverseLookup class */
   reverseLookupFromCss?: (css: string, property: string, value: string) => Array<{
     property: string; value: string

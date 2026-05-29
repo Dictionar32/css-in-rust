@@ -1,11 +1,13 @@
 /**
  * tailwind-styled-v4 — CSS → IR converter
  *
- * Native handles: CSS parsing, class extraction, variant splitting, specificity.
- * JS handles: ID generation, layer detection, RuleIR assembly.
+ * Native handles: CSS parsing, class extraction, variant splitting, specificity,
+ *                 ID assignment, fingerprinting, layer detection, IR assembly.
+ * JS handles:     Typed ID wrapper construction, RuleIR object shape.
  *
- * Removed from JS: parseSelector, calculateSpecificity
- * (native parseCssRules already returns className/variants/specificity).
+ * ## Migration summary (Priority 1)
+ * Sebelum: `parseCssRules()` + JS loop (N × NAPI calls untuk fingerprint + propertyId + valueId)
+ * Sesudah: `assembleCssIr()` → satu NAPI call, JS hanya wrap angka ke typed objects
  */
 
 import { getNativeEngineBinding } from "./native-bridge"
@@ -31,7 +33,8 @@ export interface ParseCssToIrOptions {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// ID Generator — Factory Pattern
+// ID Generator — dipertahankan untuk fallback path saja
+// Tidak dipakai di fast path (assembleCssIr sudah handle semua ID di Rust)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function createIdGenerator() {
@@ -83,7 +86,7 @@ const getNextInsertionOrder = (): number => _defaultIdGen.getNextInsertionOrder(
 const resetIdGenerator = (): void => _defaultIdGen.reset()
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layer detection (JS — simple string check, not hot path)
+// Layer helpers — dipertahankan untuk fallback path saja
 // ─────────────────────────────────────────────────────────────────────────────
 
 const layerMap: Map<string, LayerId> = new Map()
@@ -112,27 +115,154 @@ function detectLayerFromClassName(className: string): string | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// parseCssToIr — native parse + JS IR assembly
+// Type definitions untuk AssembledRuleIr dari Rust
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AssembledRuleIr {
+  ruleId: number
+  selectorId: number
+  propertyId: number
+  valueId: number
+  layerId: number        // -1 jika tidak ada layer
+  conditionId: number    // -1 jika tidak ada condition
+  propertyName: string
+  valueName: string
+  layerName: string      // "" jika tidak ada layer
+  origin: number
+  importance: number
+  layerOrder: number
+  specificity: number
+  conditionResult: number
+  insertionOrder: number
+  fingerprint: string
+  className: string
+}
+
+interface ClassRuleMapping {
+  className: string
+  ruleIds: number[]
+}
+
+interface LayerEntry {
+  name: string
+  layerId: number
+  order: number
+}
+
+interface AssembledIrResult {
+  rules: AssembledRuleIr[]
+  classToRuleIds: ClassRuleMapping[]
+  layers: LayerEntry[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// parseCssToIr — fast path via assembleCssIr, fallback ke loop lama
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function parseCssToIr(
   css: string,
   options: ParseCssToIrOptions = {}
 ): { rules: RuleIR[]; classToRuleIds: Map<string, RuleId[]> } {
-  resetIdGenerator()
+  const native = getNativeEngineBinding()
+  const prefix = options.prefix ?? ""
+
+  // ── Fast path: satu NAPI call → semua IDs + fingerprint sudah di-assign Rust ──
+  if (native?.assembleCssIr) {
+    return _parseCssToIrFast(native.assembleCssIr(css, prefix || null) as AssembledIrResult)
+  }
+
+  // ── Fallback: pola lama (N × NAPI calls per rule) ────────────────────────
+  // Dipertahankan untuk kompatibilitas binary lama sebelum rebuild.
+  return _parseCssToIrFallback(css, prefix, native)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fast path: wrap AssembledIrResult → typed RuleIR objects
+// Zero computation — hanya wrap angka ke typed class instances
+// ─────────────────────────────────────────────────────────────────────────────
+
+function _parseCssToIrFast(
+  assembled: AssembledIrResult
+): { rules: RuleIR[]; classToRuleIds: Map<string, RuleId[]> } {
+  const native = getNativeEngineBinding()
+
+  // Rebuild layerMap dari data Rust (untuk konsistensi kalau caller butuh layerMap)
   layerMap.clear()
   layerOrderMap.clear()
+  for (const le of assembled.layers) {
+    const lid = new LayerId(le.layerId)
+    layerMap.set(le.name, lid)
+    layerOrderMap.set(le.name, le.order)
+  }
 
-  const native = getNativeEngineBinding()
+  // Wrap tiap AssembledRuleIr → RuleIR
+  const rules: RuleIR[] = assembled.rules.map((r) => {
+    const propertyId = new PropertyId(r.propertyId)
+    const valueId = new ValueId(r.valueId)
+
+    // Register names ke native registry (untuk propertyIdToString / valueIdToString)
+    if (native?.registerPropertyName) {
+      native.registerPropertyName(r.propertyId, r.propertyName)
+    } else {
+      registerPropertyName(propertyId, r.propertyName)
+    }
+    if (native?.registerValueName) {
+      native.registerValueName(r.valueId, r.valueName)
+    } else {
+      registerValueName(valueId, r.valueName)
+    }
+
+    return {
+      id: new RuleId(r.ruleId),
+      selector: new SelectorId(r.selectorId),
+      variantChain: new VariantChainId(0),
+      property: propertyId,
+      value: valueId,
+      origin: r.origin as Origin,
+      importance: r.importance as Importance,
+      layer: r.layerId >= 0 ? new LayerId(r.layerId) : null,
+      layerOrder: r.layerOrder,
+      specificity: r.specificity,
+      condition: r.conditionId >= 0 ? new ConditionId(r.conditionId) : null,
+      conditionResult: r.conditionResult as ConditionResult,
+      insertionOrder: r.insertionOrder,
+      fingerprint: r.fingerprint,
+      source: { file: "", line: 1, column: 1 },
+    } satisfies RuleIR
+  })
+
+  // Rebuild classToRuleIds Map
+  const classToRuleIds = new Map<string, RuleId[]>(
+    assembled.classToRuleIds.map((m) => [
+      m.className,
+      m.ruleIds.map((id) => new RuleId(id)),
+    ])
+  )
+
+  return { rules, classToRuleIds }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fallback path: pola lama — N × NAPI calls
+// Identik dengan implementasi sebelumnya, tidak dimodifikasi
+// ─────────────────────────────────────────────────────────────────────────────
+
+function _parseCssToIrFallback(
+  css: string,
+  prefix: string,
+  native: ReturnType<typeof getNativeEngineBinding>
+): { rules: RuleIR[]; classToRuleIds: Map<string, RuleId[]> } {
   if (!native?.parseCssRules) {
     throw new Error("FATAL: Native binding 'parseCssRules' is required but not available.")
   }
 
-  const prefix = options.prefix ?? ""
+  resetIdGenerator()
+  layerMap.clear()
+  layerOrderMap.clear()
+
   const rules: RuleIR[] = []
   const classToRuleIds = new Map<string, RuleId[]>()
 
-  // Native returns: { className, property, value, isImportant, variants, specificity }
   const parsed = native.parseCssRules(css)
 
   for (const r of parsed) {
@@ -147,10 +277,9 @@ export function parseCssToIr(
     const propertyId = generatePropertyId(r.property)
     const valueId = generateValueId(r.value)
 
-    // Media query variants produce an unknown condition
     const hasMedia = r.variants.some((v) => v.startsWith("@") || v === "dark" || v === "print")
     const conditionId = hasMedia ? generateConditionId() : null
-    const conditionResult = hasMedia ? ConditionResult.Unknown : ConditionResult.Unknown
+    const conditionResult = ConditionResult.Unknown
 
     const ruleId = generateRuleId()
     const fingerprint = createFingerprint([className, r.property, r.value])
@@ -165,7 +294,7 @@ export function parseCssToIr(
       importance: r.isImportant ? Importance.Important : Importance.Normal,
       layer,
       layerOrder,
-      specificity: r.specificity, // from native — no JS recalculation
+      specificity: r.specificity,
       condition: conditionId,
       conditionResult,
       insertionOrder: getNextInsertionOrder(),

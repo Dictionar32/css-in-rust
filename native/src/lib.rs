@@ -59,6 +59,9 @@ pub use application::css_analysis::{
 pub use application::engine::{
     compute_incremental_diff, create_fingerprint, hash_file_content, process_file_change,
 };
+pub use application::ir_assembler::{
+    assemble_css_ir, AssembledIrResult, AssembledRuleIr, ClassRuleMapping, LayerEntry,
+};
 pub use application::hashing::{hash_content, hash_file, scan_file_native, scan_files_batch};
 pub use application::impact_analysis::{calculate_impact, calculate_risk, calculate_savings};
 pub use application::impact_scorer::{

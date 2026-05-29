@@ -70,6 +70,97 @@ export declare function applyClassDiff(existing: Array<string>, added: Array<str
 export declare function areClassSetsEqual(a: Array<string>, b: Array<string>): boolean
 
 /**
+ * Parse CSS + assign semua IDs + fingerprint + assemble RuleIR — satu pass di Rust.
+ *
+ * Menggantikan JS loop di `parseCssToIr()` di `cssToIr.ts`:
+ * ```typescript
+ * // Sebelum: O(N) loop dengan NAPI call per rule
+ * for (const r of parsed) {
+ *   const fingerprint = createFingerprint([...])   // NAPI × N
+ *   const propertyId  = generatePropertyId(r.prop)  // NAPI × N
+ *   const valueId     = generateValueId(r.value)    // NAPI × N
+ *   rules.push(assembleRule(...))
+ * }
+ *
+ * // Sesudah: 1 NAPI call
+ * const { rules, classToRuleIds, layers } = native.assembleCssIr(css, prefix)
+ * ```
+ *
+ * JS kemudian hanya perlu wrap numerik IDs ke typed wrapper objects:
+ * ```typescript
+ * rule.id       = new RuleId(r.ruleId)
+ * rule.property = new PropertyId(r.propertyId)
+ * // dst.
+ * ```
+ *
+ * ## ID assignment semantics
+ * Identik dengan JS `createIdGenerator()`:
+ * - Setiap rule dapat RuleId, SelectorId, PropertyId, ValueId yang unik (sequential counter)
+ * - LayerId di-share per layer name (layerMap cache)
+ * - ConditionId diassign per-rule jika ada media variant
+ * - Counter reset setiap kali `assemble_css_ir` dipanggil (mirror `resetIdGenerator()`)
+ */
+export declare function assembleCssIr(css: string, prefix?: string | undefined | null): AssembledIrResult
+
+/** Output dari assemble_css_ir — semua rules + classToRuleIds mapping */
+export interface AssembledIrResult {
+  /** Semua rule IR yang sudah di-assemble, siap untuk di-wrap ke RuleIR di JS */
+  rules: Array<AssembledRuleIr>
+  /**
+   * classToRuleIds: class_name → Vec<rule_id>
+   * Di JS: `new Map(classToRuleIds.map(e => [e.className, e.ruleIds.map(id => new RuleId(id))]))`
+   */
+  classToRuleIds: Array<ClassRuleMapping>
+  /**
+   * Nama-nama layer yang ditemukan, dengan order-nya
+   * Di JS: dipakai rebuild layerMap dan layerOrderMap
+   */
+  layers: Array<LayerEntry>
+}
+
+/**
+ * Satu rule IR yang sudah di-assemble.
+ * Field numerik (ruleId, selectorId, dst) langsung dipakai JS untuk construct
+ * typed ID wrapper objects (new RuleId(ruleId), new SelectorId(selectorId), dst).
+ */
+export interface AssembledRuleIr {
+  /** Numeric ID untuk construct `new RuleId(ruleId)` di JS */
+  ruleId: number
+  /** Numeric ID untuk construct `new SelectorId(selectorId)` di JS */
+  selectorId: number
+  /** Numeric ID untuk construct `new PropertyId(propertyId)` di JS */
+  propertyId: number
+  /** Numeric ID untuk construct `new ValueId(valueId)` di JS */
+  valueId: number
+  /** Numeric ID untuk construct `new LayerId(layerId)` di JS, -1 jika tidak ada layer */
+  layerId: number
+  /** Numeric ID untuk construct `new ConditionId(conditionId)` di JS, -1 jika tidak ada condition */
+  conditionId: number
+  /** Nama property — dipakai JS untuk `registerPropertyName(id, name)` */
+  propertyName: string
+  /** Nama value — dipakai JS untuk `registerValueName(id, name)` */
+  valueName: string
+  /** Layer name string (e.g. "tailwind"), empty jika tidak ada */
+  layerName: string
+  /** origin enum value (2 = AuthorNormal) */
+  origin: number
+  /** importance enum value (0 = Normal, 1 = Important) */
+  importance: number
+  /** layer order integer (0-4) */
+  layerOrder: number
+  /** specificity dari CSS rule */
+  specificity: number
+  /** conditionResult enum value (2 = Unknown) */
+  conditionResult: number
+  /** insertion order (monotonically increasing per parse) */
+  insertionOrder: number
+  /** FNV-1a fingerprint dari [className, property, value] */
+  fingerprint: string
+  /** Class name (dengan prefix jika ada) */
+  className: string
+}
+
+/**
  * Parse a source file and extract Tailwind classes using AST-level analysis.
  * More accurate than regex-only approaches — handles JSX, template literals,
  * and object configs. Implements the same interface as the oxc-based scanner.
@@ -428,6 +519,39 @@ export interface ClassFrequency {
   count: number
 }
 
+export interface ClassifiedThemeConfig {
+  /**
+   * Tokens dengan prefix `color-` → key tanpa prefix
+   * e.g. `--color-primary: #3b82f6` → colors["primary"] = "#3b82f6"
+   */
+  colors: Record<string, string>
+  /**
+   * Tokens dengan prefix `spacing-`
+   * e.g. `--spacing-sm: 0.5rem` → spacing["sm"] = "0.5rem"
+   */
+  spacing: Record<string, string>
+  /**
+   * Tokens dengan prefix `font-`
+   * e.g. `--font-sans: Inter, sans-serif` → fonts["sans"] = "Inter, sans-serif"
+   */
+  fonts: Record<string, string>
+  /**
+   * Tokens dengan prefix `breakpoint-`
+   * e.g. `--breakpoint-md: 768px` → breakpoints["md"] = "768px"
+   */
+  breakpoints: Record<string, string>
+  /**
+   * Tokens dengan prefix `animate-`
+   * e.g. `--animate-spin: spin 1s linear infinite` → animations["spin"] = "..."
+   */
+  animations: Record<string, string>
+  /**
+   * Semua token mentah, key tanpa `--`, value sudah di-resolve
+   * e.g. raw["color-primary"] = "#3b82f6"
+   */
+  raw: Record<string, string>
+}
+
 /**
  * Classify dan sort Tailwind classes berdasarkan CSS property bucket.
  *
@@ -447,6 +571,12 @@ export declare function classifyAndSortClasses(classes: Array<string>): Array<Bu
  * Batch mode: process banyak classes sekaligus via HashSet lookups.
  */
 export declare function classifyKnownClasses(classes: Array<string>, safelist: Array<string>, customUtilities: Array<string>): Array<KnownClassResult>
+
+/** Entry dalam classToRuleIds */
+export interface ClassRuleMapping {
+  className: string
+  ruleIds: Array<number>
+}
 
 /** Result dari compute_class_stats */
 export interface ClassStatsResult {
@@ -827,6 +957,30 @@ export declare function extractCssVars(source: string): Array<string>
 export declare function extractThemeFromCss(css: string): Array<CssThemeVar>
 
 /**
+ * Parse `@theme { ... }` CSS blocks, classify tokens ke bucket (colors/spacing/fonts/etc),
+ * dan resolve semua `var(--token)` references — semuanya dalam satu pass di Rust.
+ *
+ * Menggantikan pola JS berikut di `themeReader.ts`:
+ * ```typescript
+ * const vars = binding.extractThemeFromCss(css)           // NAPI call 1
+ * for (const { key, value } of vars) { setToken(...) }    // JS classify loop
+ * for (const key of Object.keys(raw)) {
+ *   resolveThemeValue(`--${key}`, theme)                  // NAPI call × N tokens!
+ * }
+ * ```
+ *
+ * Dengan fungsi ini: **1 NAPI call** → ClassifiedThemeConfig siap pakai.
+ *
+ * ## Urutan operasi internal:
+ * 1. Parse `@theme {}` blocks dengan regex (identik dengan `extract_theme_from_css`)
+ * 2. Collect semua token ke `raw` HashMap
+ * 3. Resolve semua `var()` chains secara iteratif (tanpa JSON serialization)
+ * 4. Classify resolved values ke buckets (colors, spacing, fonts, breakpoints, animations)
+ * 5. Return struct sekali — zero round-trips
+ */
+export declare function extractThemeFromCssClassified(css: string): ClassifiedThemeConfig
+
+/**
  * Extract semua `tw.tag({ states: {...} })` configs dari source file.
  *
  * Return array of `TwStateConfigEntry` — satu per komponen yang punya `states` config.
@@ -934,6 +1088,45 @@ export declare function generateSubComponentTypes(root: string, outputPath?: str
  * Returns: list of suggestion strings.
  */
 export declare function generateSuggestions(className: string, impactJson: string): Array<string>
+
+/**
+ * Generate TypeScript interface `TailwindStyledThemeTokens` dari classified theme config.
+ *
+ * Menggantikan `generateTypeDefinitions()` di `themeReader.ts` untuk dipakai
+ * di CLI (`tw generate-types`). Build-time only — bukan hot path.
+ *
+ * ## Input
+ * `theme_json`: JSON serialization dari `ClassifiedThemeConfig`:
+ * ```json
+ * {
+ *   "colors": { "primary": "#3b82f6", "secondary": "#8b5cf6" },
+ *   "spacing": { "sm": "0.5rem", "md": "1rem" },
+ *   "fonts": {}, "breakpoints": {}, "animations": {}, "raw": {}
+ * }
+ * ```
+ *
+ * ## Output
+ * TypeScript interface string siap ditulis ke `.d.ts`:
+ * ```typescript
+ * export interface TailwindStyledThemeTokens {
+ *   colors: {
+ *     "primary": string
+ *     "secondary": string
+ *   }
+ *   spacing: {
+ *     "sm": string
+ *     "md": string
+ *   }
+ *   fonts: Record<string, string>
+ *   breakpoints: Record<string, string>
+ *   animations: Record<string, string>
+ * }
+ * ```
+ *
+ * Identik dengan output `generateTypeDefinitions()` JS — bisa dipakai sebagai
+ * drop-in replacement untuk CLI codegen.
+ */
+export declare function generateTypeDefinitions(themeJson: string): string
 
 /**
  * Hash a content string dengan algoritma pilihan.
@@ -1130,6 +1323,13 @@ export interface KnownClassResult {
   baseClass: string
   utilityPrefix: string
   isArbitrary: boolean
+}
+
+/** Layer yang di-detect selama parse */
+export interface LayerEntry {
+  name: string
+  layerId: number
+  order: number
 }
 
 /**

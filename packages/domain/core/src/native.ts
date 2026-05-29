@@ -95,6 +95,22 @@ interface NativeBinding {
   /** Tailwind classes → semicolon-separated inline CSS declarations. (state_css.rs) */
   twClassesToCss?: (classes: string) => string
   /**
+   * Generate semua CSS rules untuk satu component dari state config — satu Rust call.
+   *
+   * Menggantikan JS loop di `injectStateStyles()` dan `generateStateCss()` yang
+   * memanggil `twClassesToCss()` per state entry (N × NAPI calls → 1 call).
+   *
+   * @param id           Component state class, e.g. `"tw-s-abc123"`
+   * @param stateMapJson JSON object `{"loading":"opacity-60 cursor-wait","selected":"ring-2"}`
+   * @param resolvedCss  Opsional Tailwind pipeline CSS untuk resolve named classes
+   * @returns            Array of `{ cssRule, stateName, declarations }` — satu per state entry
+   */
+  generateRuntimeStateCss?: (
+    id: string,
+    stateMapJson: string,
+    resolvedCss: string | null
+  ) => Array<{ cssRule: string; stateName: string; declarations: string }>
+  /**
    * Hash a content string — menggantikan JS djb2 loop di hashState() dan hashContainer().
    * algorithm: "md5" | "sha256" | "fnv" | "ahash" (default: "md5")
    * length: potong output hex ke N karakter (mis. 6 untuk short ID)
@@ -102,6 +118,24 @@ interface NativeBinding {
   hashContent?: (content: string, algorithm?: "md5" | "sha256" | "fnv" | "ahash", length?: number) => string
   /** Iterative CSS var() chain resolver. (theme.rs) */
   resolveThemeValue?: (key: string, rawMapJson: string) => string
+  /**
+   * Parse @theme CSS blocks, classify tokens ke buckets, resolve semua var() —
+   * satu Rust call menggantikan extractThemeFromCss() + N × resolveThemeValue().
+   * Return ClassifiedThemeConfig: { colors, spacing, fonts, breakpoints, animations, raw }
+   */
+  extractThemeFromCssClassified?: (css: string) => {
+    colors: Record<string, string>
+    spacing: Record<string, string>
+    fonts: Record<string, string>
+    breakpoints: Record<string, string>
+    animations: Record<string, string>
+    raw: Record<string, string>
+  }
+  /**
+   * Generate TypeScript interface TailwindStyledThemeTokens dari theme JSON.
+   * Build-time CLI only (tw generate-types). Menggantikan generateTypeDefinitions() JS.
+   */
+  generateTypeDefinitions?: (themeJson: string) => string
   /** Parse sub-component block syntax from tw`` template. (tw_merge.rs) */
   parseSubcomponentBlocksNapi?: (template: string, componentName: string) => {
     baseClasses: string
