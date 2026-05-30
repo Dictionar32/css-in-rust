@@ -136,6 +136,15 @@ interface NativeBinding {
    * Build-time CLI only (tw generate-types). Menggantikan generateTypeDefinitions() JS.
    */
   generateTypeDefinitions?: (themeJson: string) => string
+  /**
+   * Generate `:root { --prefix-group-name: value; ... }` CSS block dari SystemTokenMap.
+   *
+   * Menggantikan nested JS loop di `injectTokensToRoot()` dan `setTokens()` di `styledSystem.ts`.
+   *
+   * `tokensJson`: JSON dari `SystemTokenMap` — `{"colors":{"primary":"#6366f1"},"radius":{"base":"0.5rem"}}`
+   * `prefix`: CSS variable prefix, e.g. `"sys"` → `--sys-colors-primary`
+   */
+  generateSystemTokenCss?: (tokensJson: string, prefix: string) => string
   /** Parse sub-component block syntax from tw`` template. (tw_merge.rs) */
   parseSubcomponentBlocksNapi?: (template: string, componentName: string) => {
     baseClasses: string

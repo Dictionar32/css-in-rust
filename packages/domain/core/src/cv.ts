@@ -54,13 +54,34 @@ function lookupGenerated(
     _sortedVariantKeysCache.set(componentId, sortedKeys)
   }
 
-  // Build lookup key — hot path, hindari array allocation dengan string concat
+  // ── Fast path: buildVariantLookupKey di Rust ────────────────────────────
+  // Menggantikan JS string concat loop — eliminasi per-render string building.
+  // buildVariantLookupKey(defaultVariantsJson, propsJson) → "size:lg|variant:solid"
+  const binding = getNativeBinding()
+  if (binding?.buildVariantLookupKey) {
+    // Kirim hanya keys yang relevan (sortedKeys) untuk menghindari noise dari
+    // props non-variant (onClick, ref, className, dll)
+    const relevantDefaults: Record<string, string> = {}
+    const relevantProps: Record<string, string> = {}
+    for (const k of sortedKeys) {
+      const dv = defaultVariants?.[k]
+      if (dv !== undefined) relevantDefaults[k] = String(dv)
+      const pv = (props as Record<string, unknown>)[k]
+      if (pv !== undefined && pv !== null) relevantProps[k] = String(pv)
+    }
+    const key = binding.buildVariantLookupKey(
+      JSON.stringify(relevantDefaults),
+      JSON.stringify(relevantProps)
+    )
+    return table[key]
+  }
+
+  // ── Fallback: JS string concat loop ────────────────────────────────────
   let key = ""
   for (let i = 0; i < sortedKeys.length; i++) {
     if (i > 0) key += "|"
     key += sortedKeys[i] + ":" + String(merged[sortedKeys[i]])
   }
-
   return table[key]
 }
 
@@ -93,12 +114,8 @@ function resolveVariantsNative<C extends ComponentConfig>(
     const binding = getNativeBinding()
 
     // Path 1: resolveVariants — full resolution termasuk compound variants
-    // Lebih cepat dari resolveSimpleVariants + JS compound loop karena
-    // tidak ada round-trip JS untuk compound resolution
     if (binding?.resolveVariants) {
       const configJson = _getConfigJson(config as object)
-      // Build props JSON hanya dari variant keys yang relevan — hindari mengirim
-      // semua props (onClick, ref, dll) ke Rust yang akan diabaikan
       const cleanProps: Record<string, string> = {}
       for (const k of variantKeys) {
         const dv = (defaultVariants as Record<string, string>)[k]
@@ -132,12 +149,12 @@ function resolveVariantsNative<C extends ComponentConfig>(
         mergedProps
       )
 
-      // Compound variants — JS loop (hanya masuk sini jika resolveVariants tidak tersedia)
       if (compoundVariants.length > 0) {
         const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
         const extra: string[] = []
         for (const compound of compoundVariants) {
-          const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+          const { class: compoundClass, className: compoundClassName, ...conditions } =
+            compound as Record<string, unknown>
           const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
           if (matches) {
             if (compoundClass) extra.push(String(compoundClass))
@@ -176,7 +193,8 @@ function resolveVariantsNative<C extends ComponentConfig>(
 
   const resolvedFull: Record<string, unknown> = { ...defaultVariants, ...props }
   for (const compound of compoundVariants) {
-    const { class: compoundClass, className: compoundClassName, ...conditions } = compound as Record<string, unknown>
+    const { class: compoundClass, className: compoundClassName, ...conditions } =
+      compound as Record<string, unknown>
     const matches = Object.entries(conditions).every(([key, val]) => resolvedFull[key] === val)
     if (matches) {
       if (compoundClass) classes.push(String(compoundClass))
@@ -213,7 +231,7 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
       )
       result = generated ?? resolveVariantsNative(config, props)
     } else {
-      // Mode 2: pure JS fallback
+      // Mode 2: runtime resolution via native binding
       result = resolveVariantsNative(config, props)
     }
 
@@ -251,7 +269,11 @@ export function validateVariantConfig(config: ComponentConfig): VariantValidatio
     const { class: _cls, ...conditions } = compound
     for (const [key] of Object.entries(conditions)) {
       if (!(key in variants)) {
-        errors.push({ type: "unknown_key", key, message: `compoundVariants[${i}]: "${key}" not in variants` })
+        errors.push({
+          type: "unknown_key",
+          key,
+          message: `compoundVariants[${i}]: "${key}" not in variants`,
+        })
       }
     }
   }

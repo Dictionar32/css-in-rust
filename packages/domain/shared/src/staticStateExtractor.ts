@@ -70,10 +70,23 @@ const IGNORE_PATTERNS = ["node_modules", ".next", "dist", "build", ".git", "cove
 
 // ── Native bridge lazy loader ───────────────────────────────────────────────
 
+interface PrefilterFileResult {
+  path: string
+  content: string
+}
+
 let _native: {
   extractTwStateConfigs: (source: string, filename: string) => TwStateConfigEntry[]
   generateStaticStateCss: (inputs: StaticStateCssInput[], resolvedCss?: string | null) => GeneratedStateRule[]
   extractAndGenerateStateCss: (source: string, filename: string) => GeneratedStateRule[]
+  walkAndPrefilterSourceFiles?: (
+    root: string,
+    extensions?: string[] | null,
+    ignoreDirs?: string[] | null,
+    requiredSubstrings?: string[] | null,
+    maxFiles?: number | null,
+    parallel?: boolean | null,
+  ) => PrefilterFileResult[]
 } | null = null
 
 function getNative() {
@@ -210,30 +223,60 @@ export function extractStaticStateCss(
   let filesScanned = 0
   let filesWithStates = 0
 
-  for (const filePath of walkSourceFiles(srcDir)) {
-    if (filesScanned >= maxFiles) break
+  // ── Fast path: walkAndPrefilterSourceFiles — walk + read + pre-filter di Rust ──
+  // Eliminasi: JS fs.readdirSync recursive + fs.readFileSync per file +
+  // JS String.includes() pre-filter. Rust fs::read_dir + contains() ~5-10x lebih cepat.
+  if (native.walkAndPrefilterSourceFiles) {
+    const prefiltered = native.walkAndPrefilterSourceFiles(
+      srcDir,
+      [".ts", ".tsx", ".js", ".jsx", ".mts", ".mjs"],
+      ["node_modules", ".next", "dist", "build", ".git", "coverage", "__tests__"],
+      // Required substrings — AND logic, identik dengan JS pre-filter di bawah
+      ["states:", "tw."],
+      maxFiles === Infinity ? null : maxFiles,
+      null  // sequential — parallel mode opsional untuk large monorepo
+    )
 
-    let source: string
-    try {
-      source = fs.readFileSync(filePath, "utf-8")
-    } catch {
-      continue
+    for (const { path: filePath, content: source } of prefiltered) {
+      filesScanned++
+      const configs = native.extractTwStateConfigs(source, filePath)
+      if (configs.length > 0) {
+        filesWithStates++
+        allConfigs.push(...configs)
+        if (verbose) {
+          process.stderr.write(
+            `[tw:static-state] ${path.relative(srcDir, filePath)}: ${configs.length} komponen\n`
+          )
+        }
+      }
     }
+  } else {
+    // ── Fallback: JS generator + readFileSync + JS pre-filter ────────────────
+    for (const filePath of walkSourceFiles(srcDir)) {
+      if (filesScanned >= maxFiles) break
 
-    filesScanned++
+      let source: string
+      try {
+        source = fs.readFileSync(filePath, "utf-8")
+      } catch {
+        continue
+      }
 
-    // Quick pre-filter — skip files tanpa states config
-    if (!source.includes("states:") && !source.includes("states :")) continue
-    if (!source.includes("tw.") && !source.includes("tailwind-styled")) continue
+      filesScanned++
 
-    const configs = native.extractTwStateConfigs(source, filePath)
-    if (configs.length > 0) {
-      filesWithStates++
-      allConfigs.push(...configs)
-      if (verbose) {
-        process.stderr.write(
-          `[tw:static-state] ${path.relative(srcDir, filePath)}: ${configs.length} komponen\n`
-        )
+      // Quick pre-filter — skip files tanpa states config
+      if (!source.includes("states:") && !source.includes("states :")) continue
+      if (!source.includes("tw.") && !source.includes("tailwind-styled")) continue
+
+      const configs = native.extractTwStateConfigs(source, filePath)
+      if (configs.length > 0) {
+        filesWithStates++
+        allConfigs.push(...configs)
+        if (verbose) {
+          process.stderr.write(
+            `[tw:static-state] ${path.relative(srcDir, filePath)}: ${configs.length} komponen\n`
+          )
+        }
       }
     }
   }

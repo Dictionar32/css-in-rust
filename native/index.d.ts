@@ -1044,6 +1044,48 @@ export interface GeneratedStateRule {
 }
 
 /**
+ * Generate semua CSS rules untuk satu component dari state config di Rust.
+ *
+ * Menggantikan JS string assembly di `injectStateStyles()` dan `generateStateCss()`
+ * di `stateEngine.ts`:
+ *
+ * ```typescript
+ * // Sebelum: JS loop + N × NAPI twClassesToCss calls
+ * const rules = Object.entries(state)
+ *   .map(([stateName, classes]) => {
+ *     const css = twClassesToCss(classes)          // NAPI call × N state entries
+ *     return css ? `.${id}[data-${stateName}="true"]{${css}}` : null
+ *   })
+ *
+ * // Sesudah: 1 NAPI call
+ * const rules = native.generateRuntimeStateCss(id, stateMapJson, resolvedCssJson)
+ * ```
+ *
+ * ## Parameters
+ * - `id`: Component state class, e.g. `"tw-s-abc123"`
+ * - `state_map_json`: JSON object `{"loading":"opacity-60 cursor-wait","selected":"ring-2"}`
+ * - `resolved_css`: Opsional — Tailwind pipeline CSS output untuk resolve named classes.
+ *   Kalau `None` atau kosong, hanya arbitrary values `[…]` yang bisa di-resolve.
+ *
+ * ## Returns
+ * Vec of `RuntimeStateCssRule` — satu per state entry yang berhasil di-resolve.
+ * Entries dengan empty declarations di-skip (identik dengan JS `.filter(Boolean)`).
+ *
+ * ## Usage
+ * ```typescript
+ * // injectStateStyles path:
+ * const rules = native.generateRuntimeStateCss(id, JSON.stringify(state), null)
+ * for (const rule of rules) batchedInjectFn(rule.cssRule)
+ *
+ * // generateStateCss path (SSR):
+ * const rules = native.generateRuntimeStateCss(id, JSON.stringify(state), null)
+ * return rules.map(r => r.cssRule).join("
+")
+ * ```
+ */
+export declare function generateRuntimeStateCss(id: string, stateMapJson: string, resolvedCss?: string | undefined | null): Array<RuntimeStateCssRule>
+
+/**
  * Pre-generate semua CSS rules untuk state configs yang di-extract dari source files.
  *
  * Menggunakan hash algorithm yang **identik** dengan `hashState()` di `stateEngine.ts`,
@@ -1088,6 +1130,51 @@ export declare function generateSubComponentTypes(root: string, outputPath?: str
  * Returns: list of suggestion strings.
  */
 export declare function generateSuggestions(className: string, impactJson: string): Array<string>
+
+/**
+ * Generate `:root { --prefix-group-name: value; ... }` CSS block dari SystemTokenMap.
+ *
+ * Menggantikan JS nested loop di `injectTokensToRoot()` dan `setTokens()` di `styledSystem.ts`:
+ *
+ * ```typescript
+ * // Sebelum: JS nested loop + string building
+ * const lines: string[] = [":root {"]
+ * for (const [group, map] of Object.entries(tokens)) {
+ *   for (const [name, value] of Object.entries(map)) {
+ *     lines.push(`  --${prefix}-${group}-${name}: ${value};`)
+ *   }
+ * }
+ * lines.push("}")
+ * style.textContent = lines.join("
+")
+ *
+ * // Sesudah: 1 NAPI call
+ * style.textContent = native.generateSystemTokenCss(JSON.stringify(tokens), prefix)
+ * ```
+ *
+ * ## Input
+ * `tokens_json`: JSON dari `SystemTokenMap`:
+ * ```json
+ * {
+ *   "colors":  { "primary": "#6366f1", "muted": "#71717a" },
+ *   "radius":  { "base": "0.5rem", "full": "9999px" },
+ *   "spacing": { "sm": "0.5rem", "md": "1rem" }
+ * }
+ * ```
+ * `prefix`: CSS variable prefix, e.g. `"sys"` → `--sys-colors-primary`
+ *
+ * ## Output
+ * ```css
+ * :root {
+ *   --sys-colors-muted: #71717a;
+ *   --sys-colors-primary: #6366f1;
+ *   --sys-radius-base: 0.5rem;
+ *   --sys-radius-full: 9999px;
+ * }
+ * ```
+ * Keys di-sort per group untuk output yang deterministic.
+ */
+export declare function generateSystemTokenCss(tokensJson: string, prefix: string): string
 
 /**
  * Generate TypeScript interface `TailwindStyledThemeTokens` dari classified theme config.
@@ -1632,6 +1719,17 @@ export declare function pluginVerifyIntegrity(content: string, expectedIntegrity
  */
 export declare function pollWatchEvents(handleId: number): Array<WatchChangeEvent>
 
+/** Output dari `walk_and_prefilter_source_files()` — satu file yang lolos filter. */
+export interface PrefilterFileResult {
+  /** Absolute path ke file */
+  path: string
+  /**
+   * Konten file — siap di-pass langsung ke `extractTwStateConfigs()`
+   * tanpa perlu `fs.readFileSync()` lagi dari JS
+   */
+  content: string
+}
+
 /**
  * Pre-generate semua kombinasi boolean states di build time.
  *
@@ -1857,6 +1955,19 @@ export interface RscAnalysis {
   detectedPatterns: Array<string>
   /** QA #3: Confidence score 0-100 (100 = explicit directive found) */
   confidence: number
+}
+
+/** Output satu CSS rule dari `generate_runtime_state_css()`. */
+export interface RuntimeStateCssRule {
+  /**
+   * Full CSS rule string — e.g. `.tw-s-abc123[data-loading="true"]{opacity:0.6;cursor:wait}`
+   * Siap dipakai langsung sebagai `style.textContent` atau `batchedInject(rule)`.
+   */
+  cssRule: string
+  /** State name — e.g. `"loading"`, `"selected"` */
+  stateName: string
+  /** CSS declarations saja tanpa selector — e.g. `"opacity:0.6;cursor:wait"` */
+  declarations: string
 }
 
 export interface SafelistCheckResult {
@@ -2220,6 +2331,45 @@ export interface VariantValidationResult {
   errors: Array<VariantValidationError>
   warnings: Array<string>
 }
+
+/**
+ * Walk direktori rekursif + baca file + pre-filter substring dalam satu Rust pass.
+ *
+ * Menggantikan dua operasi JS di `staticStateExtractor.ts`:
+ *
+ * ```typescript
+ * // Sebelum: JS generator + fs.readFileSync per file + JS String.includes()
+ * for (const filePath of walkSourceFiles(srcDir)) {          // JS fs.readdirSync recursive
+ *   const source = fs.readFileSync(filePath, "utf-8")        // blocking I/O per file
+ *   if (!source.includes("states:")) continue                // JS string search
+ *   if (!source.includes("tw.")) continue                    // JS string search
+ *   allConfigs.push(...native.extractTwStateConfigs(source)) // NAPI call per file
+ * }
+ *
+ * // Sesudah: 1 NAPI call yang return hanya files yang lolos pre-filter
+ * const files = native.walkAndPrefilterSourceFiles(srcDir, extensions, ignoreDirs, requiredSubstrings)
+ * // files sudah berisi { path, content } — tidak perlu readFileSync lagi
+ * ```
+ *
+ * ## Keuntungan
+ * - **Rust `std::fs::read_dir`** ~5-10x lebih cepat dari JS `fs.readdirSync` untuk
+ *   direktori besar (tidak ada JS event loop overhead, tidak ada UTF-8 re-encoding)
+ * - **Substring pre-filter** dengan `memchr`-style byte search sebelum NAPI call —
+ *   files tanpa "states:" dan "tw." di-skip tanpa pernah di-kirim ke JS
+ * - **Baca konten sekaligus** — eliminasi `fs.readFileSync()` per file dari JS
+ * - **Parallel read** via rayon jika `parallel = true`
+ *
+ * ## Parameters
+ * - `root`: Root directory untuk walk (e.g. `process.cwd() + "/src"`)
+ * - `extensions`: File extensions yang di-include. Default: `[".ts", ".tsx", ".js", ".jsx", ".mts", ".mjs"]`
+ * - `ignore_dirs`: Directory names yang di-skip. Default: `["node_modules", ".next", "dist", "build", ".git", "coverage", "__tests__"]`
+ * - `required_substrings`: Semua substring ini harus ada di konten file (AND logic).
+ *   Pre-filter: file yang tidak mengandung semua substring ini di-skip.
+ *   Default: `["states:", "tw."]` (sama dengan staticStateExtractor.ts)
+ * - `max_files`: Batas maksimum file yang dikembalikan. `0` = unlimited.
+ * - `parallel`: Jika true, baca file secara paralel via rayon. Default: false.
+ */
+export declare function walkAndPrefilterSourceFiles(root: string, extensions?: Array<string> | undefined | null, ignoreDirs?: Array<string> | undefined | null, requiredSubstrings?: Array<string> | undefined | null, maxFiles?: number | undefined | null, parallel?: boolean | undefined | null): Array<PrefilterFileResult>
 
 export interface WatchChangeEvent {
   kind: string

@@ -44,6 +44,7 @@
 import type React from "react"
 
 import { createComponent } from "./createComponent"
+import { getNativeBinding } from "./native"
 import type { ComponentConfig, TwStyledComponent } from "./types"
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -103,6 +104,29 @@ function injectTokensToRoot(tokens: SystemTokenMap, prefix: string): void {
   const styleId = `__tw-sys-tokens-${prefix}`
   if (document.getElementById(styleId)) return
 
+  const style = document.createElement("style")
+  style.id = styleId
+  style.textContent = _buildTokenCss(tokens, prefix)
+  document.head.appendChild(style)
+}
+
+/**
+ * Build `:root { --prefix-group-name: value; ... }` CSS string.
+ *
+ * Fast path: generateSystemTokenCss() di Rust — eliminasi nested JS loop.
+ * Fallback: JS string building (identik dengan implementasi sebelumnya).
+ *
+ * Dipakai oleh `injectTokensToRoot()` (init) dan `setTokens()` (runtime update).
+ */
+function _buildTokenCss(tokens: SystemTokenMap, prefix: string): string {
+  const binding = getNativeBinding()
+
+  // ── Fast path: 1 NAPI call ─────────────────────────────────────────────
+  if (binding?.generateSystemTokenCss) {
+    return binding.generateSystemTokenCss(JSON.stringify(tokens), prefix)
+  }
+
+  // ── Fallback: JS nested loop ───────────────────────────────────────────
   const lines: string[] = [":root {"]
   for (const [group, map] of Object.entries(tokens)) {
     for (const [name, value] of Object.entries(map)) {
@@ -110,11 +134,7 @@ function injectTokensToRoot(tokens: SystemTokenMap, prefix: string): void {
     }
   }
   lines.push("}")
-
-  const style = document.createElement("style")
-  style.id = styleId
-  style.textContent = lines.join("\n")
-  document.head.appendChild(style)
+  return lines.join("\n")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -301,14 +321,7 @@ export function createStyledSystem<
       }
     }
 
-    const lines: string[] = [":root {"]
-    for (const [group, map] of Object.entries(tokens as SystemTokenMap)) {
-      for (const [name, value] of Object.entries(map)) {
-        lines.push(`  ${tokenVarName(prefix, group, name)}: ${value};`)
-      }
-    }
-    lines.push("}")
-    style.textContent = lines.join("\n")
+    style.textContent = _buildTokenCss(tokens as SystemTokenMap, prefix)
   }
 
   function getConfig(name: keyof C): ComponentConfig | undefined {

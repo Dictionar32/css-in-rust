@@ -85,10 +85,11 @@ pub use application::plugin_registry::{
 pub use application::scanner::{
     batch_extract_classes, check_against_safelist, collect_files, extract_classes_from_source,
     generate_sub_component_types, scan_file, scan_workspace,
+    walk_and_prefilter_source_files, PrefilterFileResult,
 };
 pub use application::state_css::{
-    extract_and_generate_state_css, generate_static_state_css, tw_classes_to_css,
-    GeneratedStateRule, StaticStateCssInput,
+    extract_and_generate_state_css, generate_static_state_css, generate_runtime_state_css,
+    tw_classes_to_css, GeneratedStateRule, RuntimeStateCssRule, StaticStateCssInput,
 };
 pub use application::template_parser::parse_template;
 pub use application::tw_merge::{

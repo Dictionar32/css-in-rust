@@ -369,8 +369,8 @@ mod tests {
 
         let result = extract_theme_from_css_classified(css);
 
-        assert_eq!(result.colors.get("primary"), Some(&String::from("#3b82f6")));
-        assert_eq!(result.colors.get("secondary"), Some(&String::from("#8b5cf6")));
+        assert_eq!(result.colors.get("primary"), Some(&"#3b82f6".to_string()));
+        assert_eq!(result.colors.get("secondary"), Some(&"#8b5cf6".to_string()));
         assert_eq!(result.spacing.get("sm"), Some(&"0.5rem".to_string()));
         assert_eq!(result.spacing.get("md"), Some(&"1rem".to_string()));
         assert_eq!(result.fonts.get("sans"), Some(&"Inter, sans-serif".to_string()));
@@ -391,8 +391,8 @@ mod tests {
         let result = extract_theme_from_css_classified(css);
 
         // color-primary harus resolve ke nilai konkret dari color-base
-        assert_eq!(result.colors.get("primary"), Some(&String::from("#3b82f6")));
-        assert_eq!(result.raw.get("color-primary"), Some(&String::from("#3b82f6")));
+        assert_eq!(result.colors.get("primary"), Some(&"#3b82f6".to_string()));
+        assert_eq!(result.raw.get("color-primary"), Some(&"#3b82f6".to_string()));
     }
 
     #[test]
@@ -406,9 +406,9 @@ mod tests {
 
         let result = extract_theme_from_css_classified(css);
 
-        assert_eq!(result.colors.get("primary"), Some(&String::from("#ff0000")));
-        assert_eq!(result.colors.get("mid"), Some(&String::from("#ff0000")));
-        assert_eq!(result.colors.get("final"), Some(&String::from("#ff0000")));
+        assert_eq!(result.colors.get("primary"), Some(&"#ff0000".to_string()));
+        assert_eq!(result.colors.get("mid"), Some(&"#ff0000".to_string()));
+        assert_eq!(result.colors.get("final"), Some(&"#ff0000".to_string()));
     }
 
     #[test]
@@ -443,7 +443,7 @@ mod tests {
         let css = "@theme {\n  --color-primary: #3b82f6;\n}\n@theme {\n  --spacing-sm: 0.5rem;\n}";
         let result = extract_theme_from_css_classified(css.to_string());
 
-        assert_eq!(result.colors.get("primary"), Some(&String::from("#3b82f6")));
+        assert_eq!(result.colors.get("primary"), Some(&"#3b82f6".to_string()));
         assert_eq!(result.spacing.get("sm"), Some(&"0.5rem".to_string()));
     }
 
@@ -470,8 +470,7 @@ mod tests {
         raw.insert("color-primary".to_string(), "var(--color-base)".to_string());
 
         let resolved = resolve_var_chain("color-primary", &raw);
-        let expected_fff = String::from("#fff");
-        assert_eq!(resolved, expected_fff);
+        assert_eq!(resolved, "#fff");
 
         // Key tidak ada → empty string
         let missing = resolve_var_chain("color-missing", &raw);
@@ -481,8 +480,8 @@ mod tests {
     #[test]
     fn test_backward_compat_resolve_theme_value() {
         // resolve_theme_value (NAPI fn lama) harus tetap bekerja.
-        // Bangun JSON dari slice concat agar tidak ada ambiguity dengan
-        // raw string delimiter r#"..."# ketika berisi karakter '#'.
+        // JSON dibangun dari slice concat — r#"..."# dengan '#hex' di dalamnya
+        // menyebabkan konflik delimiter di Rust 2021.
         let hex_color = ["#", "3b82f6"].concat();
         let raw_json = [
             r#"{"color-base":""#,
@@ -737,5 +736,200 @@ mod typegen_tests {
         assert!(result.contains("    \"primary\": string"));
         assert!(result.contains("    \"secondary\": string"));
         assert!(result.ends_with("  }"));
+    }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// generate_system_token_css — token CSS var block generator untuk styledSystem
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Generate `:root { --prefix-group-name: value; ... }` CSS block dari SystemTokenMap.
+///
+/// Menggantikan JS nested loop di `injectTokensToRoot()` dan `setTokens()` di `styledSystem.ts`:
+///
+/// ```typescript
+/// // Sebelum: JS nested loop + string building
+/// const lines: string[] = [":root {"]
+/// for (const [group, map] of Object.entries(tokens)) {
+///   for (const [name, value] of Object.entries(map)) {
+///     lines.push(`  --${prefix}-${group}-${name}: ${value};`)
+///   }
+/// }
+/// lines.push("}")
+/// style.textContent = lines.join("\n")
+///
+/// // Sesudah: 1 NAPI call
+/// style.textContent = native.generateSystemTokenCss(JSON.stringify(tokens), prefix)
+/// ```
+///
+/// ## Input
+/// `tokens_json`: JSON dari `SystemTokenMap`:
+/// ```json
+/// {
+///   "colors":  { "primary": "#6366f1", "muted": "#71717a" },
+///   "radius":  { "base": "0.5rem", "full": "9999px" },
+///   "spacing": { "sm": "0.5rem", "md": "1rem" }
+/// }
+/// ```
+/// `prefix`: CSS variable prefix, e.g. `"sys"` → `--sys-colors-primary`
+///
+/// ## Output
+/// ```css
+/// :root {
+///   --sys-colors-muted: #71717a;
+///   --sys-colors-primary: #6366f1;
+///   --sys-radius-base: 0.5rem;
+///   --sys-radius-full: 9999px;
+/// }
+/// ```
+/// Keys di-sort per group untuk output yang deterministic.
+#[napi]
+pub fn generate_system_token_css(tokens_json: String, prefix: String) -> String {
+    let tokens: serde_json::Map<String, serde_json::Value> =
+        match serde_json::from_str(&tokens_json) {
+            Ok(serde_json::Value::Object(m)) => m,
+            _ => return String::from(":root {}\n"),
+        };
+
+    if tokens.is_empty() {
+        return String::from(":root {}\n");
+    }
+
+    // Pre-allocate: rata-rata 30 chars per declaration
+    let total_tokens: usize = tokens
+        .values()
+        .filter_map(|v| v.as_object())
+        .map(|m| m.len())
+        .sum();
+    let mut lines: Vec<String> = Vec::with_capacity(total_tokens + 2);
+    lines.push(String::from(":root {"));
+
+    // Sort groups untuk deterministic output
+    let mut groups: Vec<(&String, &serde_json::Value)> = tokens.iter().collect();
+    groups.sort_by_key(|(k, _)| k.as_str());
+
+    for (group, map_val) in &groups {
+        let map = match map_val.as_object() {
+            Some(m) if !m.is_empty() => m,
+            _ => continue,
+        };
+
+        // Sort names dalam setiap group
+        let mut entries: Vec<(&String, &serde_json::Value)> = map.iter().collect();
+        entries.sort_by_key(|(k, _)| k.as_str());
+
+        for (name, value) in &entries {
+            let val_str = match value {
+                serde_json::Value::String(s) => s.as_str(),
+                _ => continue,
+            };
+            lines.push(format!("  --{}-{}-{}: {};", prefix, group, name, val_str));
+        }
+    }
+
+    lines.push(String::from("}"));
+    lines.join("\n") + "\n"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests — generate_system_token_css
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod system_token_tests {
+    use super::*;
+
+    #[test]
+    fn test_basic_token_output() {
+        let hex1 = ["#", "6366f1"].concat();
+        let hex2 = ["#", "71717a"].concat();
+        let tokens = [
+            r#"{"colors":{"primary":""#,
+            hex1.as_str(),
+            r#"","muted":""#,
+            hex2.as_str(),
+            r#""}}"#,
+        ].concat();
+        let out = generate_system_token_css(tokens, "sys".to_string());
+
+        assert!(out.starts_with(":root {"));
+        let expected1 = format!("  --sys-colors-primary: {};", hex1);
+        let expected2 = format!("  --sys-colors-muted: {};", hex2);
+        assert!(out.contains(&expected1));
+        assert!(out.contains(&expected2));
+    }
+
+    #[test]
+    fn test_multiple_groups() {
+        let tokens = r#"{"colors":{"primary":"blue"},"radius":{"base":"0.5rem"},"spacing":{"sm":"0.5rem"}}"#;
+        let out = generate_system_token_css(tokens.to_string(), "sys".to_string());
+
+        assert!(out.contains("--sys-colors-primary: blue;"));
+        assert!(out.contains("--sys-radius-base: 0.5rem;"));
+        assert!(out.contains("--sys-spacing-sm: 0.5rem;"));
+    }
+
+    #[test]
+    fn test_custom_prefix() {
+        let tokens = r#"{"colors":{"primary":"red"}}"#;
+        let out = generate_system_token_css(tokens.to_string(), "ui".to_string());
+
+        assert!(out.contains("--ui-colors-primary: red;"));
+        assert!(!out.contains("--sys-"));
+    }
+
+    #[test]
+    fn test_groups_sorted_deterministic() {
+        // Group order: colors < radius < spacing (alphabetical)
+        let tokens = r#"{"spacing":{"sm":"0.5rem"},"colors":{"a":"red"},"radius":{"b":"4px"}}"#;
+        let out = generate_system_token_css(tokens.to_string(), "sys".to_string());
+
+        let colors_pos = out.find("--sys-colors-").unwrap();
+        let radius_pos = out.find("--sys-radius-").unwrap();
+        let spacing_pos = out.find("--sys-spacing-").unwrap();
+
+        assert!(colors_pos < radius_pos, "colors harus sebelum radius");
+        assert!(radius_pos < spacing_pos, "radius harus sebelum spacing");
+    }
+
+    #[test]
+    fn test_names_sorted_within_group() {
+        let tokens = r#"{"colors":{"zebra":"z","alpha":"a","middle":"m"}}"#;
+        let out = generate_system_token_css(tokens.to_string(), "sys".to_string());
+
+        let alpha_pos = out.find("--sys-colors-alpha").unwrap();
+        let middle_pos = out.find("--sys-colors-middle").unwrap();
+        let zebra_pos = out.find("--sys-colors-zebra").unwrap();
+
+        assert!(alpha_pos < middle_pos && middle_pos < zebra_pos);
+    }
+
+    #[test]
+    fn test_empty_tokens_returns_empty_root() {
+        let out = generate_system_token_css("{}".to_string(), "sys".to_string());
+        assert_eq!(out, ":root {}\n");
+    }
+
+    #[test]
+    fn test_invalid_json_returns_empty_root() {
+        let out = generate_system_token_css("not json".to_string(), "sys".to_string());
+        assert_eq!(out, ":root {}\n");
+    }
+
+    #[test]
+    fn test_output_format_matches_js_exactly() {
+        // Verifikasi format identik dengan JS styledSystem.
+        // JSON dibangun dari slice concat untuk menghindari konflik
+        // delimiter r#"..."# dengan '#hex' di Rust 2021.
+        let hex = ["#", "6366f1"].concat();
+        let tokens = [
+            r#"{"colors":{"primary":""#,
+            hex.as_str(),
+            r#""}}"#,
+        ].concat();
+        let out = generate_system_token_css(tokens, "sys".to_string());
+
+        let expected = format!(":root {{\n  --sys-colors-primary: {};\n}}\n", hex);
+        assert_eq!(out, expected);
     }
 }

@@ -574,3 +574,222 @@ pub fn extract_and_generate_state_css(source: String, filename: String) -> Vec<G
 
     generate_static_state_css(inputs, None)
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// generate_runtime_state_css — runtime CSS assembly dalam satu Rust call
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Output satu CSS rule dari `generate_runtime_state_css()`.
+#[napi(object)]
+#[derive(Clone)]
+pub struct RuntimeStateCssRule {
+    /// Full CSS rule string — e.g. `.tw-s-abc123[data-loading="true"]{opacity:0.6;cursor:wait}`
+    /// Siap dipakai langsung sebagai `style.textContent` atau `batchedInject(rule)`.
+    pub css_rule: String,
+    /// State name — e.g. `"loading"`, `"selected"`
+    pub state_name: String,
+    /// CSS declarations saja tanpa selector — e.g. `"opacity:0.6;cursor:wait"`
+    pub declarations: String,
+}
+
+/// Generate semua CSS rules untuk satu component dari state config di Rust.
+///
+/// Menggantikan JS string assembly di `injectStateStyles()` dan `generateStateCss()`
+/// di `stateEngine.ts`:
+///
+/// ```typescript
+/// // Sebelum: JS loop + N × NAPI twClassesToCss calls
+/// const rules = Object.entries(state)
+///   .map(([stateName, classes]) => {
+///     const css = twClassesToCss(classes)          // NAPI call × N state entries
+///     return css ? `.${id}[data-${stateName}="true"]{${css}}` : null
+///   })
+///
+/// // Sesudah: 1 NAPI call
+/// const rules = native.generateRuntimeStateCss(id, stateMapJson, resolvedCssJson)
+/// ```
+///
+/// ## Parameters
+/// - `id`: Component state class, e.g. `"tw-s-abc123"`
+/// - `state_map_json`: JSON object `{"loading":"opacity-60 cursor-wait","selected":"ring-2"}`
+/// - `resolved_css`: Opsional — Tailwind pipeline CSS output untuk resolve named classes.
+///   Kalau `None` atau kosong, hanya arbitrary values `[…]` yang bisa di-resolve.
+///
+/// ## Returns
+/// Vec of `RuntimeStateCssRule` — satu per state entry yang berhasil di-resolve.
+/// Entries dengan empty declarations di-skip (identik dengan JS `.filter(Boolean)`).
+///
+/// ## Usage
+/// ```typescript
+/// // injectStateStyles path:
+/// const rules = native.generateRuntimeStateCss(id, JSON.stringify(state), null)
+/// for (const rule of rules) batchedInjectFn(rule.cssRule)
+///
+/// // generateStateCss path (SSR):
+/// const rules = native.generateRuntimeStateCss(id, JSON.stringify(state), null)
+/// return rules.map(r => r.cssRule).join("\n")
+/// ```
+#[napi]
+pub fn generate_runtime_state_css(
+    id: String,
+    state_map_json: String,
+    resolved_css: Option<String>,
+) -> Vec<RuntimeStateCssRule> {
+    // Parse state map — { stateName: "class1 class2 ...", ... }
+    let state_map: std::collections::BTreeMap<String, String> =
+        match serde_json::from_str(&state_map_json) {
+            Ok(m) => m,
+            Err(_) => return Vec::new(),
+        };
+
+    if state_map.is_empty() {
+        return Vec::new();
+    }
+
+    // Build class map dari resolved_css kalau tersedia
+    // Identik dengan generate_static_state_css — reuse parse_tailwind_css_to_class_map
+    let class_map: Option<HashMap<String, String>> = resolved_css
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .map(parse_tailwind_css_to_class_map);
+
+    let mut results: Vec<RuntimeStateCssRule> = Vec::with_capacity(state_map.len());
+
+    for (state_name, classes) in &state_map {
+        // Resolve classes → declarations
+        // Identik dengan JS twClassesToCss(classes) + arbitrary value handler
+        let declarations = match &class_map {
+            Some(map) => classes_to_css_with_map(classes, map),
+            None => classes_to_css_inner(classes),
+        };
+
+        // Skip empty declarations — identik dengan JS `.filter(Boolean)`
+        if declarations.is_empty() {
+            continue;
+        }
+
+        // Assemble CSS rule — identik dengan JS template literal:
+        // `.${id}[data-${stateName}="true"]{${css}}`
+        let selector = format!(".{}[data-{}=\"true\"]", id, state_name);
+        let css_rule = format!("{}{{{}}}", selector, declarations);
+
+        results.push(RuntimeStateCssRule {
+            css_rule,
+            state_name: state_name.clone(),
+            declarations,
+        });
+    }
+
+    results
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tests — generate_runtime_state_css
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[cfg(test)]
+mod runtime_css_tests {
+    use super::*;
+
+    #[test]
+    fn test_arbitrary_values_resolved() {
+        let state_json = r#"{"loading":"bg-[#f00] opacity-[0.5]","selected":"w-[200px]"}"#;
+        let rules = generate_runtime_state_css("tw-s-abc123".to_string(), state_json.to_string(), None);
+
+        assert_eq!(rules.len(), 2);
+
+        let loading = rules.iter().find(|r| r.state_name == "loading").unwrap();
+        assert!(loading.declarations.contains("background-color:#f00"));
+        assert!(loading.css_rule.starts_with(".tw-s-abc123[data-loading=\"true\"]"));
+        assert!(loading.css_rule.contains("background-color:#f00"));
+
+        let selected = rules.iter().find(|r| r.state_name == "selected").unwrap();
+        assert_eq!(selected.declarations, "width:200px");
+    }
+
+    #[test]
+    fn test_with_resolved_css() {
+        let tailwind_css = r#"
+.opacity-60 { opacity: 0.6; }
+.cursor-wait { cursor: wait; }
+.pointer-events-none { pointer-events: none; }
+.w-full { width: 100%; }
+"#;
+        let state_json = r#"{"loading":"opacity-60 cursor-wait","fullWidth":"w-full"}"#;
+        let rules = generate_runtime_state_css(
+            "tw-s-test99".to_string(),
+            state_json.to_string(),
+            Some(tailwind_css.to_string()),
+        );
+
+        assert_eq!(rules.len(), 2);
+
+        let loading = rules.iter().find(|r| r.state_name == "loading").unwrap();
+        assert!(loading.declarations.contains("opacity:0.6"));
+        assert!(loading.declarations.contains("cursor:wait"));
+        assert_eq!(loading.css_rule,
+            r#".tw-s-test99[data-loading="true"]{opacity:0.6;cursor:wait}"#);
+
+        let full_width = rules.iter().find(|r| r.state_name == "fullWidth").unwrap();
+        assert_eq!(full_width.declarations, "width:100%");
+    }
+
+    #[test]
+    fn test_empty_declarations_skipped() {
+        // Class yang tidak bisa di-resolve → skip (identik dengan JS .filter(Boolean))
+        let state_json = r#"{"unknown":"bg-red-500 text-white","known":"bg-[red]"}"#;
+        let rules = generate_runtime_state_css("tw-s-skip".to_string(), state_json.to_string(), None);
+
+        // "unknown" tidak bisa di-resolve tanpa resolvedCss → skip
+        // "known" arbitrary value bisa di-resolve → include
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].state_name, "known");
+    }
+
+    #[test]
+    fn test_empty_state_map() {
+        let rules = generate_runtime_state_css("tw-s-empty".to_string(), "{}".to_string(), None);
+        assert!(rules.is_empty());
+    }
+
+    #[test]
+    fn test_invalid_json_returns_empty() {
+        let rules = generate_runtime_state_css("tw-s-bad".to_string(), "not json".to_string(), None);
+        assert!(rules.is_empty());
+    }
+
+    #[test]
+    fn test_css_rule_format_matches_js_template() {
+        // Verifikasi format identik dengan JS: `.${id}[data-${stateName}="true"]{${css}}`
+        let state_json = r#"{"active":"bg-[blue]"}"#;
+        let rules = generate_runtime_state_css("tw-s-xyz".to_string(), state_json.to_string(), None);
+
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].css_rule, r#".tw-s-xyz[data-active="true"]{background-color:blue}"#);
+    }
+
+    #[test]
+    fn test_selector_field_matches_css_rule_prefix() {
+        let state_json = r#"{"hover":"w-[100px]"}"#;
+        let rules = generate_runtime_state_css("tw-s-abc".to_string(), state_json.to_string(), None);
+
+        assert_eq!(rules.len(), 1);
+        // css_rule harus mulai dengan selector yang benar
+        assert!(rules[0].css_rule.starts_with(r#".tw-s-abc[data-hover="true"]"#));
+    }
+
+    #[test]
+    fn test_multiple_classes_per_state() {
+        let tailwind_css = ".opacity-50 { opacity: 0.5; } .pointer-events-none { pointer-events: none; }";
+        let state_json = r#"{"disabled":"opacity-50 pointer-events-none"}"#;
+        let rules = generate_runtime_state_css(
+            "tw-s-multi".to_string(),
+            state_json.to_string(),
+            Some(tailwind_css.to_string()),
+        );
+
+        assert_eq!(rules.len(), 1);
+        assert!(rules[0].declarations.contains("opacity:0.5"));
+        assert!(rules[0].declarations.contains("pointer-events:none"));
+    }
+}
