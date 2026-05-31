@@ -79,18 +79,11 @@ function hashContainer(tag: string, container: ContainerConfig, name?: string): 
   const cached = _hashContainerCache.get(sortedKey)
   if (cached) return cached
 
-  let id: string
-  try {
-    const native = getNativeBinding()
-    if (native?.hashContent) {
-      id = `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
-    } else {
-      throw new Error("no hashContent")
-    }
-  } catch {
-    const hash = sortedKey.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
-    id = `tw-cq-${Math.abs(hash).toString(36).slice(0, 6)}`
+  const native = getNativeBinding()
+  if (!native?.hashContent) {
+    throw new Error("FATAL: Native binding 'hashContent' is required but not available.")
   }
+  const id = `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
 
   _hashContainerCache.set(sortedKey, id)
   return id
@@ -100,86 +93,16 @@ function hashContainer(tag: string, container: ContainerConfig, name?: string): 
 // CSS generator
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Minimal Tailwind → CSS for container query contexts */
-const LAYOUT_MAP: Record<string, string> = {
-  "flex-col": "flex-direction:column",
-  "flex-row": "flex-direction:row",
-  "flex-wrap": "flex-wrap:wrap",
-  "flex-nowrap": "flex-wrap:nowrap",
-  "flex-1": "flex:1 1 0%",
-  hidden: "display:none",
-  block: "display:block",
-  flex: "display:flex",
-  grid: "display:grid",
-  "grid-cols-1": "grid-template-columns:repeat(1,minmax(0,1fr))",
-  "grid-cols-2": "grid-template-columns:repeat(2,minmax(0,1fr))",
-  "grid-cols-3": "grid-template-columns:repeat(3,minmax(0,1fr))",
-  "grid-cols-4": "grid-template-columns:repeat(4,minmax(0,1fr))",
-  "grid-cols-6": "grid-template-columns:repeat(6,minmax(0,1fr))",
-  "grid-cols-12": "grid-template-columns:repeat(12,minmax(0,1fr))",
-  "text-sm": "font-size:0.875rem;line-height:1.25rem",
-  "text-base": "font-size:1rem;line-height:1.5rem",
-  "text-lg": "font-size:1.125rem;line-height:1.75rem",
-  "text-xl": "font-size:1.25rem;line-height:1.75rem",
-  "text-2xl": "font-size:1.5rem;line-height:2rem",
-  "text-xs": "font-size:0.75rem;line-height:1rem",
-  "p-2": "padding:0.5rem",
-  "p-4": "padding:1rem",
-  "p-6": "padding:1.5rem",
-  "p-8": "padding:2rem",
-  "px-2": "padding-left:0.5rem;padding-right:0.5rem",
-  "px-4": "padding-left:1rem;padding-right:1rem",
-  "px-6": "padding-left:1.5rem;padding-right:1.5rem",
-  "py-2": "padding-top:0.5rem;padding-bottom:0.5rem",
-  "py-4": "padding-top:1rem;padding-bottom:1rem",
-  "gap-2": "gap:0.5rem",
-  "gap-4": "gap:1rem",
-  "gap-6": "gap:1.5rem",
-  "gap-8": "gap:2rem",
-  "w-full": "width:100%",
-  "w-1/2": "width:50%",
-  "w-1/3": "width:33.333333%",
-  "w-2/3": "width:66.666667%",
-  "max-w-sm": "max-width:24rem",
-  "max-w-md": "max-width:28rem",
-  "max-w-lg": "max-width:32rem",
-  "max-w-xl": "max-width:36rem",
-  "items-center": "align-items:center",
-  "items-start": "align-items:flex-start",
-  "items-end": "align-items:flex-end",
-  "justify-center": "justify-content:center",
-  "justify-between": "justify-content:space-between",
-  "justify-start": "justify-content:flex-start",
-  "justify-end": "justify-content:flex-end",
-}
-
 /**
  * Konversi layout class string → inline CSS declarations.
- *
- * Native-first: Rust static lookup table (zero alloc) + split_whitespace.
- * JS fallback: LAYOUT_MAP object lookup + split(/\s+/).
+ * Native-only: Rust static lookup table (zero alloc) + split_whitespace.
  */
 function layoutClassesToCss(classes: string): string {
-  try {
-    const native = getNativeBinding()
-    if (native?.layoutClassesToCss) {
-      return native.layoutClassesToCss(classes)
-    }
-  } catch { /* fallback */ }
-
-  // JS fallback
-  const decls: string[] = []
-  for (const cls of classes.trim().split(/\s+/)) {
-    if (LAYOUT_MAP[cls]) decls.push(LAYOUT_MAP[cls])
-    else if (cls.startsWith("w-[")) {
-      const val = cls.match(/\[(.+)\]/)?.[1]
-      if (val) decls.push(`width:${val}`)
-    } else if (cls.startsWith("max-w-[")) {
-      const val = cls.match(/\[(.+)\]/)?.[1]
-      if (val) decls.push(`max-width:${val}`)
-    }
+  const native = getNativeBinding()
+  if (!native?.layoutClassesToCss) {
+    throw new Error("FATAL: Native binding 'layoutClassesToCss' is required but not available.")
   }
-  return decls.join(";")
+  return native.layoutClassesToCss(classes)
 }
 
 function buildContainerRules(
@@ -309,8 +232,7 @@ export function processContainer(
 /**
  * Generate @container CSS rules dari breakpoint config.
  *
- * Native-first: Rust string building tanpa intermediate allocations.
- * JS fallback: `buildContainerRules()` loop.
+ * Native-only: Rust string building tanpa intermediate allocations.
  */
 export function generateContainerCss(
   tag: string,
@@ -319,20 +241,15 @@ export function generateContainerCss(
 ): string {
   const id = hashContainer(tag, container, containerName)
 
-  // Native-first: pass breakpoints ke Rust — satu NAPI call generate semua rules
-  try {
-    const native = getNativeBinding()
-    if (native?.buildContainerRules) {
-      const breakpoints = Object.entries(container).map(([key, value]) => ({
-        key,
-        classes: typeof value === "string" ? value : value.classes,
-      }))
-      return native.buildContainerRules(id, breakpoints, containerName ?? null)
-    }
-  } catch { /* fallback */ }
-
-  // JS fallback
-  return buildContainerRules(id, container, containerName)
+  const native = getNativeBinding()
+  if (!native?.buildContainerRules) {
+    throw new Error("FATAL: Native binding 'buildContainerRules' is required but not available.")
+  }
+  const breakpoints = Object.entries(container).map(([key, value]) => ({
+    key,
+    classes: typeof value === "string" ? value : value.classes,
+  }))
+  return native.buildContainerRules(id, breakpoints, containerName ?? null)
 }
 
 export function getContainerRegistry(): Map<string, ContainerEntry> {

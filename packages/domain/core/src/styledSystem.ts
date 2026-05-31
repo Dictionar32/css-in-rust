@@ -120,21 +120,10 @@ function injectTokensToRoot(tokens: SystemTokenMap, prefix: string): void {
  */
 function _buildTokenCss(tokens: SystemTokenMap, prefix: string): string {
   const binding = getNativeBinding()
-
-  // ── Fast path: 1 NAPI call ─────────────────────────────────────────────
-  if (binding?.generateSystemTokenCss) {
-    return binding.generateSystemTokenCss(JSON.stringify(tokens), prefix)
+  if (!binding?.generateSystemTokenCss) {
+    throw new Error("FATAL: Native binding 'generateSystemTokenCss' is required but not available.")
   }
-
-  // ── Fallback: JS nested loop ───────────────────────────────────────────
-  const lines: string[] = [":root {"]
-  for (const [group, map] of Object.entries(tokens)) {
-    for (const [name, value] of Object.entries(map)) {
-      lines.push(`  ${tokenVarName(prefix, group, name)}: ${value};`)
-    }
-  }
-  lines.push("}")
-  return lines.join("\n")
+  return binding.generateSystemTokenCss(JSON.stringify(tokens), prefix)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

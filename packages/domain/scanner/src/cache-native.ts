@@ -52,11 +52,10 @@ export function pruneStaleEntries(
   entries: NativeCacheEntry[],
   opts: { maxAgeMs?: number; rootDir?: string } = {}
 ): { pruned: NativeCacheEntry[]; removed: number } {
-  // Native-first: satu NAPI call — Rust check semua files sekaligus
   const nativeResult = pruneStaleEntriesNative(
     entries.map((e) => ({ file: e.file, lastSeenMs: e.lastSeenMs })),
     opts.maxAgeMs,
-    !!opts.rootDir  // hanya check existence jika rootDir disediakan
+    !!opts.rootDir
   )
 
   if (nativeResult !== null) {
@@ -64,18 +63,7 @@ export function pruneStaleEntries(
     return { pruned, removed: nativeResult.removed }
   }
 
-  // JS fallback
-  const maxAge = opts.maxAgeMs ?? STALE_THRESHOLD_MS
-  const now = Date.now()
-  const { existsSync } = require("node:fs") as typeof import("node:fs")
-
-  const pruned = entries.filter((entry) => {
-    if (opts.rootDir && !existsSync(entry.file)) return false
-    if (entry.lastSeenMs && now - entry.lastSeenMs > maxAge) return false
-    return true
-  })
-
-  return { pruned, removed: entries.length - pruned.length }
+  throw new Error("FATAL: Native binding 'pruneStaleEntries' is required but not available.")
 }
 
 /**

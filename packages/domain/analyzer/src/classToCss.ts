@@ -3,16 +3,12 @@ import { parseClassToCssOptions, parseNativeCssCompileResult } from "./schemas"
 import type { ClassToCssOptions, ClassToCssResult } from "./types"
 import { formatErrorMessage } from "./utils"
 
-export const normalizeClassInput = (input: string | string[], _binding?: { normalizeClassInput?: (s: string) => string[] }): string[] => {
-  // Native-first: untuk single string, delegate ke Rust yang lebih cepat
+export const normalizeClassInput = (input: string | string[], binding: { normalizeClassInput?: (s: string) => string[] }): string[] => {
   if (typeof input === "string") {
-    if (_binding?.normalizeClassInput) {
-      return _binding.normalizeClassInput(input)
+    if (!binding.normalizeClassInput) {
+      throw new Error("FATAL: Native binding 'normalizeClassInput' is required but not available.")
     }
-    return input
-      .split(/\s+/)
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0)
+    return binding.normalizeClassInput(input)
   }
 
   if (!Array.isArray(input)) {
@@ -60,15 +56,13 @@ const mergeDeclarationMap = (
 
 const declarationMapToString = (
   declarationMap: Map<string, string>,
-  binding?: { declarationMapToString?: (entries: Array<{ property: string; value: string }>) => string }
+  binding: { declarationMapToString?: (entries: Array<{ property: string; value: string }>) => string }
 ): string => {
-  // Native-first: serialize entries via Rust (satu allocation vs JS multiple)
-  const entries = Array.from(declarationMap.entries()).map(([property, value]) => ({ property, value }))
-  if (binding?.declarationMapToString) {
-    return binding.declarationMapToString(entries)
+  if (!binding.declarationMapToString) {
+    throw new Error("FATAL: Native binding 'declarationMapToString' is required but not available.")
   }
-  // JS fallback
-  return entries.map(({ property, value }) => `${property}: ${value}`).join("; ")
+  const entries = Array.from(declarationMap.entries()).map(([property, value]) => ({ property, value }))
+  return binding.declarationMapToString(entries)
 }
 
 /**

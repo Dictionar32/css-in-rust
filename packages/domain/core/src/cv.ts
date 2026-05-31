@@ -54,34 +54,23 @@ function lookupGenerated(
     _sortedVariantKeysCache.set(componentId, sortedKeys)
   }
 
-  // ── Fast path: buildVariantLookupKey di Rust ────────────────────────────
-  // Menggantikan JS string concat loop — eliminasi per-render string building.
-  // buildVariantLookupKey(defaultVariantsJson, propsJson) → "size:lg|variant:solid"
+  // buildVariantLookupKey di Rust — satu NAPI call, eliminasi JS string concat loop
   const binding = getNativeBinding()
-  if (binding?.buildVariantLookupKey) {
-    // Kirim hanya keys yang relevan (sortedKeys) untuk menghindari noise dari
-    // props non-variant (onClick, ref, className, dll)
-    const relevantDefaults: Record<string, string> = {}
-    const relevantProps: Record<string, string> = {}
-    for (const k of sortedKeys) {
-      const dv = defaultVariants?.[k]
-      if (dv !== undefined) relevantDefaults[k] = String(dv)
-      const pv = (props as Record<string, unknown>)[k]
-      if (pv !== undefined && pv !== null) relevantProps[k] = String(pv)
-    }
-    const key = binding.buildVariantLookupKey(
-      JSON.stringify(relevantDefaults),
-      JSON.stringify(relevantProps)
-    )
-    return table[key]
+  if (!binding?.buildVariantLookupKey) {
+    throw new Error("FATAL: Native binding 'buildVariantLookupKey' is required but not available.")
   }
-
-  // ── Fallback: JS string concat loop ────────────────────────────────────
-  let key = ""
-  for (let i = 0; i < sortedKeys.length; i++) {
-    if (i > 0) key += "|"
-    key += sortedKeys[i] + ":" + String(merged[sortedKeys[i]])
+  const relevantDefaults: Record<string, string> = {}
+  const relevantProps: Record<string, string> = {}
+  for (const k of sortedKeys) {
+    const dv = defaultVariants?.[k]
+    if (dv !== undefined) relevantDefaults[k] = String(dv)
+    const pv = (props as Record<string, unknown>)[k]
+    if (pv !== undefined && pv !== null) relevantProps[k] = String(pv)
   }
+  const key = binding.buildVariantLookupKey(
+    JSON.stringify(relevantDefaults),
+    JSON.stringify(relevantProps)
+  )
   return table[key]
 }
 
@@ -100,109 +89,31 @@ function _getConfigJson(config: object): string {
 }
 
 // Native Rust variant resolution
-// Path 1 (optimal): resolveVariants — full resolution termasuk compound variants di Rust
-// Path 2 (fallback): resolveSimpleVariants + JS compound variants
-// Path 3 (browser): pure JS fallback
 function resolveVariantsNative<C extends ComponentConfig>(
   config: C,
   props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>>
 ): string {
-  const { base = "", variants = {}, compoundVariants = [], defaultVariants = {} } = config
+  const { variants = {}, defaultVariants = {} } = config
   const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
 
-  try {
-    const binding = getNativeBinding()
-
-    // Path 1: resolveVariants — full resolution termasuk compound variants
-    if (binding?.resolveVariants) {
-      const configJson = _getConfigJson(config as object)
-      const cleanProps: Record<string, string> = {}
-      for (const k of variantKeys) {
-        const dv = (defaultVariants as Record<string, string>)[k]
-        if (dv !== undefined && dv !== null) cleanProps[k] = String(dv)
-      }
-      for (const k of variantKeys) {
-        const v = (props as Record<string, unknown>)[k]
-        if (v !== undefined && v !== null) cleanProps[k] = String(v)
-      }
-      const propsJson = JSON.stringify(cleanProps)
-      const result = binding.resolveVariants(configJson, propsJson)
-      return result.classes
-    }
-
-    // Path 2: resolveSimpleVariants + JS compound variants (fallback)
-    if (binding?.resolveSimpleVariants) {
-      const mergedProps: Record<string, string> = {}
-      for (const k of variantKeys) {
-        const dv = (defaultVariants as Record<string, string>)[k]
-        if (dv !== undefined && dv !== null) mergedProps[k] = String(dv)
-      }
-      for (const k of variantKeys) {
-        const v = (props as Record<string, unknown>)[k]
-        if (v !== undefined && v !== null) mergedProps[k] = String(v)
-      }
-
-      let result = binding.resolveSimpleVariants(
-        base || null,
-        variants as Record<string, Record<string, string>>,
-        {},
-        mergedProps
-      )
-
-      if (compoundVariants.length > 0) {
-        const resolved: Record<string, unknown> = { ...defaultVariants, ...props }
-        const extra: string[] = []
-        for (const compound of compoundVariants) {
-          const { class: compoundClass, className: compoundClassName, ...conditions } =
-            compound as Record<string, unknown>
-          const matches = Object.entries(conditions).every(([key, val]) => resolved[key] === val)
-          if (matches) {
-            if (compoundClass) extra.push(String(compoundClass))
-            if (compoundClassName) extra.push(String(compoundClassName))
-          }
-        }
-        if (extra.length > 0) result = `${result} ${extra.join(" ")}`.trim()
-      }
-
-      return result
-    }
-  } catch {
-    // Native binding unavailable — browser context, fall through ke JS
+  const binding = getNativeBinding()
+  if (!binding?.resolveVariants) {
+    throw new Error("FATAL: Native binding 'resolveVariants' is required but not available.")
   }
 
-  // Path 3: pure JS fallback (browser)
-  const resolved: Record<string, string> = {}
+  const configJson = _getConfigJson(config as object)
+  const cleanProps: Record<string, string> = {}
   for (const k of variantKeys) {
     const dv = (defaultVariants as Record<string, string>)[k]
-    if (dv !== undefined) resolved[k] = dv
+    if (dv !== undefined && dv !== null) cleanProps[k] = String(dv)
   }
   for (const k of variantKeys) {
     const v = (props as Record<string, unknown>)[k]
-    if (v !== undefined && v !== null) resolved[k] = String(v)
+    if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
-
-  const classes: string[] = []
-  if (base) classes.push(base)
-  for (const k of variantKeys) {
-    const variantMap = (variants as Record<string, Record<string, string>>)[k]
-    const selected = resolved[k]
-    if (selected !== undefined && variantMap?.[selected] !== undefined) {
-      classes.push(variantMap[selected])
-    }
-  }
-
-  const resolvedFull: Record<string, unknown> = { ...defaultVariants, ...props }
-  for (const compound of compoundVariants) {
-    const { class: compoundClass, className: compoundClassName, ...conditions } =
-      compound as Record<string, unknown>
-    const matches = Object.entries(conditions).every(([key, val]) => resolvedFull[key] === val)
-    if (matches) {
-      if (compoundClass) classes.push(String(compoundClass))
-      if (compoundClassName) classes.push(String(compoundClassName))
-    }
-  }
-
-  return classes.filter(Boolean).join(" ")
+  const propsJson = JSON.stringify(cleanProps)
+  const result = binding.resolveVariants(configJson, propsJson)
+  return result.classes
 }
 
 export function cv<C extends ComponentConfig>(config: C, componentId?: string): CvFn<C> {

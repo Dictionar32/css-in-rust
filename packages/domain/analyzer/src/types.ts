@@ -116,6 +116,8 @@ export interface NativeAnalyzerBinding {
     utilityPrefix: string
     isArbitrary: boolean
   }>
+  /** Map Tailwind class base → conflict group name. Return "" if no group. */
+  resolveConflictGroup?(base: string): string
   /** Aggregate class counts from scan files JSON. */
   collectClassCounts?(filesJson: string): Array<{ name: string; count: number }>
   /** Compute frequency distribution buckets for class usages. */

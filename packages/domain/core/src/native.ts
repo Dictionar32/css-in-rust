@@ -51,6 +51,11 @@ interface NativeBinding {
     isArbitrary: boolean
     hasModifier: boolean
   }>
+  
+  twMergeRaw?: (classLists: string[]) => string
+  flattenAndResolve?: (nestedJson: string) => string
+  resolveConflictGroup?: (base: string) => string
+
   compileTheme?: (themeConfig: string) => { css: string; variables: Record<string, string> }
   extractCssVars?: (css: string) => Record<string, string>
   extractThemeFromCss?: (css: string) => Array<{ key: string; value: string }>

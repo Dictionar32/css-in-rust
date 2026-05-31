@@ -998,3 +998,111 @@ pub fn pregenerate_states_napi(
         combinations,
     })
 }
+// ─────────────────────────────────────────────────────────────────────────────
+// New exports: tw_merge_raw, flatten_and_resolve, resolve_conflict_group
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// tw_merge_raw — normalize (trim+filter) + conflict-resolve dalam satu NAPI call.
+/// Menggantikan pola JS: normalizeClassInput() → twMergeMany() (2 calls → 1 call).
+#[napi]
+pub fn tw_merge_raw(class_lists: Vec<String>) -> String {
+    let joined = class_lists
+        .iter()
+        .filter_map(|s| {
+            let t = s.trim();
+            if t.is_empty() { None } else { Some(t) }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    if joined.is_empty() {
+        return String::new();
+    }
+
+    merge_class_string(&joined)
+}
+
+/// flatten_and_resolve — flatten nested JSON array + join dalam satu NAPI call.
+/// Menggantikan pola JS: flattenInputs() stack loop → resolveClassNames().
+/// Input: JSON.stringify(nestedArray) dari JS, e.g. '["p-4", ["flex", null], false]'.
+#[napi]
+pub fn flatten_and_resolve(nested_json: String) -> napi::Result<String> {
+    let value: serde_json::Value = serde_json::from_str(&nested_json)
+        .map_err(|e| napi::Error::from_reason(format!("flatten_and_resolve: invalid JSON: {e}")))?;
+
+    let mut result: Vec<String> = Vec::new();
+    flatten_json_value(&value, &mut result);
+
+    Ok(result.join(" "))
+}
+
+fn flatten_json_value(val: &serde_json::Value, out: &mut Vec<String>) {
+    match val {
+        serde_json::Value::String(s) => {
+            let t = s.trim();
+            if !t.is_empty() {
+                out.push(t.to_owned());
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr {
+                flatten_json_value(item, out);
+            }
+        }
+        _ => {} // null, false, 0, {} → skip
+    }
+}
+
+/// resolve_conflict_group — Tailwind class prefix → conflict group name.
+/// Menggantikan if-else chain JS di semantic.ts resolveConflictGroup().
+/// Return "" jika tidak ada group — JS side convert ke null.
+///
+/// Catatan: fungsi ini intentionally lebih sederhana dari conflict_group() internal
+/// karena dipakai untuk analyzer/devtools reporting, bukan untuk merge algorithm.
+#[napi]
+pub fn resolve_conflict_group(base: String) -> String {
+    if base.contains('[') && base.contains(']') {
+        return String::new();
+    }
+
+    match base.as_str() {
+        "block" | "inline" | "inline-block" | "inline-flex" | "flex"
+        | "grid" | "hidden" | "contents" | "flow-root" | "list-item" => {
+            return "display".to_string()
+        }
+        "static" | "relative" | "absolute" | "fixed" | "sticky" => {
+            return "position".to_string()
+        }
+        _ => {}
+    }
+
+    if base.starts_with("min-w-") || base.starts_with("max-w-") || base.starts_with("w-") {
+        return "width".to_string();
+    }
+    if base.starts_with("min-h-") || base.starts_with("max-h-") || base.starts_with("h-") {
+        return "height".to_string();
+    }
+    if base.starts_with("bg-") { return "bg".to_string(); }
+    if base.starts_with("text-") { return "text".to_string(); }
+    if base.starts_with("font-") { return "font".to_string(); }
+    if base.starts_with("rounded") { return "rounded".to_string(); }
+    if base.starts_with("shadow") { return "shadow".to_string(); }
+    if base.starts_with("border-") { return "border".to_string(); }
+    if base.starts_with("opacity-") { return "opacity".to_string(); }
+    if base.starts_with("px-") || base.starts_with("py-") || base.starts_with("p-") {
+        return "padding".to_string();
+    }
+    if base.starts_with("mx-") || base.starts_with("my-") || base.starts_with("m-") {
+        return "margin".to_string();
+    }
+    if base.starts_with("gap-x-") { return "gap-x".to_string(); }
+    if base.starts_with("gap-y-") { return "gap-y".to_string(); }
+    if base.starts_with("gap-") { return "gap".to_string(); }
+    if base.starts_with("flex-") { return "flex".to_string(); }
+    if base.starts_with("grid-cols-") { return "grid-cols".to_string(); }
+    if base.starts_with("overflow-x-") { return "overflow-x".to_string(); }
+    if base.starts_with("overflow-y-") { return "overflow-y".to_string(); }
+    if base.starts_with("overflow-") { return "overflow".to_string(); }
+
+    String::new()
+}

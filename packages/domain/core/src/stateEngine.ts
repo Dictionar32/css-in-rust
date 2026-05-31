@@ -56,24 +56,11 @@ function hashState(tag: string, state: StateConfig): string {
   const cached = _hashStateCache.get(sortedKey)
   if (cached) return cached
 
-  let id: string
-  try {
-    const native = getNativeBinding()
-    if (native?.hashContent) {
-      // native hashContent: FNV-1a via Rust, ~40x lebih cepat dari JS djb2 loop
-      // karena tidak ada .split("") overhead (char array allocation) dan
-      // tidak perlu .reduce() closure per-character.
-      const raw = native.hashContent(sortedKey, "fnv", 6)
-      id = `tw-s-${raw}`
-    } else {
-      throw new Error("no hashContent")
-    }
-  } catch {
-    // JS djb2 fallback — identik output tidak dijamin dengan native,
-    // tapi cukup untuk development / browser context.
-    const hash = sortedKey.split("").reduce((h, char) => ((h << 5) + h) ^ char.charCodeAt(0), 5381)
-    id = `tw-s-${Math.abs(hash).toString(36).slice(0, 6)}`
+  const native = getNativeBinding()
+  if (!native?.hashContent) {
+    throw new Error("FATAL: Native binding 'hashContent' is required but not available.")
   }
+  const id = `tw-s-${native.hashContent(sortedKey, "fnv", 6)}`
 
   _hashStateCache.set(sortedKey, id)
   return id

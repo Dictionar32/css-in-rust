@@ -510,83 +510,21 @@ const _CONTAINER_BREAKPOINTS: Record<string, string> = {
   "2xl": "1536px",
 }
 
-// Tabel lookup CSS declarations — identik dengan containerQuery.ts di core
-const _LAYOUT_MAP: Record<string, string> = {
-  "flex-col": "flex-direction:column",
-  "flex-row": "flex-direction:row",
-  "flex-wrap": "flex-wrap:wrap",
-  "flex-nowrap": "flex-wrap:nowrap",
-  "flex-1": "flex:1 1 0%",
-  hidden: "display:none",
-  block: "display:block",
-  flex: "display:flex",
-  grid: "display:grid",
-  "grid-cols-1": "grid-template-columns:repeat(1,minmax(0,1fr))",
-  "grid-cols-2": "grid-template-columns:repeat(2,minmax(0,1fr))",
-  "grid-cols-3": "grid-template-columns:repeat(3,minmax(0,1fr))",
-  "grid-cols-4": "grid-template-columns:repeat(4,minmax(0,1fr))",
-  "grid-cols-6": "grid-template-columns:repeat(6,minmax(0,1fr))",
-  "grid-cols-12": "grid-template-columns:repeat(12,minmax(0,1fr))",
-  "text-xs": "font-size:0.75rem;line-height:1rem",
-  "text-sm": "font-size:0.875rem;line-height:1.25rem",
-  "text-base": "font-size:1rem;line-height:1.5rem",
-  "text-lg": "font-size:1.125rem;line-height:1.75rem",
-  "text-xl": "font-size:1.25rem;line-height:1.75rem",
-  "text-2xl": "font-size:1.5rem;line-height:2rem",
-  "p-2": "padding:0.5rem",
-  "p-4": "padding:1rem",
-  "p-6": "padding:1.5rem",
-  "p-8": "padding:2rem",
-  "px-2": "padding-left:0.5rem;padding-right:0.5rem",
-  "px-4": "padding-left:1rem;padding-right:1rem",
-  "px-6": "padding-left:1.5rem;padding-right:1.5rem",
-  "py-2": "padding-top:0.5rem;padding-bottom:0.5rem",
-  "py-4": "padding-top:1rem;padding-bottom:1rem",
-  "gap-2": "gap:0.5rem",
-  "gap-4": "gap:1rem",
-  "gap-6": "gap:1.5rem",
-  "gap-8": "gap:2rem",
-  "w-full": "width:100%",
-  "w-1/2": "width:50%",
-  "w-1/3": "width:33.333333%",
-  "w-2/3": "width:66.666667%",
-  "max-w-sm": "max-width:24rem",
-  "max-w-md": "max-width:28rem",
-  "max-w-lg": "max-width:32rem",
-  "max-w-xl": "max-width:36rem",
-  "items-center": "align-items:center",
-  "items-start": "align-items:flex-start",
-  "items-end": "align-items:flex-end",
-  "justify-center": "justify-content:center",
-  "justify-between": "justify-content:space-between",
-  "justify-start": "justify-content:flex-start",
-  "justify-end": "justify-content:flex-end",
-}
-
 function _layoutClassesToCss(classes: string): string {
   const native = getNativeBridge()
-  if (native?.layoutClassesToCss) {
-    try { return native.layoutClassesToCss(classes) } catch { /* fallback */ }
+  if (!native?.layoutClassesToCss) {
+    throw new Error("FATAL: Native binding 'layoutClassesToCss' is required but not available.")
   }
-  return classes.trim().split(/\s+/).map(cls => _LAYOUT_MAP[cls] ?? "").filter(Boolean).join(";")
-}
-
-function _djb2Hash(s: string): string {
-  let h = 5381
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i)
-  return Math.abs(h).toString(36).slice(0, 6)
+  return native.layoutClassesToCss(classes)
 }
 
 function _hashContainer(tag: string, containerJson: string, name?: string): string {
   const sortedKey = tag + (name ?? "") + containerJson
   const native = getNativeBridge()
-  if (native?.hashContent) {
-    try {
-      const raw = native.hashContent(sortedKey, "fnv", 6)
-      return `tw-cq-${raw}`
-    } catch { /* fallback */ }
+  if (!native?.hashContent) {
+    throw new Error("FATAL: Native binding 'hashContent' is required but not available.")
   }
-  return `tw-cq-${_djb2Hash(sortedKey)}`
+  return `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
 }
 
 /**

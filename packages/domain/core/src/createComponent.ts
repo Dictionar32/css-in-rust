@@ -37,8 +37,6 @@ function _getParsedTemplate(template: string): _ParsedTemplate {
     const native = getNativeBinding()
     if (native?.parseSubcomponentBlocksNapi) {
       const r = native.parseSubcomponentBlocksNapi(template, "tw")
-      // JSON.parse sekali di sini, hasil disimpan sebagai Map<string,string>.
-      // Tidak pernah di-parse ulang — semua caller pakai cache entry ini.
       const raw = JSON.parse(r.subMapJson) as Record<string, string>
       result = {
         baseClasses: r.baseClasses.trim().replace(/\s+/g, " "),
@@ -48,27 +46,10 @@ function _getParsedTemplate(template: string): _ParsedTemplate {
       return result
     }
   } catch {
-    // Native tidak tersedia (browser) — fall through ke JS fallback
+    // fall through
   }
 
-  // JS fallback — identik output dengan Rust path untuk hydration consistency
-  const subMap = new Map<string, string>()
-  const regex = /((?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
-  let match
-  while ((match = regex.exec(template)) !== null) {
-    const rawName = match[1]
-    const name = rawName.startsWith("[") ? rawName.slice(1, -1) : rawName
-    const classes = match[2].trim().replace(/\s+/g, " ")
-    if (classes) subMap.set(name, classes)
-  }
-  const baseClasses = template
-    .replace(/(?:\[[a-zA-Z][a-zA-Z0-9_-]*\]|[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[^}]*\}/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-
-  result = { baseClasses, subMap }
-  _templateParseCache.set(template, result)
-  return result
+  throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
 }
 
 /**
@@ -250,30 +231,13 @@ function resolveVariants(
     const binding = getNativeBinding()
     if (binding?.resolveSimpleVariants) {
       const result = binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
-      // Normalize whitespace — Rust dan JS fallback harus produce output identik
-      // Variant strings dari backtick templates punya newlines yang harus di-collapse
       return result.trim().replace(/\s+/g, " ")
     }
   } catch {
-    // Native binding unavailable (browser/client context) — fall through to JS fallback
+    // fall through
   }
 
-  // JS fallback for browser/client context
-  const resolved = { ...defaults, ...cleanProps }
-  const classes: string[] = []
-  // Sort keys — Rust HashMap tidak punya insertion order, kita sort alphabetically
-  // agar output JS fallback identik dengan Rust output
-  const sortedVariantEntries = Object.entries(variants).sort(([a], [b]) => a.localeCompare(b))
-  for (const [variantKey, variantMap] of sortedVariantEntries) {
-    const selected = resolved[variantKey]
-    if (selected !== undefined && variantMap[selected] !== undefined) {
-      // Normalize whitespace — Rust strips leading/trailing spaces and collapses
-      // newlines in template literals. JS fallback must produce identical output.
-      const normalized = variantMap[selected].trim().replace(/\s+/g, " ")
-      classes.push(normalized)
-    }
-  }
-  return classes.filter(Boolean).join(" ")
+  throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
 }
 
 /**

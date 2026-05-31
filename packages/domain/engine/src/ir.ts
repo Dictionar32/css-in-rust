@@ -70,44 +70,38 @@ export class CascadeResolutionId {
   }
 }
 
-// Registry for property and value names
-// Native-first: Rust DashMap (thread-safe, lock-free) menggantikan JS Map.
-// JS Maps di sini dibuat ulang tiap kali native tidak tersedia (fallback only).
-const _propertyNamesFallback = new Map<number, string>()
-const _valueNamesFallback = new Map<number, string>()
+// Registry for property and value names — native Rust DashMap required.
 
 export function registerPropertyName(id: PropertyId, name: string): void {
   const native = getNativeEngineBinding()
-  if (native?.registerPropertyName) {
-    native.registerPropertyName(id.value, name)
-    return
+  if (!native?.registerPropertyName) {
+    throw new Error("FATAL: Native binding 'registerPropertyName' is required but not available.")
   }
-  _propertyNamesFallback.set(id.value, name)
+  native.registerPropertyName(id.value, name)
 }
 
 export function registerValueName(id: ValueId, name: string): void {
   const native = getNativeEngineBinding()
-  if (native?.registerValueName) {
-    native.registerValueName(id.value, name)
-    return
+  if (!native?.registerValueName) {
+    throw new Error("FATAL: Native binding 'registerValueName' is required but not available.")
   }
-  _valueNamesFallback.set(id.value, name)
+  native.registerValueName(id.value, name)
 }
 
 export function propertyIdToString(id: PropertyId): string {
   const native = getNativeEngineBinding()
-  if (native?.propertyIdToString) {
-    return native.propertyIdToString(id.value)
+  if (!native?.propertyIdToString) {
+    throw new Error("FATAL: Native binding 'propertyIdToString' is required but not available.")
   }
-  return _propertyNamesFallback.get(id.value) ?? `P${id.value}`
+  return native.propertyIdToString(id.value)
 }
 
 export function valueIdToString(id: ValueId): string {
   const native = getNativeEngineBinding()
-  if (native?.valueIdToString) {
-    return native.valueIdToString(id.value)
+  if (!native?.valueIdToString) {
+    throw new Error("FATAL: Native binding 'valueIdToString' is required but not available.")
   }
-  return _valueNamesFallback.get(id.value) ?? `V${id.value}`
+  return native.valueIdToString(id.value)
 }
 
 export enum Origin {
@@ -216,28 +210,16 @@ export interface SourceLocation {
   column: number
 }
 
-/** @internal JS fallback — only used when native binding is unavailable */
-function createFingerprintFallback(parts: string[]): string {
-  const hash = parts.reduce(
-    (acc, part) => part.split("").reduce((h, char) => ((h << 5) - h + char.charCodeAt(0)) & h, acc),
-    0
-  )
-  return Math.abs(hash).toString(36)
-}
-
 /**
  * Generate a short fingerprint string from a list of ordered parts.
- *
- * Hot path — called on every class conflict check and IR node creation.
- * Delegates to Rust `create_fingerprint()` (FNV-1a, base-36 output) when the
- * native binding is available; falls back to the pure-JS djb2 variant otherwise.
+ * Native-only: delegates to Rust `create_fingerprint()` (FNV-1a, base-36 output).
  */
 export function createFingerprint(parts: string[]): string {
   const native = getNativeEngineBinding()
-  if (native?.createFingerprint) {
-    return native.createFingerprint(parts)
+  if (!native?.createFingerprint) {
+    throw new Error("FATAL: Native binding 'createFingerprint' is required but not available.")
   }
-  return createFingerprintFallback(parts)
+  return native.createFingerprint(parts)
 }
 
 // compareCascadeOrder removed — cascade sort is now handled by Rust resolve_cascade().

@@ -38,94 +38,31 @@ interface ParsedTemplate {
   hasSubs: boolean
 }
 
-// JS fallback — hanya aktif jika native binding tidak tersedia (e.g. browser)
-const SUB_RE = /(?:\[([a-zA-Z][a-zA-Z0-9_-]*)\]|([a-zA-Z][a-zA-Z0-9_-]*))\s*\{([^}]*)\}/g
-const COMMENT_RE = /\/\/[^\n]*/g
-
-function parseTemplateFallback(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
-  const raw = strings.raw.reduce((acc, str, i) => {
-    const expr = exprs[i]
-    const exprStr = typeof expr === "function" ? "" : (expr ?? "")
-    return acc + str + String(exprStr)
-  }, "")
-
-  const subs: Record<string, string> = {}
-  let base = raw
-
-  let match: RegExpExecArray | null
-  SUB_RE.lastIndex = 0
-  while ((match = SUB_RE.exec(raw)) !== null) {
-    const name = match[1] ?? match[2]
-    // Single pass: replace comment → split → trim → filter → join
-    // Sebelumnya 4 method chain = 4 intermediate arrays.
-    // Sesudah: satu loop dengan result string accumulation.
-    const rawInner = match[3].replace(COMMENT_RE, "")
-    let inner = ""
-    for (const line of rawInner.split("\n")) {
-      const t = line.trim()
-      if (t) inner += (inner ? " " : "") + t
-    }
-    inner = inner.replace(/\s+/g, " ").trim()
-
-    subs[name] = inner
-    base = base.replace(match[0], "")
-  }
-
-  // Same single-pass optimization for base string
-  const rawBase = base.replace(COMMENT_RE, "")
-  let cleanBase = ""
-  for (const line of rawBase.split("\n")) {
-    const t = line.trim()
-    if (t) cleanBase += (cleanBase ? " " : "") + t
-  }
-  cleanBase = cleanBase.replace(/\s+/g, " ").trim()
-
-  return { base: cleanBase, subs, hasSubs: Object.keys(subs).length > 0 }
-}
-
 // Cache untuk parseTemplate — raw template string tidak berubah antar hot reloads
-// (string literal di source code adalah konstanta). Cache ini memastikan
-// Rust parseTemplate + JSON.parse hanya dipanggil SEKALI per unique template.
-// Key: raw string hasil join (bukan TemplateStringsArray — tidak bisa dijadikan Map key).
 const _parsedTemplateCache = new Map<string, ParsedTemplate>()
 
 /**
  * parseTemplate — native-first, cache-first.
- *
- * Join strings+exprs di JS (TemplateStringsArray tidak bisa di-serialize ke NAPI),
- * lalu kirim raw string ke Rust untuk parsing.
- * Cache: Rust + JSON.parse hanya dipanggil SEKALI per unique template string.
- * Fallback ke pure-JS jika native tidak tersedia (browser / test env).
+ * Native-only: delegates ke Rust `parse_template`.
  */
 function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
-  // Join dulu di JS — Rust terima satu raw string
   const raw = strings.raw.reduce((acc, str, i) => {
     const expr = exprs[i]
     const exprStr = typeof expr === "function" ? "" : (expr ?? "")
     return acc + str + String(exprStr)
   }, "")
 
-  // Cache lookup — template literal di source code adalah konstanta
   const cached = _parsedTemplateCache.get(raw)
   if (cached) return cached
 
-  let result: ParsedTemplate
-
-  try {
-    const binding = getNativeBinding()
-    if (binding?.parseTemplate) {
-      const r = binding.parseTemplate(raw)
-      // JSON.parse sekali — disimpan di cache, tidak pernah di-parse ulang
-      const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
-      result = { base: r.base, subs, hasSubs: r.hasSubs }
-      _parsedTemplateCache.set(raw, result)
-      return result
-    }
-  } catch {
-    // binding unavailable — fall through to JS
+  const binding = getNativeBinding()
+  if (!binding?.parseTemplate) {
+    throw new Error("FATAL: Native binding 'parseTemplate' is required but not available.")
   }
 
-  result = parseTemplateFallback(strings, exprs)
+  const r = binding.parseTemplate(raw)
+  const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
+  const result: ParsedTemplate = { base: r.base, subs, hasSubs: r.hasSubs }
   _parsedTemplateCache.set(raw, result)
   return result
 }

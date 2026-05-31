@@ -71,15 +71,11 @@ function keyframesCacheKey(name: string, stops: KeyframesDefinition): string {
  * Catatan: binding di-pass sebagai parameter untuk menghindari await
  * (fungsi ini dipanggil dalam konteks sync setelah binding sudah resolve).
  */
-function splitClasses(classList: string, binding?: { splitAnimateClasses?: (s: string) => string[] }): string[] {
-  if (binding?.splitAnimateClasses) {
-    return binding.splitAnimateClasses(classList)
+function splitClasses(classList: string, binding: { splitAnimateClasses?: (s: string) => string[] }): string[] {
+  if (!binding.splitAnimateClasses) {
+    throw new Error("FATAL: Native binding 'splitAnimateClasses' is required but not available.")
   }
-  // JS fallback
-  return classList
-    .split(/\s+/)
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
+  return binding.splitAnimateClasses(classList)
 }
 
 async function validateTailwindClasses(

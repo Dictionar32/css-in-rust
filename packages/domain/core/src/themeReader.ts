@@ -11,22 +11,6 @@ export interface ThemeConfig {
 
 const cache = new Map<string, ThemeConfig>()
 
-// ─── Legacy helpers — hanya dipakai oleh JS fallback path ────────────────────
-// Dipertahankan agar tidak ada breaking change kalau native binding tidak tersedia.
-
-function createEmptyTheme(): ThemeConfig {
-  return { colors: {}, spacing: {}, fonts: {}, breakpoints: {}, animations: {}, raw: {} }
-}
-
-function setToken(theme: ThemeConfig, key: string, value: string): void {
-  theme.raw[key] = value
-  if (key.startsWith("color-")) { theme.colors[key.slice(6)] = value; return }
-  if (key.startsWith("spacing-")) { theme.spacing[key.slice(8)] = value; return }
-  if (key.startsWith("font-")) { theme.fonts[key.slice(5)] = value; return }
-  if (key.startsWith("breakpoint-")) { theme.breakpoints[key.slice(11)] = value; return }
-  if (key.startsWith("animate-")) { theme.animations[key.slice(8)] = value }
-}
-
 // ─── resolveThemeValue — dipertahankan untuk backward-compat ─────────────────
 // Masih bisa dipanggil dari kode lain yang butuh resolve satu token secara
 // on-demand (misalnya dari styledSystem.ts atau plugin consumer).
@@ -35,22 +19,13 @@ function setToken(theme: ThemeConfig, key: string, value: string): void {
 export function resolveThemeValue(
   key: string,
   theme: ThemeConfig,
-  visited: Set<string> = new Set()
+  _visited?: Set<string>
 ): string {
   const binding = getNativeBinding()
-  if (binding?.resolveThemeValue) {
-    return binding.resolveThemeValue(key, JSON.stringify(theme.raw))
+  if (!binding?.resolveThemeValue) {
+    throw new Error("FATAL: Native binding 'resolveThemeValue' is required but not available.")
   }
-
-  // JS fallback
-  const token = key.replace(/^--/, "")
-  const raw = theme.raw[token]
-  if (!raw) return ""
-  if (visited.has(token)) return raw
-  const nested = raw.match(/^var\((--[a-zA-Z0-9_-]+)\)$/)
-  if (!nested) return raw
-  visited.add(token)
-  return resolveThemeValue(nested[1], theme, visited)
+  return binding.resolveThemeValue(key, JSON.stringify(theme.raw))
 }
 
 // ─── extractThemeFromCSS — hot path ──────────────────────────────────────────
@@ -60,75 +35,27 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   if (hit) return hit
 
   const binding = getNativeBinding()
-
-  // ── Fast path: new Rust fn yang classify + resolve semuanya dalam satu call ──
-  if (binding?.extractThemeFromCssClassified) {
-    // 1 NAPI call menggantikan: extractThemeFromCss() + N × resolveThemeValue()
-    const result = binding.extractThemeFromCssClassified(cssContent) as ThemeConfig
-    cache.set(cssContent, result)
-    return result
-  }
-
-  // ── Fallback: pola lama (dua-stage: parse → classify → resolve per-token) ──
-  // Dipertahankan untuk kompatibilitas kalau binary belum di-rebuild.
-  if (!binding?.extractThemeFromCss) {
+  if (!binding?.extractThemeFromCssClassified) {
     throw new Error(
-      "FATAL: Native binding 'extractThemeFromCss' is required but not available.\n" +
+      "FATAL: Native binding 'extractThemeFromCssClassified' is required but not available.\n" +
       "Run 'npm run build:rust' to build the native module."
     )
   }
 
-  const vars = binding.extractThemeFromCss(cssContent) as Array<{ key: string; value: string }>
-  const theme = createEmptyTheme()
-
-  for (const { key, value } of vars) {
-    setToken(theme, key, value)
-  }
-
-  for (const key of Object.keys(theme.raw)) {
-    const resolved = resolveThemeValue(`--${key}`, theme)
-    theme.raw[key] = resolved
-    if (key.startsWith("color-")) theme.colors[key.slice(6)] = resolved
-    else if (key.startsWith("spacing-")) theme.spacing[key.slice(8)] = resolved
-    else if (key.startsWith("font-")) theme.fonts[key.slice(5)] = resolved
-    else if (key.startsWith("breakpoint-")) theme.breakpoints[key.slice(11)] = resolved
-    else if (key.startsWith("animate-")) theme.animations[key.slice(8)] = resolved
-  }
-
-  cache.set(cssContent, theme)
-  return theme
+  const result = binding.extractThemeFromCssClassified(cssContent) as ThemeConfig
+  cache.set(cssContent, result)
+  return result
 }
 
 // ─── generateTypeDefinitions — build-time CLI codegen ────────────────────────
 
 export function generateTypeDefinitions(theme: ThemeConfig): string {
   const binding = getNativeBinding()
-
-  // ── Fast path: Rust codegen (CLI path — build-time only) ─────────────────
-  if (binding?.generateTypeDefinitions) {
-    // Omit 'raw' dari JSON — tidak masuk ke interface output
-    const { raw: _raw, ...rest } = theme
-    return binding.generateTypeDefinitions(JSON.stringify(rest)) as string
+  if (!binding?.generateTypeDefinitions) {
+    throw new Error("FATAL: Native binding 'generateTypeDefinitions' is required but not available.")
   }
-
-  // ── Fallback: JS string building ──────────────────────────────────────────
-  const toRecordType = (name: string, obj: Record<string, string>) => {
-    const keys = Object.keys(obj)
-    if (keys.length === 0) return `  ${name}: Record<string, string>`
-    const mapped = keys.map((k) => `    "${k}": string`).join("\n")
-    return `  ${name}: {\n${mapped}\n  }`
-  }
-
-  return [
-    "export interface TailwindStyledThemeTokens {",
-    toRecordType("colors", theme.colors),
-    toRecordType("spacing", theme.spacing),
-    toRecordType("fonts", theme.fonts),
-    toRecordType("breakpoints", theme.breakpoints),
-    toRecordType("animations", theme.animations),
-    "}",
-    "",
-  ].join("\n")
+  const { raw: _raw, ...rest } = theme
+  return binding.generateTypeDefinitions(JSON.stringify(rest)) as string
 }
 
 export function clearThemeReaderCache(): void {

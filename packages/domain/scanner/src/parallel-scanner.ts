@@ -12,7 +12,6 @@
  */
 
 import { Worker, isMainThread, parentPort, workerData } from "node:worker_threads"
-import fs from "node:fs"
 import path from "node:path"
 import { availableParallelism } from "node:os"
 import { fileURLToPath } from "node:url"
@@ -72,34 +71,9 @@ type WorkerOutput =
  * JS fallback: dipakai jika native binding tidak tersedia (mis. test env).
  */
 function collectFiles(rootDir: string, extensions: string[], ignoreDirs: string[]): string[] {
-  // Native-first: satu NAPI call menggantikan seluruh rekursi JS
   const native = collectFilesNative(rootDir, extensions, ignoreDirs)
   if (native !== null) return native
-
-  // JS fallback
-  const files: string[] = []
-
-  function walk(dir: string): void {
-    let entries: fs.Dirent[]
-    try {
-      entries = fs.readdirSync(dir, { withFileTypes: true })
-    } catch {
-      return
-    }
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name)
-      const rel = path.relative(rootDir, fullPath)
-      if (entry.isDirectory()) {
-        const ignored = ignoreDirs.some((d) => entry.name === d || rel.startsWith(d + path.sep))
-        if (!ignored) walk(fullPath)
-      } else if (isScannableFile(entry.name, extensions)) {
-        files.push(fullPath)
-      }
-    }
-  }
-
-  walk(rootDir)
-  return files
+  throw new Error("FATAL: Native binding 'collectFiles' is required but not available.")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -112,12 +86,9 @@ function mergeResults(batchResults: NativeBatchResult[]): ScanWorkspaceResult {
     classes: r.classes,
     hash: r.content_hash,
   }))
-  // Native-first: Rust HashSet dedup + sort_unstable (satu pass, zero GC)
   const native = rebuildWorkspaceResultNative(files)
   if (native) return native
-  // Fallback — hanya aktif jika binding belum loaded (e.g. test env)
-  const unique = new Set(files.flatMap((f) => f.classes))
-  return { files, totalFiles: files.length, uniqueClasses: Array.from(unique).sort() }
+  throw new Error("FATAL: Native binding 'rebuildWorkspaceResult' is required but not available.")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

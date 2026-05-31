@@ -1,13 +1,9 @@
 /**
  * tailwind-styled-v4 — createTwMerge()
- *
- * Native-first: uses Rust `tw_merge_many` when available.
- * Browser fallback: simple join (no conflict resolution).
- * In browser/client context, classes were already resolved on the server during SSR.
+ * Pure Node.js — requires native Rust binding.
  */
 
 import { getNativeBinding } from "./native"
-
 import type { ThemeConfig } from "./themeReader"
 
 export interface MergeOptions {
@@ -16,51 +12,20 @@ export interface MergeOptions {
   theme?: ThemeConfig
 }
 
-function normalizeClassInput(classLists: Array<string | undefined | null | false>): string[] {
-  // Single-pass: gabungkan filter + trim + length check dalam satu loop.
-  // Sebelumnya: 3 array traversals (.filter → .map → .filter) → 3 intermediate arrays.
-  // Sesudah: 1 traversal, 1 output array, zero intermediate allocations.
-  const result: string[] = []
-  for (let i = 0; i < classLists.length; i++) {
-    const v = classLists[i]
-    if (!v) continue
-    const s = String(v).trim()
-    if (s.length > 0) result.push(s)
-  }
-  return result
-}
-
-/**
- * createTwMerge — returns a conflict-aware merge function.
- * Native-first: uses Rust `tw_merge_many` when available.
- * Browser fallback: simple join without conflict resolution.
- *
- * IMPORTANT: The browser fallback must produce output identical to the server
- * (Rust) path to avoid React hydration mismatches. For static base classes this
- * is fine because they are pre-resolved at build time. For runtime className
- * overrides passed by the consumer, the join order must be stable and
- * deterministic on both sides.
- *
- * Note: `prefix` and `separator` options are not supported in native mode
- * (Tailwind v3/v4 defaults are used).
- */
 export function createTwMerge(_options: MergeOptions = {}) {
   return function twMerge(...classLists: Array<string | undefined | null | false>): string {
-    const clean = normalizeClassInput(classLists)
-    if (clean.length === 0) return ""
-
-    try {
-      const native = getNativeBinding()
-      if (native?.twMergeMany) {
-        return native.twMergeMany(clean)
-      }
-    } catch {
-      // Native binding unavailable in browser — fall through to JS fallback
+    const inputs: string[] = []
+    for (let i = 0; i < classLists.length; i++) {
+      const v = classLists[i]
+      if (v) inputs.push(String(v))
     }
+    if (inputs.length === 0) return ""
 
-    // Browser/client fallback: simple join — input classes are already
-    // individually conflict-resolved from the server SSR pass.
-    return clean.join(" ")
+    const native = getNativeBinding()
+    if (!native?.twMergeRaw) {
+      throw new Error("Native binding 'twMergeRaw' is required but not available.")
+    }
+    return native.twMergeRaw(inputs)
   }
 }
 
@@ -75,6 +40,5 @@ export function mergeWithRules(
     (acc, rule) => twMerge(rule(acc)).split(/\s+/).filter(Boolean),
     base.split(/\s+/).filter(Boolean)
   )
-
   return classes.join(" ")
 }

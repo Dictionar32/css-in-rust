@@ -24,28 +24,17 @@ export const splitVariantAndBase = (className: string): { variantKey: string; ba
   return { variantKey: parts.join(":"), base }
 }
 
-const isArbitraryUtility = (baseClass: string): boolean => {
-  return baseClass.includes("[") && baseClass.includes("]")
-}
-
-export const resolveConflictGroup = (base: string): string | null => {
-  if (isArbitraryUtility(base)) return null
-  if (["block", "inline", "inline-block", "inline-flex", "flex", "grid", "hidden"].includes(base))
-    return "display"
-  if (base.startsWith("bg-")) return "bg"
-  if (base.startsWith("text-")) return "text"
-  if (base.startsWith("font-")) return "font"
-  if (base.startsWith("rounded")) return "rounded"
-  if (base.startsWith("shadow")) return "shadow"
-  if (base.startsWith("border-")) return "border"
-  if (base.startsWith("opacity-")) return "opacity"
-  if (base.startsWith("w-") || base.startsWith("min-w-") || base.startsWith("max-w-"))
-    return "width"
-  if (base.startsWith("h-") || base.startsWith("min-h-") || base.startsWith("max-h-"))
-    return "height"
-  if (base.startsWith("p-") || base.startsWith("px-") || base.startsWith("py-")) return "padding"
-  if (base.startsWith("m-") || base.startsWith("mx-") || base.startsWith("my-")) return "margin"
-  return null
+/**
+ * resolveConflictGroup — delegates ke Rust `resolve_conflict_group`.
+ * Return: string | null — null jika tidak ada conflict group.
+ */
+export const resolveConflictGroup = async (base: string): Promise<string | null> => {
+  const native = await getNativeBinding()
+  if (!native?.resolveConflictGroup) {
+    throw new Error("Native binding 'resolveConflictGroup' is required but not available.")
+  }
+  const result = native.resolveConflictGroup(base) as string
+  return result.length > 0 ? result : null
 }
 
 const detectConflicts = async (
