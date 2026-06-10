@@ -300,18 +300,23 @@ export async function runCompileVariantsCli(rawArgs: string[]): Promise<void> {
     let table: VariantTableResult
 
     // ── Native path: Rust cartesian product (10–100x faster for large configs)
-    const native = getNativeBridge()
-    if (native?.compileVariantTable) {
-      const result = native.compileVariantTable(JSON.stringify(config))
-      table = {
-        id: result.id,
-        tableJson: result.tableJson,
-        keys: result.keys,
-        defaultKey: result.defaultKey,
-        combinations: result.combinations,
+    try {
+      const native = getNativeBridge()
+      if (native.compileVariantTable && typeof native.compileVariantTable === 'function') {
+        const result = native.compileVariantTable(JSON.stringify(config))
+        table = {
+          id: result.id,
+          tableJson: result.tableJson,
+          keys: result.keys,
+          defaultKey: result.defaultKey,
+          combinations: result.combinations,
+        }
+      } else {
+        // ── JS fallback
+        table = compileVariantTableJS(config)
       }
-    } else {
-      // ── JS fallback
+    } catch {
+      // ── JS fallback if native unavailable
       table = compileVariantTableJS(config)
     }
 

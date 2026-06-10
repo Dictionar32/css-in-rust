@@ -7,7 +7,8 @@
  * These are handled by native parseCssRules + resolve_cascade.
  */
 
-import { type CssCompileResult, compileCssFromClasses } from "@tailwind-styled/compiler/internal"
+import { compileCssFromClasses } from "@tailwind-styled/compiler/internal"
+import type { CssCompileResult } from "@tailwind-styled/compiler/internal"
 import {
   CascadeResolver,
   parseCssToIr,
