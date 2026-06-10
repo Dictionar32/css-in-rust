@@ -13,8 +13,9 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VariantConfig {
     pub base: Option<String>,
+    #[serde(default)]  // base-only / compound-only configs omit this
     pub variants: HashMap<String, HashMap<String, String>>,
-    #[serde(default)]  // default to empty vec if missing
+    #[serde(default, alias = "compoundVariants")]  // accept camelCase (TS) and snake_case (Rust)
     pub compound_variants: Vec<CompoundVariant>,
     #[serde(default, alias = "defaultVariants")]  // accept both camelCase (TS) and snake_case (Rust)
     pub default_variants: HashMap<String, String>,

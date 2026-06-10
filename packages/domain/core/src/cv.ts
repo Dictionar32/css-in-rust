@@ -107,13 +107,27 @@ function resolveVariantsNative<C extends ComponentConfig>(
       const cfgObj = (config as unknown as Record<string, unknown>)
       const cfgStr = JSON.stringify(cfgObj)
       const parsed = JSON.parse(cfgStr) as Record<string, unknown>
-      
+
       // Rename defaultVariants to default_variants for Rust compatibility
       if ('defaultVariants' in parsed && !('default_variants' in parsed)) {
         parsed.default_variants = parsed.defaultVariants
         delete parsed.defaultVariants
       }
-      
+
+      // Rename compoundVariants to compound_variants. The Rust VariantConfig has
+      // no serde alias for this field (unlike default_variants), so without the
+      // rename Rust silently falls back to an empty vec and drops every compound.
+      if ('compoundVariants' in parsed && !('compound_variants' in parsed)) {
+        parsed.compound_variants = parsed.compoundVariants
+        delete parsed.compoundVariants
+      }
+
+      // Rust requires a `variants` field (it is not #[serde(default)]); a base-only
+      // or compound-only config omits it, which makes deserialization fail.
+      if (!('variants' in parsed) || parsed.variants == null) {
+        parsed.variants = {}
+      }
+
       return JSON.stringify(parsed)
     })()
     const cleanProps: Record<string, string> = {}
@@ -135,17 +149,31 @@ function resolveVariantsNative<C extends ComponentConfig>(
       console.warn("[cv() fallback] getNativeBinding threw error, using JS fallback")
     }
     const result: string[] = []
-    const { base = "" } = config
+    const { base = "", compoundVariants = [] } = config
     if (base) result.push(base)
 
+    const merged: Record<string, unknown> = { ...defaultVariants }
     for (const [key, values] of Object.entries(variants || {})) {
       const selected = (props as Record<string, unknown>)[key] ?? defaultVariants?.[key]
+      if (selected !== undefined && selected !== null) merged[key] = selected
       if (selected && typeof values === 'object' && values !== null) {
         const variantValues = values as Record<string, string>
         if (variantValues[String(selected)]) {
           result.push(variantValues[String(selected)])
         }
       }
+    }
+
+    // Compound variants — parity with the native path, which resolves these in Rust.
+    // Without this, compoundVariants are silently dropped whenever the binding is absent.
+    for (const compound of compoundVariants) {
+      const { class: compoundClass, ...conditions } = compound as {
+        class: string
+      } & Record<string, unknown>
+      const matches = Object.entries(conditions).every(
+        ([k, v]) => String(merged[k]) === String(v)
+      )
+      if (matches && compoundClass) result.push(compoundClass)
     }
 
     return result.join(" ")

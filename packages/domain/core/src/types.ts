@@ -380,27 +380,3 @@ export function createVariantStoryArgs(config: ComponentConfig): {
     matrix,
   }
 }
-
-export function getVariantClass(config: ComponentConfig, props: Record<string, string>): string {
-  const classes: string[] = []
-
-  if (config.base) classes.push(config.base)
-
-  if (config.variants) {
-    for (const [key, values] of Object.entries(config.variants)) {
-      const val = props[key] ?? config.defaultVariants?.[key]
-      if (val && values[val]) classes.push(values[val])
-    }
-  }
-
-  if (config.compoundVariants) {
-    for (const compound of config.compoundVariants) {
-      const { class: cls, ...conditions } = compound
-      if (Object.entries(conditions).every(([k, v]) => props[k] === v)) {
-        classes.push(cls)
-      }
-    }
-  }
-
-  return classes.join(" ")
-}
