@@ -14,6 +14,7 @@ pub mod domain;
 pub mod infrastructure;
 pub mod interface;
 pub mod shared;
+pub mod utils;
 
 #[cfg(test)]
 mod tests;
@@ -31,6 +32,7 @@ mod watcher_tests;
 pub use application::analyzer::{
     analyze_classes, build_distribution, collect_class_counts, compute_class_stats,
 };
+pub use application::class_parser::ClassParser;
 pub use application::animate_utils::{
     animation_cache_key, keyframes_cache_key, normalize_iterations, normalize_number,
     split_animate_classes, stable_keyframes_entries,
@@ -118,6 +120,7 @@ pub use domain::variants::{
 
 // Infrastructure
 pub use infrastructure::cache_store::*;
+pub use infrastructure::napi_bridge::*;
 
 // Interface exports - class extractor
 pub use interface::class_extractor::{

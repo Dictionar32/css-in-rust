@@ -8,8 +8,8 @@ const args = new Map(
   })
 )
 
-const inputDir = path.resolve(args.get("input") ?? "artifacts/scale")
-const outFile = args.get("out") ? path.resolve(args.get("out")) : null
+const inputDir = path.resolve((args.get("input") as string | undefined) ?? "artifacts/scale")
+const outFile = args.get("out") ? path.resolve(args.get("out") as string) : null
 
 if (!fs.existsSync(inputDir)) {
   throw new Error(`Input directory not found: ${inputDir}`)
@@ -28,9 +28,10 @@ for (const file of files) {
   else if (file.startsWith("watch-")) watch.push({ file, data })
 }
 
-function average(values) {
-  if (values.length === 0) return null
-  return Math.round(values.reduce((acc, v) => acc + v, 0) / values.length)
+function average(values: (number | null | undefined)[]): number | null {
+  const nums = values.filter(Number.isFinite) as number[]
+  if (nums.length === 0) return null
+  return Math.round(nums.reduce((acc, v) => acc + v, 0) / nums.length)
 }
 
 const summary = {

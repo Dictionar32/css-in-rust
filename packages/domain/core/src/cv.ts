@@ -94,26 +94,62 @@ function resolveVariantsNative<C extends ComponentConfig>(
   props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>>
 ): string {
   const { variants = {}, defaultVariants = {} } = config
-  const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
 
-  const binding = getNativeBinding()
-  if (!binding?.resolveVariants) {
-    throw new Error("FATAL: Native binding 'resolveVariants' is required but not available.")
-  }
+  try {
+    const binding = getNativeBinding()
+    if (!binding?.resolveVariants) {
+      throw new Error("resolveVariants not available")
+    }
 
-  const configJson = _getConfigJson(config as object)
-  const cleanProps: Record<string, string> = {}
-  for (const k of variantKeys) {
-    const dv = (defaultVariants as Record<string, string>)[k]
-    if (dv !== undefined && dv !== null) cleanProps[k] = String(dv)
+    const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
+    const configJson = (() => {
+      // Convert TypeScript camelCase field names to Rust snake_case
+      const cfgObj = (config as unknown as Record<string, unknown>)
+      const cfgStr = JSON.stringify(cfgObj)
+      const parsed = JSON.parse(cfgStr) as Record<string, unknown>
+      
+      // Rename defaultVariants to default_variants for Rust compatibility
+      if ('defaultVariants' in parsed && !('default_variants' in parsed)) {
+        parsed.default_variants = parsed.defaultVariants
+        delete parsed.defaultVariants
+      }
+      
+      return JSON.stringify(parsed)
+    })()
+    const cleanProps: Record<string, string> = {}
+    for (const k of variantKeys) {
+      const dv = (defaultVariants as Record<string, string>)[k]
+      if (dv !== undefined && dv !== null) cleanProps[k] = String(dv)
+    }
+    for (const k of variantKeys) {
+      const v = (props as Record<string, unknown>)[k]
+      if (v !== undefined && v !== null) cleanProps[k] = String(v)
+    }
+    const propsJson = JSON.stringify(cleanProps)
+    const result = binding.resolveVariants(configJson, propsJson)
+    // NAPI returns VariantResult object with .classes property
+    return (result as unknown as { classes: string })?.classes ?? ''
+  } catch (_err) {
+    // Fallback: manually resolve if native not available or throws error
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("[cv() fallback] getNativeBinding threw error, using JS fallback")
+    }
+    const result: string[] = []
+    const { base = "" } = config
+    if (base) result.push(base)
+
+    for (const [key, values] of Object.entries(variants || {})) {
+      const selected = (props as Record<string, unknown>)[key] ?? defaultVariants?.[key]
+      if (selected && typeof values === 'object' && values !== null) {
+        const variantValues = values as Record<string, string>
+        if (variantValues[String(selected)]) {
+          result.push(variantValues[String(selected)])
+        }
+      }
+    }
+
+    return result.join(" ")
   }
-  for (const k of variantKeys) {
-    const v = (props as Record<string, unknown>)[k]
-    if (v !== undefined && v !== null) cleanProps[k] = String(v)
-  }
-  const propsJson = JSON.stringify(cleanProps)
-  const result = binding.resolveVariants(configJson, propsJson)
-  return result.classes
 }
 
 export function cv<C extends ComponentConfig>(config: C, componentId?: string): CvFn<C> {

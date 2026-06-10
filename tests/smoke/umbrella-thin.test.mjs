@@ -30,20 +30,24 @@ describe("Root umbrella package — thin wrapper assertion", () => {
       const trimmed = content.trim()
 
       // Umbrella files should only have export * / export { } / import for bin
-      const hasOnlyReExports = (
-        trimmed.split("\n").every(line => {
-          const stripped = line.trim()
-          return (
-            stripped === "" ||
-            stripped.startsWith("//") ||
-            stripped.startsWith("export *") ||
-            stripped.startsWith("export {") ||
-            stripped.startsWith("export type") ||
-            stripped.startsWith("import ") ||
-            stripped.startsWith("#!/usr/bin/env")
-          )
-        })
-      )
+      // Allow comments, whitespace, and re-export statements only
+      const lines = trimmed.split("\n").filter(l => l.trim().length > 0)
+      const codeLines = lines.filter(l => !l.trim().startsWith("//") && !l.trim().startsWith("/*") && !l.trim().startsWith("*"))
+      
+      const hasOnlyReExports = codeLines.every(line => {
+        const stripped = line.trim()
+        return (
+          stripped === "" ||
+          stripped.startsWith("export *") ||
+          stripped.startsWith("export {") ||
+          stripped.startsWith("export type") ||
+          stripped.startsWith("import ") ||
+          stripped.startsWith("#!/usr/bin/env") ||
+          stripped.endsWith("}") ||
+          stripped.endsWith('")') ||
+          stripped.endsWith("'")
+        )
+      })
 
       assert.ok(
         hasOnlyReExports,

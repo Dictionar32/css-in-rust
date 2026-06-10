@@ -12,39 +12,39 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const REPO_ROOT = path.resolve(__dirname, "..")
 
-function parseArg(name, fallback = undefined) {
+function parseArg(name: string, fallback: string | undefined = undefined): string | undefined {
   const prefixed = `--${name}=`
   const value = process.argv.find((arg) => arg.startsWith(prefixed))
   if (!value) return fallback
   return value.slice(prefixed.length)
 }
 
-function parseNumberArg(name, fallback) {
+function parseNumberArg(name: string, fallback: number): number {
   const raw = parseArg(name, String(fallback))
   const num = Number(raw)
   return Number.isFinite(num) ? num : fallback
 }
 
-function avg(list) {
+function avg(list: number[]): number {
   if (list.length === 0) return 0
   return list.reduce((sum, n) => sum + n, 0) / list.length
 }
 
-function formatMs(value) {
+function formatMs(value: number): string {
   return `${Math.round(value)} ms`
 }
 
-function formatPercent(value) {
+function formatPercent(value: number): string {
   if (!Number.isFinite(value)) return "n/a"
   return `${Math.round(value)}%`
 }
 
-function safeImprovement(from, to) {
+function safeImprovement(from: number, to: number): number {
   if (from <= 0) return Number.NaN
   return (1 - to / from) * 100
 }
 
-function ensureDistOrExit(modulePath, label) {
+function ensureDistOrExit(modulePath: string, label: string): void {
   if (!fs.existsSync(modulePath)) {
     console.error(`[benchmark] Missing ${label}: ${modulePath}`)
     console.error("[benchmark] Run `npm run build -w packages/domain/scanner -w packages/domain/engine` first.")
@@ -117,7 +117,7 @@ async function runInternalWatchCpu() {
   let toggle = false
   const handle = engine.watchWorkspaceNative(
     tempRoot,
-    (events) => {
+    (events: unknown[]) => {
       eventCount += events.length
     },
     { pollIntervalMs }
@@ -158,7 +158,7 @@ async function runInternalWatchCpu() {
   )
 }
 
-function runSubprocess(internal, extraArgs = [], env = process.env) {
+function runSubprocess(internal: string, extraArgs: string[] = [], env: Record<string, string | undefined> = process.env): unknown {
   const args = [
     __filename,
     `--internal=${internal}`,

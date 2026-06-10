@@ -6,8 +6,8 @@ description = "Native Rust engine for tailwind-styled-v5"
 
 [lib]
 # cdylib  → .node file for Node.js N-API
-# staticlib → optional, for C ABI consumers (bindings/)
-crate-type = ["cdylib"]
+# rlib → Rust library for tests and other crates
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 napi = { version = "3", features = ["napi4"] }
@@ -16,6 +16,7 @@ napi-derive = "3"
 regex = "1"
 # Once-cell for lazy static regex compilation (avoid recompiling on every call)
 once_cell = "1"
+lazy_static = "1.4"
 dashmap = "6.1.0"
 notify = "6"
 # ─ OPTIMIZATION (Phase 2): Parallel iterators for workspace scanning
@@ -40,6 +41,10 @@ lightningcss = { version = "1.0.0-alpha.60", features = ["default"] }
 
 [dev-dependencies]
 serial_test = "3.0"
+quickcheck = "1"
+quickcheck_macros = "1"
+criterion = { version = "0.5", features = ["html_reports"] }
+tailwind_styled_parser = { path = "." }
 
 [build-dependencies]
 napi-build = "2"

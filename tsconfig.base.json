@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2025",
+    "target": "ES2024",
     "lib": [
-      "ES2025",
+      "ES2024",
       "DOM",
       "DOM.Iterable"
     ],
@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "ignoreDeprecations": "6.0",
+
     "rootDir": ".",
     "jsx": "react-jsx",
     "declaration": true,

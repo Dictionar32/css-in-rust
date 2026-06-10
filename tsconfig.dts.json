@@ -6,6 +6,7 @@
     "noUncheckedSideEffectImports": false,
     "skipLibCheck": true,
     "isolatedModules": false,
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@tailwind-styled/shared": [
         "./packages/domain/shared/src/index.ts"

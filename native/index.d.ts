@@ -61,6 +61,18 @@ export declare function animationCacheKey(optsJson: string): string
 export declare function applyClassDiff(existing: Array<string>, added: Array<string>, removed: Array<string>): Array<string>
 
 /**
+ * Apply opacity modifier to a color (Week 4 Day 2)
+ *
+ * # Arguments
+ * * `color` - Hex color value (e.g., "#1e40af")
+ * * `opacity` - Opacity percentage 0-100 (e.g., "50")
+ *
+ * # Returns
+ * RGBA color string (e.g., "rgba(30, 64, 175, 0.5)")
+ */
+export declare function applyOpacity(color: string, opacity: string): string
+
+/**
  * Cek apakah dua class array berisi elemen identik (order-independent).
  *
  * **Menggantikan** `areClassSetsEqual()` di `engine/src/incremental.ts`.
@@ -249,6 +261,9 @@ export interface BatchExtractResult {
  *   → { variantKey: "dark:hover", base: "bg-blue-500", modifier: "50", ... }
  */
 export declare function batchSplitClasses(classes: Array<string>): Array<VariantSplitResult>
+
+/** Benchmark streaming vs buffered compilation */
+export declare function benchmarkStreamingVsBuffered(classCount: number): string
 
 export interface BucketedClass {
   className: string
@@ -602,6 +617,14 @@ export interface ClassUsageResult {
 }
 
 /**
+ * Clear all caches
+ *
+ * Resets all cache layers and statistics
+ * Useful for memory cleanup or testing
+ */
+export declare function clearAllCaches(): void
+
+/**
  * Clear the global atomic registry.
  * JS equivalent: `clearAtomicRegistry()`
  */
@@ -614,8 +637,26 @@ export declare function clearAtomicRegistry(): void
  */
 export declare function clearAtomicRegistry(): void
 
+/** Clear compile cache specifically */
+export declare function clearCompileCache(): void
+
+/** Clear CSS generation cache specifically */
+export declare function clearCssGenCache(): void
+
 /** Hapus semua entries dari kedua registry — useful untuk test isolation. */
 export declare function clearNameRegistries(): void
+
+/** Clear parse cache specifically */
+export declare function clearParseCache(): void
+
+/** Clear resolve cache specifically */
+export declare function clearResolveCache(): void
+
+/** Clear the theme resolver cache */
+export declare function clearThemeCache(): void
+
+/** Clear the theme resolver cache */
+export declare function clearThemeCache(): void
 
 /**
  * Aggregate class counts from a list of (file, classes[]) scan entries.
@@ -650,14 +691,49 @@ export declare function collectFiles(root: string, extensions?: Array<string> | 
 export declare function compileAnimation(from: string, to: string, name?: string | undefined | null, durationMs?: number | undefined | null, easing?: string | undefined | null, delayMs?: number | undefined | null, fill?: string | undefined | null, iterations?: string | undefined | null, direction?: string | undefined | null): CompiledAnimation
 
 /**
+ * Compile a Tailwind class to CSS (Week 4 Day 2)
+ *
+ * Full pipeline: parse → resolve → generate CSS
+ *
+ * # Arguments
+ * * `input` - Tailwind class string (e.g., "md:hover:bg-blue-600/50")
+ *
+ * # Returns
+ * JSON string containing CSS rule with selector, property, value, variants
+ *
+ * # Example
+ * ```js
+ * const css = compileClass("md:hover:bg-blue-600/50");
+ * // Returns: '{"selector":".md\\:hover\\:bg-blue-600\\/50",...}'
+ * ```
+ */
+export declare function compileClass(input: string): string
+
+/**
+ * Compile multiple Tailwind classes to CSS (Week 4 Day 2)
+ *
+ * Batch processing with parallel execution using rayon
+ *
+ * # Arguments
+ * * `inputs` - Array of Tailwind class strings
+ *
+ * # Returns
+ * JSON array string containing CSS rules
+ *
+ * # Example
+ * ```js
+ * const css = compileClasses(["bg-blue-600", "text-white", "p-4"]);
+ * // Returns: '[{"selector":".bg-blue-600",...},...]'
+ * ```
+ */
+export declare function compileClasses(inputs: Array<string>): string
+
+/**
  * Compile a list of Tailwind classes into atomic CSS.
  * This is the Rust implementation of LightningCSS-style compilation.
  * For classes without a known mapping, generates `@apply` fallback rules.
  */
 export declare function compileCss(classes: Array<string>, prefix?: string | undefined | null): CssCompileResult
-
-/** Alias untuk backward compat. */
-export declare function compileCssLightning(css: string, prefix?: string | undefined | null): CssCompileResult
 
 export interface CompiledAnimation {
   className: string
@@ -684,13 +760,6 @@ export interface CompiledTheme {
 export declare function compileKeyframes(name: string, stopsJson: string): CompiledAnimation
 
 /**
- * Process raw CSS string (bukan class names) dengan LightningCSS.
- * CSS harus datang dari Tailwind JS engine.
- * Renamed dari compile_css untuk menghindari konflik dengan legacy_part::compile_css.
- */
-export declare function compileRawCss(css: string, prefix?: string | undefined | null): CssCompileResult
-
-/**
  * Parse a token map JSON and compile it into a CSS variable block.
  *
  * `tokens_json`: `{"color":{"primary":"#3b82f6","secondary":"#8b5cf6"},"spacing":{"sm":"0.5rem"}}`
@@ -698,6 +767,40 @@ export declare function compileRawCss(css: string, prefix?: string | undefined |
  * `prefix`:      CSS variable prefix, e.g. "tw" → `--tw-color-primary`
  */
 export declare function compileTheme(tokensJson: string, themeName: string, prefix: string): CompiledTheme
+
+/**
+ * Complete pipeline: class → CSS string (Week 4 Day 3)
+ *
+ * One-step compilation from Tailwind class to CSS output
+ *
+ * # Arguments
+ * * `input` - Tailwind class string
+ * * `minify` - Whether to minify output
+ *
+ * # Returns
+ * CSS string ready for use
+ *
+ * # Example
+ * ```js
+ * const css = compileToCSS("md:hover:bg-blue-600/50", false);
+ * // Returns: "@media (min-width: 768px) { .md\\:hover\\:bg-blue-600\\/50:hover { background-color: rgba(30, 64, 175, 0.5); } }"
+ * ```
+ */
+export declare function compileToCss(input: string, minify?: boolean | undefined | null): string
+
+/**
+ * Batch compile to CSS strings (Week 4 Day 3)
+ *
+ * Complete pipeline for multiple classes
+ *
+ * # Arguments
+ * * `inputs` - Array of Tailwind class strings
+ * * `minify` - Whether to minify output
+ *
+ * # Returns
+ * Combined CSS string
+ */
+export declare function compileToCssBatch(inputs: Array<string>, minify?: boolean | undefined | null): string
 
 /**
  * Compile semua kombinasi variant component ke lookup table.
@@ -813,13 +916,6 @@ export interface CssCompileResult {
   sizeBytes: number
 }
 
-export interface CssCompileResult {
-  css: string
-  sizeBytes: number
-  resolvedClasses: Array<string>
-  unknownClasses: Array<string>
-}
-
 export interface CssDeclarationMap {
   /** JSON: Record<string, string> — property → value (last wins) */
   declarationsJson: string
@@ -907,6 +1003,15 @@ export declare function detectDeadCode(scanResultJson: string, css: string): Dea
  * HashSet-based diff: O(n+m) vs JS array indexOf O(n*m).
  */
 export declare function diffClassLists(previous: Array<string>, current: Array<string>): ClassDiffResult
+
+/** Estimate optimal batch size for streaming compilation */
+export declare function estimateOptimalBatchSize(totalClasses: number, memoryAvailableMb: number): number
+
+/** Estimate optimal cache configuration for a workload */
+export declare function estimateOptimalCacheConfigNative(totalBudgetMb: number, workloadType: string): string
+
+/** Estimate optimal batch size for streaming compilation */
+export declare function estimateStreamingBatchSize(totalClasses: number, availableMemoryMb: number): number
 
 export declare function extractAllClasses(source: string): Array<string>
 
@@ -1012,6 +1117,13 @@ export interface FileScanEntry {
 }
 
 /**
+ * flatten_and_resolve — flatten nested JSON array + join dalam satu NAPI call.
+ * Menggantikan pola JS: flattenInputs() stack loop → resolveClassNames().
+ * Input: JSON.stringify(nestedArray) dari JS, e.g. '["p-4", ["flex", null], false]'.
+ */
+export declare function flattenAndResolve(nestedJson: string): string
+
+/**
  * Generate CSS string from an array of AtomicRule JSON.
  *
  * Input JSON: `Array<AtomicRule>`
@@ -1028,6 +1140,64 @@ export declare function generateAtomicCss(rulesJson: string): string
  * Input JSON: `[{ twClass, atomicName, property, value, modifier? }, ...]`
  */
 export declare function generateAtomicCss(rulesJson: string): string
+
+/**
+ * Generate CSS string from CssRule (Week 4 Day 3)
+ *
+ * Converts CssRule JSON to actual CSS string with proper formatting
+ *
+ * # Arguments
+ * * `rule_json` - JSON string containing CssRule
+ * * `minify` - Whether to minify output (default: false)
+ *
+ * # Returns
+ * CSS string ready for browser
+ *
+ * # Example
+ * ```js
+ * const css = generateCss(ruleJson, false);
+ * // Returns: ".selector { property: value; }"
+ * ```
+ */
+export declare function generateCss(ruleJson: string, minify?: boolean | undefined | null): string
+
+/**
+ * Generate CSS from multiple rules (Week 4 Day 3)
+ *
+ * Batch CSS generation with optional minification
+ *
+ * # Arguments
+ * * `rules_json` - JSON array string containing multiple CssRules
+ * * `minify` - Whether to minify output
+ *
+ * # Returns
+ * Combined CSS string
+ */
+export declare function generateCssBatch(rulesJson: string, minify?: boolean | undefined | null): string
+
+/**
+ * Generate CSS from Tailwind class names
+ *
+ * # Arguments
+ * * `classes` - Array of Tailwind class names
+ * * `theme_json` - Theme configuration as JSON string
+ *
+ * # Returns
+ * Generated CSS string or error
+ */
+export declare function generateCssNative(classes: Array<string>, themeJson: string): string
+
+/**
+ * Generate CSS from Tailwind class names
+ *
+ * # Arguments
+ * * `classes` - Array of Tailwind class names
+ * * `theme_json` - Theme configuration as JSON string
+ *
+ * # Returns
+ * Generated CSS string or error
+ */
+export declare function generateCssNative(classes: Array<string>, themeJson: string): string
 
 /** Satu CSS rule yang di-generate untuk satu state entry. */
 export interface GeneratedStateRule {
@@ -1214,6 +1384,45 @@ export declare function generateSystemTokenCss(tokensJson: string, prefix: strin
  * drop-in replacement untuk CLI codegen.
  */
 export declare function generateTypeDefinitions(themeJson: string): string
+
+/** Get optimization recommendations for current cache state */
+export declare function getCacheOptimizationHints(hitRatePercent: number, memoryUsedMb: number, uniqueClasses: number): string
+
+/**
+ * Get cache statistics and hit/miss rates (Phase 2)
+ *
+ * Returns JSON with cache stats:
+ * - parse_cache: {size, capacity, hits, misses, hit_rate}
+ * - resolve_cache: {size, capacity, hits, misses, hit_rate}
+ * - compile_cache: {size, capacity, hits, misses, hit_rate}
+ * - css_gen_cache: {size, capacity, hits, misses, hit_rate}
+ * - total_hits: Total cache hits across all caches
+ * - total_misses: Total cache misses across all caches
+ * - overall_hit_rate: Overall hit rate percentage
+ */
+export declare function getCacheStatistics(): string
+
+/**
+ * Get cache statistics
+ *
+ * Returns (hits, misses) tuple
+ */
+export declare function getCacheStats(): [number, number]
+
+/** Get memory optimization recommendations */
+export declare function getMemoryRecommendationsNative(): string
+
+/** Get current memory statistics for all cache layers */
+export declare function getMemoryStatsNative(): string
+
+/** Get optimization recommendations based on current cache metrics */
+export declare function getOptimizationRecommendations(hitRate: number, memoryMb: number, classCount: number): string
+
+/** Get Week 6 feature status */
+export declare function getWeek6FeaturesStatus(): string
+
+/** Get Week 6 optimization status */
+export declare function getWeek6OptimizationStatus(): string
 
 /**
  * Hash a content string dengan algoritma pilihan.
@@ -1448,6 +1657,19 @@ export declare function layoutClassesToCss(classes: string): string
  */
 export declare function mergeCssDeclarations(cssChunks: Array<string>): CssDeclarationMap
 
+/**
+ * Minify CSS string (Week 4 Day 3)
+ *
+ * Remove whitespace and optimize CSS
+ *
+ * # Arguments
+ * * `css` - CSS string to minify
+ *
+ * # Returns
+ * Minified CSS string
+ */
+export declare function minifyCss(css: string): string
+
 export interface NativeScanFileResult {
   file: string
   classes: Array<string>
@@ -1539,7 +1761,26 @@ export declare function parseAtomicClass(twClass: string): string | null
  */
 export declare function parseAtomicClass(twClass: string): AtomicRule | null
 
-export declare function parseClasses(input: string): Array<ParsedClass>
+/**
+ * Parse a Tailwind class into its components (Week 4 Day 1)
+ *
+ * # Arguments
+ * * `input` - Tailwind class string (e.g., "md:hover:bg-blue-600/50")
+ *
+ * # Returns
+ * JSON string containing parsed components:
+ * - variants: array of variant strings
+ * - prefix: utility prefix (e.g., "bg")
+ * - value: theme value (e.g., "blue-600")
+ * - modifier: optional modifier (e.g., "50" for opacity)
+ *
+ * # Example
+ * ```js
+ * const result = parseClass("md:hover:bg-blue-600/50");
+ * // Returns: '{"variants":["md","hover"],"prefix":"bg","value":"blue-600","modifier":"50"}'
+ * ```
+ */
+export declare function parseClass(input: string): string
 
 export declare function parseClasses(raw: string): Array<ClassToken>
 
@@ -1574,14 +1815,6 @@ export declare function parseCssRules(css: string): Array<CssRuleLookup>
  * Dipakai oleh engine trace, tw why, dan devtools inspector.
  */
 export declare function parseCssToRules(css: string, prefix?: string | undefined | null): Array<ParsedCssRule>
-
-export interface ParsedClass {
-  raw: string
-  base: string
-  variants: Array<string>
-  modifierType?: string
-  modifierValue?: string
-}
 
 export interface ParsedCssRule {
   className: string
@@ -1719,6 +1952,9 @@ export declare function pluginVerifyIntegrity(content: string, expectedIntegrity
  */
 export declare function pollWatchEvents(handleId: number): Array<WatchChangeEvent>
 
+/** Predict memory usage with current cache configuration */
+export declare function predictMemoryUsage(uniqueClasses: number, avgClassSizeBytes: number, cacheMultiplier: number): number
+
 /** Output dari `walk_and_prefilter_source_files()` — satu file yang lolos filter. */
 export interface PrefilterFileResult {
   /** Absolute path ke file */
@@ -1756,12 +1992,6 @@ export declare function pregenerateStatesNapi(states: Record<string, string>): S
  * - `content`: when `None`, file is treated as deleted and registry entry is removed.
  */
 export declare function processFileChange(filePath: string, newClasses: Array<string>, content?: string | undefined | null): FileChangeDiff
-
-/** Entry point utama — post-process raw CSS dari Tailwind JS dengan LightningCSS. */
-export declare function processTailwindCssLightning(css: string): CssCompileResult
-
-/** Post-process dengan vendor prefix sesuai target browser. */
-export declare function processTailwindCssWithTargets(css: string, targets?: string | undefined | null): CssCompileResult
 
 /**
  * Resolve PropertyId ke nama yang sudah terdaftar.
@@ -1822,6 +2052,69 @@ export interface RebuildResult {
  */
 export declare function rebuildWorkspaceResult(files: Array<IncrementalFileEntry>): RebuildResult
 
+/** Recommend cache strategy based on workload */
+export declare function recommendCachingStrategy(isSsr: boolean, classReuseRatio: number, memoryConstraintMb: number): string
+
+/** Clear cache and reset stats (Phase 4 Redis Function #14) */
+export declare function redisCacheClear(): string
+
+/** Get cache hit rate (Phase 4 Redis Function #16) */
+export declare function redisCacheHitRate(): string
+
+/** Delete key from Redis (Phase 4 Redis Function #4) */
+export declare function redisDelete(key: string): string
+
+/** Enable cluster mode (Phase 4 Redis Function #15) */
+export declare function redisEnableCluster(enabled: boolean): string
+
+/** Check if key exists in Redis (Phase 4 Redis Function #7) */
+export declare function redisExists(key: string): string
+
+/** Set expiration on key (Phase 4 Redis Function #8) */
+export declare function redisExpire(key: string, ttlSeconds: number): string
+
+/** Flush all keys in Redis database (Phase 4 Redis Function #11) */
+export declare function redisFlushDb(): string
+
+/** Get value from Redis (Phase 4 Redis Function #3) */
+export declare function redisGet(key: string): string
+
+/** Get Redis configuration (Phase 4 Redis Function #19) */
+export declare function redisGetConfig(): string
+
+/** Get Redis server info (Phase 4 Redis Function #13) */
+export declare function redisInfo(): string
+
+/** Get multiple values from Redis (Phase 4 Redis Function #5) */
+export declare function redisMget(keys: Array<string>): string
+
+/** Monitor Redis performance (Phase 4 Redis Function #17) */
+export declare function redisMonitor(): string
+
+/** Set multiple key-value pairs in Redis (Phase 4 Redis Function #6) */
+export declare function redisMset(pairs: Array<[string, string]>): string
+
+/** Ping Redis server (Phase 4 Redis Function #12) */
+export declare function redisPing(): string
+
+/** Initialize Redis pool with custom config (Phase 4 Redis Function #1) */
+export declare function redisPoolConnect(host: string, port: number, poolSize?: number | undefined | null): string
+
+/** Get Redis pool statistics (Phase 4 Redis Function #10) */
+export declare function redisPoolStats(): string
+
+/** Set value in Redis (Phase 4 Redis Function #2) */
+export declare function redisSet(key: string, value: string, ttlSeconds?: number | undefined | null): string
+
+/** Shutdown Redis connection pool (Phase 4 Redis Function #20) */
+export declare function redisShutdown(): string
+
+/** Sync cache state across nodes (Phase 4 Redis Function #18) */
+export declare function redisSyncNodes(): string
+
+/** Get TTL remaining on key (Phase 4 Redis Function #9) */
+export declare function redisTtl(key: string): string
+
 /**
  * Daftarkan nama untuk sebuah PropertyId.
  *
@@ -1837,6 +2130,20 @@ export declare function registerPropertyName(id: number, name: string): void
  * **Menggantikan** `registerValueName(id, name)` di `engine/src/ir.ts`.
  */
 export declare function registerValueName(id: number, name: string): void
+
+/** Clear cache statistics (reset counters) */
+export declare function resetCacheStats(): void
+
+/**
+ * Resolve a breakpoint from the theme (Week 4 Day 2)
+ *
+ * # Arguments
+ * * `breakpoint` - Breakpoint identifier (e.g., "sm", "md", "lg")
+ *
+ * # Returns
+ * Resolved breakpoint value (e.g., "640px", "768px")
+ */
+export declare function resolveBreakpoint(breakpoint: string): string
 
 /**
  * Resolve CSS cascade for a set of rules.
@@ -1873,10 +2180,53 @@ export declare function resolveCascade(rulesJson: string): string
 export declare function resolveClassNames(inputs: Array<string>): string
 
 /**
+ * Resolve a color value from the theme (Week 4 Day 2)
+ *
+ * # Arguments
+ * * `color` - Color identifier (e.g., "blue-600", "slate-200")
+ *
+ * # Returns
+ * Resolved hex color value (e.g., "#1e40af")
+ */
+export declare function resolveColor(color: string): string
+
+/**
+ * resolve_conflict_group — Tailwind class prefix → conflict group name.
+ * Menggantikan if-else chain JS di semantic.ts resolveConflictGroup().
+ * Return "" jika tidak ada group — JS side convert ke null.
+ *
+ * Catatan: fungsi ini intentionally lebih sederhana dari conflict_group() internal
+ * karena dipakai untuk analyzer/devtools reporting, bukan untuk merge algorithm.
+ */
+export declare function resolveConflictGroup(base: string): string
+
+/**
+ * Resolve a font size from the theme (Week 4 Day 2)
+ *
+ * # Arguments
+ * * `size` - Font size identifier (e.g., "sm", "base", "xl")
+ *
+ * # Returns
+ * Resolved font size value (e.g., "0.875rem", "1rem")
+ */
+export declare function resolveFontSize(size: string): string
+
+/**
  * Simple variant resolution - no compound variants support
  * Faster for simple use cases
  */
 export declare function resolveSimpleVariants(base: string | undefined | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>): string
+
+/**
+ * Resolve a spacing value from the theme (Week 4 Day 2)
+ *
+ * # Arguments
+ * * `spacing` - Spacing identifier (e.g., "4", "8", "px")
+ *
+ * # Returns
+ * Resolved spacing value (e.g., "1rem", "0.25rem")
+ */
+export declare function resolveSpacing(spacing: string): string
 
 /**
  * Resolve a CSS custom property chain like `var(--color-primary)` → concrete value.
@@ -2223,6 +2573,12 @@ export interface TwMergeOptions {
   /** Aktifkan debug logging (override TWS_DEBUG env) */
   debug?: boolean
 }
+
+/**
+ * tw_merge_raw — normalize (trim+filter) + conflict-resolve dalam satu NAPI call.
+ * Menggantikan pola JS: normalizeClassInput() → twMergeMany() (2 calls → 1 call).
+ */
+export declare function twMergeRaw(classLists: Array<string>): string
 
 /**
  * tw_merge dengan custom separator.

@@ -1,0 +1,53 @@
+{
+  "description": "Expected CSS output for snapshot testing",
+  "simple_cases": [
+    {
+      "class": "px-4",
+      "expected_contains": "padding-left: 1rem",
+      "note": "Simple spacing utility"
+    },
+    {
+      "class": "bg-blue-600",
+      "expected_contains": "background-color: #2563eb",
+      "note": "Color utility"
+    },
+    {
+      "class": "text-lg",
+      "expected_contains": "font-size: 1.125rem",
+      "note": "Typography utility"
+    }
+  ],
+  "variant_cases": [
+    {
+      "class": "hover:bg-blue-500",
+      "expected_selector_contains": ":hover",
+      "expected_contains": "background-color: #3b82f6",
+      "note": "State variant"
+    },
+    {
+      "class": "md:text-xl",
+      "expected_contains": "@media (min-width: 768px)",
+      "note": "Responsive variant"
+    },
+    {
+      "class": "dark:bg-gray-900",
+      "expected_selector_contains": "dark",
+      "note": "Dark mode variant"
+    }
+  ],
+  "modifier_cases": [
+    {
+      "class": "bg-blue-600/50",
+      "expected_contains": "rgba(",
+      "expected_contains_opacity": "0.5",
+      "note": "Opacity modifier"
+    }
+  ],
+  "arbitrary_cases": [
+    {
+      "class": "[width:200px]",
+      "expected_contains": "width: 200px",
+      "note": "Arbitrary CSS value"
+    }
+  ]
+}

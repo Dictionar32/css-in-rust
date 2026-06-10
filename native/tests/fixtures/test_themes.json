@@ -1,0 +1,85 @@
+{
+  "description": "Test theme configurations for CSS compiler",
+  "default_theme": {
+    "colors": {
+      "white": "#ffffff",
+      "black": "#000000",
+      "gray": {
+        "50": "#f9fafb",
+        "100": "#f3f4f6",
+        "200": "#e5e7eb",
+        "300": "#d1d5db",
+        "500": "#6b7280",
+        "900": "#111827"
+      },
+      "blue": {
+        "50": "#eff6ff",
+        "500": "#3b82f6",
+        "600": "#2563eb",
+        "900": "#1e3a8a"
+      },
+      "red": {
+        "500": "#ef4444",
+        "600": "#dc2626"
+      }
+    },
+    "spacing": {
+      "0": "0",
+      "2": "0.5rem",
+      "4": "1rem",
+      "6": "1.5rem",
+      "8": "2rem",
+      "12": "3rem",
+      "16": "4rem"
+    },
+    "fontSize": {
+      "xs": ["0.75rem", "1rem"],
+      "sm": ["0.875rem", "1.25rem"],
+      "base": ["1rem", "1.5rem"],
+      "lg": ["1.125rem", "1.75rem"],
+      "xl": ["1.25rem", "1.75rem"]
+    },
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1536px"
+    },
+    "opacity": {
+      "0": "0",
+      "5": "0.05",
+      "10": "0.1",
+      "25": "0.25",
+      "50": "0.5",
+      "75": "0.75",
+      "90": "0.9",
+      "95": "0.95",
+      "100": "1"
+    },
+    "darkMode": "media"
+  },
+  "custom_theme": {
+    "colors": {
+      "brand": {
+        "primary": "#3b82f6",
+        "secondary": "#8b5cf6"
+      },
+      "gray": {
+        "50": "#f9fafb",
+        "900": "#111827"
+      }
+    },
+    "spacing": {
+      "sm": "0.5rem",
+      "md": "1rem",
+      "lg": "2rem"
+    },
+    "extend": {
+      "colors": {
+        "custom-color": "#ff5733"
+      }
+    },
+    "darkMode": "class"
+  }
+}

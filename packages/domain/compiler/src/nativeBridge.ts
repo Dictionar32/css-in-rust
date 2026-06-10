@@ -33,6 +33,10 @@ const log = (...args: unknown[]) => {
 // ── Type Exports ────────────────────────────────────────────────────────────────
 
 export interface NativeBridge {
+  // CSS Compiler - New Rust implementation
+  generateCssNative?: (classes: string[], theme_json: string) => string
+  getCacheStats?: () => [number, number]
+  clearThemeCache?: () => void
   // Core transform
   transformSource?: (source: string, opts?: Record<string, string>) => NativeTransformResult | null
   extractClassesFromSource?: (source: string) => string[]
@@ -129,6 +133,17 @@ export interface NativeBridge {
    * Dipakai untuk generate deterministic container CSS IDs.
    */
   hashContent?: (input: string, algo: string, length: number) => string
+  /** Hapus dead CSS selectors + minify via Lightning CSS. */
+  eliminateDeadCss?: (css: string, deadClasses: string[]) => string
+  /** Dead code detection + strip + Lightning CSS minify dalam satu call. */
+  optimizeCss?: (css: string) => string
+  /** Extract tw container configs dari source untuk static @container CSS generation. */
+  extractTwContainerConfigs?: (source: string) => Array<{
+    tag: string
+    containerJson: string
+    containerName?: string
+    breakpoints: Array<{ key: string; classes: string }>
+  }>
 }
 
 export interface NativeTransformResult {

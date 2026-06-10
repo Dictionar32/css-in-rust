@@ -40,14 +40,81 @@ static RE_FLAT_STRING: Lazy<Regex> = Lazy::new(|| {
 // Types exposed to N-API
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[napi(object)]
-#[derive(Serialize, Deserialize, JsonSchema)]
 pub struct ParsedClass {
     pub raw: String,
     pub base: String,
-    pub variants: Vec<String>,
+    pub prefix: String,
+    pub value: String,
+    pub variants: Vec<crate::domain::variant::Variant>,
+    pub variants_str: Vec<String>,
     pub modifier_type: Option<String>,
     pub modifier_value: Option<String>,
+    pub is_arbitrary: bool,
+    pub arbitrary_declaration: Option<String>,
+}
+
+impl Clone for ParsedClass {
+    fn clone(&self) -> Self {
+        Self {
+            raw: self.raw.clone(),
+            base: self.base.clone(),
+            prefix: self.prefix.clone(),
+            value: self.value.clone(),
+            variants: self.variants.clone(),
+            variants_str: self.variants_str.clone(),
+            modifier_type: self.modifier_type.clone(),
+            modifier_value: self.modifier_value.clone(),
+            is_arbitrary: self.is_arbitrary,
+            arbitrary_declaration: self.arbitrary_declaration.clone(),
+        }
+    }
+}
+
+impl ParsedClass {
+    /// Create a new ParsedClass with Variant enum
+    pub fn new(
+        raw: String,
+        variants: Vec<crate::domain::variant::Variant>,
+        prefix: String,
+        value: String,
+        modifier: Option<String>,
+        is_arbitrary: bool,
+        arbitrary_declaration: Option<String>,
+    ) -> Self {
+        let (modifier_type, modifier_value) = if let Some(mod_str) = modifier {
+            let parts: Vec<&str> = mod_str.splitn(2, '/').collect();
+            if parts.len() == 2 {
+                (Some(parts[0].to_string()), Some(parts[1].to_string()))
+            } else {
+                (Some(mod_str), None)
+            }
+        } else {
+            (None, None)
+        };
+
+        // Convert variants to string for serialization
+        let variants_str = variants.iter()
+            .map(|v| format!("{:?}", v))
+            .collect();
+
+        Self {
+            raw,
+            base: prefix.clone(),
+            prefix,
+            value,
+            variants,
+            variants_str,
+            modifier_type,
+            modifier_value,
+            is_arbitrary,
+            arbitrary_declaration,
+        }
+    }
+
+    /// Check if this parsed class is valid
+    pub fn is_valid(&self) -> bool {
+        !self.raw.is_empty() && (!self.prefix.is_empty() || self.is_arbitrary)
+    }
 }
 
 #[napi(object)]
@@ -436,7 +503,6 @@ fn should_use_ast_for_templates(source: &str) -> bool {
 
 pub(crate) const TRANSFORM_MARKER: &str = "/* @tw-transformed */";
 
-#[napi]
 pub fn parse_classes(input: String) -> Vec<ParsedClass> {
     parse_classes_inner(&input)
 }

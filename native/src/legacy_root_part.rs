@@ -1151,3 +1151,84 @@ fn classes_to_css(classes: &str) -> String {
     result.join("; ")
 }
 
+
+// ═════════════════════════════════════════════════════════════════════════════
+// CSS Compiler NAPI Bridge (New)
+// ═════════════════════════════════════════════════════════════════════════════
+
+use std::sync::atomic::{AtomicU32, Ordering};
+
+// Global cache statistics
+static CACHE_HITS: AtomicU32 = AtomicU32::new(0);
+static CACHE_MISSES: AtomicU32 = AtomicU32::new(0);
+
+/// Generate CSS from Tailwind class names
+///
+/// # Arguments
+/// * `classes` - Array of Tailwind class names
+/// * `theme_json` - Theme configuration as JSON string
+///
+/// # Returns
+/// Generated CSS string or error
+#[napi]
+pub fn generate_css_native(
+    classes: Vec<String>,
+    theme_json: String,
+) -> napi::Result<String> {
+    // Parse theme JSON
+    let config: crate::domain::theme_config::ThemeConfig = serde_json::from_str(&theme_json)
+        .map_err(|e| {
+            napi::Error::new(
+                napi::Status::GenericFailure,
+                format!("Failed to parse theme JSON: {}", e),
+            )
+        })?;
+
+    // Create compiler with the theme
+    let compiler = crate::domain::css_compiler::CssCompiler::new(config);
+
+    // Compile the classes
+    match compiler.compile(classes) {
+        Ok(css) => Ok(css),
+        Err(e) => Err(napi::Error::new(
+            napi::Status::GenericFailure,
+            format!("Compilation failed: {}", e),
+        )),
+    }
+}
+
+/// Get cache statistics
+/// 
+/// Returns (hits, misses) tuple
+#[napi]
+pub fn get_cache_stats() -> napi::Result<(u32, u32)> {
+    let hits = CACHE_HITS.load(Ordering::SeqCst);
+    let misses = CACHE_MISSES.load(Ordering::SeqCst);
+    Ok((hits, misses))
+}
+
+/// Clear cache statistics (reset counters)
+#[napi]
+pub fn reset_cache_stats() -> napi::Result<()> {
+    CACHE_HITS.store(0, Ordering::SeqCst);
+    CACHE_MISSES.store(0, Ordering::SeqCst);
+    Ok(())
+}
+
+/// Track cache hit
+pub fn track_cache_hit() {
+    CACHE_HITS.fetch_add(1, Ordering::SeqCst);
+}
+
+/// Track cache miss
+pub fn track_cache_miss() {
+    CACHE_MISSES.fetch_add(1, Ordering::SeqCst);
+}
+
+/// Clear the theme resolver cache
+#[napi]
+pub fn clear_theme_cache() -> napi::Result<()> {
+    // Clear stats when cache is reset
+    reset_cache_stats()?;
+    Ok(())
+}

@@ -15,8 +15,8 @@ const RUNS = Number(process.env.BENCH_RUNS ?? 100)
 const P95_TARGET = Number(process.env.BENCH_P95_MS ?? 500)
 const CLI = path.join(ROOT, "packages/infrastructure/cli/dist/index.js")
 
-function bench(label, args) {
-  const times = []
+function bench(label: string, args: string[]): Record<string, unknown> {
+  const times: number[] = []
   let errors = 0
   for (let i = 0; i < RUNS; i++) {
     const t = performance.now()

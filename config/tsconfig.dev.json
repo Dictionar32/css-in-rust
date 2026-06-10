@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "packages/domain/*/src/**/*.ts",
+    "packages/infrastructure/*/src/**/*.ts",
+    "packages/presentation/*/src/**/*.ts",
+    "packages/domain/*/src/**/*.tsx",
+    "packages/infrastructure/*/src/**/*.tsx",
+    "packages/presentation/*/src/**/*.tsx",
+    "scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "packages/domain/*/dist",
+    "packages/infrastructure/*/dist",
+    "packages/presentation/*/dist",
+    "**/node_modules"
+  ]
+}

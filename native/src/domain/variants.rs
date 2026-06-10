@@ -14,7 +14,9 @@ use std::collections::HashMap;
 pub struct VariantConfig {
     pub base: Option<String>,
     pub variants: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]  // default to empty vec if missing
     pub compound_variants: Vec<CompoundVariant>,
+    #[serde(default, alias = "defaultVariants")]  // accept both camelCase (TS) and snake_case (Rust)
     pub default_variants: HashMap<String, String>,
 }
 
@@ -39,7 +41,9 @@ pub fn resolve_variants(config_json: String, props_json: String) -> VariantResul
     // Parse inputs
     let config: VariantConfig = match serde_json::from_str(&config_json) {
         Ok(c) => c,
-        Err(_) => {
+        Err(e) => {
+            eprintln!("[resolve_variants ERROR] Failed to parse config_json: {:?}", e);
+            eprintln!("[resolve_variants ERROR] config_json: {}", config_json);
             return VariantResult {
                 classes: String::new(),
                 resolved_count: 0u32,

@@ -86,10 +86,16 @@ export function toAtomicClasses(twClasses: string): {
 
 export function getAtomicRegistry(): { size: number } {
   const native = getNativeBridge()
-  return { size: native?.atomicRegistrySize?.() ?? 0 }
+  if (!native?.atomicRegistrySize) {
+    throw new Error("FATAL: Native binding 'atomicRegistrySize' is required but not available.")
+  }
+  return { size: native.atomicRegistrySize() }
 }
 
 export function clearAtomicRegistry(): void {
   const native = getNativeBridge()
-  native?.clearAtomicRegistry?.()
+  if (!native?.clearAtomicRegistry) {
+    throw new Error("FATAL: Native binding 'clearAtomicRegistry' is required but not available.")
+  }
+  native.clearAtomicRegistry()
 }

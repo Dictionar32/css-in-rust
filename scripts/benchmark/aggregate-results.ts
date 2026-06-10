@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-function arg(name, fallback) {
+function arg(name: string, fallback: string): string {
   const found = process.argv.find((value) => value.startsWith(`${name}=`))
   if (!found) return fallback
   return found.split('=').slice(1).join('=')
@@ -14,9 +14,9 @@ if (!fs.existsSync(inputDir)) {
   throw new Error(`Input directory not found: ${inputDir}`)
 }
 
-const collected = []
+const collected: string[] = []
 
-function walk(dir) {
+function walk(dir: string): void {
   const entries = fs.readdirSync(dir, { withFileTypes: true })
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name)
@@ -32,7 +32,7 @@ function walk(dir) {
 
 walk(inputDir)
 
-const aggregate = {
+const aggregate: Record<string, unknown> = {
   generatedAt: new Date().toISOString(),
   inputDir,
   files: {},
@@ -41,7 +41,7 @@ const aggregate = {
 for (const filePath of collected) {
   const key = path.basename(filePath, '.json')
   const raw = fs.readFileSync(filePath, 'utf8')
-  aggregate.files[key] = JSON.parse(raw)
+  ;(aggregate.files as Record<string, unknown>)[key] = JSON.parse(raw)
 }
 
 fs.mkdirSync(path.dirname(outputFile), { recursive: true })

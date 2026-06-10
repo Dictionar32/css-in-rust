@@ -1,0 +1,66 @@
+{
+  "description": "Representative Tailwind classes for CSS compiler testing",
+  "simple_classes": [
+    "px-4",
+    "py-2",
+    "m-0",
+    "mb-4",
+    "text-lg",
+    "text-center",
+    "bg-white",
+    "bg-blue-600",
+    "border-gray-300",
+    "rounded-md",
+    "font-bold",
+    "opacity-50",
+    "shadow-lg",
+    "cursor-pointer",
+    "inline-block",
+    "absolute",
+    "flex",
+    "gap-4",
+    "items-center",
+    "justify-between",
+    "w-full",
+    "h-screen",
+    "min-h-100",
+    "max-w-2xl"
+  ],
+  "variant_classes": [
+    "hover:bg-blue-500",
+    "focus:ring-2",
+    "active:scale-95",
+    "disabled:opacity-50",
+    "group-hover:text-white",
+    "peer-focus:border-blue-500",
+    "md:text-xl",
+    "lg:flex",
+    "sm:px-2",
+    "xl:gap-8",
+    "2xl:rounded-lg",
+    "dark:bg-gray-900",
+    "dark:text-white",
+    "light:text-black"
+  ],
+  "modifier_classes": [
+    "bg-blue-600/50",
+    "text-red-500/75",
+    "border-green-400/25",
+    "bg-white/10",
+    "text-gray-500/80"
+  ],
+  "arbitrary_classes": [
+    "[width:200px]",
+    "[color:rgb(255,0,0)]",
+    "[margin:1rem_2rem]",
+    "[content:'Hello']",
+    "[border:2px_solid_black]"
+  ],
+  "complex_classes": [
+    "md:hover:bg-slate-900",
+    "dark:md:hover:ring-2/75",
+    "group-hover:md:text-white",
+    "dark:bg-black/50",
+    "hover:[text-shadow:0_0_10px]"
+  ]
+}

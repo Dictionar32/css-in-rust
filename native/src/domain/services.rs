@@ -47,7 +47,7 @@ impl CssGeneratorService {
         CssBundle {
             css: result.css.clone(),
             classes: Vec::<ClassName>::new(),
-            size_bytes: result.size_bytes,
+            size_bytes: result.size_bytes as u32,
         }
     }
 }

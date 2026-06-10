@@ -1,0 +1,46 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": false,
+    "outDir": ".build-cache"
+  },
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.mjs",
+    "**/__tests__/**",
+    "packages/archive/_experiments",
+    "examples",
+    "scripts",
+    "test/fixtures"
+  ],
+  "references": [
+    { "path": "./packages/domain/shared" },
+    { "path": "./packages/domain/syntax" },
+    { "path": "./packages/domain/plugin-api" },
+    { "path": "./packages/domain/scanner" },
+    { "path": "./packages/domain/analyzer" },
+    { "path": "./packages/domain/compiler" },
+    { "path": "./packages/domain/engine" },
+    { "path": "./packages/domain/theme" },
+    { "path": "./packages/domain/runtime" },
+    { "path": "./packages/domain/runtime-css" },
+    { "path": "./packages/domain/animate" },
+    { "path": "./packages/domain/atomic" },
+    { "path": "./packages/domain/plugin" },
+    { "path": "./packages/domain/preset" },
+    { "path": "./packages/domain/core" },
+    { "path": "./packages/presentation/next" },
+    { "path": "./packages/presentation/vite" },
+    { "path": "./packages/presentation/rspack" },
+    { "path": "./packages/presentation/vue" },
+    { "path": "./packages/presentation/svelte" },
+    { "path": "./packages/infrastructure/devtools" },
+    { "path": "./packages/infrastructure/cli" },
+    { "path": "./packages/domain/plugin-registry" }
+  ]
+}

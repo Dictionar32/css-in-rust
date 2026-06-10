@@ -5,6 +5,9 @@
  * No JavaScript fallback - native is required.
  */
 
+import fs from "node:fs"
+import path from "node:path"
+
 import { getNativeBridge, resetNativeBridgeCache, adaptNativeResult, type NativeBridge, type NativeTransformResult, type ClassExtractResult, type ComponentMetadata, type NativeRscResult } from "./nativeBridge"
 
 export { getNativeBridge, resetNativeBridgeCache, adaptNativeResult }
@@ -14,17 +17,6 @@ export type LoaderOutput = {
   code: string
   changed: boolean
   classes: string[]
-  /**
-   * Static CSS rules extracted from this file at build time.
-   *
-   * Berisi CSS untuk:
-   *  - `state:` config  → `.tw-s-[hash][data-stateName="true"] { ... }`
-   *  - `container:` config → `@container (min-width: ...) { .tw-cq-[hash] { ... } }`
-   *
-   * Plugin (Vite / webpack) mengumpulkan field ini dari semua file dan
-   * menulisnya ke `_tw-state-static.css` / safelist file — sehingga
-   * `stateEngine.ts` + `containerQuery.ts` TIDAK perlu inject CSS di browser.
-   */
   staticCss?: string
   rsc?: { isServer?: boolean; needsClientDirective?: boolean; clientReasons?: string[] }
   engine?: string
@@ -124,7 +116,7 @@ export const extractClassesFromSource = (source: string): string => {
   return Array.isArray(result) ? result.join(" ") : String(result || "")
 }
 
-export const astExtractClasses = (source: string, filename: string) => {
+export const astExtractClasses = (source: string, _filename: string) => {
   const native = getNativeBridge()
   if (!native?.extractClassesFromSource) {
     throw new Error("FATAL: Native binding 'extractClassesFromSource' is required but not available.")
@@ -169,22 +161,10 @@ export const normalizeAndDedupClasses = (raw: string) => {
 
 export const eliminateDeadCss = (css: string, deadClasses: Set<string>): string => {
   const native = getNativeBridge()
-  if (!native?.processTailwindCssLightning) {
-    throw new Error("FATAL: Native binding 'processTailwindCssLightning' is required but not available.")
+  if (!native?.eliminateDeadCss) {
+    throw new Error("FATAL: Native binding 'eliminateDeadCss' is required but not available.")
   }
-
-  // Build pruned CSS by stripping dead selectors then minify via Lightning
-  const deadSet = deadClasses
-  const pruned = css
-    .split(/(?<=\})\s*/)
-    .filter((rule) => {
-      const m = rule.match(/\.([a-zA-Z0-9_-]+)/)
-      return !m || !deadSet.has(m[1])
-    })
-    .join("\n")
-
-  const compiled = native.processTailwindCssLightning(pruned) as { css: string } | null
-  return (compiled?.css ?? pruned).trim()
+  return native.eliminateDeadCss(css, Array.from(deadClasses)) as string
 }
 
 export const findDeadVariants = (
@@ -193,7 +173,6 @@ export const findDeadVariants = (
 ) => {
   const unused: string[] = []
 
-  // Support both array-of-components form and raw variants object form
   const configs = Array.isArray(variantConfig)
     ? variantConfig
     : [{ name: "__root__", variants: variantConfig as Record<string, Record<string, string>> }]
@@ -210,10 +189,7 @@ export const findDeadVariants = (
     }
   }
 
-  return {
-    unusedCount: unused.length,
-    unused,
-  }
+  return { unusedCount: unused.length, unused }
 }
 
 export const runElimination = (css: string, scanResult: unknown): string => {
@@ -221,52 +197,22 @@ export const runElimination = (css: string, scanResult: unknown): string => {
   if (!native?.detectDeadCode) {
     throw new Error("FATAL: Native binding 'detectDeadCode' is required but not available.")
   }
-
-  const dead = native.detectDeadCode(
-    JSON.stringify(scanResult),
-    css
-  ) as { deadInCss: string[] }
-
+  const dead = native.detectDeadCode(JSON.stringify(scanResult), css) as { deadInCss: string[] }
   return eliminateDeadCss(css, new Set(dead.deadInCss ?? []))
 }
 
 export const optimizeCss = (css: string): string => {
   const native = getNativeBridge()
-
-  // Step 1: detect dead CSS classes (native Rust — HashSet diff)
-  if (!native?.detectDeadCode) {
-    throw new Error("FATAL: Native binding 'detectDeadCode' is required but not available.")
+  if (!native?.optimizeCss) {
+    throw new Error("FATAL: Native binding 'optimizeCss' is required but not available.")
   }
-  const deadResult = native.detectDeadCode(
-    JSON.stringify({ uniqueClasses: [] }),
-    css
-  ) as { deadInCss: string[]; liveClasses: string[] }
-
-  // Step 2: minify via Rust Lightning CSS compiler
-  if (!native?.processTailwindCssLightning) {
-    throw new Error("FATAL: Native binding 'processTailwindCssLightning' is required but not available.")
-  }
-
-  // Strip dead selectors then pass through Lightning CSS
-  const deadSet = new Set(deadResult.deadInCss ?? [])
-  const pruned = css
-    .split(/(?<=\})\s*/)
-    .filter((rule) => {
-      const selectorMatch = rule.match(/\.([a-zA-Z0-9_-]+)/)
-      if (!selectorMatch) return true
-      return !deadSet.has(selectorMatch[1])
-    })
-    .join("\n")
-
-  const compiled = native.processTailwindCssLightning(pruned) as { css: string } | null
-  return (compiled?.css ?? pruned).trim()
+  return native.optimizeCss(css) as string
 }
 
 export const scanProjectUsage = (dirs: string[], cwd: string) => {
-  const path = require('node:path')
   const files = dirs.map(dir => path.resolve(cwd, dir))
   const results = batchExtractClasses(files) || []
-  
+
   const combined: Record<string, Record<string, Set<string>>> = {}
   for (const result of results) {
     if (result.ok && result.classes) {
@@ -398,12 +344,8 @@ export const analyzeFile = (source: string, filename: string) => {
   }
 }
 
-export const analyzeVariantUsage = (source: string, componentName: string, variantKeys: string[]) => {
-  const rsc = analyzeRsc(source, componentName)
-  return { 
-    resolved: {} as Record<string, string>, 
-    dynamic: [] as string[] 
-  }
+export const analyzeVariantUsage = (_source: string, _componentName: string, _variantKeys: string[]) => {
+  return { resolved: {} as Record<string, string>, dynamic: [] as string[] }
 }
 
 export const injectClientDirective = (source: string): string => {
@@ -436,19 +378,15 @@ export const analyzeClasses = (filesJson: string, cwd: string, flags: number) =>
 export const generateSafelist = (scanDirs: string[], outputPath?: string, cwd?: string) => {
   const classes = scanProjectUsage(scanDirs, cwd || process.cwd())
   const allClasses = Object.keys(classes).sort()
-  
   if (outputPath) {
-    const fs = require('node:fs')
     fs.writeFileSync(outputPath, JSON.stringify(allClasses, null, 2))
   }
-  
   return allClasses
 }
 
 export const loadSafelist = (safelistPath: string): string[] => {
-  const fs = require('node:fs')
   try {
-    const content = fs.readFileSync(safelistPath, 'utf-8')
+    const content = fs.readFileSync(safelistPath, "utf-8")
     return JSON.parse(content)
   } catch {
     return []
@@ -460,55 +398,36 @@ export const loadSafelist = (safelistPath: string): string[] => {
 // =============================================================================
 
 export const loadTailwindConfig = (cwd: string = process.cwd()) => {
-  const fs = require('node:fs')
-  const path = require('node:path')
-  
   const configFiles = [
-    'tailwind.config.ts',
-    'tailwind.config.js',
-    'tailwind.config.mjs',
-    'tailwind.config.cjs',
+    "tailwind.config.ts",
+    "tailwind.config.js",
+    "tailwind.config.mjs",
+    "tailwind.config.cjs",
   ]
-  
   for (const file of configFiles) {
     const fullPath = path.join(cwd, file)
     if (fs.existsSync(fullPath)) {
-      const mod = require(fullPath)
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const mod = require(fullPath) as { default?: unknown }
       return mod.default || mod
     }
   }
-  
   return {}
 }
 
 export const getContentPaths = (cwd: string = process.cwd()) => {
-  const path = require('node:path')
   return {
     content: [
-      path.join(cwd, 'src/**/*.{js,ts,jsx,tsx}'),
-      path.join(cwd, 'app/**/*.{js,ts,jsx,tsx}'),
-      path.join(cwd, 'pages/**/*.{js,ts,jsx,tsx}'),
+      path.join(cwd, "src/**/*.{js,ts,jsx,tsx}"),
+      path.join(cwd, "app/**/*.{js,ts,jsx,tsx}"),
+      path.join(cwd, "pages/**/*.{js,ts,jsx,tsx}"),
     ],
   }
 }
 
 // =============================================================================
-// LOADER
+// CONTAINER CSS EXTRACTOR
 // =============================================================================
-
-// =============================================================================
-// CONTAINER CSS — JS EXTRACTOR
-// (Rust belum export extractTwContainerConfigs — JS fallback ini handles common patterns)
-// =============================================================================
-
-const _CONTAINER_BREAKPOINTS: Record<string, string> = {
-  xs: "240px",
-  sm: "320px",
-  md: "640px",
-  lg: "1024px",
-  xl: "1280px",
-  "2xl": "1536px",
-}
 
 function _layoutClassesToCss(classes: string): string {
   const native = getNativeBridge()
@@ -527,128 +446,45 @@ function _hashContainer(tag: string, containerJson: string, name?: string): stri
   return `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
 }
 
+const _CONTAINER_BREAKPOINTS: Record<string, string> = {
+  xs: "240px",
+  sm: "320px",
+  md: "640px",
+  lg: "1024px",
+  xl: "1280px",
+  "2xl": "1536px",
+}
+
 /**
  * Extract container configs dari source dan generate static `@container` CSS.
- *
- * Handles pola:
- *   tw.div({ container: { md: "flex-row", lg: "grid-cols-3" }, containerName: "card" })
- *   tw.div({ base: "p-4", container: { sm: "flex-col" } })
- *
- * Untuk pola yang lebih kompleks (dynamic expressions, multi-line computed),
- * Rust-level extraction akan menanganinya di versi berikutnya.
- *
- * @internal
+ * Native-only: delegates ke Rust extractTwContainerConfigs.
  */
 export function extractContainerCssFromSource(source: string): string {
-  // Quick pre-filter
-  if (!source.includes("container") || (!source.includes("tw.") && !source.includes("tw("))) {
-    return ""
+  const native = getNativeBridge()
+  if (!native?.extractTwContainerConfigs) {
+    throw new Error("FATAL: Native binding 'extractTwContainerConfigs' is required but not available.")
   }
+
+  const configs = native.extractTwContainerConfigs(source) as Array<{
+    tag: string
+    containerJson: string
+    containerName?: string
+    breakpoints: Array<{ key: string; classes: string }>
+  }>
 
   const rules: string[] = []
-
-  // ── Helpers ────────────────────────────────────────────────────────────────
-
-  /** Extract content inside balanced braces starting at source[startIdx]. */
-  function extractBraceContent(src: string, startIdx: number): [string, number] | null {
-    if (src[startIdx] !== "{") return null
-    let depth = 1
-    let i = startIdx + 1
-    while (i < src.length && depth > 0) {
-      const ch = src[i]
-      // Skip string literals to avoid false brace matches inside strings
-      if (ch === '"' || ch === "'" || ch === "`") {
-        i++
-        while (i < src.length && src[i] !== ch) {
-          if (src[i] === "\\") i++ // escaped char
-          i++
-        }
-      } else if (ch === "{") { depth++ }
-      else if (ch === "}") { depth-- }
-      i++
-    }
-    if (depth !== 0) return null
-    return [src.slice(startIdx + 1, i - 1), i]
-  }
-
-  /** Parse { key: "value" } — handles quoted/unquoted keys, multi-line. */
-  function parseSimpleKvObject(objContent: string): Record<string, string> {
-    const result: Record<string, string> = {}
-    const entryRe = /["']?([\w-]+)["']?\s*:\s*(?:"([^"]*?)"|'([^']*?)'|`([^`]*?)`)/g
-    let m: RegExpExecArray | null
-    while ((m = entryRe.exec(objContent)) !== null) {
-      const key = m[1]
-      const val = m[2] ?? m[3] ?? m[4] ?? ""
-      if (key) result[key] = val
-    }
-    return result
-  }
-
-  // ── Main scan ──────────────────────────────────────────────────────────────
-  // Match: tw.TAG(  /  tw.TAG<Generic>(  /  tw(Comp)(  /  tw(Comp)<Generic>(
-  const twCallRe = /tw(?:\.(\w+)|\((\w[\w.]*)\))(?:\s*<[^>]*>)?\s*\(/g
-  let twMatch: RegExpExecArray | null
-
-  while ((twMatch = twCallRe.exec(source)) !== null) {
-    const tag = twMatch[1] ?? twMatch[2] ?? "div"
-
-    // Advance to opening `{` of config object arg
-    let argsStart = twMatch.index + twMatch[0].length
-    while (argsStart < source.length && source[argsStart] !== "{") {
-      if (source[argsStart] === ")" || source[argsStart] === ";") { argsStart = -1; break }
-      argsStart++
-    }
-    if (argsStart < 0 || source[argsStart] !== "{") continue
-
-    const extracted = extractBraceContent(source, argsStart)
-    if (!extracted) continue
-    const [objContent] = extracted
-
-    // Must contain `container` key
-    if (!objContent.includes("container")) continue
-
-    // Find `container:` key — skip `containerName:` key
-    const containerKeyMatch = objContent.match(/(?<![a-zA-Z])container\s*:/)
-    if (!containerKeyMatch || containerKeyMatch.index === undefined) continue
-
-    // Find position of the value (after colon)
-    let valueStart = containerKeyMatch.index + containerKeyMatch[0].length
-    while (valueStart < objContent.length && /\s/.test(objContent[valueStart])) valueStart++
-
-    // Value must be an object `{ ... }`
-    if (objContent[valueStart] !== "{") continue
-
-    const containerExtracted = extractBraceContent(objContent, valueStart)
-    if (!containerExtracted) continue
-    const [containerObjContent] = containerExtracted
-
-    // Parse optional containerName
-    const nameMatch = objContent.match(
-      /\bcontainerName\s*:\s*(?:"([^"]*?)"|'([^']*?)'|`([^`]*?)`)/
-    )
-    const containerName = nameMatch?.[1] ?? nameMatch?.[2] ?? nameMatch?.[3]
-
-    // Parse breakpoint → classes mapping
-    const containerConfig = parseSimpleKvObject(containerObjContent)
-    if (Object.keys(containerConfig).length === 0) continue
-
-    // Deterministic sort for hash (must match runtime _hashContainer)
-    const sortedEntries = Object.entries(containerConfig).sort(([a], [b]) => a.localeCompare(b))
-    const sortedJson = JSON.stringify(Object.fromEntries(sortedEntries))
-    const id = _hashContainer(tag, sortedJson, containerName)
-
-    // Emit @container rules
-    for (const [key, classes] of sortedEntries) {
+  for (const cfg of configs) {
+    const id = _hashContainer(cfg.tag, cfg.containerJson, cfg.containerName)
+    for (const { key, classes } of cfg.breakpoints) {
       const minWidth = _CONTAINER_BREAKPOINTS[key] ?? key
       const css = _layoutClassesToCss(classes)
       if (!css) continue
-      const query = containerName
-        ? `@container ${containerName} (min-width: ${minWidth})`
+      const query = cfg.containerName
+        ? `@container ${cfg.containerName} (min-width: ${minWidth})`
         : `@container (min-width: ${minWidth})`
       rules.push(`${query}{.${id}{${css}}}`)
     }
   }
-
   return rules.join("\n")
 }
 
@@ -660,21 +496,15 @@ export const runLoaderTransform = (ctx: { filepath: string; source: string; opti
   const { filepath, source, options } = ctx
   const result = transformSource(source, { filename: filepath, ...options })
 
-  // ── Static CSS extraction (non-fatal) ──────────────────────────────────────
-  // Extract state + container CSS dari source asli (sebelum transform).
-  // Digabungkan dan di-return sebagai `staticCss` agar plugin layer bisa
-  // mengumpulkan dan menulisnya ke file statis — zero runtime injection.
   let staticCss: string | undefined
   try {
     const cssChunks: string[] = []
 
-    // 1. State CSS via Rust (extractAndGenerateStateCss)
     const stateRules = extractAndGenerateStateCss(source, filepath)
     if (stateRules.length > 0) {
       cssChunks.push(stateRules.map((r) => r.cssRule).join("\n"))
     }
 
-    // 2. Container CSS via JS extractor (Rust support belum ada)
     const containerCss = extractContainerCssFromSource(source)
     if (containerCss) cssChunks.push(containerCss)
 
@@ -682,7 +512,6 @@ export const runLoaderTransform = (ctx: { filepath: string; source: string; opti
     if (combined) staticCss = combined
   } catch {
     // Non-fatal — static CSS extraction gagal tidak boleh break transform pipeline.
-    // stateEngine + containerQuery masih bisa inject runtime sebagai fallback.
   }
 
   return {
@@ -694,9 +523,8 @@ export const runLoaderTransform = (ctx: { filepath: string; source: string; opti
 }
 
 export const shouldSkipFile = (filepath: string): boolean => {
-  const SKIP_PATHS = ['node_modules', '.next', '.rspack-dist', '.turbo', 'dist/', 'out/']
-  const skipExtensions = ['.css', '.json', '.md', '.txt', '.yaml', '.yml']
-  
+  const SKIP_PATHS = ["node_modules", ".next", ".rspack-dist", ".turbo", "dist/", "out/"]
+  const skipExtensions = [".css", ".json", ".md", ".txt", ".yaml", ".yml"]
   for (const p of SKIP_PATHS) {
     if (filepath.includes(p)) return true
   }
@@ -711,18 +539,14 @@ export const shouldSkipFile = (filepath: string): boolean => {
 // =============================================================================
 
 export const fileToRoute = (filepath: string): string | null => {
-  const normalized = filepath.replace(/\\/g, '/')
-  
-  if (normalized.includes('/layout.') || normalized.includes('/loading.') || normalized.includes('/error.')) {
-    return '__global'
+  const normalized = filepath.replace(/\\/g, "/")
+  if (normalized.includes("/layout.") || normalized.includes("/loading.") || normalized.includes("/error.")) {
+    return "__global"
   }
-  
   const pageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
   if (pageMatch) return `/${pageMatch[1]}`
-  
   const rootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
-  if (rootPage) return '/'
-  
+  if (rootPage) return "/"
   return null
 }
 
@@ -731,24 +555,12 @@ export const getAllRoutes = (): string[] => {
   if (!native?.analyzeClasses) {
     throw new Error("FATAL: Native binding 'analyzeClasses' is required but not available.")
   }
-  return ['/', '__global']
+  return ["/", "__global"]
 }
 
-export const getRouteClasses = (_route: string): Set<string> => {
-  return new Set()
-}
-
-export const registerFileClasses = (_filepath: string, _classes: string[]): void => {
-  // Delegated to native scan cache — no-op at JS layer
-}
-
-export const registerGlobalClasses = (_classes: string[]): void => {
-  // Delegated to native scan cache — no-op at JS layer
-}
-
-// =============================================================================
-// INCREMENTAL ENGINE
-// =============================================================================
+export const getRouteClasses = (_route: string): Set<string> => new Set()
+export const registerFileClasses = (_filepath: string, _classes: string[]): void => {}
+export const registerGlobalClasses = (_classes: string[]): void => {}
 
 // =============================================================================
 // INCREMENTAL ENGINE
@@ -788,14 +600,10 @@ export const getBucketEngine = () => {
   }
 }
 
-export const resetBucketEngine = (): void => {
-  // Native engine manages its own state — no JS instance to reset
-}
+export const resetBucketEngine = (): void => {}
 
 export const BucketEngine = class {
-  add(className: string) {
-    return className
-  }
+  add(className: string) { return className }
 }
 
 export const classifyNode = (_node: unknown): string => {
@@ -803,10 +611,10 @@ export const classifyNode = (_node: unknown): string => {
   if (!native?.classifyAndSortClasses) {
     throw new Error("FATAL: Native binding 'classifyAndSortClasses' is required but not available.")
   }
-  return 'unknown'
+  return "unknown"
 }
 
-export const detectConflicts = (classes: string[]): string[] => {
+export const detectConflicts = (_classes: string[]): string[] => {
   const native = getNativeBridge()
   if (!native?.analyzeClassUsage) {
     throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
@@ -815,7 +623,7 @@ export const detectConflicts = (classes: string[]): string[] => {
 }
 
 export const bucketSort = (classes: string[]): string[] => {
-  return classifyAndSortClasses(classes).map((c) => (c as { raw?: string; class?: string }).raw ?? (c as unknown as string))
+  return classifyAndSortClasses(classes).map((c) => (c as { raw?: string }).raw ?? (c as unknown as string))
 }
 
 // =============================================================================
@@ -843,14 +651,7 @@ export interface GeneratedStateRule {
   stateName: string
 }
 
-/**
- * Extract semua `tw.tag({ states: {...} })` configs dari source file.
- * Dipanggil oleh staticStateExtractor.ts via @tailwind-styled/compiler/internal.
- */
-export const extractTwStateConfigs = (
-  source: string,
-  filename: string
-): TwStateConfigEntry[] => {
+export const extractTwStateConfigs = (source: string, filename: string): TwStateConfigEntry[] => {
   const native = getNativeBridge()
   if (!native?.extractTwStateConfigs) {
     throw new Error("FATAL: Native binding 'extractTwStateConfigs' is required but not available.")
@@ -858,15 +659,6 @@ export const extractTwStateConfigs = (
   return native.extractTwStateConfigs(source, filename)
 }
 
-/**
- * Generate static CSS rules dari kumpulan state configs.
- * Selector format: `.tw-s-[hash][data-stateName="true"] { ... }`
- *
- * @param inputs State configs dari extractTwStateConfigs
- * @param resolvedCss CSS output dari Tailwind pipeline (_initial-scan.css content).
- *   Kalau di-provide, Rust parse CSS ini → class map → resolve SEMUA Tailwind class
- *   termasuk `w-full`, `ring-2`, dll. Kalau null, fallback ke TW_MAP statis.
- */
 export const generateStaticStateCss = (
   inputs: StaticStateCssInput[],
   resolvedCss: string | null = null
@@ -878,17 +670,9 @@ export const generateStaticStateCss = (
   return native.generateStaticStateCss(inputs, resolvedCss)
 }
 
-/**
- * Shortcut: extract + generate dalam satu call per file.
- * Ekuivalen dengan `extractTwStateConfigs` → `generateStaticStateCss`.
- */
-export const extractAndGenerateStateCss = (
-  source: string,
-  filename: string
-): GeneratedStateRule[] => {
+export const extractAndGenerateStateCss = (source: string, filename: string): GeneratedStateRule[] => {
   const native = getNativeBridge()
   if (!native?.extractAndGenerateStateCss) {
-    // Fallback manual jika native belum export fungsi shortcut ini
     const configs = extractTwStateConfigs(source, filename)
     if (configs.length === 0) return []
     return generateStaticStateCss(

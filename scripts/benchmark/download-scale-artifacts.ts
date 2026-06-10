@@ -9,19 +9,19 @@ const args = new Map(
   })
 )
 
-const workflow = args.get("workflow") ?? "scale-benchmark.yml"
-const repo = args.get("repo")
-const outDir = path.resolve(args.get("out") ?? "artifacts/scale-download")
+const workflow = (args.get("workflow") as string | undefined) ?? "scale-benchmark.yml"
+const repo = args.get("repo") as string | undefined
+const outDir = path.resolve((args.get("out") as string | undefined) ?? "artifacts/scale-download")
 let runId = args.get("runId")
 
 fs.mkdirSync(outDir, { recursive: true })
 
-const baseExtraArgs = []
+const baseExtraArgs: string[] = []
 if (repo) {
   baseExtraArgs.push("--repo", repo)
 }
 
-function runGh(commandArgs) {
+function runGh(commandArgs: string[]): ReturnType<typeof spawnSync> {
   return spawnSync("gh", [...commandArgs, ...baseExtraArgs], {
     encoding: "utf8",
     shell: process.platform === "win32",
