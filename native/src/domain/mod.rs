@@ -12,6 +12,7 @@ pub mod transform;
 pub mod transform_components;
 pub(crate) mod transform_parser;
 pub mod variant;
+pub mod variant_precedence;
 pub mod variants;
 
 // Re-export commonly used types
@@ -21,3 +22,4 @@ pub use error::{CompileError, GenerateError, ParseError, ResolveError, VariantEr
 pub use transform::ParsedClass;
 pub use theme_config::{DarkModeStrategy, ThemeConfig, ThemeValue};
 pub use variant::Variant;
+pub use variant_precedence::{get_variant_precedence, sort_by_precedence, VariantPrecedence};

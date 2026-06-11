@@ -4,11 +4,12 @@ use crate::domain::error::ResolveError;
 use crate::domain::theme_config::{ThemeConfig, ThemeValue};
 use crate::infrastructure::cache::LruCache;
 use crate::utils::constants::DEFAULT_COLORS;
+use std::sync::Mutex;
 
 /// Resolves theme values with LRU caching for performance
 pub struct ThemeResolver {
     config: ThemeConfig,
-    cache: LruCache<String, String>,
+    cache: Mutex<LruCache<String, String>>,
 }
 
 impl ThemeResolver {
@@ -16,7 +17,7 @@ impl ThemeResolver {
     pub fn new(config: ThemeConfig) -> Self {
         Self {
             config,
-            cache: LruCache::new(1000),
+            cache: Mutex::new(LruCache::new(1000)),
         }
     }
 
@@ -24,22 +25,22 @@ impl ThemeResolver {
     /// 
     /// Supports nested lookups like "blue-600" -> "#1e40af"
     /// Falls back to Tailwind defaults if custom not found
-    pub fn resolve_color(&mut self, color: &str) -> Result<String, ResolveError> {
+    pub fn resolve_color(&self, color: &str) -> Result<String, ResolveError> {
         // Check cache first
         let cache_key = format!("color:{}", color);
-        if let Some(cached) = self.cache.get(&cache_key) {
+        if let Some(cached) = self.cache.lock().unwrap().get(&cache_key) {
             return Ok(cached);
         }
 
         // Try to find in custom colors first
         if let Some(ThemeValue::Simple(hex)) = self.config.colors.get(color) {
-            self.cache.insert(cache_key, hex.clone());
+            self.cache.lock().unwrap().insert(cache_key, hex.clone());
             return Ok(hex.clone());
         }
 
         // Fall back to default colors
         if let Some(hex) = DEFAULT_COLORS.get(color) {
-            self.cache.insert(cache_key, hex.clone());
+            self.cache.lock().unwrap().insert(cache_key, hex.clone());
             return Ok(hex.clone());
         }
 
@@ -51,14 +52,14 @@ impl ThemeResolver {
     }
 
     /// Resolve a spacing value from theme
-    pub fn resolve_spacing(&mut self, spacing: &str) -> Result<String, ResolveError> {
+    pub fn resolve_spacing(&self, spacing: &str) -> Result<String, ResolveError> {
         let cache_key = format!("spacing:{}", spacing);
-        if let Some(cached) = self.cache.get(&cache_key) {
+        if let Some(cached) = self.cache.lock().unwrap().get(&cache_key) {
             return Ok(cached);
         }
 
         if let Some(value) = self.config.spacing.get(spacing) {
-            self.cache.insert(cache_key, value.clone());
+            self.cache.lock().unwrap().insert(cache_key, value.clone());
             return Ok(value.clone());
         }
 
@@ -69,15 +70,15 @@ impl ThemeResolver {
     }
 
     /// Resolve a font size from theme
-    pub fn resolve_font_size(&mut self, size: &str) -> Result<String, ResolveError> {
+    pub fn resolve_font_size(&self, size: &str) -> Result<String, ResolveError> {
         let cache_key = format!("font-size:{}", size);
-        if let Some(cached) = self.cache.get(&cache_key) {
+        if let Some(cached) = self.cache.lock().unwrap().get(&cache_key) {
             return Ok(cached);
         }
 
         if let Some(value) = self.config.font_sizes.get(size) {
             let result = value.join(", ");
-            self.cache.insert(cache_key, result.clone());
+            self.cache.lock().unwrap().insert(cache_key, result.clone());
             return Ok(result);
         }
 
@@ -88,14 +89,14 @@ impl ThemeResolver {
     }
 
     /// Resolve a breakpoint from theme
-    pub fn resolve_breakpoint(&mut self, breakpoint: &str) -> Result<String, ResolveError> {
+    pub fn resolve_breakpoint(&self, breakpoint: &str) -> Result<String, ResolveError> {
         let cache_key = format!("breakpoint:{}", breakpoint);
-        if let Some(cached) = self.cache.get(&cache_key) {
+        if let Some(cached) = self.cache.lock().unwrap().get(&cache_key) {
             return Ok(cached);
         }
 
         if let Some(value) = self.config.breakpoints.get(breakpoint) {
-            self.cache.insert(cache_key, value.clone());
+            self.cache.lock().unwrap().insert(cache_key, value.clone());
             return Ok(value.clone());
         }
 
@@ -192,28 +193,28 @@ mod tests {
 
     #[test]
     fn test_resolve_color_default() {
-        let mut resolver = ThemeResolver::default();
+        let resolver = ThemeResolver::default();
         let result = resolver.resolve_color("blue-600");
         assert_eq!(result, Ok("#1e40af".to_string()));
     }
 
     #[test]
     fn test_resolve_color_not_found() {
-        let mut resolver = ThemeResolver::default();
+        let resolver = ThemeResolver::default();
         let result = resolver.resolve_color("unknowncolor-999");
         assert!(result.is_err());
     }
 
     #[test]
     fn test_resolve_spacing() {
-        let mut resolver = ThemeResolver::default();
+        let resolver = ThemeResolver::default();
         let result = resolver.resolve_spacing("4");
         assert_eq!(result, Ok("1rem".to_string()));
     }
 
     #[test]
     fn test_resolve_breakpoint() {
-        let mut resolver = ThemeResolver::default();
+        let resolver = ThemeResolver::default();
         let result = resolver.resolve_breakpoint("md");
         assert_eq!(result, Ok("768px".to_string()));
     }
@@ -247,7 +248,7 @@ mod tests {
 
     #[test]
     fn test_cache_performance() {
-        let mut resolver = ThemeResolver::default();
+        let resolver = ThemeResolver::default();
         
         // First call - miss
         let _ = resolver.resolve_color("blue-600");

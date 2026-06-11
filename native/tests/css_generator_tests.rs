@@ -1,7 +1,7 @@
 //! CSS Generator Tests - Week 3 Day 2
 //! Integration tests: ThemeResolver + CssGenerator
 
-use tailwind_styled_parser::application::class_parser_v2::ClassParser;
+use tailwind_styled_parser::application::class_parser::ClassParser;
 use tailwind_styled_parser::application::theme_resolver::ThemeResolver;
 
 // ============================================================================

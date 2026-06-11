@@ -1,7 +1,7 @@
 //! Comprehensive tests for ClassParser v2
 //! Tests all 65 test cases from WEEK1_DAY6_TEST_STRATEGY.md
 
-use tailwind_styled_parser::application::class_parser_v2::{ClassParser, ParsedClass, ParserError};
+use tailwind_styled_parser::application::class_parser::{ClassParser, ParsedClass, ParserError};
 
 // ============================================================================
 // PART 1: Simple Class Tests (10 tests)

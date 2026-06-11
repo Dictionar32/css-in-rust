@@ -155,8 +155,20 @@ lazy_static! {
 pub struct ClassParser;
 
 impl ClassParser {
-    /// Parse a Tailwind class string into components
+    /// Create new parser instance (for compatibility with v1 interface)
+    pub fn new() -> Self {
+        Self
+    }
+
+    /// PHASE 7: Static parse for compatibility with test code and bench code
+    /// This creates a new parser and parses, making it stateless
     pub fn parse(input: &str) -> Result<ParsedClass, ParserError> {
+        let parser = ClassParser::new();
+        parser.parse_internal(input)
+    }
+
+    /// Parse a Tailwind class string into components (internal method)
+    fn parse_internal(&self, input: &str) -> Result<ParsedClass, ParserError> {
         let input = input.trim();
         
         // Step 1: Validate input

@@ -32,6 +32,7 @@ mod watcher_tests;
 pub use application::analyzer::{
     analyze_classes, build_distribution, collect_class_counts, compute_class_stats,
 };
+// PHASE 7.1: Consolidated to single parser - v2 implementation now in class_parser module
 pub use application::class_parser::ClassParser;
 pub use application::animate_utils::{
     animation_cache_key, keyframes_cache_key, normalize_iterations, normalize_number,

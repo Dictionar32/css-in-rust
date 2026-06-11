@@ -9,6 +9,7 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use crate::infrastructure::cache_backend::{CacheBackend, CacheStats};
 
 /// Cache entry with access timestamp
 #[derive(Clone, Debug)]
@@ -92,29 +93,89 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> LruCache<K, V> {
     pub fn capacity(&self) -> usize {
         self.capacity
     }
-
-    /// Get hit/miss stats (approximate)
-    pub fn stats(&self) -> CacheStats {
-        let data = self.data.lock().unwrap();
-        CacheStats {
-            size: data.len(),
-            capacity: self.capacity,
-            entries: vec![], // Stats entries populated separately if needed
-        }
-    }
 }
 
-#[derive(Debug, Clone)]
-pub struct CacheStats {
-    pub size: usize,
-    pub capacity: usize,
-    pub entries: Vec<u64>,
+// PHASE 7.2: Implement CacheBackend trait for String-based LRU cache
+impl CacheBackend for LruCache<String, String> {
+    fn get(&self, key: &str) -> Option<String> {
+        let result = {
+            let mut data = self.data.lock().unwrap();
+            let mut ts = self.timestamps.lock().unwrap();
+            *ts += 1;
+
+            if let Some(entry) = data.get_mut(key) {
+                entry.last_accessed = *ts;
+                Some(entry.value.clone())
+            } else {
+                None
+            }
+        };
+        result
+    }
+
+    fn put(&self, key: String, value: String) {
+        let mut data = self.data.lock().unwrap();
+        let mut ts = self.timestamps.lock().unwrap();
+        *ts += 1;
+
+        if data.len() >= self.capacity && !data.contains_key(&key) {
+            // Remove least recently used
+            if let Some(lru_key) = data
+                .iter()
+                .min_by_key(|(_, entry)| entry.last_accessed)
+                .map(|(k, _)| k.clone())
+            {
+                data.remove(&lru_key);
+            }
+        }
+
+        data.insert(
+            key,
+            CacheEntry {
+                value,
+                last_accessed: *ts,
+            },
+        );
+    }
+
+    fn remove(&self, key: &str) -> bool {
+        let mut data = self.data.lock().unwrap();
+        data.remove(key).is_some()
+    }
+
+    fn clear(&self) {
+        let mut data = self.data.lock().unwrap();
+        data.clear();
+
+        let mut ts = self.timestamps.lock().unwrap();
+        *ts = 0;
+    }
+
+    fn stats(&self) -> CacheStats {
+        let data = self.data.lock().unwrap();
+        let size = data.len();
+        
+        crate::infrastructure::cache_backend::CacheStats {
+            hits: 0,
+            misses: 0,
+            current_size: size as u64,
+            capacity: self.capacity as u64,
+            evictions: 0,
+            hit_rate: 0.0,
+        }
+    }
+
+    fn capacity(&self) -> usize {
+        self.capacity
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    // ===== Generic LRU Cache Tests =====
+    
     #[test]
     fn test_lru_cache_basic() {
         let cache: LruCache<String, String> = LruCache::new(3);
@@ -171,5 +232,211 @@ mod tests {
         assert_eq!(cache.get(&2), None); // Evicted
         assert_eq!(cache.get(&3), Some("c"));
         assert_eq!(cache.get(&4), Some("d"));
+    }
+
+    // ===== CacheBackend Trait Tests (PHASE 7.2) =====
+    
+    #[test]
+    fn test_cache_backend_get_put_consistency() {
+        // Property: Cache consistency - get after put returns same value
+        let cache: LruCache<String, String> = LruCache::new(10);
+        
+        // Implement CacheBackend
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+        
+        backend.put("key2".to_string(), "value2".to_string());
+        assert_eq!(backend.get("key2"), Some("value2".to_string()));
+        
+        // Verify other keys unchanged
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+    }
+
+    #[test]
+    fn test_cache_backend_remove() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+        
+        let removed = backend.remove("key1");
+        assert_eq!(removed, true);
+        assert_eq!(backend.get("key1"), None);
+        
+        // Remove non-existent key
+        let removed = backend.remove("nonexistent");
+        assert_eq!(removed, false);
+    }
+
+    #[test]
+    fn test_cache_backend_clear() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        backend.put("key2".to_string(), "value2".to_string());
+        backend.put("key3".to_string(), "value3".to_string());
+        
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+        assert_eq!(backend.get("key2"), Some("value2".to_string()));
+        assert_eq!(backend.get("key3"), Some("value3".to_string()));
+        
+        backend.clear();
+        
+        assert_eq!(backend.get("key1"), None);
+        assert_eq!(backend.get("key2"), None);
+        assert_eq!(backend.get("key3"), None);
+    }
+
+    #[test]
+    fn test_cache_backend_contains() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        
+        assert_eq!(backend.contains("key1"), true);
+        assert_eq!(backend.contains("key2"), false);
+        
+        backend.remove("key1");
+        assert_eq!(backend.contains("key1"), false);
+    }
+
+    #[test]
+    fn test_cache_backend_stats() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        backend.put("key2".to_string(), "value2".to_string());
+        
+        let stats = backend.stats();
+        assert_eq!(stats.current_size, 2);
+        assert_eq!(stats.capacity, 10);
+        assert_eq!(stats.hits, 0);
+        assert_eq!(stats.misses, 0);
+    }
+
+    #[test]
+    fn test_cache_backend_capacity() {
+        let cache: LruCache<String, String> = LruCache::new(50);
+        let backend: &dyn CacheBackend = &cache;
+        
+        assert_eq!(backend.capacity(), 50);
+    }
+
+    #[test]
+    fn test_cache_backend_size() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        assert_eq!(backend.size(), 0);
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        assert_eq!(backend.size(), 1);
+        
+        backend.put("key2".to_string(), "value2".to_string());
+        assert_eq!(backend.size(), 2);
+        
+        backend.remove("key1");
+        assert_eq!(backend.size(), 1);
+    }
+
+    #[test]
+    fn test_cache_backend_is_full() {
+        let cache: LruCache<String, String> = LruCache::new(2);
+        let backend: &dyn CacheBackend = &cache;
+        
+        assert_eq!(backend.is_full(), false);
+        
+        backend.put("key1".to_string(), "value1".to_string());
+        assert_eq!(backend.is_full(), false);
+        
+        backend.put("key2".to_string(), "value2".to_string());
+        assert_eq!(backend.is_full(), true);
+    }
+
+    #[test]
+    fn test_cache_backend_eviction_behavior() {
+        // Property: Cache eviction preserves recent items
+        let cache: LruCache<String, String> = LruCache::new(3);
+        let backend: &dyn CacheBackend = &cache;
+        
+        // Fill cache
+        backend.put("key1".to_string(), "value1".to_string());
+        backend.put("key2".to_string(), "value2".to_string());
+        backend.put("key3".to_string(), "value3".to_string());
+        
+        // Access key1 to mark it as recently used
+        let _ = backend.get("key1");
+        
+        // Add new key - should evict key2 (least recently used)
+        backend.put("key4".to_string(), "value4".to_string());
+        
+        // Verify recent items still exist
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+        assert_eq!(backend.get("key2"), None); // Should be evicted
+        assert_eq!(backend.get("key3"), Some("value3".to_string()));
+        assert_eq!(backend.get("key4"), Some("value4".to_string()));
+    }
+
+    #[test]
+    fn test_cache_backend_multiple_operations() {
+        // Test complex sequence of operations
+        let cache: LruCache<String, String> = LruCache::new(5);
+        let backend: &dyn CacheBackend = &cache;
+        
+        // Add items
+        for i in 1..=5 {
+            backend.put(format!("key{}", i), format!("value{}", i));
+        }
+        
+        // All items present
+        assert_eq!(backend.size(), 5);
+        
+        // Remove some items
+        backend.remove("key2");
+        backend.remove("key4");
+        assert_eq!(backend.size(), 3);
+        
+        // Add new items (should not evict due to space)
+        backend.put("key6".to_string(), "value6".to_string());
+        backend.put("key7".to_string(), "value7".to_string());
+        assert_eq!(backend.size(), 5);
+        
+        // Verify correct items
+        assert_eq!(backend.get("key2"), None);
+        assert_eq!(backend.get("key4"), None);
+        assert_eq!(backend.get("key1"), Some("value1".to_string()));
+        assert_eq!(backend.get("key6"), Some("value6".to_string()));
+    }
+
+    #[test]
+    fn test_cache_backend_update_value() {
+        // Test updating existing value
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        backend.put("key1".to_string(), "old_value".to_string());
+        assert_eq!(backend.get("key1"), Some("old_value".to_string()));
+        
+        // Update with new value
+        backend.put("key1".to_string(), "new_value".to_string());
+        assert_eq!(backend.get("key1"), Some("new_value".to_string()));
+        
+        // Size should not increase (replacement, not addition)
+        assert_eq!(backend.size(), 1);
+    }
+
+    #[test]
+    fn test_cache_backend_hit_rate_empty() {
+        let cache: LruCache<String, String> = LruCache::new(10);
+        let backend: &dyn CacheBackend = &cache;
+        
+        // Empty cache should have 0% hit rate
+        assert_eq!(backend.hit_rate(), 0.0);
     }
 }

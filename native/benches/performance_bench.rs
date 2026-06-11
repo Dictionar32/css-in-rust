@@ -9,6 +9,7 @@
 //! - Memory efficiency
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+// PHASE 7.1: Consolidated to single parser implementation
 use css_in_rust::application::class_parser::ClassParser;
 use css_in_rust::domain::theme_config::ThemeConfig;
 use css_in_rust::application::theme_resolver::ThemeResolver;

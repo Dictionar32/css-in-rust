@@ -40,6 +40,7 @@ static RE_FLAT_STRING: Lazy<Regex> = Lazy::new(|| {
 // Types exposed to N-API
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[derive(Serialize, Deserialize)]
 pub struct ParsedClass {
     pub raw: String,
     pub base: String,

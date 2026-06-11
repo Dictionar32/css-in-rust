@@ -4,6 +4,7 @@
 //! Orchestrates the compilation pipeline: ClassParser → ThemeResolver → CssGenerator → Deduplication
 
 use serde::{Deserialize, Serialize};
+// PHASE 7.1: Consolidated to single parser implementation
 use crate::application::class_parser::ClassParser;
 use crate::application::theme_resolver::ThemeResolver;
 use crate::domain::theme_config::ThemeConfig;
@@ -110,9 +111,10 @@ impl CssCompiler {
         // Track parsed results and errors
         let mut css_rules = Vec::new();
         let mut errors = Vec::new();
+        let parser = ClassParser::new();
         
         for class in &classes {
-            match self.parser.parse(class.trim()) {
+            match parser.parse(class.trim()) {
                 Ok(_parsed) => {
                     // For now, just generate a simple CSS rule
                     // TODO: Full integration with resolver and generator

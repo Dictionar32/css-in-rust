@@ -3,7 +3,7 @@
 //! Run with: cargo bench --bench class_parser_v2_bench
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use tailwind_styled_parser::application::class_parser_v2::ClassParser;
+use tailwind_styled_parser::application::class_parser::ClassParser;
 
 // ============================================================================
 // SIMPLE CLASS BENCHMARKS

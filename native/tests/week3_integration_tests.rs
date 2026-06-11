@@ -1,7 +1,7 @@
 //! Week 3 Integration Tests
 //! Final comprehensive testing before Week 4
 
-use tailwind_styled_parser::application::class_parser_v2::ClassParser;
+use tailwind_styled_parser::application::class_parser::ClassParser;
 use tailwind_styled_parser::application::theme_resolver::ThemeResolver;
 
 // ============================================================================

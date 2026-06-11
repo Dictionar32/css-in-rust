@@ -30,6 +30,120 @@ const log = (...args: unknown[]) => {
   }
 }
 
+// ── Structured Type Definitions ─────────────────────────────────────────────
+
+export interface ScanWorkspaceResult {
+  files: string[]
+  total_files: number
+  classes: string[]
+  unique_classes: number
+  duration_ms: number
+  errors: string[]
+}
+
+export interface ScanFileResult {
+  file: string
+  classes: string[]
+  class_count: number
+  has_tw_usage: boolean
+  size_bytes: number
+  duration_ms: number
+}
+
+export interface BatchExtractResult {
+  file: string
+  classes: string[]
+  contentHash: string
+  ok: boolean
+  error?: string
+}
+
+export interface SafelistCheckResult {
+  matched: string[]
+  unmatched: string[]
+  safelistSize: number
+}
+
+export interface PrefilterFileResult {
+  file: string
+  has_tw_usage: boolean
+  duration_ms: number
+  size_bytes: number
+  status: "processed" | "skipped" | "error"
+  error?: string
+}
+
+export interface DeadCodeResult {
+  deadInCss: string[]
+  deadInSource: string[]
+  liveClasses: string[]
+  totalCssClasses: number
+  totalSourceClasses: number
+}
+
+export interface ProcessedCssResult {
+  css: string
+  size_bytes: number
+  resolved_classes: string[]
+  unknown_classes: string[]
+}
+
+export interface ContainerConfig {
+  tag: string
+  containerJson: string
+  containerName?: string
+  breakpoints: Array<{ key: string; classes: string }>
+}
+
+export interface HoistResult {
+  code: string
+  hoisted: string[]
+  warnings: string[]
+}
+
+export interface VariantTableResult {
+  id: string
+  tableJson: string
+  keys: string[]
+  defaultKey: string
+  combinations: number
+}
+
+export interface ClassifyResult {
+  className: string
+  bucket: string
+  sortOrder: number
+}
+
+export interface MergeResult {
+  declarationsJson: string
+  declarationString: string
+  count: number
+}
+
+export interface ClassUsageItem {
+  className: string
+  usageCount: number
+  filesJson: string
+  bundleSizeBytes: number
+  isDeadCode: boolean
+}
+
+export interface StateCssConfig {
+  tag: string
+  componentName: string
+  statesJson: string
+  sourceFile: string
+}
+
+export interface GeneratedStateCss {
+  selector: string
+  declarations: string
+  cssRule: string
+  componentName: string
+  stateName: string
+}
+
 // ── Type Exports ────────────────────────────────────────────────────────────────
 
 export interface NativeBridge {
@@ -42,6 +156,15 @@ export interface NativeBridge {
   extractClassesFromSource?: (source: string) => string[]
   hasTwUsage?: (source: string) => boolean
   isAlreadyTransformed?: (source: string) => boolean
+  // Phase 5: Scanner functions (snake_case from Rust)
+  scan_workspace?: (root: string, extensions?: string[]) => ScanWorkspaceResult
+  extract_classes_from_source?: (source: string) => string[]
+  batch_extract_classes?: (filePaths: string[]) => BatchExtractResult[]
+  check_against_safelist?: (classes: string[], safelist: string[]) => SafelistCheckResult
+  scan_file?: (filePath: string) => ScanFileResult
+  collect_files?: (root: string, extensions?: string[]) => string[]
+  walk_and_prefilter_source_files?: (root: string, extensions?: string[]) => PrefilterFileResult[]
+  generate_sub_component_types?: (root: string, outputPath?: string) => string
   // Class Extractor
   extractAllClasses?: (source: string) => string[]
   parseClasses?: (raw: string) => Array<{ raw: string; type: string }>
@@ -52,11 +175,11 @@ export interface NativeBridge {
   batchExtractClasses?: (filePaths: string[]) => Array<{ file: string; classes: string[]; contentHash: string; ok: boolean; error?: string }>
   checkAgainstSafelist?: (classes: string[], safelist: string[]) => { matched: string[]; unmatched: string[]; safelistSize: number }
   // Batch 2
-  hoistComponents?: (source: string) => { code: string; hoisted: string[]; warnings: string[] }
-  compileVariantTable?: (configJson: string) => { id: string; tableJson: string; keys: string[]; defaultKey: string; combinations: number }
-  classifyAndSortClasses?: (classes: string[]) => Array<{ className: string; bucket: string; sortOrder: number }>
-  mergeCssDeclarations?: (cssChunks: string[]) => { declarationsJson: string; declarationString: string; count: number }
-  analyzeClassUsage?: (classes: string[], scanResultJson: string, css: string) => Array<{ className: string; usageCount: number; filesJson: string; bundleSizeBytes: number; isDeadCode: boolean }>
+  hoistComponents?: (source: string) => HoistResult
+  compileVariantTable?: (configJson: string) => VariantTableResult
+  classifyAndSortClasses?: (classes: string[]) => ClassifyResult[]
+  mergeCssDeclarations?: (cssChunks: string[]) => MergeResult
+  analyzeClassUsage?: (classes: string[], scanResultJson: string, css: string) => ClassUsageItem[]
   analyzeRsc?: (source: string, filename: string) => {
     isServer: boolean
     needsClientDirective: boolean
@@ -79,14 +202,8 @@ export interface NativeBridge {
   compileCss?: (classes: string[], prefix?: string | null) => { css: string; classes: string[] }
   compileCssLightning?: (classes: string[]) => string
   /** Post-process raw Tailwind-generated CSS dengan LightningCSS di Rust */
-  detectDeadCode?: (scanResultJson: string, css: string) => {
-    deadInCss: string[]
-    deadInSource: string[]
-    liveClasses: string[]
-    totalCssClasses: number
-    totalSourceClasses: number
-  }
-  processTailwindCssLightning?: (css: string) => { css: string; size_bytes: number; resolved_classes: string[]; unknown_classes: string[] }
+  detectDeadCode?: (scanResultJson: string, css: string) => DeadCodeResult
+  processTailwindCssLightning?: (css: string) => ProcessedCssResult
   processTailwindCssWithTargets?: (css: string, targets: string | null) => { css: string; size_bytes: number }
   // Atomic CSS (atomic.rs)
   parseAtomicClass?: (twClass: string) => string | null
@@ -99,30 +216,13 @@ export interface NativeBridge {
   calculateRisk?: (className: string, totalComponents: number) => string
   calculateSavings?: (bundleSizeBytes: number, componentCount: number) => number
   // Static state CSS pre-generation (state_css.rs)
-  extractTwStateConfigs?: (source: string, filename: string) => Array<{
-    tag: string
-    componentName: string
-    statesJson: string
-    sourceFile: string
-  }>
+  extractTwStateConfigs?: (source: string, filename: string) => StateCssConfig[]
   generateStaticStateCss?: (inputs: Array<{
     tag: string
     componentName: string
     statesJson: string
-  }>, resolvedCss: string | null) => Array<{
-    selector: string
-    declarations: string
-    cssRule: string
-    componentName: string
-    stateName: string
-  }>
-  extractAndGenerateStateCss?: (source: string, filename: string) => Array<{
-    selector: string
-    declarations: string
-    cssRule: string
-    componentName: string
-    stateName: string
-  }>
+  }>, resolvedCss: string | null) => GeneratedStateCss[]
+  extractAndGenerateStateCss?: (source: string, filename: string) => GeneratedStateCss[]
   /**
    * Convert layout/utility class string ke CSS declarations.
    * Dipakai oleh extractContainerCssFromSource sebagai Rust-accelerated fallback.
@@ -144,6 +244,134 @@ export interface NativeBridge {
     containerName?: string
     breakpoints: Array<{ key: string; classes: string }>
   }>
+  
+  // Phase 5.1: Cache Management (9 functions)
+  get_cache_statistics?: () => string  // Returns JSON
+  clear_all_caches?: () => void
+  clear_parse_cache?: () => void
+  clear_resolve_cache?: () => void
+  clear_compile_cache?: () => void
+  clear_css_gen_cache?: () => void
+  get_cache_optimization_hints?: (hit_rate_percent: number, memory_used_mb: number) => string  // Returns JSON
+  estimate_optimal_cache_config_native?: (total_budget_mb: number, workload_type: string) => string  // Returns JSON
+  cache_read?: (cache_path: string) => { entries_json: string }
+  cache_write?: (cache_path: string, entries: Array<{ file: string; content_hash: string; classes: string[]; mtime_ms: number; size_bytes: number }>) => boolean
+  cache_priority?: (mtime_ms: number, size_bytes: number, hit_count: number) => number
+  
+  // Phase 5.1: Theme Resolution Extended (7 functions)
+  resolve_variants?: (configJson: string) => string  // Returns JSON
+  validate_variant_config?: (configJson: string) => string  // Returns JSON
+  resolve_cascade?: (baseThemeJson: string, overridesJson: string) => string  // Returns JSON
+  resolve_class_names?: (classNames: string[], themeJson: string) => string  // Returns JSON
+  resolve_conflict_group?: (groupName: string, themeJson: string) => string  // Returns JSON
+  resolve_theme_value?: (keyPath: string, themeJson: string) => string | null
+  resolve_simple_variants?: (configJson: string) => string  // Returns JSON
+  
+  // Phase 5.1: Streaming & Incremental Processing (8 functions)
+  process_file_change?: (fileChangeJson: string) => string  // Returns JSON
+  compute_incremental_diff?: (oldScanJson: string, newScanJson: string) => string  // Returns JSON
+  create_fingerprint?: (filePath: string, fileContent: string) => string  // Returns JSON
+  inject_state_hash?: (css: string, stateHash: string) => string  // Returns JSON
+  prune_stale_entries?: (maxAgeSeconds: number, maxEntries: number) => string  // Returns JSON
+  rebuild_workspace_result?: (rootDir: string, extensions?: string[]) => string  // Returns JSON
+  scan_file_native?: (filePath: string, fileContent: string) => string  // Returns JSON
+  scan_files_batch_native?: (filesJson: string) => string  // Returns JSON
+  
+  // Phase 5.2: CSS Compilation (12 functions)
+  compile_class?: (input: string) => string  // Returns JSON
+  compile_classes?: (inputs: string[]) => string  // Returns JSON
+  compile_to_css?: (input: string, minify: boolean) => string
+  compile_to_css_batch?: (inputs: string[], minify: boolean) => string
+  minify_css?: (css: string) => string
+  compile_animation?: (animationName: string, from: string, to: string) => string  // Returns JSON
+  compile_keyframes?: (name: string, stopsJson: string) => string  // Returns JSON
+  compile_theme?: (tokensJson: string, themeName: string, prefix: string) => string  // Returns JSON
+  tw_merge?: (classString: string) => string
+  tw_merge_many?: (classStrings: string[]) => string
+  tw_merge_with_separator?: (classString: string, options: Record<string, unknown>) => string
+  tw_merge_many_with_separator?: (classStrings: string[], options: Record<string, unknown>) => string
+  tw_merge_raw?: (classLists: string[]) => string
+  
+  // Phase 5.2: ID Registry (16 functions)
+  id_registry_create?: () => number
+  id_registry_generate?: (handle: number, name: string) => number
+  id_registry_lookup?: (handle: number, name: string) => number
+  id_registry_next?: (handle: number) => number
+  id_registry_destroy?: (handle: number) => void
+  id_registry_reset?: (handle: number) => void
+  id_registry_snapshot?: (handle: number) => string  // Returns JSON
+  id_registry_active_count?: () => number
+  register_property_name?: (propertyName: string) => number
+  register_value_name?: (valueName: string) => number
+  property_id_to_string?: (propertyId: number) => string
+  value_id_to_string?: (valueId: number) => string
+  reverse_lookup_property?: (propertyId: number) => string
+  reverse_lookup_value?: (valueId: number) => string
+  id_registry_export?: (handle: number) => string
+  id_registry_import?: (importedData: string) => number
+  
+  // Phase 5.3: Redis Integration (40 functions)
+  redis_ping?: () => string
+  redis_get?: (key: string) => string
+  redis_set?: (key: string, value: string, ttl_seconds?: number) => string
+  redis_delete?: (key: string) => number
+  redis_exists?: (key: string) => number
+  redis_mget?: (keys: string[]) => string  // Returns JSON
+  redis_mset?: (pairs: Array<[string, string]>) => string
+  redis_flush_db?: () => number
+  redis_flush_all?: () => number
+  redis_pool_connect?: (host: string, port: number, pool_size?: number) => string
+  redis_pool_stats?: () => string  // Returns JSON
+  redis_pool_reconnect?: () => string
+  redis_enable_cluster?: (initial_nodes: string[]) => string  // Returns JSON
+  redis_disable_cluster?: () => string
+  redis_cluster_status?: () => string  // Returns JSON
+  redis_subscribe?: (channel: string) => string
+  redis_publish?: (channel: string, message: string) => number
+  redis_expiration_set?: (key: string, ttl_seconds: number) => number
+  redis_expiration_get?: (key: string) => string  // Returns JSON
+  redis_info?: () => string
+  redis_monitor?: () => string
+  redis_cache_size?: () => number
+  redis_cache_key_count?: () => number
+  redis_cache_clear?: () => number
+  redis_cache_hit_rate?: () => number
+  redis_enable_persistence?: (mode: string) => string
+  redis_disable_persistence?: () => string
+  redis_snapshot?: () => string
+  redis_memory_stats?: () => string
+  redis_optimize_memory?: () => number
+  redis_set_eviction_policy?: (policy: string) => string
+  redis_get_eviction_policy?: () => string
+  redis_replicate?: (target_host: string, target_port: number) => number
+  redis_replication_status?: () => string
+  redis_cache_sync?: (peers: string[]) => number
+  redis_enable_cache_warming?: (key_pattern: string) => string
+  redis_disable_cache_warming?: () => string
+  redis_diagnose?: () => string
+  
+  // Phase 5.4: Watch System & File Monitoring (20 functions)
+  start_watch?: (root_path: string, patterns?: string[]) => number
+  poll_watch_events?: (handle: number, timeout_ms?: number) => string  // Returns JSON
+  stop_watch?: (handle: number) => number
+  watch_add_pattern?: (handle: number, pattern: string) => string
+  watch_remove_pattern?: (handle: number, pattern: string) => string
+  watch_get_active_handles?: () => string  // Returns JSON
+  watch_clear_all?: () => number
+  watch_event_type_to_string?: (event_type_code: number) => string
+  is_watch_running?: (handle: number) => boolean
+  get_watch_stats?: () => string  // Returns JSON
+  watch_pause?: (handle: number) => string
+  watch_resume?: (handle: number) => string
+  scan_cache_optimizations?: () => string  // Returns JSON
+  get_plugin_hooks?: () => string  // Returns JSON
+  register_plugin_hook?: (hook_name: string, handler_id: string) => string
+  unregister_plugin_hook?: (hook_name: string, handler_id: string) => string
+  emit_plugin_hook?: (hook_name: string, data_json: string) => string
+  get_compilation_metrics?: () => string  // Returns JSON
+  reset_compilation_metrics?: () => string
+  validate_css_output?: (css: string) => string  // Returns JSON
+  get_compiler_diagnostics?: () => string  // Returns JSON
 }
 
 export interface NativeTransformResult {

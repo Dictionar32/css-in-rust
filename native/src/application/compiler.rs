@@ -1,5 +1,6 @@
 //! Compiler - orchestrates the complete CSS compilation pipeline
 
+// PHASE 7.1: Consolidated to single parser implementation
 use crate::application::class_parser::ClassParser;
 use crate::application::css_generator::CssGenerator;
 use crate::application::theme_resolver::ThemeResolver;
@@ -36,6 +37,11 @@ impl Compiler {
 
     /// Compile a single class to CSS
     pub fn compile_class(&self, class: &str) -> Result<String, CompileError> {
+        // TODO: Phase 7.1 - Fix ParsedClass type mismatch between class_parser and transform modules
+        // Currently this function cannot compile due to incompatible ParsedClass types
+        // Use domain::css_compiler instead for actual compilation
+        Err(CompileError::Other("compile_class not yet updated for Phase 7.1 consolidation".to_string()))
+        /*
         // Parse the class
         let parsed = self.parser.parse(class)?;
 
@@ -72,6 +78,7 @@ impl Compiler {
         let rule = self.generator.generate(&parsed, &theme_map)?;
 
         Ok(rule.to_css_string())
+        */
     }
 
     /// Compile multiple classes to CSS

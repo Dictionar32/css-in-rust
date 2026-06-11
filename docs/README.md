@@ -1,115 +1,59 @@
-# CSS-in-Rust Documentation
+# Documentation Hub
 
-Complete documentation for the CSS-in-Rust project (Tailwind CSS compiler in Rust with Node.js integration).
+Dokumentasi project terstruktur berdasarkan fase pengembangan dan kategori.
 
-## 📚 Quick Navigation
+## � Quick Navigation
 
-### 🚀 Getting Started
-- **[START_HERE.md](../START_HERE.md)** - Begin here
-- **[QUICK_BUILD_GUIDE.md](../QUICK_BUILD_GUIDE.md)** - Build instructions
-- **[PHASE4_QUICK_START.md](../PHASE4_QUICK_START.md)** - Phase 4 quick reference
+### Phase Documentation
+- **[Phase 6](./phase-6/)** - Atomic operations & optimization (latest)
+- **[Phase 5](./phase-5/)** - Cache infrastructure & Redis integration
+- **[Phase 4](./phase-4/)** - NAPI bridge & native bindings
+- **[Archive](./archive/)** - Legacy docs, guides, and reports
 
-### 📋 Current Status
-- **[00_STATUS_PHASE4_FINAL.md](../00_STATUS_PHASE4_FINAL.md)** - Final project status ✅
-- **[00_PHASE4_COMPLETE.md](../00_PHASE4_COMPLETE.md)** - Phase 4 completion report
-- **[PROJECT_STATUS_MID_JUNE.md](../PROJECT_STATUS_MID_JUNE.md)** - Project overview
+## 🚀 Getting Started
+- Start with [../README.md](../README.md) for project overview
+- Read [../QUICK_START.md](../QUICK_START.md) for quick setup
 
-### 🔍 API Reference
-- **[native/API.md](../native/API.md)** - Native API documentation
-- **[PHASE4_REDIS_NAPI_BRIDGE.md](../PHASE4_REDIS_NAPI_BRIDGE.md)** - Redis NAPI functions (20 functions)
-
-### 📂 Documentation Structure
+## 📂 Structure
 
 ```
 docs/
-├── phases/              # Phase-specific documentation
-│   ├── phase1.md       # CSS Compiler Core
-│   ├── phase2.md       # Caching Infrastructure
-│   ├── phase3.md       # Distributed Cache + Redis
-│   └── phase4.md       # Node.js Integration (NAPI)
-│
-├── archive/            # Historical documentation (old sessions)
-│   └── [week-by-week reports]
-│
-└── README.md           # This file
+├── phase-6/          → Phase 6 optimization (atomic operations)
+├── phase-5/          → Phase 5 implementation (caching, Redis)
+├── phase-4/          → Phase 4 completion (NAPI, native bindings)
+├── archive/          → General docs, reports, guides, utilities
+├── api/              → API documentation
+├── benchmark/        → Performance benchmark reports
+├── phases/           → Phase planning & roadmap
+└── other dirs/       → Various documentation categories
 ```
 
-## 📊 Project Phases (All Complete ✅)
+## � Phase 6 Documentation
 
-| Phase | Status | Key Features |
-|-------|--------|--------------|
-| Phase 0 | ✅ | Foundation & setup |
-| Phase 1 | ✅ | CSS compiler core |
-| Phase 2 | ✅ | Multi-layer caching (11 weeks) |
-| Phase 3 | ✅ | Distributed cache + Redis |
-| Phase 4 | ✅ | Node.js integration (20 NAPI functions) |
+Latest optimization phase focusing on atomic operations:
+- Performance improvements: 2.5-2.8x faster
+- Lock-free atomic operations
+- Zero unsafe code
+- 100% backward compatible
 
-## 🎯 Key Achievements
+See [phase-6/README.md](phase-6/) for details.
 
-✅ **Complete CSS Compiler** in Rust  
-✅ **5-Layer Caching System** (90%+ hit rate)  
-✅ **Distributed Cache** with Redis support  
-✅ **40 NAPI Functions** (20 compiler + 20 Redis)  
-✅ **TypeScript Integration** (fully typed)  
-✅ **538 Tests** (99.3% passing)  
-✅ **Production Ready** (0 build errors)
+## 🔗 Key Links
 
-## 📦 Current Implementation
+- **[Root README](../README.md)** - Project overview
+- **[Quick Start](../QUICK_START.md)** - Setup & first steps
+- **[API Documentation](./api/)** - API reference
+- **[Benchmarks](./benchmark/)** - Performance metrics
 
-```
-Total Code:        8,950+ lines
-Total Tests:       538 tests (99.3% passing)
-Build Status:      0 errors ✅
-NAPI Functions:    40 (all working)
-Performance:       <5ms latency, <10MB memory
-```
+## 💡 How to Use This Documentation
 
-## 🔗 Important Files
-
-### Active Documentation
-- `START_HERE.md` - Project entry point
-- `PHASE_1_2_3_4_IMPLEMENTATION.md` - Architecture overview
-- `README.md` - Main readme
-- `package.json` - Project config
-- `native/Cargo.toml` - Rust config
-
-### Deployment
-- `DEPLOYMENT_GUIDE.md` - How to deploy
-- `QUICK_BUILD_GUIDE.md` - Build steps
-- `native/API.md` - API reference
-
-### Reference
-- `PHASE4_REDIS_NAPI_BRIDGE.md` - Redis functions (20)
-- `PHASE4_QUICK_START.md` - Quick reference
-- `TROUBLESHOOTING_GUIDE.md` - Problem solving
-
-## 🗂️ Files Consolidated
-
-**Archived** 159+ old `.md` files into `docs/archive/` to keep root directory clean.
-
-Active documentation now in root:
-- `START_HERE.md`
-- `PHASE_*.md` (current phases)
-- `README.md`
-- `native/API.md`
-
-## ✅ Ready for Production
-
-All phases complete and production-ready:
-
-```bash
-# Build
-npm run build:rust
-
-# Test
-cargo test
-
-# Deploy
-npm publish
-```
+1. **New to the project?** → Start with root [../README.md](../README.md)
+2. **Want to get started?** → Read [../QUICK_START.md](../QUICK_START.md)
+3. **Learning about phases?** → Browse phase-specific folders
+4. **Need reference docs?** → Check `./api/` and `./archive/`
+5. **Performance info?** → See `./benchmark/`
 
 ---
 
-**Status**: Production Ready 🚀  
-**Last Updated**: June 10, 2026  
-**Build**: ✅ Passing (534/538 tests)
+Generated: June 11, 2026  
+Structure: Organized by phase for better navigation

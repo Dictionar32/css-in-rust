@@ -1,6 +1,6 @@
 {
   "name": "@tailwind-styled/compiler",
-  "version": "5.0.4",
+  "version": "5.0.14",
   "description": "Compiler pipeline for tailwind-styled-v4",
   "license": "MIT",
   "type": "module",

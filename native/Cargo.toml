@@ -41,8 +41,11 @@ lightningcss = { version = "1.0.0-alpha.60", features = ["default"] }
 
 [dev-dependencies]
 serial_test = "3.0"
-quickcheck = "1"
-quickcheck_macros = "1"
+# Property-based testing libraries for R4 (Property-Based Testing)
+# Runs 1000+ iterations per property to discover edge cases
+proptest = "1.0"      # Generation-based property testing framework
+quickcheck = "1"      # Shrinking-based property testing framework
+quickcheck_macros = "1"  # Macros for quickcheck properties
 criterion = { version = "0.5", features = ["html_reports"] }
 tailwind_styled_parser = { path = "." }
 

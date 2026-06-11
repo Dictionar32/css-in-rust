@@ -13,6 +13,246 @@ import { getNativeBridge, resetNativeBridgeCache, adaptNativeResult, type Native
 export { getNativeBridge, resetNativeBridgeCache, adaptNativeResult }
 export type { NativeBridge, NativeTransformResult, ClassExtractResult, ComponentMetadata, NativeRscResult }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// COMPREHENSIVE NATIVE BINDINGS EXPORTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// CSS Generation with Caching
+export { generateCssNative, getCacheStats, clearThemeCache } from "./cssGeneratorNative"
+
+// Scanning & File Processing - Phase 5 Integration
+export {
+  scanWorkspace,
+  extractClassesFromSourceNative,
+  batchExtractClassesNative,
+  checkAgainstSafelistNative,
+  scanFile,
+  collectFiles,
+  walkAndPrefilterSourceFiles,
+  generateSubComponentTypes,
+  type ScanWorkspaceResult,
+  type ScanFileResult,
+  type BatchExtractResult,
+  type SafelistCheckResult,
+  type PrefilterFileResult,
+} from "./scannerNative"
+
+// Analysis & Optimization - Phase 5 Integration
+export {
+  detectDeadCode,
+  analyzeClassUsageNative,
+  analyzeClassesNative,
+  analyzeRscNative,
+  optimizeCssNative,
+  processTailwindCssLightning,
+  eliminateDeadCssNative,
+  hoistComponentsNative,
+  compileVariantTableNative,
+  classifyAndSortClassesNative,
+  mergeCssDeclarationsNative,
+  type DeadCodeResult,
+  type ClassUsageItem,
+  type ProcessedCssResult,
+  type HoistResult,
+  type VariantTableResult,
+  type ClassifyResult,
+  type MergeResult,
+} from "./analyzerNative"
+
+// Advanced Compilation - Phase 5 Integration
+export {
+  compileCssNative2,
+  compileCssLightning,
+  extractTwStateConfigsNative,
+  generateStaticStateCssNative,
+  extractAndGenerateStateCssNative,
+  layoutClassesToCss,
+  hashContent,
+  extractTwContainerConfigs,
+  parseAtomicClass,
+  generateAtomicCss,
+  toAtomicClasses,
+  clearAtomicRegistry,
+  atomicRegistrySize,
+  type ContainerConfig,
+  type StateCssConfig,
+  type GeneratedStateCss,
+} from "./compilationNative"
+
+// Phase 5.1: Cache Management
+export {
+  getCacheStatistics,
+  clearAllCaches,
+  clearParseCache,
+  clearResolveCache,
+  clearCompileCache,
+  clearCssGenCache,
+  getCacheOptimizationHints,
+  estimateOptimalCacheConfig,
+  cacheRead,
+  cacheWrite,
+  cachePriority,
+  type CacheOptimizationHints,
+  type OptimalCacheConfig,
+  type CacheStatistics,
+} from "./cacheNative"
+
+// Phase 5.1: Theme Resolution Extended
+export {
+  resolveVariants,
+  validateThemeConfig,
+  resolveCascade,
+  resolveClassNames,
+  resolveConflictGroup,
+  resolveThemeValue,
+  resolveSimpleVariants,
+  type ThemeValidationResult,
+  type ResolvedVariantConfig,
+  type ThemeCascadeResult,
+  type ResolvedClassName,
+  type ConflictGroupInfo,
+} from "./themeResolutionNative"
+
+// Phase 5.1: Streaming & Incremental Processing
+export {
+  processFileChange,
+  computeIncrementalDiff,
+  createFingerprint,
+  injectStateHash,
+  pruneStaleCacheEntries,
+  rebuildWorkspaceResult,
+  scanFileNative,
+  scanFilesBatchNative,
+  type FileChangeEvent,
+  type ProcessedFileChange,
+  type FileDiff,
+  type FileFingerprint,
+  type IncrementalDiffResult,
+  type StateInjectionResult,
+  type PruneResult,
+  type RebuildWorkspaceResult,
+} from "./streamingNative"
+
+// Phase 5.2: CSS Compilation (12 functions)
+export {
+  compileClass,
+  compileClasses,
+  compileToCss,
+  compileToCssBatch,
+  minifyCss,
+  compileAnimation,
+  compileKeyframes,
+  compileTheme,
+  twMerge,
+  twMergeMany,
+  twMergeWithSeparator,
+  twMergeManyWithSeparator,
+  twMergeRaw,
+  type CompiledCssRule,
+  type CompiledAnimation,
+  type CompiledTheme,
+  type CssCompileResult,
+  type TwMergeOptions,
+} from "./cssCompilationNative"
+
+// Phase 5.2: ID Registry (16 functions)
+export {
+  idRegistryCreate,
+  idRegistryGenerate,
+  idRegistryLookup,
+  idRegistryNext,
+  idRegistryDestroy,
+  idRegistryReset,
+  idRegistrySnapshot,
+  idRegistryActiveCount,
+  registerPropertyName,
+  registerValueName,
+  propertyIdToString,
+  valueIdToString,
+  reverseLookupProperty,
+  reverseLookupValue,
+  idRegistryExport,
+  idRegistryImport,
+  type RegistrySnapshot,
+} from "./idRegistryNative"
+
+// Phase 5.3: Redis Integration (40 functions)
+export {
+  redisPing,
+  redisGet,
+  redisSet,
+  redisDelete,
+  redisExists,
+  redisMget,
+  redisMset,
+  redisFlushDb,
+  redisFlushAll,
+  redisPoolConnect,
+  redisPoolStats,
+  redisPoolReconnect,
+  redisEnableCluster,
+  redisDisableCluster,
+  redisClusterStatus,
+  redisSubscribe,
+  redisPublish,
+  redisExpirationSet,
+  redisExpirationGet,
+  redisInfo,
+  redisMonitor,
+  redisCacheSize,
+  redisCacheKeyCount,
+  redisCacheClear,
+  redisCacheHitRate,
+  redisEnablePersistence,
+  redisDisablePersistence,
+  redisSnapshot,
+  redisMemoryStats,
+  redisOptimizeMemory,
+  redisSetEvictionPolicy,
+  redisGetEvictionPolicy,
+  redisReplicate,
+  redisReplicationStatus,
+  redisCacheSync,
+  redisEnableCacheWarming,
+  redisDisableCacheWarming,
+  redisDiagnose,
+  type RedisCacheConfig,
+  type RedisPoolStats,
+  type RedisClusterNode,
+  type RedisClusterStatus,
+  type KeyExpiration,
+  type PubSubMessage,
+  type PoolInfo,
+} from "./redisNative"
+
+// Phase 5.4: Watch System & File Monitoring (20 functions)
+export {
+  startWatch,
+  pollWatchEvents,
+  stopWatch,
+  watchAddPattern,
+  watchRemovePattern,
+  watchGetActiveHandles,
+  watchClearAll,
+  watchEventTypeToString,
+  isWatchRunning,
+  getWatchStats,
+  watchPause,
+  watchResume,
+  scanCacheOptimizations,
+  getPluginHooks,
+  registerPluginHook,
+  unregisterPluginHook,
+  emitPluginHook,
+  getCompilationMetrics,
+  resetCompilationMetrics,
+  validateCssOutput,
+  getCompilerDiagnostics,
+  type WatchEvent,
+  type WatchHandle,
+  type WatchStats,
+} from "./watchSystemNative"
+
 export type LoaderOutput = {
   code: string
   changed: boolean
