@@ -9,7 +9,7 @@
  * - Type safety through TypeScript generics
  */
 
-import { getNativeBridge } from "./nativeBridge"
+import { getNativeBridge, DeadCodeResult, ProcessedCssResult, ClassUsageItem } from "./nativeBridge"
 
 /**
  * Creates a safe wrapper for calling native bridge functions with error handling
@@ -208,7 +208,7 @@ export const redis_mget = (keys: string[]): Record<string, string> => {
  * @param pairs Array of [key, value, ttl?] tuples
  * @returns Status message
  */
-export const redis_mset = (pairs: Array<[string, string, number?]>): string => {
+export const redis_mset = (pairs: Array<[string, string]>): string => {
   const bridge = getNativeBridge()
   if (!bridge.redis_mset) throw new Error("redis_mset not available")
   return safeCallNative("redis_mset", () => bridge.redis_mset!(pairs))
@@ -918,7 +918,7 @@ export const inject_state_hash = (css: string, stateHash: string): string => {
  * @param maxEntries Optional maximum entry count
  * @returns Prune result as JSON string
  */
-export const prune_stale_entries = (maxAgeSeconds: number, maxEntries?: number): string => {
+export const prune_stale_entries = (maxAgeSeconds: number, maxEntries: number): string => {
   const bridge = getNativeBridge()
   if (!bridge.prune_stale_entries) throw new Error("prune_stale_entries not available")
   return safeCallNative("prune_stale_entries", () => bridge.prune_stale_entries!(maxAgeSeconds, maxEntries))
@@ -1038,7 +1038,7 @@ export const resolve_simple_variants = (configJson: string): string => {
  * @param css Generated CSS content
  * @returns Dead code analysis as JSON string
  */
-export const detect_dead_code = (scanResultJson: string, css: string): string => {
+export const detect_dead_code = (scanResultJson: string, css: string): DeadCodeResult => {
   const bridge = getNativeBridge()
   if (!bridge.detectDeadCode) throw new Error("detectDeadCode not available")
   return safeCallNative("detectDeadCode", () => bridge.detectDeadCode!(scanResultJson, css))
@@ -1072,7 +1072,7 @@ export const optimize_css = (css: string): string => {
  * @param css CSS content
  * @returns Processed CSS result as JSON string
  */
-export const process_tailwind_css_lightning = (css: string): string => {
+export const process_tailwind_css_lightning = (css: string): ProcessedCssResult => {
   const bridge = getNativeBridge()
   if (!bridge.processTailwindCssLightning) throw new Error("processTailwindCssLightning not available")
   return safeCallNative("processTailwindCssLightning", () => bridge.processTailwindCssLightning!(css))
@@ -1084,10 +1084,16 @@ export const process_tailwind_css_lightning = (css: string): string => {
  * @param targets Optional target browsers string
  * @returns Processed CSS result as JSON string
  */
-export const process_tailwind_css_with_targets = (css: string, targets?: string | null): string => {
+export const process_tailwind_css_with_targets = (css: string, targets?: string | null): ProcessedCssResult => {
   const bridge = getNativeBridge()
   if (!bridge.processTailwindCssWithTargets) throw new Error("processTailwindCssWithTargets not available")
-  return safeCallNative("processTailwindCssWithTargets", () => bridge.processTailwindCssWithTargets!(css, targets))
+  const result = safeCallNative("processTailwindCssWithTargets", () => bridge.processTailwindCssWithTargets!(css, targets ?? null))
+  // Cast to ProcessedCssResult - bridge returns partial shape
+  return {
+    ...result,
+    resolved_classes: [],
+    unknown_classes: [],
+  }
 }
 
 /**
@@ -1138,8 +1144,8 @@ export const clear_atomic_registry = (): void => {
  */
 export const get_atomic_registry_size = (): number => {
   const bridge = getNativeBridge()
-  if (!bridge.getAtomicRegistrySize) throw new Error("getAtomicRegistrySize not available")
-  return safeCallNative("getAtomicRegistrySize", () => bridge.getAtomicRegistrySize!())
+  if (!bridge.atomicRegistrySize) throw new Error("atomicRegistrySize not available")
+  return safeCallNative("atomicRegistrySize", () => bridge.atomicRegistrySize!())
 }
 
 // ── ANALYSIS FUNCTIONS (8 total) ───────────────────────────────────────────
@@ -1151,7 +1157,7 @@ export const get_atomic_registry_size = (): number => {
  * @param css Generated CSS
  * @returns Array of class usage items as JSON string
  */
-export const analyze_class_usage = (classes: string[], scanResultJson: string, css: string): string => {
+export const analyze_class_usage = (classes: string[], scanResultJson: string, css: string): ClassUsageItem[] => {
   const bridge = getNativeBridge()
   if (!bridge.analyzeClassUsage) throw new Error("analyzeClassUsage not available")
   return safeCallNative("analyzeClassUsage", () => bridge.analyzeClassUsage!(classes, scanResultJson, css))
@@ -1192,25 +1198,559 @@ export const calculate_savings = (bundleSizeBytes: number, componentCount: numbe
   return safeCallNative("calculateSavings", () => bridge.calculateSavings!(bundleSizeBytes, componentCount))
 }
 
+// ── TYPE DEFINITIONS: Cache ──────────────────────────────────────────────────
+
+export interface CacheStatsResult {
+  status: "ok"
+  data: {
+    total_hits: number
+    total_misses: number
+    hit_rate: number
+    cache_backends: Record<string, unknown>
+    theme_resolver_pool: {
+      hits: number
+      misses: number
+      total: number
+      hit_rate: number
+      cached_resolvers: number
+    }
+  }
+}
+
+export interface RecommendedCacheConfig {
+  parse_cache_size: number
+  resolve_cache_size: number
+  compile_cache_size: number
+  css_gen_cache_size: number
+  recommended_eviction_policy: string
+  ttl_seconds: number
+  expected_hit_rate_percent: number
+}
+
+export interface ResolverPoolStatsResult {
+  hits: number
+  misses: number
+  total: number
+  hit_rate: number
+  cached_resolvers: number
+}
+
+export interface CacheOptimizationHintsResult {
+  current_strategy: string
+  recommended_strategy: string
+  estimated_improvement_percent: number
+  suggested_memory_mb: number
+  notes: string[]
+}
+
+export interface StreamingBatchSizeResult {
+  recommended_batch_size: number
+  target_memory_mb: number
+  estimated_memory_per_item_bytes: number
+  notes: string
+}
+
+// ── TYPE DEFINITIONS: Parsing ────────────────────────────────────────────────
+
+export interface ParsedClassResult {
+  prefix: string
+  value: string
+  variants: string[]
+  modifier?: string
+  arbitrary_declaration?: string
+}
+
+export interface CompiledClassResult {
+  prefix: string
+  value: string
+  resolved: string
+  variants: string[]
+  modifier?: string
+}
+
+export interface ClassAnalysisResult {
+  total: number
+  unique_prefixes: number
+  prefixes: string[]
+  variant_distribution: Record<string, number>
+  error_count: number
+  errors: string[]
+}
+
+export interface ParseStatsResult {
+  hits: number
+  misses: number
+  total: number
+  hit_rate: number
+}
+
+// ── TYPE DEFINITIONS: Watch (infrastructure) ────────────────────────────────
+
+export interface WatchHandleResult {
+  status: string
+  handle_id: number
+}
+
+export interface WatchFileEvent {
+  kind: string
+  path: string
+  timestamp_ms: number
+}
+
+export interface WatchPerformanceResult {
+  avg_event_latency_ms: number
+  max_event_latency_ms: number
+  min_event_latency_ms: number
+  total_processed: number
+}
+
+// ── TYPE DEFINITIONS: Week 6 ─────────────────────────────────────────────────
+
+export interface OptimizationRecommendationsResult {
+  recommendations: string[]
+  priority: "low" | "medium" | "high"
+  estimated_improvement_percent: number
+}
+
+export interface CachingStrategyResult {
+  strategy: string
+  rationale: string
+  settings: Record<string, unknown>
+}
+
+export interface BenchmarkResult {
+  streaming_ops_per_sec: number
+  buffered_ops_per_sec: number
+  winner: "streaming" | "buffered"
+  notes: string
+}
+
+export interface Week6StatusResult {
+  features_enabled: string[]
+  optimization_level: string
+  memory_pressure: "low" | "medium" | "high"
+}
+
+// ── TYPE DEFINITIONS: Scan Cache ─────────────────────────────────────────────
+
+export interface ScanCacheStatsResult {
+  size: number
+}
+
+// ── CACHE WRAPPERS ────────────────────────────────────────────────────────────
+
 /**
- * Identifies unused components or classes
- * @param scanResultJson Scan result as JSON
- * @param css Generated CSS
- * @returns Array of unused items as JSON string
+ * Configure the global cache backend.
+ * @param config - { backend, maxCapacity?, redisUrl?, persistDir? }
  */
-export const identify_unused = (scanResultJson: string, css: string): string => {
+export const configure_cache_backend = (config: {
+  backend: "lru" | "redis" | "persistent" | "adaptive"
+  max_capacity?: number
+  redis_url?: string
+  persist_dir?: string
+}): { status: string; backend: string } => {
   const bridge = getNativeBridge()
-  if (!bridge.identifyUnused) throw new Error("identifyUnused not available")
-  return safeCallNative("identifyUnused", () => bridge.identifyUnused!(scanResultJson, css))
+  if (!bridge.configureCacheBackend) throw new Error("configureCacheBackend not available")
+  const result = safeCallNative("configureCacheBackend", () =>
+    bridge.configureCacheBackend!(JSON.stringify(config))
+  )
+  return parseNativeJson(result, "configureCacheBackend")
 }
 
 /**
- * Builds component dependency graph
- * @param sourceFiles Array of source files with content
- * @returns Dependency graph as JSON string
+ * Get comprehensive cache statistics including resolver pool.
  */
-export const build_dependency_graph = (sourceFiles: string): string => {
+export const get_cache_stats = (): CacheStatsResult => {
   const bridge = getNativeBridge()
-  if (!bridge.buildDependencyGraph) throw new Error("buildDependencyGraph not available")
-  return safeCallNative("buildDependencyGraph", () => bridge.buildDependencyGraph!(sourceFiles))
+  if (!bridge.getCacheStats) throw new Error("getCacheStats not available")
+  const result = safeCallNative("getCacheStats", () => bridge.getCacheStats!())
+  // Handle [number, number] tuple return type from native bridge
+  if (Array.isArray(result) && result.length === 2) {
+    return parseNativeJson(JSON.stringify(result), "getCacheStats")
+  }
+  return parseNativeJson(String(result), "getCacheStats")
+}
+
+/**
+ * Get recommended cache config for a workload type.
+ * @param workloadType - "build" | "dev" | "test" | "production"
+ */
+export const get_recommended_cache_config = (workloadType: string): RecommendedCacheConfig => {
+  const bridge = getNativeBridge()
+  if (!bridge.getRecommendedCacheConfig) throw new Error("getRecommendedCacheConfig not available")
+  const result = safeCallNative("getRecommendedCacheConfig", () =>
+    bridge.getRecommendedCacheConfig!(workloadType)
+  )
+  return parseNativeJson(result, "getRecommendedCacheConfig")
+}
+
+/** Clear all caches (parse, resolve, compile, css-gen). */
+export const clear_all_caches_napi = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearAllCachesNapi) throw new Error("clearAllCachesNapi not available")
+  safeCallNative("clearAllCachesNapi", () => bridge.clearAllCachesNapi!())
+}
+
+/** Clear only the resolve cache. */
+export const clear_resolve_cache_napi = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearResolveCacheNapi) throw new Error("clearResolveCacheNapi not available")
+  safeCallNative("clearResolveCacheNapi", () => bridge.clearResolveCacheNapi!())
+}
+
+/** Clear only the compile cache. */
+export const clear_compile_cache_napi = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearCompileCacheNapi) throw new Error("clearCompileCacheNapi not available")
+  safeCallNative("clearCompileCacheNapi", () => bridge.clearCompileCacheNapi!())
+}
+
+/** Clear only the CSS generation cache. */
+export const clear_css_gen_cache_napi = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearCssGenCacheNapi) throw new Error("clearCssGenCacheNapi not available")
+  safeCallNative("clearCssGenCacheNapi", () => bridge.clearCssGenCacheNapi!())
+}
+
+/** Get theme resolver pool statistics. */
+export const get_resolver_pool_stats = (): ResolverPoolStatsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getResolverPoolStats) throw new Error("getResolverPoolStats not available")
+  const result = safeCallNative("getResolverPoolStats", () => bridge.getResolverPoolStats!())
+  return parseNativeJson(result, "getResolverPoolStats")
+}
+
+/** Clear and reset the resolver pool. */
+export const clear_resolver_pool = (): { status: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearResolverPool) throw new Error("clearResolverPool not available")
+  const result = safeCallNative("clearResolverPool", () => bridge.clearResolverPool!())
+  return parseNativeJson(result, "clearResolverPool")
+}
+
+/** Get cache optimization hints based on current stats. */
+export const get_cache_optimization_hints = (): CacheOptimizationHintsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getCacheOptimizationHints) throw new Error("getCacheOptimizationHints not available")
+  const result = safeCallNative("getCacheOptimizationHints", () => bridge.getCacheOptimizationHints!())
+  return parseNativeJson(result, "getCacheOptimizationHints")
+}
+
+/**
+ * Estimate streaming batch size for a given memory target.
+ * @param targetMemoryMb - Target memory budget in MB
+ */
+export const estimate_streaming_batch_size = (targetMemoryMb: number): StreamingBatchSizeResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.estimateStreamingBatchSize) throw new Error("estimateStreamingBatchSize not available")
+  const result = safeCallNative("estimateStreamingBatchSize", () =>
+    bridge.estimateStreamingBatchSize!(targetMemoryMb)
+  )
+  return parseNativeJson(result, "estimateStreamingBatchSize")
+}
+
+// ── PARSING WRAPPERS ──────────────────────────────────────────────────────────
+
+/**
+ * Parse a single Tailwind class into its components.
+ * @param input - e.g. "md:hover:bg-blue-600/50"
+ */
+export const parse_class = (input: string): ParsedClassResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.parseClass) throw new Error("parseClass not available")
+  const result = safeCallNative("parseClass", () => bridge.parseClass!(input))
+  return parseNativeJson(result, "parseClass")
+}
+
+/**
+ * Parse multiple Tailwind classes in batch (parallelised in Rust via rayon).
+ * @param inputs - Array of class strings
+ */
+export const parse_classes = (inputs: string[]): ParsedClassResult[] => {
+  const bridge = getNativeBridge()
+  if (!bridge.parseClasses) throw new Error("parseClasses not available")
+  const result = safeCallNative("parseClasses", () => bridge.parseClasses!(JSON.stringify(inputs)))
+  // parseClasses returns an array of parsed class objects
+  if (Array.isArray(result)) {
+    return result as unknown as ParsedClassResult[]
+  }
+  return parseNativeJson(String(result), "parseClasses")
+}
+
+/**
+ * Analyze a set of classes for variant distribution and prefix stats.
+ * @param classes - Array of class strings
+ */
+export const analyze_classes = (classes: string[]): ClassAnalysisResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.analyzeClasses) throw new Error("analyzeClasses not available")
+  const cwd = typeof process !== 'undefined' ? process.cwd() : '.'
+  const result = safeCallNative("analyzeClasses", () =>
+    bridge.analyzeClasses!(JSON.stringify(classes), cwd, 0)
+  )
+  if (result && typeof result === 'object' && !Array.isArray(result)) {
+    return result as unknown as ClassAnalysisResult
+  }
+  return parseNativeJson(String(result), "analyzeClasses")
+}
+
+/**
+ * Run parse → resolve → generate pipeline for a single class.
+ * @param input - Tailwind class string
+ */
+export const compile_class_napi = (input: string): CompiledClassResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.compileClassNapi) throw new Error("compileClassNapi not available")
+  const result = safeCallNative("compileClassNapi", () => bridge.compileClassNapi!(input))
+  return parseNativeJson(result, "compileClassNapi")
+}
+
+/** Get parse cache hit/miss statistics. */
+export const get_parse_stats = (): ParseStatsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getParseStats) throw new Error("getParseStats not available")
+  const result = safeCallNative("getParseStats", () => bridge.getParseStats!())
+  return parseNativeJson(result, "getParseStats")
+}
+
+/** Clear the parse cache and reset its statistics. */
+export const clear_parse_cache_napi = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearParseCacheNapi) throw new Error("clearParseCacheNapi not available")
+  safeCallNative("clearParseCacheNapi", () => bridge.clearParseCacheNapi!())
+}
+
+// ── WATCH WRAPPERS (infrastructure) ──────────────────────────────────────────
+
+/**
+ * Start watching a directory using the Rust `notify` crate.
+ * Different from `start_watch` — uses a handle_id-based API from napi_bridge_watch.rs.
+ * @param rootDir - Root directory to watch
+ * @param options - Optional JSON config (patterns, debounceMs)
+ */
+export const watch_files = (
+  rootDir: string,
+  options?: { patterns?: string[]; debounce_ms?: number }
+): WatchHandleResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.watchFiles) throw new Error("watchFiles not available")
+  const result = safeCallNative("watchFiles", () =>
+    bridge.watchFiles!(rootDir, options ? JSON.stringify(options) : null)
+  )
+  return parseNativeJson(result, "watchFiles")
+}
+
+/**
+ * Stop a watcher started by `watch_files`.
+ * @param handleId - Handle ID from watchFiles result
+ */
+export const stop_watching = (handleId: number): { status: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.stopWatching) throw new Error("stopWatching not available")
+  const result = safeCallNative("stopWatching", () => bridge.stopWatching!(handleId))
+  return parseNativeJson(result, "stopWatching")
+}
+
+/**
+ * Drain queued file events for a watch handle.
+ * @param handleId - Handle ID from watchFiles
+ * @param maxEvents - Max events to return (default: all)
+ */
+export const get_watch_events = (handleId: number, maxEvents?: number): WatchFileEvent[] => {
+  const bridge = getNativeBridge()
+  if (!bridge.getWatchEvents) throw new Error("getWatchEvents not available")
+  const result = safeCallNative("getWatchEvents", () =>
+    bridge.getWatchEvents!(handleId, maxEvents ?? null)
+  )
+  return parseNativeJson(result, "getWatchEvents")
+}
+
+/** Get watcher latency and throughput performance metrics. */
+export const get_watch_performance = (): WatchPerformanceResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getWatchPerformance) throw new Error("getWatchPerformance not available")
+  const result = safeCallNative("getWatchPerformance", () => bridge.getWatchPerformance!())
+  return parseNativeJson(result, "getWatchPerformance")
+}
+
+/** Reset all watch statistics counters. */
+export const clear_watch_stats = (): { status: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.clearWatchStats) throw new Error("clearWatchStats not available")
+  const result = safeCallNative("clearWatchStats", () => bridge.clearWatchStats!())
+  return parseNativeJson(result, "clearWatchStats")
+}
+
+/** Returns the number of currently active watch handles. */
+export const get_active_watches = (): number => {
+  const bridge = getNativeBridge()
+  if (!bridge.getActiveWatches) throw new Error("getActiveWatches not available")
+  return safeCallNative("getActiveWatches", () => bridge.getActiveWatches!())
+}
+
+/**
+ * Set a custom metric on the watcher.
+ * @param metricName - Metric key
+ * @param value - Metric value as string
+ */
+export const set_watch_metrics = (metricName: string, value: string): { status: string; metric: string; value: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.setWatchMetrics) throw new Error("setWatchMetrics not available")
+  const result = safeCallNative("setWatchMetrics", () => bridge.setWatchMetrics!(metricName, value))
+  return parseNativeJson(result, "setWatchMetrics")
+}
+
+/**
+ * Set event aggregation strategy.
+ * @param aggregationType - "debounce" | "throttle" | "batch" | "immediate"
+ */
+export const set_watch_aggregation = (aggregationType: string): { status: string; aggregation_type: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.setWatchAggregation) throw new Error("setWatchAggregation not available")
+  const result = safeCallNative("setWatchAggregation", () => bridge.setWatchAggregation!(aggregationType))
+  return parseNativeJson(result, "setWatchAggregation")
+}
+
+// ── WEEK 6 WRAPPERS ───────────────────────────────────────────────────────────
+
+/**
+ * Get optimization recommendations based on runtime metrics.
+ * @param hitRate - Cache hit rate as integer percent (0-100)
+ * @param memoryMb - Current memory usage in MB
+ * @param classCount - Number of unique classes being processed
+ */
+export const get_optimization_recommendations = (
+  hitRate: number,
+  memoryMb: number,
+  classCount: number
+): OptimizationRecommendationsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getOptimizationRecommendations) throw new Error("getOptimizationRecommendations not available")
+  const result = safeCallNative("getOptimizationRecommendations", () =>
+    bridge.getOptimizationRecommendations!(hitRate, memoryMb, classCount)
+  )
+  return parseNativeJson(result, "getOptimizationRecommendations")
+}
+
+/**
+ * Estimate optimal batch size given memory constraints.
+ * @param totalClasses - Total number of classes to process
+ * @param memoryAvailableMb - Available memory in MB
+ */
+export const estimate_optimal_batch_size = (
+  totalClasses: number,
+  memoryAvailableMb: number
+): number => {
+  const bridge = getNativeBridge()
+  if (!bridge.estimateOptimalBatchSize) throw new Error("estimateOptimalBatchSize not available")
+  return safeCallNative("estimateOptimalBatchSize", () =>
+    bridge.estimateOptimalBatchSize!(totalClasses, memoryAvailableMb)
+  )
+}
+
+/**
+ * Predict memory usage for a given class set size.
+ * @param uniqueClasses - Number of unique class names
+ * @param avgClassSizeBytes - Average byte size per class
+ * @returns Predicted memory usage in bytes
+ */
+export const predict_memory_usage = (
+  uniqueClasses: number,
+  avgClassSizeBytes: number
+): number => {
+  const bridge = getNativeBridge()
+  if (!bridge.predictMemoryUsage) throw new Error("predictMemoryUsage not available")
+  return safeCallNative("predictMemoryUsage", () =>
+    bridge.predictMemoryUsage!(uniqueClasses, avgClassSizeBytes)
+  )
+}
+
+/**
+ * Get caching strategy recommendation.
+ * @param isSsr - Whether running in SSR context
+ * @param memoryConstraintMb - Available memory budget in MB
+ */
+export const recommend_caching_strategy = (
+  isSsr: boolean,
+  memoryConstraintMb: number
+): CachingStrategyResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.recommendCachingStrategy) throw new Error("recommendCachingStrategy not available")
+  const result = safeCallNative("recommendCachingStrategy", () =>
+    bridge.recommendCachingStrategy!(isSsr, memoryConstraintMb)
+  )
+  return parseNativeJson(result, "recommendCachingStrategy")
+}
+
+/**
+ * Benchmark streaming vs buffered processing.
+ * @param classCount - Number of classes to benchmark
+ */
+export const benchmark_streaming_vs_buffered = (classCount: number): BenchmarkResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.benchmarkStreamingVsBuffered) throw new Error("benchmarkStreamingVsBuffered not available")
+  const result = safeCallNative("benchmarkStreamingVsBuffered", () =>
+    bridge.benchmarkStreamingVsBuffered!(classCount)
+  )
+  return parseNativeJson(result, "benchmarkStreamingVsBuffered")
+}
+
+/** Get Week 6 optimization feature status and memory pressure level. */
+export const get_week6_optimization_status = (): Week6StatusResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getWeek6OptimizationStatus) throw new Error("getWeek6OptimizationStatus not available")
+  const result = safeCallNative("getWeek6OptimizationStatus", () => bridge.getWeek6OptimizationStatus!())
+  return parseNativeJson(result, "getWeek6OptimizationStatus")
+}
+
+// ── SCAN CACHE WRAPPERS ───────────────────────────────────────────────────────
+
+/**
+ * Get cached classes for a file by content hash. Returns null on miss.
+ * @param filePath - Absolute file path
+ * @param contentHash - Hash of file content
+ */
+export const scan_cache_get = (filePath: string, contentHash: string): string[] | null => {
+  const bridge = getNativeBridge()
+  if (!bridge.scanCacheGet) throw new Error("scanCacheGet not available")
+  return safeCallNative("scanCacheGet", () => bridge.scanCacheGet!(filePath, contentHash)) ?? null
+}
+
+/**
+ * Store class extraction result in the scan cache.
+ * @param filePath - Absolute file path
+ * @param contentHash - Hash of file content
+ * @param classes - Extracted class names
+ * @param mtimeMs - File modification time in ms
+ * @param size - File size in bytes
+ */
+export const scan_cache_put = (
+  filePath: string,
+  contentHash: string,
+  classes: string[],
+  mtimeMs: number,
+  size: number
+): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.scanCachePut) throw new Error("scanCachePut not available")
+  safeCallNative("scanCachePut", () =>
+    bridge.scanCachePut!(filePath, contentHash, classes, mtimeMs, size)
+  )
+}
+
+/**
+ * Invalidate a single cache entry (e.g. file deleted or renamed).
+ * @param filePath - Absolute file path
+ */
+export const scan_cache_invalidate = (filePath: string): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.scanCacheInvalidate) throw new Error("scanCacheInvalidate not available")
+  safeCallNative("scanCacheInvalidate", () => bridge.scanCacheInvalidate!(filePath))
+}
+
+/** Return number of entries currently in the scan cache. */
+export const scan_cache_stats = (): ScanCacheStatsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.scanCacheStats) throw new Error("scanCacheStats not available")
+  return safeCallNative("scanCacheStats", () => bridge.scanCacheStats!())
 }

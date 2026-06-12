@@ -372,6 +372,59 @@ export interface NativeBridge {
   reset_compilation_metrics?: () => string
   validate_css_output?: (css: string) => string  // Returns JSON
   get_compiler_diagnostics?: () => string  // Returns JSON
+
+  // ── Cache Management (napi_bridge_cache.rs) ────────────────────────────────
+  configureCacheBackend?: (configJson: string) => string
+  getRecommendedCacheConfig?: (workloadType: string) => string
+  clearAllCachesNapi?: () => void
+  clearResolveCacheNapi?: () => void
+  clearCompileCacheNapi?: () => void
+  clearCssGenCacheNapi?: () => void
+  getResolverPoolStats?: () => string
+  clearResolverPool?: () => string
+  getCacheOptimizationHints?: () => string
+  estimateStreamingBatchSize?: (targetMemoryMb: number) => string
+
+  // ── Parsing (napi_bridge_parsing.rs) ──────────────────────────────────────
+  parseClass?: (input: string) => string
+  compileClassNapi?: (input: string) => string
+  getParseStats?: () => string
+  clearParseCacheNapi?: () => void
+
+  // ── Theme Parsing (napi_bridge_theme_parsing.rs) ───────────────────────────
+  parseColorsNapi?: (colorsJson: string) => string | Record<string, string>
+  parseSpacingNapi?: (spacingJson: string) => string | Record<string, string>
+  parseTransformNapi?: (transformJson: string) => string | Record<string, string>
+  normalizeColorNapi?: (color: string, opacity: string) => string
+  sanitizeColorNapi?: (color: string) => string
+  splitRgbaNapi?: (color: string) => string | { r: number; g: number; b: number; a: number }
+  validateColorsNapi?: (colorsJson: string) => boolean
+  validateBreakpointsNapi?: (breakpointsJson: string) => boolean
+  runHealthCheck?: () => void
+
+  // ── Watch (napi_bridge_watch.rs) ───────────────────────────────────────────
+  watchFiles?: (rootDir: string, optionsJson?: string | null) => string
+  stopWatching?: (handleId: number) => string
+  getWatchEvents?: (handleId: number, maxEvents?: number | null) => string
+  getWatchPerformance?: () => string
+  clearWatchStats?: () => string
+  getActiveWatches?: () => number
+  setWatchMetrics?: (metricName: string, value: string) => string
+  setWatchAggregation?: (aggregationType: string) => string
+
+  // ── Week 6 Optimization (week6_api.rs) ────────────────────────────────────
+  getOptimizationRecommendations?: (hitRate: number, memoryMb: number, classCount: number) => string
+  estimateOptimalBatchSize?: (totalClasses: number, memoryAvailableMb: number) => number
+  predictMemoryUsage?: (uniqueClasses: number, avgClassSizeBytes: number) => number
+  recommendCachingStrategy?: (isSsr: boolean, memoryConstraintMb: number) => string
+  benchmarkStreamingVsBuffered?: (classCount: number) => string
+  getWeek6OptimizationStatus?: () => string
+
+  // ── Scan Cache (scan_cache_api.rs) ────────────────────────────────────────
+  scanCacheGet?: (filePath: string, contentHash: string) => string[] | null
+  scanCachePut?: (filePath: string, contentHash: string, classes: string[], mtimeMs: number, size: number) => void
+  scanCacheInvalidate?: (filePath: string) => void
+  scanCacheStats?: () => { size: number }
 }
 
 export interface NativeTransformResult {
@@ -588,30 +641,4 @@ export {
   resolve_conflict_group,
   resolve_theme_value,
   resolve_simple_variants,
-  // CSS Optimization Functions (12)
-  detect_dead_code,
-  eliminate_dead_css,
-  optimize_css,
-  process_tailwind_css_lightning,
-  process_tailwind_css_with_targets,
-  parse_atomic_class,
-  generate_atomic_css,
-  to_atomic_classes,
-  clear_atomic_registry,
-  get_atomic_registry_size,
-  // Analysis Functions (8)
-  analyze_class_usage,
-  calculate_impact,
-  calculate_risk,
-  calculate_savings,
-  identify_unused,
-  build_dependency_graph,
-  // Type definitions for wrapper functions
-  type WatchEvent,
-  type WatchStats,
-  type PoolStats,
-  type ClusterStatus,
-  type ReplicationStatus,
-  type MemoryStats,
-  type DiagnosticsReport,
 } from "./nativeBridgeWrappers"

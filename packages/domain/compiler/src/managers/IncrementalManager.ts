@@ -21,7 +21,15 @@
  */
 
 import { BaseManager, ManagerConfig } from './BaseManager'
-import { getNativeBridge } from '../nativeBridge'
+import {
+  process_file_change,
+  compute_incremental_diff,
+  create_fingerprint,
+  rebuild_workspace_result,
+  prune_stale_entries,
+  inject_state_hash,
+  scan_files_batch_native,
+} from '../nativeBridgeWrappers'
 
 export interface IncrementalManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -81,7 +89,6 @@ export class IncrementalManager extends BaseManager {
   private fingerprintCache: Map<string, FileFingerprint> = new Map()
   private lastBuildResult: IncrementalBuildResult | null = null
   private maxCacheSize: number
-  private native = getNativeBridge()
 
   constructor(config: IncrementalManagerConfig = {}) {
     super({
@@ -117,53 +124,18 @@ export class IncrementalManager extends BaseManager {
 
     try {
       const startTime = performance.now()
-
-      // Call Rust function if available
-      if (this.native.process_file_change) {
-        const rustResult = this.native.process_file_change(
-          JSON.stringify(fileChange)
-        )
-        const parsed = JSON.parse(rustResult)
-
-        const diff: FileChangeDiff = {
-          file_path: parsed.file_path,
-          affected_classes: parsed.affected_classes || [],
-          removed_classes: parsed.removed_classes || [],
-          new_classes: parsed.new_classes || [],
-          change_impact: parsed.change_impact || 'low',
-        }
-
-        this.logPerformance('processFileChange', performance.now() - startTime, { file: fileChange.file_path })
-        return diff
-      }
-
-      // Fallback: TypeScript implementation
-      const oldFingerprint = this.fingerprintCache.get(fileChange.file_path)
-      const newFingerprint = this.createFingerprint(
-        fileChange.file_path,
-        fileChange.new_content
-      )
-
-      let impact: 'low' | 'medium' | 'high' = 'low'
-      if (fileChange.event_type === 'Created') {
-        impact = 'medium'
-      } else if (fileChange.event_type === 'Deleted') {
-        impact = 'high'
-      } else if (oldFingerprint) {
-        const contentChanged = oldFingerprint.content_hash !== newFingerprint.content_hash
-        impact = contentChanged ? 'medium' : 'low'
-      }
+      const rustResult = process_file_change(JSON.stringify(fileChange))
+      const parsed = JSON.parse(rustResult)
 
       const diff: FileChangeDiff = {
-        file_path: fileChange.file_path,
-        affected_classes: [],
-        removed_classes: [],
-        new_classes: [],
-        change_impact: impact,
+        file_path: parsed.file_path,
+        affected_classes: parsed.affected_classes || [],
+        removed_classes: parsed.removed_classes || [],
+        new_classes: parsed.new_classes || [],
+        change_impact: parsed.change_impact || 'low',
       }
 
-      this.fingerprintCache.set(fileChange.file_path, newFingerprint)
-      this.logPerformance('processFileChange', performance.now() - startTime, { file: fileChange.file_path, fallback: true })
+      this.logPerformance('processFileChange', performance.now() - startTime, { file: fileChange.file_path })
       return diff
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -195,48 +167,19 @@ export class IncrementalManager extends BaseManager {
 
     try {
       const startTime = performance.now()
-
-      // Call Rust function if available
-      if (this.native.compute_incremental_diff) {
-        const rustResult = this.native.compute_incremental_diff(
-          JSON.stringify(oldScan),
-          JSON.stringify(newScan)
-        )
-        const parsed = JSON.parse(rustResult)
-
-        const diff: IncrementalDiff = {
-          files_changed: parsed.files_changed || [],
-          classes_added: parsed.classes_added || [],
-          classes_removed: parsed.classes_removed || [],
-          classes_modified: parsed.classes_modified || [],
-          total_changes: parsed.total_changes || 0,
-          rebuild_required: parsed.rebuild_required || false,
-        }
-
-        this.logPerformance('computeIncrementalDiff', performance.now() - startTime)
-        return diff
-      }
-
-      // Fallback: TypeScript implementation
-      const oldClasses = new Set((oldScan as any).classes || [])
-      const newClasses = new Set((newScan as any).classes || [])
-
-      const added = Array.from(newClasses).filter(c => !oldClasses.has(c))
-      const removed = Array.from(oldClasses).filter(c => !newClasses.has(c))
-      const oldFiles = new Set((oldScan as any).files || [])
-      const newFiles = new Set((newScan as any).files || [])
-      const changedFiles = Array.from(newFiles).filter(f => !oldFiles.has(f))
+      const rustResult = compute_incremental_diff(JSON.stringify(oldScan), JSON.stringify(newScan))
+      const parsed = JSON.parse(rustResult)
 
       const diff: IncrementalDiff = {
-        files_changed: changedFiles as string[],
-        classes_added: added as string[],
-        classes_removed: removed as string[],
-        classes_modified: [],
-        total_changes: added.length + removed.length,
-        rebuild_required: removed.length > 0,
+        files_changed: parsed.files_changed || [],
+        classes_added: parsed.classes_added || [],
+        classes_removed: parsed.classes_removed || [],
+        classes_modified: parsed.classes_modified || [],
+        total_changes: parsed.total_changes || 0,
+        rebuild_required: parsed.rebuild_required || false,
       }
 
-      this.logPerformance('computeIncrementalDiff', performance.now() - startTime, { fallback: true })
+      this.logPerformance('computeIncrementalDiff', performance.now() - startTime)
       return diff
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -263,33 +206,17 @@ export class IncrementalManager extends BaseManager {
   createFingerprint(filePath: string, fileContent: string): FileFingerprint {
     try {
       const startTime = performance.now()
+      const rustResult = create_fingerprint(filePath, fileContent)
+      const parsed = JSON.parse(rustResult)
 
-      // Call Rust function if available
-      if (this.native.create_fingerprint) {
-        const rustResult = this.native.create_fingerprint(filePath, fileContent)
-        const parsed = JSON.parse(rustResult)
-
-        const fp: FileFingerprint = {
-          file_path: parsed.file_path,
-          content_hash: parsed.content_hash,
-          timestamp_ms: parsed.timestamp_ms,
-          size_bytes: parsed.size_bytes,
-        }
-
-        this.logPerformance('createFingerprint', performance.now() - startTime, { file: filePath })
-        return fp
-      }
-
-      // Fallback: TypeScript implementation with simple hash
-      const hash = this.simpleHash(fileContent).substring(0, 16)
       const fp: FileFingerprint = {
-        file_path: filePath,
-        content_hash: hash,
-        timestamp_ms: Date.now(),
-        size_bytes: Buffer.byteLength(fileContent, 'utf-8'),
+        file_path: parsed.file_path,
+        content_hash: parsed.content_hash,
+        timestamp_ms: parsed.timestamp_ms,
+        size_bytes: parsed.size_bytes,
       }
 
-      this.logPerformance('createFingerprint', performance.now() - startTime, { file: filePath, fallback: true })
+      this.logPerformance('createFingerprint', performance.now() - startTime, { file: filePath })
       return fp
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -321,38 +248,20 @@ export class IncrementalManager extends BaseManager {
 
     try {
       const startTime = performance.now()
+      const rustResult = rebuild_workspace_result(rootDir, extensions)
+      const parsed = JSON.parse(rustResult)
 
-      // Call Rust function if available
-      if (this.native.rebuild_workspace_result) {
-        const rustResult = this.native.rebuild_workspace_result(rootDir, extensions)
-        const parsed = JSON.parse(rustResult)
-
-        const result: IncrementalBuildResult = {
-          success: parsed.success || true,
-          baseline_hash: parsed.baseline_hash,
-          changes_detected: parsed.changes_detected || 0,
-          files_processed: parsed.files_processed || 0,
-          css_size_bytes: parsed.css_size_bytes || 0,
-          build_time_ms: performance.now() - startTime,
-        }
-
-        this.lastBuildResult = result
-        this.logPerformance('rebuildWorkspaceResult', result.build_time_ms)
-        return result
-      }
-
-      // Fallback: TypeScript implementation
       const result: IncrementalBuildResult = {
-        success: true,
-        baseline_hash: this.simpleHash(rootDir),
-        changes_detected: this.fingerprintCache.size,
-        files_processed: 0,
-        css_size_bytes: 0,
+        success: parsed.success || true,
+        baseline_hash: parsed.baseline_hash,
+        changes_detected: parsed.changes_detected || 0,
+        files_processed: parsed.files_processed || 0,
+        css_size_bytes: parsed.css_size_bytes || 0,
         build_time_ms: performance.now() - startTime,
       }
 
       this.lastBuildResult = result
-      this.logPerformance('rebuildWorkspaceResult', result.build_time_ms, { fallback: true })
+      this.logPerformance('rebuildWorkspaceResult', result.build_time_ms)
       return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -383,60 +292,16 @@ export class IncrementalManager extends BaseManager {
 
     try {
       const startTime = performance.now()
-
-      // Call Rust function if available
-      if (this.native.prune_stale_entries) {
-        const rustResult = this.native.prune_stale_entries(
-          maxAgeSeconds,
-          maxEntries || 10000
-        )
-        const parsed = JSON.parse(rustResult)
-
-        const result: PruneResult = {
-          entries_removed: parsed.entries_removed || 0,
-          bytes_reclaimed: parsed.bytes_reclaimed || 0,
-          entries_remaining: parsed.entries_remaining || 0,
-        }
-
-        this.logPerformance('pruneStaleEntries', performance.now() - startTime, { removed: result.entries_removed })
-        return result
-      }
-
-      // Fallback: TypeScript implementation
-      const now = Date.now()
-      const cutoffTime = now - maxAgeSeconds * 1000
-      let removed = 0
-      let bytes = 0
-
-      for (const [path, fingerprint] of this.fingerprintCache.entries()) {
-        if (fingerprint.timestamp_ms < cutoffTime) {
-          this.fingerprintCache.delete(path)
-          removed++
-          bytes += fingerprint.size_bytes
-        }
-      }
-
-      // Also enforce max entries limit
-      if (maxEntries && this.fingerprintCache.size > maxEntries) {
-        const entriesToRemove = this.fingerprintCache.size - maxEntries
-        let removed2 = 0
-
-        for (const [path, fingerprint] of this.fingerprintCache.entries()) {
-          if (removed2 >= entriesToRemove) break
-          this.fingerprintCache.delete(path)
-          removed++
-          bytes += fingerprint.size_bytes
-          removed2++
-        }
-      }
+      const rustResult = prune_stale_entries(maxAgeSeconds, maxEntries || 10000)
+      const parsed = JSON.parse(rustResult)
 
       const result: PruneResult = {
-        entries_removed: removed,
-        bytes_reclaimed: bytes,
-        entries_remaining: this.fingerprintCache.size,
+        entries_removed: parsed.entries_removed || 0,
+        bytes_reclaimed: parsed.bytes_reclaimed || 0,
+        entries_remaining: parsed.entries_remaining || 0,
       }
 
-      this.logPerformance('pruneStaleEntries', performance.now() - startTime, { removed, fallback: true })
+      this.logPerformance('pruneStaleEntries', performance.now() - startTime, { removed: result.entries_removed })
       return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -461,18 +326,9 @@ export class IncrementalManager extends BaseManager {
   injectStateHash(css: string, stateHash: string): string {
     try {
       const startTime = performance.now()
-
-      // Call Rust function if available
-      if (this.native.inject_state_hash) {
-        const result = this.native.inject_state_hash(css, stateHash)
-        this.logPerformance('injectStateHash', performance.now() - startTime)
-        return result
-      }
-
-      // Fallback: TypeScript implementation
-      const comment = `/* state-hash: ${stateHash} */\n`
-      this.logPerformance('injectStateHash', performance.now() - startTime, { fallback: true })
-      return comment + css
+      const result = inject_state_hash(css, stateHash)
+      this.logPerformance('injectStateHash', performance.now() - startTime)
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'injectStateHash', { logOnly: true })
@@ -501,45 +357,17 @@ export class IncrementalManager extends BaseManager {
 
     try {
       const startTime = performance.now()
-
-      // Call Rust function if available
-      if (this.native.scan_files_batch_native) {
-        const rustResult = this.native.scan_files_batch_native(JSON.stringify(files))
-        const parsed = JSON.parse(rustResult)
-
-        const result: BatchScanResult = {
-          total_files: parsed.total_files || files.length,
-          classes_found: parsed.classes_found || [],
-          unique_classes: parsed.unique_classes || 0,
-          errors: parsed.errors || [],
-        }
-
-        this.logPerformance('scanFilesNative', performance.now() - startTime, { files: files.length })
-        return result
-      }
-
-      // Fallback: TypeScript implementation
-      const classes = new Set<string>()
-      const errors: Array<{ file: string; error: string }> = []
-
-      for (const file of files) {
-        try {
-          // Simple regex to extract Tailwind classes
-          const classMatches = file.content.match(/\b[\w-]+(?::\S+)?\b/g) || []
-          classMatches.forEach(c => classes.add(c))
-        } catch (err) {
-          errors.push({ file: file.path, error: String(err) })
-        }
-      }
+      const rustResult = scan_files_batch_native(JSON.stringify(files))
+      const parsed = JSON.parse(rustResult)
 
       const result: BatchScanResult = {
-        total_files: files.length,
-        classes_found: Array.from(classes),
-        unique_classes: classes.size,
-        errors,
+        total_files: parsed.total_files || files.length,
+        classes_found: parsed.classes_found || [],
+        unique_classes: parsed.unique_classes || 0,
+        errors: parsed.errors || [],
       }
 
-      this.logPerformance('scanFilesNative', performance.now() - startTime, { files: files.length, fallback: true })
+      this.logPerformance('scanFilesNative', performance.now() - startTime, { files: files.length })
       return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))

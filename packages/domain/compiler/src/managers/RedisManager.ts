@@ -13,7 +13,44 @@
  */
 
 import { BaseManager, ManagerConfig } from './BaseManager'
-import { getNativeBridge } from '../nativeBridge'
+import { resolveRedisConfig } from '../utils/redisConfigParser'
+import type { TailwindConfig } from '../types/redis'
+// Import wrapper functions for all Redis operations (40 Rust functions wired through wrappers)
+import {
+  redis_pool_connect,
+  redis_pool_stats,
+  redis_pool_reconnect,
+  redis_ping,
+  redis_get,
+  redis_set,
+  redis_delete,
+  redis_exists,
+  redis_mget,
+  redis_mset,
+  redis_cache_size,
+  redis_cache_key_count,
+  redis_cache_clear,
+  redis_cache_hit_rate,
+  redis_enable_cluster,
+  redis_disable_cluster,
+  redis_cluster_status,
+  redis_replicate,
+  redis_replication_status,
+  redis_subscribe,
+  redis_publish,
+  redis_cache_sync,
+  redis_enable_persistence,
+  redis_disable_persistence,
+  redis_snapshot,
+  redis_enable_cache_warming,
+  redis_disable_cache_warming,
+  redis_memory_stats,
+  redis_optimize_memory,
+  redis_diagnose,
+  redis_set_eviction_policy,
+  redis_get_eviction_policy,
+  redis_monitor,
+} from '../nativeBridgeWrappers'
 
 export interface RedisManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -29,6 +66,14 @@ export interface RedisManagerConfig extends ManagerConfig {
   evictionPolicy?: 'LRU' | 'LFU' | 'FIFO' | 'RANDOM'
   connectionTimeoutMs?: number
   retryAttemptsOnFailure?: number
+  /**
+   * Phase 1.1.2: TailwindConfig support for config resolution
+   * If provided, config parser will resolve from:
+   * 1. Environment variables (REDIS_URL, REDIS_HOST, etc.)
+   * 2. tailwindConfig.compiler.cache.redis
+   * 3. Defaults
+   */
+  tailwindConfig?: TailwindConfig
 }
 
 export interface PoolStats {
@@ -93,6 +138,40 @@ export class RedisManager extends BaseManager {
   private healthCheckIntervalMs: number = 5000 // Check every 5 seconds
 
   constructor(config: RedisManagerConfig = {}) {
+    // Phase 1.1.2: Resolve config from multiple sources using new parser
+    const resolvedConfig = config.tailwindConfig 
+      ? resolveRedisConfig(config.tailwindConfig)
+      : null
+
+    // Use resolved config if available, otherwise fall back to direct config
+    const finalConfig = resolvedConfig && resolvedConfig.validation.valid
+      ? {
+          enabled: resolvedConfig.config.enabled,
+          host: resolvedConfig.config.connection.host,
+          port: resolvedConfig.config.connection.port,
+          password: resolvedConfig.config.connection.password,
+          poolSize: resolvedConfig.config.pool?.size || 10,
+          ttlSeconds: (resolvedConfig.config.ttl || 604800),
+          clusterMode: resolvedConfig.config.cluster?.enabled || false,
+          replicationEnabled: resolvedConfig.config.replication?.enabled || false,
+          persistenceMode: resolvedConfig.config.persistence?.mode === 'AOF' 
+            ? 'AOF' 
+            : 'RDB',
+        }
+      : {
+          enabled: false,
+          host: 'localhost',
+          port: 6379,
+          poolSize: 10,
+          ttlSeconds: 604800, // 7 days
+          clusterMode: false,
+          replicationEnabled: false,
+          persistenceMode: 'none' as const,
+          evictionPolicy: 'LRU' as const,
+          connectionTimeoutMs: 5000,
+          retryAttemptsOnFailure: 3,
+        }
+
     super({
       enabled: false,
       host: 'localhost',
@@ -105,6 +184,7 @@ export class RedisManager extends BaseManager {
       evictionPolicy: 'LRU',
       connectionTimeoutMs: 5000,
       retryAttemptsOnFailure: 3,
+      ...finalConfig,
       ...config,
     })
   }
@@ -114,6 +194,8 @@ export class RedisManager extends BaseManager {
    * 
    * **Requirement 1.1**: When `redis_pool_connect` is called with host, port, and pool_size,
    * the system SHALL create a connection pool and verify connectivity within 5 seconds
+   * 
+   * Uses wrapper: redis_pool_connect() from nativeBridgeWrappers.ts
    */
   async connectPool(config?: {
     host?: string
@@ -136,57 +218,50 @@ export class RedisManager extends BaseManager {
       const timeoutMs = (this.config.connectionTimeoutMs as number) || 5000
       const startTime = Date.now()
 
-      // Call Rust function: redis_pool_connect
+      // Call Rust function via wrapper: redis_pool_connect
       try {
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_pool_connect) {
-          const result = (nativeBridge.redis_pool_connect as (host: string, port: number, poolSize?: number) => string)(
-            finalConfig.host,
-            finalConfig.port,
-            finalConfig.poolSize
-          )
-          
-          // Parse result from Rust (returns JSON string)
-          const statsResult = JSON.parse(result)
-          
-          // Verify connectivity within 5 seconds
-          const elapsed = Date.now() - startTime
-          if (elapsed > timeoutMs) {
-            this.logger.logWarn(
-              this.constructor.name,
-              `Redis connection took ${elapsed}ms, exceeding ${timeoutMs}ms timeout`,
-              { host: finalConfig.host, port: finalConfig.port }
-            )
-          }
-
-          this.poolStats = {
-            active_connections: statsResult.active_connections || 1,
-            available_connections: statsResult.available_connections || (finalConfig.poolSize - 1),
-            pool_size: finalConfig.poolSize,
-            total_requests: statsResult.total_requests || 0,
-            average_latency_ms: statsResult.average_latency_ms || 0,
-            uptime_seconds: 0,
-          }
-
-          this.connectionEstablishedTime = Date.now()
-
-          this.logger.logInfo(
+        const result = redis_pool_connect(finalConfig.host, finalConfig.port, finalConfig.poolSize)
+        
+        // Parse result from Rust (returns JSON string)
+        const statsResult = JSON.parse(result)
+        
+        // Verify connectivity within 5 seconds
+        const elapsed = Date.now() - startTime
+        if (elapsed > timeoutMs) {
+          this.logger.logWarn(
             this.constructor.name,
-            `Connected to Redis pool: ${finalConfig.host}:${finalConfig.port} (size: ${finalConfig.poolSize})`,
-            {
-              elapsedMs: elapsed,
-              withinTimeout: elapsed <= timeoutMs,
-            }
+            `Redis connection took ${elapsed}ms, exceeding ${timeoutMs}ms timeout`,
+            { host: finalConfig.host, port: finalConfig.port }
           )
-
-          return this.poolStats
         }
+
+        this.poolStats = {
+          active_connections: statsResult.active_connections || 1,
+          available_connections: statsResult.available_connections || (finalConfig.poolSize - 1),
+          pool_size: finalConfig.poolSize,
+          total_requests: statsResult.total_requests || 0,
+          average_latency_ms: statsResult.average_latency_ms || 0,
+          uptime_seconds: 0,
+        }
+
+        this.connectionEstablishedTime = Date.now()
+
+        this.logger.logInfo(
+          this.constructor.name,
+          `Connected to Redis pool: ${finalConfig.host}:${finalConfig.port} (size: ${finalConfig.poolSize})`,
+          {
+            elapsedMs: elapsed,
+            withinTimeout: elapsed <= timeoutMs,
+          }
+        )
+
+        return this.poolStats
       } catch (rustErr) {
-        // Fallback if Rust function not available or fails
+        // Fallback if Rust function fails
         const elapsed = Date.now() - startTime
         this.logger.logWarn(
           this.constructor.name,
-          `Redis pool connect failed or not available, using fallback (${elapsed}ms)`,
+          `Redis pool connect failed, using fallback (${elapsed}ms)`,
           { error: String(rustErr) }
         )
       }
@@ -206,6 +281,7 @@ export class RedisManager extends BaseManager {
    * Get current pool statistics
    * 
    * **Requirement 1.2**: Tracking pool statistics
+   * Uses wrapper: redis_pool_stats() from nativeBridgeWrappers.ts
    */
   async getPoolStats(): Promise<PoolStats> {
     this.ensureReady()
@@ -216,24 +292,20 @@ export class RedisManager extends BaseManager {
       // Perform health check every 5 seconds
       if (now - this.lastHealthCheckTime >= this.healthCheckIntervalMs) {
         try {
-          // Call Rust function: redis_pool_stats
-          const nativeBridge = getNativeBridge()
-          if (nativeBridge?.redis_pool_stats) {
-            const result = (nativeBridge.redis_pool_stats as () => string)()
-            const statsResult = JSON.parse(result)
-            this.poolStats = {
-              active_connections: statsResult.active_connections || 0,
-              available_connections: statsResult.available_connections || 10,
-              pool_size: statsResult.pool_size || 10,
-              total_requests: statsResult.total_requests || 0,
-              average_latency_ms: statsResult.average_latency_ms || 0,
-              uptime_seconds: this.connectionEstablishedTime
-                ? Math.floor((now - this.connectionEstablishedTime) / 1000)
-                : undefined,
-            }
+          // Call Rust function via wrapper: redis_pool_stats
+          const statsResult = redis_pool_stats()
+          this.poolStats = {
+            active_connections: statsResult.active_connections || 0,
+            available_connections: statsResult.available_connections || 10,
+            pool_size: statsResult.pool_size || 10,
+            total_requests: statsResult.total_requests || 0,
+            average_latency_ms: statsResult.average_latency_ms || 0,
+            uptime_seconds: this.connectionEstablishedTime
+              ? Math.floor((now - this.connectionEstablishedTime) / 1000)
+              : undefined,
           }
         } catch {
-          // Keep existing stats if parsing fails
+          // Keep existing stats if call fails
         }
         
         this.lastHealthCheckTime = now
@@ -255,6 +327,7 @@ export class RedisManager extends BaseManager {
    * Reconnect to Redis with automatic health checks
    * 
    * **Requirement 1.2**: Automatic reconnection implementation
+   * Uses wrapper: redis_pool_reconnect() from nativeBridgeWrappers.ts
    */
   async reconnect(): Promise<void> {
     this.ensureReady()
@@ -264,27 +337,14 @@ export class RedisManager extends BaseManager {
 
     for (let attempt = 0; attempt < retryAttempts; attempt++) {
       try {
-        // Call Rust function: redis_pool_reconnect
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_pool_reconnect) {
-          const result = (nativeBridge.redis_pool_reconnect as () => string)()
-          const reconnectResult = JSON.parse(result)
-          
-          if (reconnectResult.success !== false) {
-            this.logger.logInfo(
-              this.constructor.name,
-              `Successfully reconnected to Redis (attempt ${attempt + 1}/${retryAttempts})`
-            )
-            this.cacheHits = 0
-            this.cacheRequests = 0
-            this.connectionEstablishedTime = Date.now()
-            return
-          }
-        } else {
-          // Fallback: simulate successful reconnect
+        // Call Rust function via wrapper: redis_pool_reconnect
+        const result = redis_pool_reconnect()
+        const reconnectResult = JSON.parse(result)
+        
+        if (reconnectResult.success !== false) {
           this.logger.logInfo(
             this.constructor.name,
-            `Fallback reconnection successful (attempt ${attempt + 1}/${retryAttempts})`
+            `Successfully reconnected to Redis (attempt ${attempt + 1}/${retryAttempts})`
           )
           this.cacheHits = 0
           this.cacheRequests = 0
@@ -333,6 +393,7 @@ export class RedisManager extends BaseManager {
    * Get cache value by key
    * 
    * **Requirement 1.3**: Cache read operations with optional TTL tracking
+   * Uses wrapper: redis_get() from nativeBridgeWrappers.ts
    */
   async getCacheValue(key: string): Promise<string | null> {
     this.ensureReady()
@@ -341,20 +402,17 @@ export class RedisManager extends BaseManager {
       this.cacheRequests++
       
       try {
-        // Call Rust function: redis_get
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_get) {
-          const result = (nativeBridge.redis_get as (key: string) => string)(key)
-          
-          if (result && result !== 'nil') {
-            this.cacheHits++
-            this.logger.logDebug(
-              this.constructor.name,
-              `Cache hit for key: ${key}`,
-              { keyLength: key.length }
-            )
-            return result
-          }
+        // Call Rust function via wrapper: redis_get
+        const result = redis_get(key)
+        
+        if (result && result !== 'nil') {
+          this.cacheHits++
+          this.logger.logDebug(
+            this.constructor.name,
+            `Cache hit for key: ${key}`,
+            { keyLength: key.length }
+          )
+          return result
         }
       } catch (rustErr) {
         // Log but continue to fallback
@@ -378,6 +436,7 @@ export class RedisManager extends BaseManager {
    * 
    * **Requirement 1.4**: Cache write operations with TTL support
    * Key format: `css-compiler:{file-hash}:{theme-id}:{variant-hash}`
+   * Uses wrapper: redis_set() from nativeBridgeWrappers.ts
    */
   async setCacheValue(
     key: string,
@@ -390,22 +449,15 @@ export class RedisManager extends BaseManager {
       const ttl = ttlSeconds || (this.config.ttlSeconds as number)
       
       try {
-        // Call Rust function: redis_set
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_set) {
-          const result = (nativeBridge.redis_set as (key: string, value: string, ttl?: number) => string)(
-            key,
-            value,
-            ttl
+        // Call Rust function via wrapper: redis_set
+        const result = redis_set(key, value, ttl)
+        
+        if (result === 'OK' || result === '1') {
+          this.logger.logDebug(
+            this.constructor.name,
+            `Cache set for key: ${key}`,
+            { ttl, valueSize: value.length }
           )
-          
-          if (result === 'OK' || result === '1') {
-            this.logger.logDebug(
-              this.constructor.name,
-              `Cache set for key: ${key}`,
-              { ttl, valueSize: value.length }
-            )
-          }
         }
       } catch (rustErr) {
         this.logger.logWarn(
@@ -422,27 +474,25 @@ export class RedisManager extends BaseManager {
 
   /**
    * Delete cache entry
+   * Uses wrapper: redis_delete() from nativeBridgeWrappers.ts
    */
   async deleteCacheValue(key: string): Promise<boolean> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_delete
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_delete) {
-          const result = (nativeBridge.redis_delete as (key: string) => number)(key)
-          const deleted = result === 1
-          
-          if (deleted) {
-            this.logger.logDebug(
-              this.constructor.name,
-              `Cache deleted for key: ${key}`
-            )
-          }
-          
-          return deleted
+        // Call Rust function via wrapper: redis_delete
+        const result = redis_delete(key)
+        const deleted = result === 1
+        
+        if (deleted) {
+          this.logger.logDebug(
+            this.constructor.name,
+            `Cache deleted for key: ${key}`
+          )
         }
+        
+        return deleted
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -463,18 +513,16 @@ export class RedisManager extends BaseManager {
    * Check if cache key exists
    * 
    * **Requirement 1.5**: Cache existence checks
+   * Uses wrapper: redis_exists() from nativeBridgeWrappers.ts
    */
   async cacheExists(key: string): Promise<boolean> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_exists
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_exists) {
-          const result = (nativeBridge.redis_exists as (key: string) => number)(key)
-          return result === 1
-        }
+        // Call Rust function via wrapper: redis_exists
+        const result = redis_exists(key)
+        return result === 1
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -495,6 +543,7 @@ export class RedisManager extends BaseManager {
    * Get multiple cache values (batch operation)
    * 
    * **Requirement 1.6**: Batch cache operations for efficiency
+   * Uses wrapper: redis_mget() from nativeBridgeWrappers.ts
    */
   async getCacheMany(keys: string[]): Promise<Map<string, string>> {
     this.ensureReady()
@@ -503,32 +552,28 @@ export class RedisManager extends BaseManager {
       if (keys.length === 0) return new Map()
       
       try {
-        // Call Rust function: redis_mget
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_mget) {
-          const result = (nativeBridge.redis_mget as (keys: string[]) => string)(keys)
-          const parsed = JSON.parse(result)
-          
-          const resultMap = new Map<string, string>()
-          if (typeof parsed === 'object' && parsed !== null) {
-            for (const [key, value] of Object.entries(parsed)) {
-              if (typeof value === 'string' && value !== 'nil') {
-                resultMap.set(key, value)
-              }
+        // Call Rust function via wrapper: redis_mget
+        const parsed = redis_mget(keys)
+        
+        const resultMap = new Map<string, string>()
+        if (typeof parsed === 'object' && parsed !== null) {
+          for (const [key, value] of Object.entries(parsed)) {
+            if (typeof value === 'string' && value !== 'nil') {
+              resultMap.set(key, value)
             }
           }
-          
-          this.cacheRequests += keys.length
-          this.cacheHits += resultMap.size
-          
-          this.logger.logDebug(
-            this.constructor.name,
-            `Cache batch get: ${resultMap.size}/${keys.length} hits`,
-            { keysRequested: keys.length }
-          )
-          
-          return resultMap
         }
+        
+        this.cacheRequests += keys.length
+        this.cacheHits += resultMap.size
+        
+        this.logger.logDebug(
+          this.constructor.name,
+          `Cache batch get: ${resultMap.size}/${keys.length} hits`,
+          { keysRequested: keys.length }
+        )
+        
+        return resultMap
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -549,6 +594,7 @@ export class RedisManager extends BaseManager {
    * Set multiple cache values (batch operation)
    * 
    * **Requirement 1.7**: Batch cache operations with TTL support
+   * Uses wrapper: redis_mset() from nativeBridgeWrappers.ts
    */
   async setCacheMany(entries: Array<[string, string, number?]>): Promise<void> {
     this.ensureReady()
@@ -560,18 +606,15 @@ export class RedisManager extends BaseManager {
         // Transform entries to pairs format for redis_mset
         const pairs: Array<[string, string]> = entries.map(([key, value]) => [key, value])
         
-        // Call Rust function: redis_mset
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_mset) {
-          const result = (nativeBridge.redis_mset as (pairs: Array<[string, string]>) => string)(pairs)
-          
-          if (result === 'OK' || result === '1') {
-            this.logger.logDebug(
-              this.constructor.name,
-              `Cache batch set: ${entries.length} entries`,
-              { entriesCount: entries.length }
-            )
-          }
+        // Call Rust function via wrapper: redis_mset
+        const result = redis_mset(pairs)
+        
+        if (result === 'OK' || result === '1') {
+          this.logger.logDebug(
+            this.constructor.name,
+            `Cache batch set: ${entries.length} entries`,
+            { entriesCount: entries.length }
+          )
         }
       } catch (rustErr) {
         this.logger.logWarn(
@@ -590,18 +633,16 @@ export class RedisManager extends BaseManager {
    * Get total cache size in bytes
    * 
    * **Requirement 1.7**: Cache statistics tracking
+   * Uses wrapper: redis_cache_size() from nativeBridgeWrappers.ts
    */
   async getCacheSize(): Promise<number> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_cache_size
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cache_size) {
-          const result = (nativeBridge.redis_cache_size as () => number)()
-          return result || 0
-        }
+        // Call Rust function via wrapper: redis_cache_size
+        const result = redis_cache_size()
+        return result || 0
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -622,18 +663,16 @@ export class RedisManager extends BaseManager {
    * Get cache key count
    * 
    * **Requirement 1.7**: Cache statistics tracking
+   * Uses wrapper: redis_cache_key_count() from nativeBridgeWrappers.ts
    */
   async getCacheKeyCount(): Promise<number> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_cache_key_count
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cache_key_count) {
-          const result = (nativeBridge.redis_cache_key_count as () => number)()
-          return result || 0
-        }
+        // Call Rust function via wrapper: redis_cache_key_count
+        const result = redis_cache_key_count()
+        return result || 0
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -652,6 +691,7 @@ export class RedisManager extends BaseManager {
 
   /**
    * Get cache hit rate
+   * Uses wrapper: redis_cache_hit_rate() from nativeBridgeWrappers.ts
    */
   async getCacheHitRate(): Promise<number> {
     this.ensureReady()
@@ -660,13 +700,10 @@ export class RedisManager extends BaseManager {
       if (this.cacheRequests === 0) return 0
       
       try {
-        // Call Rust function: redis_cache_hit_rate
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cache_hit_rate) {
-          const result = (nativeBridge.redis_cache_hit_rate as () => number)()
-          this.cacheHitRate = Math.round(result) || 0
-          return this.cacheHitRate
-        }
+        // Call Rust function via wrapper: redis_cache_hit_rate
+        const result = redis_cache_hit_rate()
+        this.cacheHitRate = Math.round(result) || 0
+        return this.cacheHitRate
       } catch (rustErr) {
         // Fallback to calculated hit rate
       }
@@ -684,29 +721,27 @@ export class RedisManager extends BaseManager {
    * Clear all cache
    * 
    * **Requirement 1.7**: Cache clearing operations
+   * Uses wrapper: redis_cache_clear() from nativeBridgeWrappers.ts
    */
   async clearCache(): Promise<number> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_cache_clear
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cache_clear) {
-          const result = (nativeBridge.redis_cache_clear as () => number)()
-          
-          this.logger.logInfo(
-            this.constructor.name,
-            `Cache cleared: ${result} entries removed`,
-            { clearedCount: result }
-          )
-          
-          this.cacheHits = 0
-          this.cacheRequests = 0
-          this.cacheHitRate = 0
-          
-          return result || 0
-        }
+        // Call Rust function via wrapper: redis_cache_clear
+        const result = redis_cache_clear()
+        
+        this.logger.logInfo(
+          this.constructor.name,
+          `Cache cleared: ${result} entries removed`,
+          { clearedCount: result }
+        )
+        
+        this.cacheHits = 0
+        this.cacheRequests = 0
+        this.cacheHitRate = 0
+        
+        return result || 0
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -727,8 +762,11 @@ export class RedisManager extends BaseManager {
 
   /**
    * Enable cluster mode
+  /**
+   * Enable cluster mode
    * 
    * **Requirement 1.8**: Enable cluster mode with automatic failover
+   * Uses wrapper: redis_enable_cluster() from nativeBridgeWrappers.ts
    */
   async enableCluster(initialNodes: string[]): Promise<ClusterStatus> {
     this.ensureReady()
@@ -739,33 +777,26 @@ export class RedisManager extends BaseManager {
       }
 
       try {
-        // Call Rust function: redis_enable_cluster
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_enable_cluster) {
-          const result = (nativeBridge.redis_enable_cluster as (nodes: string[]) => string)(
-            initialNodes
-          )
-          
-          const clusterResult = JSON.parse(result)
-          
-          this.clusterStatus = {
-            enabled: true,
-            node_count: clusterResult.node_count || initialNodes.length,
-            nodes: clusterResult.nodes || initialNodes.map(node => {
-              const [host, port] = node.split(':')
-              return { host, port: parseInt(port, 10), status: 'healthy' as const }
-            }),
-            slots_covered: clusterResult.slots_covered || 16384,
-          }
-
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis cluster enabled with ${this.clusterStatus.node_count} nodes`,
-            { nodes: initialNodes, slotsCovered: this.clusterStatus.slots_covered }
-          )
-
-          return this.clusterStatus
+        // Call Rust function via wrapper: redis_enable_cluster
+        const clusterResult = redis_enable_cluster(initialNodes)
+        
+        this.clusterStatus = {
+          enabled: true,
+          node_count: clusterResult.node_count || initialNodes.length,
+          nodes: clusterResult.nodes || initialNodes.map(node => {
+            const [host, port] = node.split(':')
+            return { host, port: parseInt(port, 10), status: 'healthy' as const }
+          }),
+          slots_covered: clusterResult.slots_covered || 16384,
         }
+
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis cluster enabled with ${this.clusterStatus.node_count} nodes`,
+          { nodes: initialNodes, slotsCovered: this.clusterStatus.slots_covered }
+        )
+
+        return this.clusterStatus
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -786,8 +817,6 @@ export class RedisManager extends BaseManager {
         
         return this.clusterStatus
       }
-
-      return this.clusterStatus || { enabled: false, node_count: 0, nodes: [], slots_covered: 0 }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'enableCluster')
@@ -797,17 +826,15 @@ export class RedisManager extends BaseManager {
 
   /**
    * Disable cluster mode
+   * Uses wrapper: redis_disable_cluster() from nativeBridgeWrappers.ts
    */
   async disableCluster(): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_disable_cluster
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_disable_cluster) {
-          (nativeBridge.redis_disable_cluster as () => string)()
-        }
+        // Call Rust function via wrapper: redis_disable_cluster
+        redis_disable_cluster()
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -835,37 +862,34 @@ export class RedisManager extends BaseManager {
    * Get cluster status
    * 
    * **Requirement 1.8-1.9**: Cluster health monitoring and status reporting
+   * Uses wrapper: redis_cluster_status() from nativeBridgeWrappers.ts
    */
   async getClusterStatus(): Promise<ClusterStatus> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_cluster_status
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cluster_status) {
-          const result = (nativeBridge.redis_cluster_status as () => string)()
-          const statusResult = JSON.parse(result)
-          
-          this.clusterStatus = {
-            enabled: statusResult.enabled || false,
-            node_count: statusResult.node_count || 0,
-            nodes: statusResult.nodes || [],
-            slots_covered: statusResult.slots_covered || 0,
-          }
-
-          // Log any unhealthy nodes
-          const unhealthyNodes = (this.clusterStatus.nodes || []).filter(n => n.status !== 'healthy')
-          if (unhealthyNodes.length > 0) {
-            this.logger.logWarn(
-              this.constructor.name,
-              `Found ${unhealthyNodes.length} unhealthy cluster nodes`,
-              { unhealthy: unhealthyNodes.map(n => `${n.host}:${n.port}`) }
-            )
-          }
-
-          return this.clusterStatus
+        // Call Rust function via wrapper: redis_cluster_status
+        const statusResult = redis_cluster_status()
+        
+        this.clusterStatus = {
+          enabled: statusResult.enabled || false,
+          node_count: statusResult.node_count || 0,
+          nodes: statusResult.nodes || [],
+          slots_covered: statusResult.slots_covered || 0,
         }
+
+        // Log any unhealthy nodes
+        const unhealthyNodes = (this.clusterStatus.nodes || []).filter(n => n.status !== 'healthy')
+        if (unhealthyNodes.length > 0) {
+          this.logger.logWarn(
+            this.constructor.name,
+            `Found ${unhealthyNodes.length} unhealthy cluster nodes`,
+            { unhealthy: unhealthyNodes.map(n => `${n.host}:${n.port}`) }
+          )
+        }
+
+        return this.clusterStatus
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -895,6 +919,7 @@ export class RedisManager extends BaseManager {
    * Enable replication
    * 
    * **Requirement 1.10**: Master-replica setup for data replication
+   * Uses wrapper: redis_replicate() from nativeBridgeWrappers.ts
    */
   async enableReplication(
     targetHost: string,
@@ -904,28 +929,22 @@ export class RedisManager extends BaseManager {
 
     try {
       try {
-        // Call Rust function: redis_replicate
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_replicate) {
-          const result = (nativeBridge.redis_replicate as (host: string, port: number) => number)(
-            targetHost,
-            targetPort
-          )
-          
-          this.replicationStatus = {
-            enabled: result === 1,
-            master: `${this.config.host}:${this.config.port}`,
-            replicas: [`${targetHost}:${targetPort}`],
-            lag_bytes: 0,
-            sync_in_progress: false,
-          }
-
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis replication enabled to ${targetHost}:${targetPort}`,
-            { master: this.replicationStatus.master }
-          )
+        // Call Rust function via wrapper: redis_replicate
+        const result = redis_replicate(targetHost, targetPort)
+        
+        this.replicationStatus = {
+          enabled: result === 1,
+          master: `${this.config.host}:${this.config.port}`,
+          replicas: [`${targetHost}:${targetPort}`],
+          lag_bytes: 0,
+          sync_in_progress: false,
         }
+
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis replication enabled to ${targetHost}:${targetPort}`,
+          { master: this.replicationStatus.master }
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -953,35 +972,32 @@ export class RedisManager extends BaseManager {
    * Get replication status
    * 
    * **Requirement 1.10**: Replication lag and sync status tracking
+   * Uses wrapper: redis_replication_status() from nativeBridgeWrappers.ts
    */
   async getReplicationStatus(): Promise<ReplicationStatus> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_replication_status
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_replication_status) {
-          const result = (nativeBridge.redis_replication_status as () => string)()
-          const statusResult = JSON.parse(result)
-          
-          this.replicationStatus = {
-            enabled: statusResult.enabled || false,
-            master: statusResult.master || '',
-            replicas: statusResult.replicas || [],
-            lag_bytes: statusResult.lag_bytes || 0,
-            sync_in_progress: statusResult.sync_in_progress || false,
-          }
-
-          if (this.replicationStatus.lag_bytes > 0) {
-            this.logger.logDebug(
-              this.constructor.name,
-              `Replication lag detected: ${this.replicationStatus.lag_bytes} bytes`
-            )
-          }
-
-          return this.replicationStatus
+        // Call Rust function via wrapper: redis_replication_status
+        const statusResult = redis_replication_status()
+        
+        this.replicationStatus = {
+          enabled: statusResult.enabled || false,
+          master: statusResult.master || '',
+          replicas: statusResult.replicas || [],
+          lag_bytes: statusResult.lag_bytes || 0,
+          sync_in_progress: statusResult.sync_in_progress || false,
         }
+
+        if (this.replicationStatus.lag_bytes > 0) {
+          this.logger.logDebug(
+            this.constructor.name,
+            `Replication lag detected: ${this.replicationStatus.lag_bytes} bytes`
+          )
+        }
+
+        return this.replicationStatus
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1012,36 +1028,34 @@ export class RedisManager extends BaseManager {
    * Subscribe to Redis channel for pub/sub messaging
    * 
    * **Requirement 1.14-1.15**: Pub/sub for cache invalidation notifications
+   * Uses wrapper: redis_subscribe() from nativeBridgeWrappers.ts
    */
   async subscribeToChannel(channel: string): Promise<AsyncIterator<string>> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_subscribe
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_subscribe) {
-          const result = (nativeBridge.redis_subscribe as (channel: string) => string)(channel)
-          
-          this.logger.logInfo(
-            this.constructor.name,
-            `Subscribed to Redis channel: ${channel}`
-          )
-          
-          // Return a simple async iterator (in real impl, would use actual Redis subscription)
-          const messages: string[] = []
-          const asyncIter: AsyncIterator<string> = {
-            async next() {
-              if (messages.length > 0) {
-                return { done: false, value: messages.shift()! }
-              }
-              // Wait for new messages
-              await new Promise(resolve => setTimeout(resolve, 100))
-              return { done: false, value: result }
-            },
-          }
-          return asyncIter
+        // Call Rust function via wrapper: redis_subscribe
+        const result = redis_subscribe(channel)
+        
+        this.logger.logInfo(
+          this.constructor.name,
+          `Subscribed to Redis channel: ${channel}`
+        )
+        
+        // Return a simple async iterator (in real impl, would use actual Redis subscription)
+        const messages: string[] = []
+        const asyncIter: AsyncIterator<string> = {
+          async next() {
+            if (messages.length > 0) {
+              return { done: false, value: messages.shift()! }
+            }
+            // Wait for new messages
+            await new Promise(resolve => setTimeout(resolve, 100))
+            return { done: false, value: result }
+          },
         }
+        return asyncIter
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1068,28 +1082,23 @@ export class RedisManager extends BaseManager {
    * Publish message to Redis channel
    * 
    * **Requirement 1.14-1.15**: Publish cache invalidation events
+   * Uses wrapper: redis_publish() from nativeBridgeWrappers.ts
    */
   async publishToChannel(channel: string, message: string): Promise<number> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_publish
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_publish) {
-          const result = (nativeBridge.redis_publish as (channel: string, message: string) => number)(
-            channel,
-            message
-          )
+        // Call Rust function via wrapper: redis_publish
+        const result = redis_publish(channel, message)
 
-          this.logger.logDebug(
-            this.constructor.name,
-            `Published to channel ${channel}: reached ${result} subscribers`,
-            { channel, messageSize: message.length }
-          )
+        this.logger.logDebug(
+          this.constructor.name,
+          `Published to channel ${channel}: reached ${result} subscribers`,
+          { channel, messageSize: message.length }
+        )
 
-          return result
-        }
+        return result
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1110,6 +1119,7 @@ export class RedisManager extends BaseManager {
    * Sync cache across peer nodes
    * 
    * **Requirement 1.20**: Cache synchronization via redis_cache_sync
+   * Uses wrapper: redis_cache_sync() from nativeBridgeWrappers.ts
    */
   async cacheSyncWithPeers(peers: string[]): Promise<number> {
     this.ensureReady()
@@ -1118,19 +1128,16 @@ export class RedisManager extends BaseManager {
       if (peers.length === 0) return 0
 
       try {
-        // Call Rust function: redis_cache_sync
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_cache_sync) {
-          const result = (nativeBridge.redis_cache_sync as (peers: string[]) => number)(peers)
+        // Call Rust function via wrapper: redis_cache_sync
+        const result = redis_cache_sync(peers)
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Cache synced across ${peers.length} peers: ${result} keys synced`,
-            { peersCount: peers.length, keysSynced: result }
-          )
+        this.logger.logInfo(
+          this.constructor.name,
+          `Cache synced across ${peers.length} peers: ${result} keys synced`,
+          { peersCount: peers.length, keysSynced: result }
+        )
 
-          return result
-        }
+        return result
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1151,25 +1158,23 @@ export class RedisManager extends BaseManager {
    * Enable persistence
    * 
    * **Requirement 1.12**: Enable persistence with AOF/RDB modes
+   * Uses wrapper: redis_enable_persistence() from nativeBridgeWrappers.ts
    */
   async enablePersistence(mode: 'AOF' | 'RDB'): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_enable_persistence
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_enable_persistence) {
-          const result = (nativeBridge.redis_enable_persistence as (mode: string) => string)(mode)
+        // Call Rust function via wrapper: redis_enable_persistence
+        redis_enable_persistence(mode)
 
-          this.config.persistenceMode = mode
+        this.config.persistenceMode = mode
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis persistence enabled in ${mode} mode`,
-            { mode }
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis persistence enabled with mode: ${mode}`,
+          { mode }
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1177,8 +1182,6 @@ export class RedisManager extends BaseManager {
           { error: String(rustErr), mode }
         )
       }
-
-      this.config.persistenceMode = mode
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'enablePersistence')
@@ -1188,22 +1191,20 @@ export class RedisManager extends BaseManager {
 
   /**
    * Disable persistence
+   * Uses wrapper: redis_disable_persistence() from nativeBridgeWrappers.ts
    */
   async disablePersistence(): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_disable_persistence
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_disable_persistence) {
-          (nativeBridge.redis_disable_persistence as () => string)()
+        // Call Rust function via wrapper: redis_disable_persistence
+        redis_disable_persistence()
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis persistence disabled`
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis persistence disabled`
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1222,23 +1223,21 @@ export class RedisManager extends BaseManager {
 
   /**
    * Create snapshot for persistence
+   * Uses wrapper: redis_snapshot() from nativeBridgeWrappers.ts
    */
   async createSnapshot(): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_snapshot
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_snapshot) {
-          const result = (nativeBridge.redis_snapshot as () => string)()
+        // Call Rust function via wrapper: redis_snapshot
+        const result = redis_snapshot()
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis snapshot created`,
-            { result }
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis snapshot created`,
+          { result }
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1257,25 +1256,21 @@ export class RedisManager extends BaseManager {
    * Enable cache warming on startup
    * 
    * **Requirement 1.13**: Cache warming for preloading common entries
+   * Uses wrapper: redis_enable_cache_warming() from nativeBridgeWrappers.ts
    */
   async enableCacheWarming(keyPattern: string): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_enable_cache_warming
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_enable_cache_warming) {
-          const result = (nativeBridge.redis_enable_cache_warming as (pattern: string) => string)(
-            keyPattern
-          )
+        // Call Rust function via wrapper: redis_enable_cache_warming
+        redis_enable_cache_warming(keyPattern)
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis cache warming enabled with pattern: ${keyPattern}`,
-            { pattern: keyPattern }
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis cache warming enabled with pattern: ${keyPattern}`,
+          { pattern: keyPattern }
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1292,22 +1287,20 @@ export class RedisManager extends BaseManager {
 
   /**
    * Disable cache warming
+   * Uses wrapper: redis_disable_cache_warming() from nativeBridgeWrappers.ts
    */
   async disableCacheWarming(): Promise<void> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_disable_cache_warming
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_disable_cache_warming) {
-          (nativeBridge.redis_disable_cache_warming as () => string)()
+        // Call Rust function via wrapper: redis_disable_cache_warming
+        redis_disable_cache_warming()
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis cache warming disabled`
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis cache warming disabled`
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1326,40 +1319,27 @@ export class RedisManager extends BaseManager {
    * Get memory stats
    * 
    * **Requirement 1.16-1.17**: Memory analysis and optimization recommendations
+   * Uses wrapper: redis_memory_stats() from nativeBridgeWrappers.ts
    */
   async getMemoryStats(): Promise<MemoryStats> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_memory_stats
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_memory_stats) {
-          const result = (nativeBridge.redis_memory_stats as () => string)()
-          const statsResult = JSON.parse(result)
+        // Call Rust function via wrapper: redis_memory_stats
+        const memStats = redis_memory_stats()
 
-          const memStats: MemoryStats = {
-            total_bytes: statsResult.total_bytes || 0,
-            used_bytes: statsResult.used_bytes || 0,
-            available_bytes: statsResult.available_bytes || 0,
-            key_count: statsResult.key_count || 0,
-            avg_key_size_bytes: statsResult.avg_key_size_bytes || 0,
-            avg_value_size_bytes: statsResult.avg_value_size_bytes || 0,
-            recommendations: statsResult.recommendations || [],
-          }
+        const usedPercent = memStats.total_bytes > 0 
+          ? Math.round((memStats.used_bytes / memStats.total_bytes) * 100)
+          : 0
 
-          const usedPercent = memStats.total_bytes > 0 
-            ? Math.round((memStats.used_bytes / memStats.total_bytes) * 100)
-            : 0
+        this.logger.logDebug(
+          this.constructor.name,
+          `Redis memory stats: ${usedPercent}% used`,
+          { usedMb: Math.round(memStats.used_bytes / 1024 / 1024), keyCount: memStats.key_count }
+        )
 
-          this.logger.logDebug(
-            this.constructor.name,
-            `Redis memory stats: ${usedPercent}% used`,
-            { usedMb: Math.round(memStats.used_bytes / 1024 / 1024), keyCount: memStats.key_count }
-          )
-
-          return memStats
-        }
+        return memStats
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1396,25 +1376,23 @@ export class RedisManager extends BaseManager {
    * Optimize memory
    * 
    * **Requirement 1.17**: Memory optimization implementation
+   * Uses wrapper: redis_optimize_memory() from nativeBridgeWrappers.ts
    */
   async optimizeMemory(): Promise<number> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_optimize_memory
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_optimize_memory) {
-          const result = (nativeBridge.redis_optimize_memory as () => number)()
+        // Call Rust function via wrapper: redis_optimize_memory
+        const result = redis_optimize_memory()
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis memory optimized, freed: ${Math.round(result / 1024)} KB`,
-            { freedBytes: result }
-          )
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis memory optimized, freed: ${Math.round(result / 1024)} KB`,
+          { freedBytes: result }
+        )
 
-          return result
-        }
+        return result
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1435,43 +1413,40 @@ export class RedisManager extends BaseManager {
    * Run diagnostics
    * 
    * **Requirement 1.11**: Health checks and diagnostics
+   * Uses wrapper: redis_diagnose() from nativeBridgeWrappers.ts
    */
   async runDiagnostics(): Promise<DiagnosticsReport> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_diagnose
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_diagnose) {
-          const result = (nativeBridge.redis_diagnose as () => string)()
-          const diagResult = JSON.parse(result)
+        // Call Rust function via wrapper: redis_diagnose
+        const diagResult = redis_diagnose()
 
-          const report: DiagnosticsReport = {
-            connection_ok: diagResult.connection_ok ?? true,
-            latency_p95_ms: diagResult.latency_p95_ms || 0,
-            memory_healthy: diagResult.memory_healthy ?? true,
-            replication_ok: diagResult.replication_ok ?? true,
-            cluster_healthy: diagResult.cluster_healthy ?? true,
-            recommendations: diagResult.recommendations || [],
-          }
-
-          // Log any issues found
-          if (!report.connection_ok) {
-            this.logger.logWarn(
-              this.constructor.name,
-              `Diagnostics: Connection issue detected`
-            )
-          }
-          if (!report.memory_healthy) {
-            this.logger.logWarn(
-              this.constructor.name,
-              `Diagnostics: Memory issue detected`
-            )
-          }
-
-          return report
+        const report: DiagnosticsReport = {
+          connection_ok: diagResult.connection_ok ?? true,
+          latency_p95_ms: diagResult.latency_p95_ms || 0,
+          memory_healthy: diagResult.memory_healthy ?? true,
+          replication_ok: diagResult.replication_ok ?? true,
+          cluster_healthy: diagResult.cluster_healthy ?? true,
+          recommendations: diagResult.recommendations || [],
         }
+
+        // Log any issues found
+        if (!report.connection_ok) {
+          this.logger.logWarn(
+            this.constructor.name,
+            `Diagnostics: Connection issue detected`
+          )
+        }
+        if (!report.memory_healthy) {
+          this.logger.logWarn(
+            this.constructor.name,
+            `Diagnostics: Memory issue detected`
+          )
+        }
+
+        return report
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1506,6 +1481,7 @@ export class RedisManager extends BaseManager {
    * Set eviction policy
    * 
    * **Requirement 1.18**: Support for LRU, LFU, FIFO, RANDOM eviction policies
+   * Uses wrapper: redis_set_eviction_policy() from nativeBridgeWrappers.ts
    */
   async setEvictionPolicy(
     policy: 'LRU' | 'LFU' | 'FIFO' | 'RANDOM'
@@ -1514,21 +1490,16 @@ export class RedisManager extends BaseManager {
 
     try {
       try {
-        // Call Rust function: redis_set_eviction_policy
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_set_eviction_policy) {
-          const result = (nativeBridge.redis_set_eviction_policy as (policy: string) => string)(
-            policy
-          )
+        // Call Rust function via wrapper: redis_set_eviction_policy
+        redis_set_eviction_policy(policy)
 
-          this.config.evictionPolicy = policy
+        this.config.evictionPolicy = policy
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis eviction policy set to: ${policy}`,
-            { policy }
-          )
-        }
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis eviction policy set to: ${policy}`,
+          { policy }
+        )
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1549,24 +1520,22 @@ export class RedisManager extends BaseManager {
    * Get current eviction policy
    * 
    * **Requirement 1.18**: Query current eviction policy
+   * Uses wrapper: redis_get_eviction_policy() from nativeBridgeWrappers.ts
    */
   async getEvictionPolicy(): Promise<'LRU' | 'LFU' | 'FIFO' | 'RANDOM'> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_get_eviction_policy
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_get_eviction_policy) {
-          const result = (nativeBridge.redis_get_eviction_policy as () => string)()
+        // Call Rust function via wrapper: redis_get_eviction_policy
+        const result = redis_get_eviction_policy()
 
-          const policy = result as 'LRU' | 'LFU' | 'FIFO' | 'RANDOM'
-          this.logger.logDebug(
-            this.constructor.name,
-            `Current eviction policy: ${policy}`
-          )
-          return policy
-        }
+        const policy = result as 'LRU' | 'LFU' | 'FIFO' | 'RANDOM'
+        this.logger.logDebug(
+          this.constructor.name,
+          `Current eviction policy: ${policy}`
+        )
+        return policy
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -1587,37 +1556,35 @@ export class RedisManager extends BaseManager {
    * Monitor Redis commands in real-time
    * 
    * **Requirement 1.11**: Real-time command monitoring via redis_monitor
+   * Uses wrapper: redis_monitor() from nativeBridgeWrappers.ts
    */
   async monitorCommands(): Promise<AsyncIterator<string>> {
     this.ensureReady()
 
     try {
       try {
-        // Call Rust function: redis_monitor
-        const nativeBridge = getNativeBridge()
-        if (nativeBridge?.redis_monitor) {
-          const result = (nativeBridge.redis_monitor as () => string)()
+        // Call Rust function via wrapper: redis_monitor
+        const result = redis_monitor()
 
-          this.logger.logInfo(
-            this.constructor.name,
-            `Redis monitoring started`
-          )
+        this.logger.logInfo(
+          this.constructor.name,
+          `Redis monitoring started`
+        )
 
-          // Return an async iterator for streamed commands
-          const commands: string[] = result.split('\r\n').filter(c => c.length > 0)
-          let index = 0
+        // Return an async iterator for streamed commands
+        const commands: string[] = result.split('\r\n').filter(c => c.length > 0)
+        let index = 0
 
-          const asyncIter: AsyncIterator<string> = {
-            async next() {
-              if (index < commands.length) {
-                return { done: false, value: commands[index++] }
-              }
-              return { done: true, value: '' }
-            },
-          }
-
-          return asyncIter
+        const asyncIter: AsyncIterator<string> = {
+          async next() {
+            if (index < commands.length) {
+              return { done: false, value: commands[index++] }
+            }
+            return { done: true, value: '' }
+          },
         }
+
+        return asyncIter
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,

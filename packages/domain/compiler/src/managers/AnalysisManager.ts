@@ -6,6 +6,22 @@
  */
 
 import { BaseManager, ManagerConfig } from './BaseManager'
+import {
+  analyze_class_usage,
+  calculate_impact,
+  calculate_risk,
+  calculate_savings,
+  analyze_classes,
+  get_parse_stats,
+  get_cache_stats,
+  get_recommended_cache_config,
+  get_cache_optimization_hints,
+  type ClassAnalysisResult,
+  type ParseStatsResult,
+  type CacheStatsResult,
+  type RecommendedCacheConfig,
+  type CacheOptimizationHintsResult,
+} from '../nativeBridgeWrappers'
 
 export interface AnalysisManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -57,34 +73,44 @@ export class AnalysisManager extends BaseManager {
 
   /**
    * Analyze class usage in source code
+   * 
+   * Calls Rust function: {@link analyze_class_usage}
+   * Analyzes component class usage from scan results
    */
   async analyzeClassUsage(sourceFiles: Array<{ path: string; content: string }>): Promise<Map<string, ComponentUsage>> {
     this.ensureReady()
 
     try {
-      // Stub: Will call analyzeClassUsage() Rust function
-      this.usageMap.clear()
-
+      // Extract classes first
+      const classes: string[] = []
+      const classSet = new Set<string>()
+      
       for (const file of sourceFiles) {
-        // Simple regex to extract Tailwind classes
         const classMatches = file.content.match(/\b[\w-]+(?::\S+)?\b/g) || []
-
-        for (const className of classMatches) {
-          if (this.usageMap.has(className)) {
-            const usage = this.usageMap.get(className)!
-            usage.occurrence_count++
-            if (!usage.file_locations.includes(file.path)) {
-              usage.file_locations.push(file.path)
-            }
-          } else {
-            this.usageMap.set(className, {
-              component: className,
-              occurrence_count: 1,
-              file_locations: [file.path],
-              bundle_impact_bytes: 0,
-            })
+        for (const match of classMatches) {
+          if (!classSet.has(match)) {
+            classes.push(match)
+            classSet.add(match)
           }
         }
+      }
+
+      // Call Rust function
+      const scanResult = { files: sourceFiles.map(f => f.path), classes: Array.from(classSet) }
+      const css = sourceFiles.map(f => f.content).join('\n')
+      
+      const result = analyze_class_usage(classes, JSON.stringify(scanResult), css)
+      
+      this.usageMap.clear()
+      for (const usage of result) {
+        // Map ClassUsageItem to ComponentUsage
+        const componentUsage: ComponentUsage = {
+          component: usage.className,
+          occurrence_count: usage.usageCount,
+          file_locations: [],
+          bundle_impact_bytes: 0,
+        }
+        this.usageMap.set(usage.className, componentUsage)
       }
 
       return new Map(this.usageMap)
@@ -97,31 +123,24 @@ export class AnalysisManager extends BaseManager {
 
   /**
    * Calculate bundle impact for component
+   * 
+   * Calls Rust function: {@link calculate_impact}
+   * Calculates impact of class changes
    */
   async calculateImpact(component: string, cssRule: string): Promise<ComponentImpact> {
     this.ensureReady()
 
     try {
-      // Stub: Will call calculateImpact() Rust function
-      const cssBytes = Buffer.byteLength(cssRule, 'utf-8')
-      const gzipBytes = Math.ceil(cssBytes * 0.3) // Rough gzip estimate
-
-      const usage = this.usageMap.get(component)
-      const usageCount = usage?.occurrence_count || 0
-
-      let riskLevel: 'low' | 'medium' | 'high' = 'low'
-      if (usageCount > 100) {
-        riskLevel = 'high'
-      } else if (usageCount > 10) {
-        riskLevel = 'medium'
-      }
+      const impactData = { component, cssRule }
+      const result = calculate_impact(JSON.stringify(impactData))
+      const parsed = JSON.parse(result)
 
       const impact: ComponentImpact = {
-        component,
-        css_bytes: cssBytes,
-        gzip_bytes: gzipBytes,
-        usage_count: usageCount,
-        risk_level: riskLevel,
+        component: parsed.component,
+        css_bytes: parsed.css_bytes,
+        gzip_bytes: parsed.gzip_bytes,
+        usage_count: parsed.usage_count,
+        risk_level: parsed.risk_level,
       }
 
       this.impactMap.set(component, impact)
@@ -141,18 +160,18 @@ export class AnalysisManager extends BaseManager {
 
   /**
    * Calculate risk level for component
+   * 
+   * Calls Rust function: {@link calculate_risk}
+   * Calculates risk of removing a class
    */
   async calculateRisk(component: string): Promise<'low' | 'medium' | 'high'> {
     this.ensureReady()
 
     try {
-      // Stub: Will call calculateRisk() Rust function
-      const usage = this.usageMap.get(component)
-      if (!usage) return 'low'
-
-      if (usage.occurrence_count > 100) return 'high'
-      if (usage.occurrence_count > 10) return 'medium'
-      return 'low'
+      const totalComponents = this.usageMap.size
+      const result = calculate_risk(component, totalComponents)
+      const parsed = JSON.parse(result)
+      return parsed.risk_level || 'low'
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'calculateRisk', { logOnly: true })
@@ -162,16 +181,20 @@ export class AnalysisManager extends BaseManager {
 
   /**
    * Calculate potential savings from removing component
+   * 
+   * Calls Rust function: {@link calculate_savings}
+   * Calculates bundle savings from optimization
    */
   async calculateSavings(component: string): Promise<number> {
     this.ensureReady()
 
     try {
-      // Stub: Will call calculateSavings() Rust function
       const impact = this.impactMap.get(component)
-      if (!impact) return 0
+      const bundleSize = Array.from(this.impactMap.values()).reduce((sum, i) => sum + i.css_bytes, 0)
+      const componentCount = this.usageMap.size
 
-      return impact.css_bytes
+      const result = calculate_savings(bundleSize, componentCount)
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'calculateSavings', { logOnly: true })
@@ -267,6 +290,137 @@ export class AnalysisManager extends BaseManager {
         components: [],
         dependencies: [],
         impact: [],
+      }
+    }
+  }
+
+  /**
+   * Analyze class usage patterns (Phase 1 - Analysis Function #1)
+   *
+   * Calls Rust function: {@link analyze_classes}
+   * Returns structured analysis of class naming patterns, variants, and prefixes
+   */
+  async analyzeClasses(classes: string[]): Promise<ClassAnalysisResult> {
+    this.ensureReady()
+
+    try {
+      return analyze_classes(classes)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'analyzeClasses', { logOnly: true })
+      return {
+        total: 0,
+        unique_prefixes: 0,
+        prefixes: [],
+        variant_distribution: {},
+        error_count: 1,
+        errors: [error.message],
+      }
+    }
+  }
+
+  /**
+   * Get parsing statistics (Phase 1 - Analysis Function #2)
+   *
+   * Calls Rust function: {@link get_parse_stats}
+   * Returns cache hit/miss rates and parse performance metrics
+   */
+  async getParseStats(): Promise<ParseStatsResult> {
+    this.ensureReady()
+
+    try {
+      return get_parse_stats()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getParseStats', { logOnly: true })
+      return {
+        hits: 0,
+        misses: 0,
+        total: 0,
+        hit_rate: 0,
+      }
+    }
+  }
+
+  /**
+   * Get cache statistics (Phase 1 - Analysis Function #3)
+   *
+   * Calls Rust function: {@link get_cache_stats}
+   * Returns detailed cache performance including resolver pool stats
+   */
+  async getCacheStats(): Promise<CacheStatsResult> {
+    this.ensureReady()
+
+    try {
+      return get_cache_stats()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getCacheStats', { logOnly: true })
+      return {
+        status: 'ok',
+        data: {
+          total_hits: 0,
+          total_misses: 0,
+          hit_rate: 0,
+          cache_backends: {},
+          theme_resolver_pool: {
+            hits: 0,
+            misses: 0,
+            total: 0,
+            hit_rate: 0,
+            cached_resolvers: 0,
+          },
+        },
+      }
+    }
+  }
+
+  /**
+   * Get recommended cache configuration (Phase 1 - Analysis Function #4)
+   *
+   * Calls Rust function: {@link get_recommended_cache_config}
+   * Returns optimal cache settings based on workload type (build|dev|test|production)
+   */
+  async getRecommendations(workloadType: 'build' | 'dev' | 'test' | 'production' = 'build'): Promise<RecommendedCacheConfig> {
+    this.ensureReady()
+
+    try {
+      return get_recommended_cache_config(workloadType)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getRecommendations', { logOnly: true })
+      return {
+        parse_cache_size: 1000,
+        resolve_cache_size: 500,
+        compile_cache_size: 1000,
+        css_gen_cache_size: 500,
+        recommended_eviction_policy: 'lru',
+        ttl_seconds: 3600,
+        expected_hit_rate_percent: 75,
+      }
+    }
+  }
+
+  /**
+   * Get cache optimization hints (Phase 1 - Analysis Function #5)
+   *
+   * Calls Rust function: {@link get_cache_optimization_hints}
+   * Returns optimization recommendations and estimated improvements
+   */
+  async getOptimizationHints(): Promise<CacheOptimizationHintsResult> {
+    this.ensureReady()
+
+    try {
+      return get_cache_optimization_hints()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getOptimizationHints', { logOnly: true })
+      return {
+        current_strategy: 'lru',
+        recommended_strategy: 'adaptive',
+        estimated_improvement_percent: 0,
+        suggested_memory_mb: 256,
+        notes: ['Unable to compute hints at this time'],
       }
     }
   }

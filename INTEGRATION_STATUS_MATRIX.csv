@@ -1,0 +1,69 @@
+Function Name,Category,Module,Rust Exported,TS Wrapper,Manager Integration,Priority,Effort (hrs),Status,Notes
+redis_pool_connect,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.initializePool(),LOW,0.5,✅ INTEGRATED,Connection initialization
+redis_set,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.setCacheValue(),LOW,0.5,✅ INTEGRATED,Set key-value with TTL
+redis_get,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getCacheValue(),LOW,0.5,✅ INTEGRATED,Get cached value
+redis_delete,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.deleteCacheKey(),LOW,0.5,✅ INTEGRATED,Remove cache entry
+redis_mget,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getMultipleValues(),LOW,0.5,✅ INTEGRATED,Batch get
+redis_mset,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.setMultipleValues(),LOW,0.5,✅ INTEGRATED,Batch set
+redis_exists,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.keyExists(),LOW,0.5,✅ INTEGRATED,Check existence
+redis_expire,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.setExpiration(),LOW,0.5,✅ INTEGRATED,Set TTL
+redis_ttl,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getExpiration(),LOW,0.5,✅ INTEGRATED,Get TTL
+redis_pool_stats,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getPoolStats(),LOW,0.5,✅ INTEGRATED,Pool metrics
+redis_flush_db,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.flushDatabase(),LOW,0.5,✅ INTEGRATED,Clear database
+redis_ping,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.ping(),LOW,0.5,✅ INTEGRATED,Health check
+redis_info,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getServerInfo(),LOW,0.5,✅ INTEGRATED,Server info
+redis_cache_clear,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.clearCache(),LOW,0.5,✅ INTEGRATED,Clear cache
+redis_enable_cluster,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.enableClustering(),LOW,0.5,✅ INTEGRATED,Enable clustering
+redis_cache_hit_rate,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getHitRate(),LOW,0.5,✅ INTEGRATED,Performance metric
+redis_monitor,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.monitor(),LOW,0.5,✅ INTEGRATED,Monitor operations
+redis_sync_nodes,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.syncNodes(),LOW,0.5,✅ INTEGRATED,Cluster sync
+redis_get_config,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getConfig(),LOW,0.5,✅ INTEGRATED,Get config
+redis_shutdown,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.shutdown(),LOW,0.5,✅ INTEGRATED,Graceful shutdown
+watch_files,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,4,❌ NOT INTEGRATED,Core watch lifecycle - CRITICAL
+stop_watching,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Stop watching handle
+get_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Watch statistics
+get_watch_events,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Poll file events - CRITICAL
+get_watch_performance,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Performance metrics
+clear_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,0.5,❌ NOT INTEGRATED,Reset statistics
+get_active_watches,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,0.5,❌ NOT INTEGRATED,Count active watches
+set_watch_metrics,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Configure metrics
+set_watch_aggregation,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Event aggregation mode
+resolve_color,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveColor(),LOW,0.5,✅ INTEGRATED,Color resolution
+resolve_spacing,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveSpacing(),LOW,0.5,✅ INTEGRATED,Spacing resolution
+resolve_font_size,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveFontSize(),LOW,0.5,✅ INTEGRATED,Font size resolution
+resolve_breakpoint,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveBreakpoint(),LOW,0.5,✅ INTEGRATED,Breakpoint resolution
+apply_opacity,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Opacity modifier - NOT USED
+clear_theme_cache_napi,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.clearCache(),LOW,0.5,✅ INTEGRATED,Cache clearing
+get_theme_cache_stats,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Cache statistics - NOT USED
+resolve_color_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached color resolution - NOT USED
+resolve_spacing_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached spacing resolution - NOT USED
+resolve_font_size_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached font size - NOT USED
+parse_class,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Single class parsing
+parse_classes,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Batch class parsing
+analyze_classes,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Pattern analysis - NOT USED
+compile_class_napi,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Full compilation
+get_parse_stats,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Parse statistics - NOT USED
+clear_parse_cache_napi,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,0.5,⏳ PARTIALLY INTEGRATED,Cache management - NOT USED
+generate_css_native,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssGeneratorNative,LOW,0.5,✅ INTEGRATED,Main CSS generator
+generate_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Rule-based generation - NOT USED
+generate_css_batch,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Batch processing - NOT USED
+compile_to_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Full compile pipeline - NOT USED
+minify_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,CSS minification - NOT USED
+configure_cache_backend,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Dynamic configuration - NOT USED
+get_cache_stats,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ Multi-manager,LOW,0.5,✅ INTEGRATED,Cache statistics
+get_recommended_cache_config,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Config recommendations - NOT USED
+clear_all_caches_napi,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Global cache clear - NOT USED
+get_cache_optimization_hints,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Optimization hints - NOT USED
+estimate_streaming_batch_size,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Batch estimation - NOT USED
+get_resolver_pool_stats,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ Multi-manager,LOW,0.5,✅ INTEGRATED,Resolver pool metrics
+clear_resolver_pool,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Pool cleanup - NOT USED
+get_week6_features_status,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,1,❌ NOT INTEGRATED,Feature status
+get_memory_stats_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Memory tracking - IMPORTANT
+get_memory_recommendations_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,2,❌ NOT INTEGRATED,Memory recommendations
+estimate_optimal_cache_config_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,3,❌ NOT INTEGRATED,Cache config estimation
+reset_memory_stats,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,0.5,❌ NOT INTEGRATED,Reset statistics
+error_to_napi,Error/Utility,napi_bridge_errors,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,Error conversion
+validate_string_input,Error/Utility,napi_bridge_errors,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,Input validation
+parse_json,Marshalling,napi_bridge_marshalling,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,JSON parsing
+to_json,Marshalling,napi_bridge_marshalling,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,JSON conversion
+response_ok,Marshalling,napi_bridge_marshalling,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,Response formatting

@@ -78,4 +78,12 @@ export interface NativeAnimateBinding {
    * Native: `split_whitespace()` tanpa RegExp overhead.
    */
   splitAnimateClasses?: (classList: string) => string[]
+  /**
+   * Expands animation CSS with browser prefixes
+   */
+  expandAnimationNapi?: (css: string) => string | null
+  /**
+   * Transforms animation for browser compatibility
+   */
+  transformAnimation?: (css: string) => string | null
 }

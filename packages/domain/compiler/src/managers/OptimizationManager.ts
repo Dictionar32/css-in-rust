@@ -2,11 +2,22 @@
  * OptimizationManager - CSS optimization and dead code elimination
  *
  * Manages dead code detection, CSS elimination, and minification via
- * LightningCSS. Currently provides stub implementations - actual Rust
- * function calls added in Task 21+.
+ * LightningCSS. Integrates Rust functions for optimal performance.
  */
 
 import { BaseManager, ManagerConfig } from './BaseManager'
+import {
+  detect_dead_code,
+  eliminate_dead_css,
+  optimize_css,
+  process_tailwind_css_lightning,
+  process_tailwind_css_with_targets,
+  parse_atomic_class,
+  generate_atomic_css,
+  to_atomic_classes,
+  clear_atomic_registry,
+  get_atomic_registry_size,
+} from '../nativeBridgeWrappers'
 
 export interface OptimizationManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -59,6 +70,9 @@ export class OptimizationManager extends BaseManager {
 
   /**
    * Detect dead code in CSS
+   * 
+   * Calls Rust function: {@link detect_dead_code}
+   * Identifies unused rules from generated CSS
    */
   async detectDeadCode(
     scanResult: ScanWorkspaceResult,
@@ -67,20 +81,19 @@ export class OptimizationManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call detectDeadCode() in Task 21
-      const sourceClasses = new Set(scanResult.classes)
-      const cssClasses = this.extractCssClasses(css)
-      const deadInCss = Array.from(cssClasses).filter(c => !sourceClasses.has(c))
-
+      const analysis = detect_dead_code(JSON.stringify(scanResult), css)
+      
+      // Map DeadCodeResult to DeadCodeAnalysis
       return {
-        dead_in_css: deadInCss,
-        dead_in_source: [],
-        live_classes: Array.from(sourceClasses),
-        total_css_classes: cssClasses.size,
-        total_source_classes: sourceClasses.size,
+        dead_in_css: analysis.deadInCss || [],
+        dead_in_source: analysis.deadInSource || [],
+        live_classes: scanResult.classes || [],
+        total_css_classes: (analysis.deadInCss || []).length + (analysis.deadInSource || []).length,
+        total_source_classes: scanResult.classes?.length || 0,
         dead_code_percentage: Math.round(
-          (deadInCss.length / cssClasses.size) * 100 || 0
-        ),
+          (((analysis.deadInCss || []).length + (analysis.deadInSource || []).length) / 
+            ((analysis.deadInCss || []).length + (analysis.deadInSource || []).length + (scanResult.classes?.length || 1))) * 100
+        ) || 0,
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -91,6 +104,9 @@ export class OptimizationManager extends BaseManager {
 
   /**
    * Eliminate dead CSS from output
+   * 
+   * Calls Rust function: {@link eliminate_dead_css}
+   * Removes unused rules from CSS output
    */
   async eliminateDeadCss(
     css: string,
@@ -99,29 +115,8 @@ export class OptimizationManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call eliminateDeadCss() in Task 21
-      const deadSet = new Set(deadClasses)
-      const lines = css.split('\n')
-      const result: string[] = []
-      let inDeadRule = false
-
-      for (const line of lines) {
-        let isDeadLine = false
-
-        // Check if line contains any dead classes
-        for (const deadClass of deadClasses) {
-          if (line.includes(`.${deadClass}`) || line.includes(`\\${deadClass.replace(/\\/g, '\\\\')}`)) {
-            isDeadLine = true
-            break
-          }
-        }
-
-        if (!isDeadLine) {
-          result.push(line)
-        }
-      }
-
-      return result.join('\n')
+      const result = eliminate_dead_css(css, deadClasses)
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'eliminateDeadCss')
@@ -131,20 +126,17 @@ export class OptimizationManager extends BaseManager {
 
   /**
    * Full optimization pipeline
+   * 
+   * Calls Rust function: {@link optimize_css}
+   * End-to-end optimization including dead code and minification
    */
   async optimizeCss(css: string): Promise<OptimizationResult> {
     this.ensureReady()
 
     try {
-      // Stub: Will call optimizeCss() in Task 21
       const originalSize = Buffer.byteLength(css, 'utf-8')
-
-      // Stub minification (just remove whitespace)
-      const minified = css
-        .replace(/\s+/g, ' ')
-        .replace(/\s*([{}:;,])\s*/g, '$1')
-
-      const optimizedSize = Buffer.byteLength(minified, 'utf-8')
+      const optimized = optimize_css(css)
+      const optimizedSize = Buffer.byteLength(optimized, 'utf-8')
 
       const result: OptimizationResult = {
         success: true,
@@ -171,18 +163,16 @@ export class OptimizationManager extends BaseManager {
 
   /**
    * Process Tailwind CSS with LightningCSS
+   * 
+   * Calls Rust function: {@link process_tailwind_css_lightning}
+   * Processes Tailwind CSS with LightningCSS for minification
    */
   async processTailwindCssLightning(css: string): Promise<ProcessedCssResult> {
     this.ensureReady()
 
     try {
-      // Stub: Will call processTailwindCssLightning() in Task 21
-      return {
-        css,
-        size_bytes: Buffer.byteLength(css, 'utf-8'),
-        resolved_classes: [],
-        unknown_classes: [],
-      }
+      const result = process_tailwind_css_lightning(css)
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'processTailwindCssLightning')
@@ -192,6 +182,9 @@ export class OptimizationManager extends BaseManager {
 
   /**
    * Process Tailwind CSS with targets
+   * 
+   * Calls Rust function: {@link process_tailwind_css_with_targets}
+   * Processes Tailwind CSS with targets (for targeted minification)
    */
   async processTailwindCssWithTargets(
     css: string,
@@ -200,17 +193,95 @@ export class OptimizationManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call processTailwindCssWithTargets() in Task 21
-      return {
-        css,
-        size_bytes: Buffer.byteLength(css, 'utf-8'),
-        resolved_classes: [],
-        unknown_classes: [],
-      }
+      const result = process_tailwind_css_with_targets(css, targets)
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'processTailwindCssWithTargets')
       throw error
+    }
+  }
+
+  /**
+   * Parse Tailwind class into atomic form
+   * 
+   * Calls Rust function: {@link parse_atomic_class}
+   * Parses Tailwind class into atomic form
+   */
+  parseAtomicClass(twClass: string): string | null {
+    try {
+      const result = parse_atomic_class(twClass)
+      return result
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'parseAtomicClass', { logOnly: true })
+      return null
+    }
+  }
+
+  /**
+   * Generate atomic CSS from rules
+   * 
+   * Calls Rust function: {@link generate_atomic_css}
+   * Generates atomic CSS from rules
+   */
+  generateAtomicCss(rules: any[]): string {
+    try {
+      const result = generate_atomic_css(JSON.stringify(rules))
+      return result
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'generateAtomicCss', { logOnly: true })
+      return ''
+    }
+  }
+
+  /**
+   * Convert Tailwind classes to atomic form
+   * 
+   * Calls Rust function: {@link to_atomic_classes}
+   * Converts Tailwind classes to atomic form
+   */
+  toAtomicClasses(twClasses: string): string {
+    try {
+      const result = to_atomic_classes(twClasses)
+      return result
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'toAtomicClasses', { logOnly: true })
+      return twClasses
+    }
+  }
+
+  /**
+   * Clear atomic CSS registry
+   * 
+   * Calls Rust function: {@link clear_atomic_registry}
+   * Clears atomic CSS registry
+   */
+  clearAtomicRegistry(): void {
+    try {
+      clear_atomic_registry()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'clearAtomicRegistry', { logOnly: true })
+    }
+  }
+
+  /**
+   * Get atomic CSS registry size
+   * 
+   * Calls Rust function: {@link get_atomic_registry_size}
+   * Gets atomic CSS registry size
+   */
+  getAtomicRegistrySize(): number {
+    try {
+      const result = get_atomic_registry_size()
+      return result
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getAtomicRegistrySize', { logOnly: true })
+      return 0
     }
   }
 

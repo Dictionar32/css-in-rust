@@ -169,6 +169,14 @@ interface NativeBinding {
     stateKeys: string[]
     combinations: number
   }
+
+  // ── Theme Parsing (napi_bridge_theme_parsing.rs) ───────────────────────────
+  parseColorsNapi?: (colorsJson: string) => string | Record<string, string>
+  parseSpacingNapi?: (spacingJson: string) => string | Record<string, string>
+  parseTransformNapi?: (transformJson: string) => string | Record<string, string>
+  normalizeColorNapi?: (color: string, opacity: string) => string
+  sanitizeColorNapi?: (color: string) => string
+  splitRgbaNapi?: (color: string) => string | { r: number; g: number; b: number; a: number }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

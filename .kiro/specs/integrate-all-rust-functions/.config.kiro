@@ -1,0 +1,120 @@
+{
+  "specName": "integrate-all-rust-functions",
+  "displayName": "Integrate All 110+ Rust Functions",
+  "description": "Comprehensive specification untuk mengintegrasikan semua 110+ fungsi Rust NAPI yang sudah dibungkus TypeScript tapi belum digunakan dalam compiler pipeline",
+  "status": "planning",
+  "priority": "critical",
+  "estimatedWeeks": 8,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Foundation: Redis + Watch",
+      "weeks": 2,
+      "priority": "critical",
+      "tasks": [
+        "Implement RedisManager core",
+        "Add Redis config parsing",
+        "Implement cache key generation",
+        "Implement Redis cache operations",
+        "Add cache statistics & monitoring",
+        "Implement WatchManager core",
+        "Add file change detection & debouncing",
+        "Implement pattern management",
+        "Add plugin hook infrastructure",
+        "Add performance monitoring",
+        "Write integration tests",
+        "Benchmark Phase 1"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Core Compiler: ID Registry + Theme",
+      "weeks": 2,
+      "priority": "critical",
+      "tasks": [
+        "Implement IDRegistry core",
+        "Implement property/value tracking",
+        "Implement serialization",
+        "Integrate into compiler",
+        "Implement ThemeResolutionManager",
+        "Implement token resolution",
+        "Implement cascade merging",
+        "Integrate into compiler",
+        "Write integration tests",
+        "Benchmark Phase 2"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Performance: Incremental + Optimization",
+      "weeks": 2,
+      "priority": "important",
+      "tasks": [
+        "Implement file fingerprinting",
+        "Implement incremental diff",
+        "Implement incremental compilation",
+        "Add state management",
+        "Implement dead code detection",
+        "Implement CSS elimination & minification",
+        "Add optimization reporting",
+        "Integrate into compiler",
+        "Benchmark incremental compilation",
+        "Benchmark optimization",
+        "Full pipeline benchmark"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Advanced: Atomic CSS + Analysis + Polish",
+      "weeks": 2,
+      "priority": "nice-to-have",
+      "tasks": [
+        "Implement atomic CSS generation",
+        "Implement memory tracking",
+        "Implement component analysis",
+        "Implement diagnostics",
+        "Comprehensive testing",
+        "Documentation",
+        "Performance optimization pass",
+        "Release preparation"
+      ]
+    }
+  ],
+  "successMetrics": [
+    {
+      "metric": "All 110+ functions integrated",
+      "target": "100%"
+    },
+    {
+      "metric": "Redis cache hit rate",
+      "target": "≥ 75%"
+    },
+    {
+      "metric": "Watch system latency",
+      "target": "< 200ms"
+    },
+    {
+      "metric": "Incremental rebuild (100 files)",
+      "target": "< 500ms"
+    },
+    {
+      "metric": "Theme lookup (cached)",
+      "target": "< 1ms"
+    },
+    {
+      "metric": "CSS optimization reduction",
+      "target": "≥ 85%"
+    },
+    {
+      "metric": "Test coverage",
+      "target": "≥ 80%"
+    }
+  ],
+  "openIssues": [],
+  "relatedSpecs": [
+    "use-all-63-rust-functions",
+    "phase-7-architecture",
+    "rust-css-compiler-engine"
+  ],
+  "notes": "This spec is derived from audit of 110+ Rust functions that are wrapped in TypeScript but not yet integrated into the compiler pipeline. Goal is to make ALL functions actively used."
+}

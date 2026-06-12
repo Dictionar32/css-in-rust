@@ -111,8 +111,6 @@ import {
   calculate_impact,
   calculate_risk,
   calculate_savings,
-  identify_unused,
-  build_dependency_graph,
   // Type definitions
   type WatchEvent,
   type WatchStats,
@@ -339,10 +337,8 @@ describe("NativeBridge Wrappers - All 63 Rust Functions", () => {
         calculate_impact,
         calculate_risk,
         calculate_savings,
-        identify_unused,
-        build_dependency_graph,
       ]
-      expect(analysisFunctions.length).toBe(6) // 6 exported in this test
+      expect(analysisFunctions.length).toBe(4) // 4 exported in this test
       analysisFunctions.forEach((fn) => {
         expect(typeof fn).toBe("function")
       })

@@ -6,6 +6,15 @@
  */
 
 import { BaseManager, ManagerConfig } from './BaseManager'
+import {
+  resolve_variants,
+  validate_variant_config,
+  resolve_cascade,
+  resolve_class_names,
+  resolve_conflict_group,
+  resolve_theme_value,
+  resolve_simple_variants,
+} from '../nativeBridgeWrappers'
 
 export interface ThemeManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -87,72 +96,17 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve variants from config
+   * 
+   * Calls Rust function: {@link resolve_variants}
+   * Parses variant definitions with precedence information
    */
   async resolveVariants(config: ThemeVariantConfig): Promise<ResolvedVariants> {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_variants() Rust function
-      const variants: ResolvedVariant[] = []
-      let responsiveCount = 0
-      let darkCount = 0
-      let stateCount = 0
-      let customCount = 0
-
-      if (config.responsive) {
-        for (const [name] of Object.entries(config.responsive)) {
-          variants.push({
-            name: `${name}:`,
-            precedence: VariantPrecedence.Responsive,
-            rules: [],
-          })
-          responsiveCount++
-        }
-      }
-
-      if (config.dark) {
-        for (const [name] of Object.entries(config.dark)) {
-          variants.push({
-            name: `${name}:`,
-            precedence: VariantPrecedence.ColorScheme,
-            rules: [],
-          })
-          darkCount++
-        }
-      }
-
-      if (config.state) {
-        for (const [name] of Object.entries(config.state)) {
-          variants.push({
-            name: `${name}:`,
-            precedence: VariantPrecedence.State,
-            rules: [],
-          })
-          stateCount++
-        }
-      }
-
-      if (config.custom) {
-        for (const [name] of Object.entries(config.custom)) {
-          variants.push({
-            name: `${name}:`,
-            precedence: VariantPrecedence.Custom,
-            rules: [],
-          })
-          customCount++
-        }
-      }
-
-      return {
-        variants,
-        precedenceInfo: {
-          interaction: 0,
-          colorScheme: darkCount,
-          responsive: responsiveCount,
-          state: stateCount,
-          custom: customCount,
-        },
-      }
+      const result = resolve_variants(JSON.stringify(config))
+      const parsed = JSON.parse(result)
+      return parsed
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveVariants')
@@ -162,24 +116,17 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Validate variant config
+   * 
+   * Calls Rust function: {@link validate_variant_config}
+   * Validates variant configuration for errors and warnings
    */
   async validateVariantConfig(config: ThemeVariantConfig): Promise<ValidationResult> {
     this.ensureReady()
 
     try {
-      // Stub: Will call validate_variant_config() Rust function
-      const errors: string[] = []
-      const warnings: string[] = []
-
-      if (!config || typeof config !== 'object') {
-        errors.push('Variant config must be an object')
-      }
-
-      return {
-        valid: errors.length === 0,
-        errors,
-        warnings,
-      }
+      const result = validate_variant_config(JSON.stringify(config))
+      const parsed = JSON.parse(result)
+      return parsed
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'validateVariantConfig', { logOnly: true })
@@ -189,32 +136,17 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve simple variants
+   * 
+   * Calls Rust function: {@link resolve_simple_variants}
+   * Resolves simple variants (fast path without full config processing)
    */
   async resolveSimpleVariants(config: SimpleVariantConfig): Promise<ResolvedVariants> {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_simple_variants() Rust function
-      const variants: ResolvedVariant[] = []
-
-      for (const [name] of Object.entries(config.variants)) {
-        variants.push({
-          name: `${name}:`,
-          precedence: VariantPrecedence.Custom,
-          rules: [],
-        })
-      }
-
-      return {
-        variants,
-        precedenceInfo: {
-          interaction: 0,
-          colorScheme: 0,
-          responsive: 0,
-          state: 0,
-          custom: variants.length,
-        },
-      }
+      const result = resolve_simple_variants(JSON.stringify(config))
+      const parsed = JSON.parse(result)
+      return parsed
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveSimpleVariants')
@@ -224,6 +156,9 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve theme cascade
+   * 
+   * Calls Rust function: {@link resolve_cascade}
+   * Resolves theme cascade: merges base with overrides using cascade rules
    */
   async resolveCascade(
     baseTheme: ThemeConfig,
@@ -232,32 +167,9 @@ export class ThemeManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_cascade() Rust function
-      const cacheKey = `cascade:${JSON.stringify([baseTheme, overrides])}`
-
-      if (this.resolvedThemeCache.has(cacheKey)) {
-        return this.resolvedThemeCache.get(cacheKey)!
-      }
-
-      const merged: MergedTheme = {
-        ...baseTheme,
-        ...overrides,
-        precedenceOrder: [
-          VariantPrecedence.Interaction,
-          VariantPrecedence.ColorScheme,
-          VariantPrecedence.Responsive,
-          VariantPrecedence.State,
-          VariantPrecedence.Custom,
-        ],
-      }
-
-      if (this.resolvedThemeCache.size >= this.cacheSize) {
-        const firstKey = this.resolvedThemeCache.keys().next().value
-        this.resolvedThemeCache.delete(firstKey)
-      }
-
-      this.resolvedThemeCache.set(cacheKey, merged)
-      return merged
+      const result = resolve_cascade(JSON.stringify(baseTheme), JSON.stringify(overrides))
+      const parsed = JSON.parse(result)
+      return parsed
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveCascade')
@@ -267,6 +179,9 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve class names to theme values
+   * 
+   * Calls Rust function: {@link resolve_class_names}
+   * Resolves class names to theme values: maps each class to its resolved value
    */
   async resolveClassNames(
     classNames: string[],
@@ -275,30 +190,9 @@ export class ThemeManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_class_names() Rust function
-      const result = new Map<string, string>()
-
-      for (const className of classNames) {
-        const cacheKey = `class:${className}`
-
-        if (this.classNameCache.has(cacheKey)) {
-          result.set(className, this.classNameCache.get(cacheKey)!)
-        } else {
-          // Simple resolution
-          const parts = className.split('-')
-          const value = `${parts.join('-')}-value`
-          result.set(className, value)
-
-          if (this.classNameCache.size >= this.cacheSize) {
-            const firstKey = this.classNameCache.keys().next().value
-            this.classNameCache.delete(firstKey)
-          }
-
-          this.classNameCache.set(cacheKey, value)
-        }
-      }
-
-      return result
+      const result = resolve_class_names(classNames, JSON.stringify(theme))
+      const parsed = JSON.parse(result)
+      return new Map(Object.entries(parsed))
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveClassNames')
@@ -308,24 +202,16 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve single theme value
+   * 
+   * Calls Rust function: {@link resolve_theme_value}
+   * Resolves single theme value by key path (e.g., "colors.blue.600")
    */
   async resolveThemeValue(keyPath: string, theme: ThemeConfig): Promise<string | null> {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_theme_value() Rust function
-      const keys = keyPath.split('.')
-      let current: any = theme
-
-      for (const key of keys) {
-        if (current && typeof current === 'object' && key in current) {
-          current = current[key]
-        } else {
-          return null
-        }
-      }
-
-      return typeof current === 'string' ? current : null
+      const result = resolve_theme_value(keyPath, JSON.stringify(theme))
+      return result
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveThemeValue', { logOnly: true })
@@ -335,6 +221,9 @@ export class ThemeManager extends BaseManager {
 
   /**
    * Resolve conflict group
+   * 
+   * Calls Rust function: {@link resolve_conflict_group}
+   * Resolves conflict group: gets all classes in a conflict group (e.g., "colors")
    */
   async resolveConflictGroup(
     groupName: string,
@@ -343,15 +232,9 @@ export class ThemeManager extends BaseManager {
     this.ensureReady()
 
     try {
-      // Stub: Will call resolve_conflict_group() Rust function
-      const themeAny = theme as any
-      const group = themeAny[groupName]
-
-      if (group && typeof group === 'object') {
-        return Object.keys(group)
-      }
-
-      return []
+      const result = resolve_conflict_group(groupName, JSON.stringify(theme))
+      const parsed = JSON.parse(result)
+      return parsed
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'resolveConflictGroup', { logOnly: true })
