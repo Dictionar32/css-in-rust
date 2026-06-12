@@ -5,7 +5,7 @@
  * Exposes 40 Redis functions for high-performance distributed CSS compilation caching
  */
 
-import { getNativeBridge } from "./nativeBridge"
+import { getNativeBridge } from "../nativeBridge"
 
 /**
  * Redis pool configuration

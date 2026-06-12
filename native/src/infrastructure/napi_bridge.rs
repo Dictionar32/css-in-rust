@@ -42,6 +42,7 @@ pub use crate::infrastructure::napi_bridge_theme::{
 pub use crate::infrastructure::napi_bridge_cache::{
     configure_cache_backend, get_cache_stats, get_recommended_cache_config,
     clear_all_caches_napi, get_cache_optimization_hints, estimate_streaming_batch_size,
+    get_resolver_pool_stats, clear_resolver_pool,
 };
 
 // Session 2: Redis, analysis, and watch modules

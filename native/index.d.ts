@@ -9,6 +9,23 @@
 export declare function analyzeClasses(filesJson: string, root: string, topN: number): AnalyzerReport
 
 /**
+ * Analyze classes for patterns and optimization opportunities
+ *
+ * # Arguments
+ * * `classes_json` - JSON array of class strings
+ *
+ * # Returns
+ * JSON object containing analysis results
+ *
+ * # Example
+ * ```js
+ * const result = analyzeClasses('["bg-blue-600", "text-white", "bg-red-600"]');
+ * // Returns: '{"total":3,"duplicates":0,"variants":["bg","text"],...}'
+ * ```
+ */
+export declare function analyzeClasses(classesJson: string): string
+
+/**
  * Analisis class usage dari scan result JSON.
  *
  * Menggantikan sebagian `BundleAnalyzer.analyzeClass()` di bundleAnalyzer.ts.
@@ -61,7 +78,9 @@ export declare function animationCacheKey(optsJson: string): string
 export declare function applyClassDiff(existing: Array<string>, added: Array<string>, removed: Array<string>): Array<string>
 
 /**
- * Apply opacity modifier to a color (Week 4 Day 2)
+ * Apply opacity modifier to a color
+ *
+ * Converts a hex color to RGBA with specified opacity
  *
  * # Arguments
  * * `color` - Hex color value (e.g., "#1e40af")
@@ -69,6 +88,12 @@ export declare function applyClassDiff(existing: Array<string>, added: Array<str
  *
  * # Returns
  * RGBA color string (e.g., "rgba(30, 64, 175, 0.5)")
+ *
+ * # Example
+ * ```js
+ * const color = applyOpacity("#1e40af", "50");
+ * // Returns: '"rgba(30, 64, 175, 0.5)"'
+ * ```
  */
 export declare function applyOpacity(color: string, opacity: string): string
 
@@ -616,13 +641,8 @@ export interface ClassUsageResult {
   variants: Array<string>
 }
 
-/**
- * Clear all caches
- *
- * Resets all cache layers and statistics
- * Useful for memory cleanup or testing
- */
-export declare function clearAllCaches(): void
+/** Clear all caches */
+export declare function clearAllCachesNapi(): void
 
 /**
  * Clear the global atomic registry.
@@ -637,26 +657,87 @@ export declare function clearAtomicRegistry(): void
  */
 export declare function clearAtomicRegistry(): void
 
-/** Clear compile cache specifically */
-export declare function clearCompileCache(): void
+/** Clear compile cache */
+export declare function clearCompileCacheNapi(): void
 
-/** Clear CSS generation cache specifically */
-export declare function clearCssGenCache(): void
+/** Clear CSS generation cache */
+export declare function clearCssGenCacheNapi(): void
 
 /** Hapus semua entries dari kedua registry — useful untuk test isolation. */
 export declare function clearNameRegistries(): void
 
-/** Clear parse cache specifically */
-export declare function clearParseCache(): void
+/** Clear the parse cache */
+export declare function clearParseCacheNapi(): void
 
-/** Clear resolve cache specifically */
-export declare function clearResolveCache(): void
+/** Clear parse cache */
+export declare function clearParseCacheNapiInner(): void
+
+/** Clear resolve cache */
+export declare function clearResolveCacheNapi(): void
+
+/**
+ * Clear the resolver pool and reset statistics
+ *
+ * Removes all cached ThemeResolver instances and resets hit/miss counters.
+ * Useful for:
+ * - Testing
+ * - Memory cleanup
+ * - Theme configuration changes
+ * - Resetting performance metrics
+ *
+ * # Behavior
+ * - Removes all resolver instances from the pool
+ * - Resets hit/miss counters to zero
+ * - Arc references held by external code remain valid
+ * - No errors can occur
+ *
+ * # Example
+ * ```js
+ * clearResolverPool();
+ * const stats = getResolverPoolStats();
+ * // stats.cached_resolvers === 0
+ * // stats.hits === 0
+ * // stats.misses === 0
+ * ```
+ */
+export declare function clearResolverPool(): void
+
+/**
+ * Clear resolver pool cache
+ *
+ * Removes all cached resolver instances and resets statistics.
+ * Useful for testing, memory cleanup, or when theme configuration changes.
+ *
+ * # Returns
+ * Confirmation message with new pool state
+ *
+ * # Example
+ * ```js
+ * const result = clearResolverPool();
+ * // Returns: '{"status":"ok","message":"Pool cleared","cached_resolvers":0}'
+ * ```
+ */
+export declare function clearResolverPool(): string
 
 /** Clear the theme resolver cache */
 export declare function clearThemeCache(): void
 
-/** Clear the theme resolver cache */
-export declare function clearThemeCache(): void
+/** Clear the theme resolution cache */
+export declare function clearThemeCacheNapi(): void
+
+/**
+ * Reset watch statistics counters
+ *
+ * # Returns
+ * Confirmation that statistics have been reset
+ *
+ * # Example
+ * ```js
+ * const result = clearWatchStats();
+ * // Returns: '{"status":"ok","message":"Watch statistics reset"}'
+ * ```
+ */
+export declare function clearWatchStats(): string
 
 /**
  * Aggregate class counts from a list of (file, classes[]) scan entries.
@@ -691,7 +772,7 @@ export declare function collectFiles(root: string, extensions?: Array<string> | 
 export declare function compileAnimation(from: string, to: string, name?: string | undefined | null, durationMs?: number | undefined | null, easing?: string | undefined | null, delayMs?: number | undefined | null, fill?: string | undefined | null, iterations?: string | undefined | null, direction?: string | undefined | null): CompiledAnimation
 
 /**
- * Compile a Tailwind class to CSS (Week 4 Day 2)
+ * Compile a class to CSS (full pipeline)
  *
  * Full pipeline: parse → resolve → generate CSS
  *
@@ -699,34 +780,9 @@ export declare function compileAnimation(from: string, to: string, name?: string
  * * `input` - Tailwind class string (e.g., "md:hover:bg-blue-600/50")
  *
  * # Returns
- * JSON string containing CSS rule with selector, property, value, variants
- *
- * # Example
- * ```js
- * const css = compileClass("md:hover:bg-blue-600/50");
- * // Returns: '{"selector":".md\\:hover\\:bg-blue-600\\/50",...}'
- * ```
+ * JSON string containing CSS rule
  */
-export declare function compileClass(input: string): string
-
-/**
- * Compile multiple Tailwind classes to CSS (Week 4 Day 2)
- *
- * Batch processing with parallel execution using rayon
- *
- * # Arguments
- * * `inputs` - Array of Tailwind class strings
- *
- * # Returns
- * JSON array string containing CSS rules
- *
- * # Example
- * ```js
- * const css = compileClasses(["bg-blue-600", "text-white", "p-4"]);
- * // Returns: '[{"selector":".bg-blue-600",...},...]'
- * ```
- */
-export declare function compileClasses(inputs: Array<string>): string
+export declare function compileClassNapi(input: string): string
 
 /**
  * Compile a list of Tailwind classes into atomic CSS.
@@ -769,37 +825,13 @@ export declare function compileKeyframes(name: string, stopsJson: string): Compi
 export declare function compileTheme(tokensJson: string, themeName: string, prefix: string): CompiledTheme
 
 /**
- * Complete pipeline: class → CSS string (Week 4 Day 3)
+ * Compile class to CSS (full pipeline)
  *
- * One-step compilation from Tailwind class to CSS output
- *
- * # Arguments
- * * `input` - Tailwind class string
- * * `minify` - Whether to minify output
- *
- * # Returns
- * CSS string ready for use
- *
- * # Example
- * ```js
- * const css = compileToCSS("md:hover:bg-blue-600/50", false);
- * // Returns: "@media (min-width: 768px) { .md\\:hover\\:bg-blue-600\\/50:hover { background-color: rgba(30, 64, 175, 0.5); } }"
- * ```
+ * Full pipeline: parse → resolve → generate CSS
  */
 export declare function compileToCss(input: string, minify?: boolean | undefined | null): string
 
-/**
- * Batch compile to CSS strings (Week 4 Day 3)
- *
- * Complete pipeline for multiple classes
- *
- * # Arguments
- * * `inputs` - Array of Tailwind class strings
- * * `minify` - Whether to minify output
- *
- * # Returns
- * Combined CSS string
- */
+/** Compile multiple classes to CSS (batch) */
 export declare function compileToCssBatch(inputs: Array<string>, minify?: boolean | undefined | null): string
 
 /**
@@ -876,6 +908,32 @@ export declare function computeImpactMetadata(className: string, impactJson: str
  * Returns which classes were added/removed and which files changed.
  */
 export declare function computeIncrementalDiff(previousJson: string, currentJson: string): IncrementalDiff
+
+/**
+ * Configure the cache backend
+ *
+ * # Arguments
+ * * `config_json` - JSON configuration for cache backend
+ *
+ * # Returns
+ * Confirmation message with new configuration
+ *
+ * # Configuration Options
+ * - `backend`: "lru" | "redis" | "persistent" | "adaptive"
+ * - `max_capacity`: Maximum number of items to cache
+ * - `redis_url`: (optional) Redis connection URL
+ * - `persist_dir`: (optional) Directory for persistent cache
+ *
+ * # Example
+ * ```js
+ * const config = {
+ *   "backend": "lru",
+ *   "max_capacity": 5000
+ * };
+ * const result = configureCacheBackend(JSON.stringify(config));
+ * ```
+ */
+export declare function configureCacheBackend(configJson: string): string
 
 export interface ConflictDetectionResult {
   conflicts: Array<ClassConflict>
@@ -1007,11 +1065,28 @@ export declare function diffClassLists(previous: Array<string>, current: Array<s
 /** Estimate optimal batch size for streaming compilation */
 export declare function estimateOptimalBatchSize(totalClasses: number, memoryAvailableMb: number): number
 
-/** Estimate optimal cache configuration for a workload */
-export declare function estimateOptimalCacheConfigNative(totalBudgetMb: number, workloadType: string): string
+/**
+ * Estimate optimal cache configuration
+ *
+ * # Arguments
+ * * `workload_type` - Type of workload (typical, heavy, streaming)
+ * * `expected_entries` - Expected number of cache entries
+ *
+ * # Returns
+ * Recommended configuration
+ */
+export declare function estimateOptimalCacheConfigNative(workloadType: string, expectedEntries: number): string
 
-/** Estimate optimal batch size for streaming compilation */
-export declare function estimateStreamingBatchSize(totalClasses: number, availableMemoryMb: number): number
+/**
+ * Estimate streaming batch size based on cache configuration
+ *
+ * # Arguments
+ * * `target_memory_mb` - Target memory usage in MB
+ *
+ * # Returns
+ * Recommended batch size for streaming operations
+ */
+export declare function estimateStreamingBatchSize(targetMemoryMb: number): string
 
 export declare function extractAllClasses(source: string): Array<string>
 
@@ -1142,36 +1217,26 @@ export declare function generateAtomicCss(rulesJson: string): string
 export declare function generateAtomicCss(rulesJson: string): string
 
 /**
- * Generate CSS string from CssRule (Week 4 Day 3)
- *
- * Converts CssRule JSON to actual CSS string with proper formatting
+ * Generate CSS string from CSS rule (single rule)
  *
  * # Arguments
- * * `rule_json` - JSON string containing CssRule
- * * `minify` - Whether to minify output (default: false)
+ * * `rule_json` - JSON representation of CssRule
+ * * `minify` - Optional flag to minify output
  *
  * # Returns
- * CSS string ready for browser
- *
- * # Example
- * ```js
- * const css = generateCss(ruleJson, false);
- * // Returns: ".selector { property: value; }"
- * ```
+ * CSS string representation or error
  */
 export declare function generateCss(ruleJson: string, minify?: boolean | undefined | null): string
 
 /**
- * Generate CSS from multiple rules (Week 4 Day 3)
- *
- * Batch CSS generation with optional minification
+ * Generate CSS strings from multiple CSS rules (batch)
  *
  * # Arguments
- * * `rules_json` - JSON array string containing multiple CssRules
- * * `minify` - Whether to minify output
+ * * `rules_json` - JSON array of CssRule objects
+ * * `minify` - Optional flag to minify output
  *
  * # Returns
- * Combined CSS string
+ * CSS string with all rules combined or error
  */
 export declare function generateCssBatch(rulesJson: string, minify?: boolean | undefined | null): string
 
@@ -1188,7 +1253,7 @@ export declare function generateCssBatch(rulesJson: string, minify?: boolean | u
 export declare function generateCssNative(classes: Array<string>, themeJson: string): string
 
 /**
- * Generate CSS from Tailwind class names
+ * Generate CSS from Tailwind class names with theme
  *
  * # Arguments
  * * `classes` - Array of Tailwind class names
@@ -1385,24 +1450,20 @@ export declare function generateSystemTokenCss(tokensJson: string, prefix: strin
  */
 export declare function generateTypeDefinitions(themeJson: string): string
 
-/** Get optimization recommendations for current cache state */
-export declare function getCacheOptimizationHints(hitRatePercent: number, memoryUsedMb: number, uniqueClasses: number): string
+/**
+ * Get number of active watches
+ *
+ * # Returns
+ * Number of currently active watch handles
+ */
+export declare function getActiveWatches(): number
 
 /**
- * Get cache statistics and hit/miss rates (Phase 2)
+ * Get cache optimization hints
  *
- * Returns JSON with cache stats:
- * - parse_cache: {size, capacity, hits, misses, hit_rate}
- * - resolve_cache: {size, capacity, hits, misses, hit_rate}
- * - compile_cache: {size, capacity, hits, misses, hit_rate}
- * - css_gen_cache: {size, capacity, hits, misses, hit_rate}
- * - total_hits: Total cache hits across all caches
- * - total_misses: Total cache misses across all caches
- * - overall_hit_rate: Overall hit rate percentage
- *
- * PHASE 6 OPTIMIZATION: Uses atomic operations (2.5x faster than rebuild-on-query)
+ * Returns suggestions for optimizing cache usage based on current statistics
  */
-export declare function getCacheStatistics(): string
+export declare function getCacheOptimizationHints(): string
 
 /**
  * Get cache statistics
@@ -1411,16 +1472,205 @@ export declare function getCacheStatistics(): string
  */
 export declare function getCacheStats(): [number, number]
 
-/** Get memory optimization recommendations */
+/**
+ * Get current cache statistics including resolver pool stats
+ *
+ * # Returns
+ * JSON object containing cache hit rates, sizes, metrics, and theme resolver pool statistics
+ *
+ * # Structure
+ * ```json
+ * {
+ *   "status": "ok",
+ *   "data": {
+ *     "total_hits": 1000,
+ *     "total_misses": 200,
+ *     "hit_rate": 0.833,
+ *     "cache_backends": { ... },
+ *     "theme_resolver_pool": {
+ *       "hits": 99,
+ *       "misses": 1,
+ *       "total": 100,
+ *       "hit_rate": 0.99,
+ *       "cached_resolvers": 5
+ *     }
+ *   }
+ * }
+ * ```
+ *
+ * # Example
+ * ```js
+ * const stats = getCacheStats();
+ * // Returns full stats including resolver pool metrics
+ * console.log(stats.data.theme_resolver_pool.hit_rate); // 0.99
+ * ```
+ */
+export declare function getCacheStats(): string
+
+/**
+ * Get memory usage recommendations
+ *
+ * Analyzes current usage and provides optimization recommendations
+ */
 export declare function getMemoryRecommendationsNative(): string
 
-/** Get current memory statistics for all cache layers */
+/**
+ * Get current memory statistics
+ *
+ * Returns memory usage information for performance analysis
+ */
 export declare function getMemoryStatsNative(): string
 
 /** Get optimization recommendations based on current cache metrics */
 export declare function getOptimizationRecommendations(hitRate: number, memoryMb: number, classCount: number): string
 
-/** Get Week 6 feature status */
+/** Get parsing statistics */
+export declare function getParseStats(): string
+
+/**
+ * Get recommended cache configuration for workload type
+ *
+ * # Arguments
+ * * `workload_type` - Type of workload: "small", "medium", "large", "streaming"
+ *
+ * # Returns
+ * JSON object with recommended cache configuration
+ *
+ * # Example
+ * ```js
+ * const config = getRecommendedCacheConfig("medium");
+ * // Returns: '{"backend":"lru","max_capacity":5000,...}'
+ * ```
+ */
+export declare function getRecommendedCacheConfig(workloadType: string): string
+
+/**
+ * Get resolver pool statistics as JSON
+ *
+ * Returns statistics about the theme resolver pool including cache hit rate,
+ * number of cached resolvers, and hit/miss counts. Useful for monitoring
+ * performance and debugging caching behavior.
+ *
+ * # Returns
+ * JSON string containing pool statistics:
+ * - `hits` - Number of cache hits
+ * - `misses` - Number of cache misses
+ * - `total` - Total resolver accesses
+ * - `hit_rate` - Cache hit rate as decimal (0.0 to 1.0)
+ * - `cached_resolvers` - Number of unique resolver instances in pool
+ *
+ * # Example
+ * ```js
+ * const stats = getResolverPoolStats();
+ * // Returns: '{"hits": 45, "misses": 5, "total": 50, "hit_rate": 0.9, "cached_resolvers": 3}'
+ * ```
+ */
+export declare function getResolverPoolStats(): string
+
+/**
+ * Get theme resolver pool statistics
+ *
+ * # Returns
+ * JSON object containing resolver pool performance metrics
+ *
+ * # Structure
+ * ```json
+ * {
+ *   "status": "ok",
+ *   "hits": 99,
+ *   "misses": 1,
+ *   "total": 100,
+ *   "hit_rate": 0.99,
+ *   "cached_resolvers": 5,
+ *   "description": "Resolver pool reuse statistics for performance monitoring"
+ * }
+ * ```
+ *
+ * # Metrics Explanation
+ * - **hits**: Number of times a cached resolver was reused
+ * - **misses**: Number of times a new resolver had to be created
+ * - **total**: Total resolver access requests (hits + misses)
+ * - **hit_rate**: Cache effectiveness as fraction 0.0-1.0 (hits / total)
+ * - **cached_resolvers**: Number of unique resolver instances currently in pool
+ *
+ * # Performance Insights
+ * - High hit_rate (>0.9) indicates good pool effectiveness
+ * - Low cached_resolvers with high total suggests few unique themes
+ * - Spike in misses after deployment indicates new themes being added
+ *
+ * # Example
+ * ```js
+ * const poolStats = getResolverPoolStats();
+ * // Returns: '{"status":"ok","hits":99,"misses":1,...}'
+ * console.log(`Pool effectiveness: ${(poolStats.hit_rate * 100).toFixed(1)}%`);
+ * ```
+ */
+export declare function getResolverPoolStats(): string
+
+/** Get theme resolution cache statistics */
+export declare function getThemeCacheStats(): string
+
+/**
+ * Poll accumulated file system events from watch
+ *
+ * # Arguments
+ * * `handle_id` - Watch handle ID to poll events from
+ * * `max_events` - Maximum number of events to return (default: 100)
+ *
+ * # Returns
+ * JSON array of file system events
+ *
+ * # Event Format
+ * ```json
+ * {
+ *   "kind": "create|modify|delete|rename",
+ *   "path": "/path/to/file"
+ * }
+ * ```
+ *
+ * # Example
+ * ```js
+ * const events = getWatchEvents(0, 50);
+ * // Returns: '[{"kind":"modify","path":"src/app.ts"}]'
+ * ```
+ */
+export declare function getWatchEvents(handleId: number, maxEvents?: number | undefined | null): string
+
+/**
+ * Get watch system statistics
+ *
+ * # Returns
+ * JSON object with detailed watch statistics and metrics
+ *
+ * # Example
+ * ```js
+ * const stats = getWatchStatsDetail();
+ * // Returns: '{"events_processed":1500,"events_dropped":0,"avg_events_per_poll":10.2,...}'
+ * ```
+ *
+ * Renamed to avoid conflict with get_watch_stats()
+ */
+export declare function getWatchPerformance(): string
+
+/**
+ * Get current watch system status
+ *
+ * # Returns
+ * JSON object containing watch system state and statistics
+ *
+ * # Example
+ * ```js
+ * const status = getWatchStats();
+ * // Returns: '{"is_running":true,"active_handles":2,"events_processed":150,...}'
+ * ```
+ */
+export declare function getWatchStats(): string
+
+/**
+ * Get Week 6 features status
+ *
+ * Returns information about implemented features from Week 6 phase
+ */
 export declare function getWeek6FeaturesStatus(): string
 
 /** Get Week 6 optimization status */
@@ -1659,17 +1909,7 @@ export declare function layoutClassesToCss(classes: string): string
  */
 export declare function mergeCssDeclarations(cssChunks: Array<string>): CssDeclarationMap
 
-/**
- * Minify CSS string (Week 4 Day 3)
- *
- * Remove whitespace and optimize CSS
- *
- * # Arguments
- * * `css` - CSS string to minify
- *
- * # Returns
- * Minified CSS string
- */
+/** Minify CSS string (remove whitespace and comments) */
 export declare function minifyCss(css: string): string
 
 export interface NativeScanFileResult {
@@ -1764,25 +2004,40 @@ export declare function parseAtomicClass(twClass: string): string | null
 export declare function parseAtomicClass(twClass: string): AtomicRule | null
 
 /**
- * Parse a Tailwind class into its components (Week 4 Day 1)
+ * Parse a single Tailwind class name
+ *
+ * Extracts prefix, value, modifiers, and variants from a class name.
  *
  * # Arguments
  * * `input` - Tailwind class string (e.g., "md:hover:bg-blue-600/50")
  *
  * # Returns
- * JSON string containing parsed components:
- * - variants: array of variant strings
- * - prefix: utility prefix (e.g., "bg")
- * - value: theme value (e.g., "blue-600")
- * - modifier: optional modifier (e.g., "50" for opacity)
+ * JSON string containing parsed class components
  *
  * # Example
  * ```js
  * const result = parseClass("md:hover:bg-blue-600/50");
- * // Returns: '{"variants":["md","hover"],"prefix":"bg","value":"blue-600","modifier":"50"}'
+ * // Returns: '{"prefix":"bg","value":"blue-600","variants":["md","hover"],...}'
  * ```
  */
 export declare function parseClass(input: string): string
+
+/**
+ * Parse multiple Tailwind class names (batch)
+ *
+ * # Arguments
+ * * `inputs` - Array of Tailwind class strings
+ *
+ * # Returns
+ * JSON array string containing parsed classes
+ *
+ * # Example
+ * ```js
+ * const result = parseClasses(["bg-blue-600", "text-white", "p-4"]);
+ * // Returns: '[{"prefix":"bg",...},{"prefix":"text",...},...]'
+ * ```
+ */
+export declare function parseClasses(inputs: Array<string>): string
 
 export declare function parseClasses(raw: string): Array<ClassToken>
 
@@ -2057,67 +2312,64 @@ export declare function rebuildWorkspaceResult(files: Array<IncrementalFileEntry
 /** Recommend cache strategy based on workload */
 export declare function recommendCachingStrategy(isSsr: boolean, classReuseRatio: number, memoryConstraintMb: number): string
 
-/** Clear cache and reset stats (Phase 4 Redis Function #14) */
+/** Clear Redis cache */
 export declare function redisCacheClear(): string
 
-/**
- * Get cache hit rate (Phase 4 Redis Function #16)
- * PHASE 6 OPTIMIZATION: Uses atomic operations for faster queries
- */
+/** Get Redis cache hit rate */
 export declare function redisCacheHitRate(): string
 
-/** Delete key from Redis (Phase 4 Redis Function #4) */
+/** Delete a key from Redis */
 export declare function redisDelete(key: string): string
 
-/** Enable cluster mode (Phase 4 Redis Function #15) */
+/** Enable/disable Redis clustering */
 export declare function redisEnableCluster(enabled: boolean): string
 
-/** Check if key exists in Redis (Phase 4 Redis Function #7) */
+/** Check if key exists in Redis */
 export declare function redisExists(key: string): string
 
-/** Set expiration on key (Phase 4 Redis Function #8) */
+/** Set expiration time on a key */
 export declare function redisExpire(key: string, ttlSeconds: number): string
 
-/** Flush all keys in Redis database (Phase 4 Redis Function #11) */
+/** Flush all data from Redis database */
 export declare function redisFlushDb(): string
 
-/** Get value from Redis (Phase 4 Redis Function #3) */
+/** Get a value from Redis */
 export declare function redisGet(key: string): string
 
-/** Get Redis configuration (Phase 4 Redis Function #19) */
+/** Get Redis configuration */
 export declare function redisGetConfig(): string
 
-/** Get Redis server info (Phase 4 Redis Function #13) */
+/** Get Redis server information */
 export declare function redisInfo(): string
 
-/** Get multiple values from Redis (Phase 4 Redis Function #5) */
+/** Get multiple values from Redis (batch) */
 export declare function redisMget(keys: Array<string>): string
 
-/** Monitor Redis performance (Phase 4 Redis Function #17) */
+/** Monitor Redis operations */
 export declare function redisMonitor(): string
 
-/** Set multiple key-value pairs in Redis (Phase 4 Redis Function #6) */
-export declare function redisMset(pairs: Array<[string, string]>): string
+/** Set multiple key-value pairs in Redis (batch) */
+export declare function redisMset(pairsJson: string): string
 
-/** Ping Redis server (Phase 4 Redis Function #12) */
+/** Ping Redis server */
 export declare function redisPing(): string
 
-/** Initialize Redis pool with custom config (Phase 4 Redis Function #1) */
-export declare function redisPoolConnect(host: string, port: number, poolSize?: number | undefined | null): string
+/** Connect to Redis pool with configuration */
+export declare function redisPoolConnect(configJson?: string | undefined | null): string
 
-/** Get Redis pool statistics (Phase 4 Redis Function #10) */
+/** Get Redis pool statistics */
 export declare function redisPoolStats(): string
 
-/** Set value in Redis (Phase 4 Redis Function #2) */
+/** Set a key-value pair in Redis */
 export declare function redisSet(key: string, value: string, ttlSeconds?: number | undefined | null): string
 
-/** Shutdown Redis connection pool (Phase 4 Redis Function #20) */
+/** Shutdown Redis connection */
 export declare function redisShutdown(): string
 
-/** Sync cache state across nodes (Phase 4 Redis Function #18) */
+/** Sync Redis cluster nodes */
 export declare function redisSyncNodes(): string
 
-/** Get TTL remaining on key (Phase 4 Redis Function #9) */
+/** Get TTL of a key */
 export declare function redisTtl(key: string): string
 
 /**
@@ -2140,13 +2392,53 @@ export declare function registerValueName(id: number, name: string): void
 export declare function resetCacheStats(): void
 
 /**
- * Resolve a breakpoint from the theme (Week 4 Day 2)
+ * Reset memory statistics
+ *
+ * Clear all memory tracking counters
+ */
+export declare function resetMemoryStats(): void
+
+/**
+ * Reset resolver pool statistics while keeping cached resolvers
+ *
+ * Resets hit/miss counters to zero without removing cached resolver instances.
+ * Useful for measuring performance over specific time windows or resetting
+ * metrics after a specific operation.
+ *
+ * # Behavior
+ * - Resets hits and misses counters to zero
+ * - Keeps all cached resolver instances
+ * - Allows measurement of performance metrics for new compilation sessions
+ *
+ * # Example
+ * ```js
+ * // After warmup phase
+ * resetResolverPoolStats();
+ *
+ * // Measure performance of next compilation batch
+ * let startTime = Date.now();
+ * // ... do compilations ...
+ * let elapsed = Date.now() - startTime;
+ * const stats = getResolverPoolStats();
+ * console.log(`Compiled ${stats.total} requests in ${elapsed}ms`);
+ * ```
+ */
+export declare function resetResolverPoolStats(): void
+
+/**
+ * Resolve a breakpoint value from the theme
  *
  * # Arguments
- * * `breakpoint` - Breakpoint identifier (e.g., "sm", "md", "lg")
+ * * `breakpoint` - Breakpoint name (e.g., "sm", "md", "lg", "xl", "2xl")
  *
  * # Returns
- * Resolved breakpoint value (e.g., "640px", "768px")
+ * Resolved breakpoint value as CSS media query value
+ *
+ * # Example
+ * ```js
+ * const breakpoint = resolveBreakpoint("md");
+ * // Returns: '"768px"'
+ * ```
  */
 export declare function resolveBreakpoint(breakpoint: string): string
 
@@ -2185,15 +2477,58 @@ export declare function resolveCascade(rulesJson: string): string
 export declare function resolveClassNames(inputs: Array<string>): string
 
 /**
- * Resolve a color value from the theme (Week 4 Day 2)
+ * Resolve a color value from the theme
  *
  * # Arguments
- * * `color` - Color identifier (e.g., "blue-600", "slate-200")
+ * * `color` - Color name or hex value (e.g., "blue-600", "#1e40af")
  *
  * # Returns
- * Resolved hex color value (e.g., "#1e40af")
+ * Resolved color value as hex or rgb string
+ *
+ * # Example
+ * ```js
+ * const color = resolveColor("blue-600");
+ * // Returns: '"#1e40af"'
+ * ```
  */
 export declare function resolveColor(color: string): string
+
+/**
+ * Resolve a color value using the resolver pool (cached per theme_id)
+ *
+ * This function is optimized for repeated compilations with the same theme configuration.
+ * The first call with a given theme_id creates and caches a ThemeResolver instance.
+ * Subsequent calls reuse the cached resolver, providing significant performance improvements.
+ *
+ * # Arguments
+ * * `theme_id` - Unique identifier for the theme configuration (must be > 0)
+ * * `color` - Color name or reference (e.g., "blue-600")
+ * * `config_json` - Theme configuration as JSON string
+ *
+ * # Returns
+ * Resolved color value as hex or rgba string
+ *
+ * # Performance Characteristics
+ * - First call with theme_id: ~1-5ms (includes resolver creation)
+ * - Subsequent calls with same theme_id: <0.1ms (from cache)
+ * - Expected improvement: 10-50x faster for repeated compilations
+ *
+ * # Example
+ * ```js
+ * const config = JSON.stringify(themeConfig);
+ * // First call - creates and caches resolver
+ * let color1 = resolveColorCached(1, "blue-600", config);
+ *
+ * // Second call - reuses cached resolver (much faster)
+ * let color2 = resolveColorCached(1, "red-500", config);
+ * ```
+ *
+ * # Errors
+ * - Returns error if theme_id is 0 or invalid
+ * - Returns error if config_json is not valid JSON
+ * - Returns error if color cannot be resolved
+ */
+export declare function resolveColorCached(themeId: number, color: string, configJson: string): string
 
 /**
  * resolve_conflict_group — Tailwind class prefix → conflict group name.
@@ -2206,15 +2541,53 @@ export declare function resolveColor(color: string): string
 export declare function resolveConflictGroup(base: string): string
 
 /**
- * Resolve a font size from the theme (Week 4 Day 2)
+ * Resolve a font size value from the theme
  *
  * # Arguments
- * * `size` - Font size identifier (e.g., "sm", "base", "xl")
+ * * `size` - Font size name (e.g., "sm", "base", "lg", "xl")
  *
  * # Returns
- * Resolved font size value (e.g., "0.875rem", "1rem")
+ * Resolved font size value as CSS unit
+ *
+ * # Example
+ * ```js
+ * const fontSize = resolveFontSize("lg");
+ * // Returns: '"1.125rem"'
+ * ```
  */
 export declare function resolveFontSize(size: string): string
+
+/**
+ * Resolve a font size value using the resolver pool (cached per theme_id)
+ *
+ * This function is optimized for repeated compilations with the same theme configuration.
+ * Provides significant performance improvements by reusing cached ThemeResolver instances.
+ *
+ * # Arguments
+ * * `theme_id` - Unique identifier for the theme configuration (must be > 0)
+ * * `size` - Font size key (e.g., "sm", "base", "lg", "xl")
+ * * `config_json` - Theme configuration as JSON string
+ *
+ * # Returns
+ * Resolved font size value as CSS unit(s) (e.g., "1.125rem")
+ *
+ * # Performance Characteristics
+ * - First call with theme_id: ~1-5ms
+ * - Subsequent calls with same theme_id: <0.1ms
+ * - Expected improvement: 10-50x faster for repeated compilations
+ *
+ * # Example
+ * ```js
+ * const config = JSON.stringify(themeConfig);
+ * let fontSize = resolveFontSizeCached(1, "lg", config);
+ * ```
+ *
+ * # Errors
+ * - Returns error if theme_id is 0 or invalid
+ * - Returns error if config_json is not valid JSON
+ * - Returns error if font size cannot be resolved
+ */
+export declare function resolveFontSizeCached(themeId: number, size: string, configJson: string): string
 
 /**
  * Simple variant resolution - no compound variants support
@@ -2223,15 +2596,54 @@ export declare function resolveFontSize(size: string): string
 export declare function resolveSimpleVariants(base: string | undefined | null, variants: Record<string, Record<string, string>>, defaults: Record<string, string>, props: Record<string, string>): string
 
 /**
- * Resolve a spacing value from the theme (Week 4 Day 2)
+ * Resolve a spacing value from the theme
  *
  * # Arguments
- * * `spacing` - Spacing identifier (e.g., "4", "8", "px")
+ * * `spacing` - Spacing name (e.g., "4", "8", "px")
  *
  * # Returns
- * Resolved spacing value (e.g., "1rem", "0.25rem")
+ * Resolved spacing value as CSS unit
+ *
+ * # Example
+ * ```js
+ * const spacing = resolveSpacing("4");
+ * // Returns: '"1rem"'
+ * ```
  */
 export declare function resolveSpacing(spacing: string): string
+
+/**
+ * Resolve a spacing value using the resolver pool (cached per theme_id)
+ *
+ * This function is optimized for repeated compilations with the same theme configuration.
+ * Provides significant performance improvements by reusing cached ThemeResolver instances.
+ *
+ * # Arguments
+ * * `theme_id` - Unique identifier for the theme configuration (must be > 0)
+ * * `spacing` - Spacing key (e.g., "4", "8", "px")
+ * * `config_json` - Theme configuration as JSON string
+ *
+ * # Returns
+ * Resolved spacing value as CSS unit (e.g., "1rem", "2rem")
+ *
+ * # Performance Characteristics
+ * - First call with theme_id: ~1-5ms
+ * - Subsequent calls with same theme_id: <0.1ms
+ * - Expected improvement: 10-50x faster for repeated compilations
+ *
+ * # Example
+ * ```js
+ * const config = JSON.stringify(themeConfig);
+ * // Reuses cached resolver if theme_id was used before
+ * let spacing = resolveSpacingCached(1, "4", config);
+ * ```
+ *
+ * # Errors
+ * - Returns error if theme_id is 0 or invalid
+ * - Returns error if config_json is not valid JSON
+ * - Returns error if spacing cannot be resolved
+ */
+export declare function resolveSpacingCached(themeId: number, spacing: string, configJson: string): string
 
 /**
  * Resolve a CSS custom property chain like `var(--color-primary)` → concrete value.
@@ -2414,6 +2826,36 @@ export interface ScanResult {
 export declare function scanWorkspace(root: string, extensions?: Array<string> | undefined | null): ScanResult
 
 /**
+ * Set watch event aggregation
+ *
+ * # Arguments
+ * * `aggregation_type` - Type of aggregation: "none", "batched", "deduped"
+ *
+ * # Returns
+ * Confirmation of aggregation setting
+ *
+ * # Example
+ * ```js
+ * const result = setWatchAggregation("batched");
+ * ```
+ */
+export declare function setWatchAggregation(aggregationType: string): string
+
+/**
+ * Set watch system metrics
+ *
+ * # Arguments
+ * * `metric_name` - Name of the metric to set
+ * * `value` - Value to set (as JSON)
+ *
+ * # Example
+ * ```js
+ * const result = setWatchMetrics("max_queue_size", "5000");
+ * ```
+ */
+export declare function setWatchMetrics(metricName: string, value: string): string
+
+/**
  * Split whitespace-separated class list into individual class strings.
  *
  * Replaces `splitClasses(classList)` in `animate/src/registry.ts`.
@@ -2469,6 +2911,23 @@ export interface StaticStateCssInput {
 
 /** Hentikan watcher dengan `handle_id`. */
 export declare function stopWatch(handleId: number): boolean
+
+/**
+ * Stop file watching
+ *
+ * # Arguments
+ * * `handle_id` - Watch handle ID returned from watch_files()
+ *
+ * # Returns
+ * Confirmation that watch has stopped
+ *
+ * # Example
+ * ```js
+ * const result = stopWatching(0);
+ * // Returns: '{"status":"ok","message":"Watch stopped","handle_id":0}'
+ * ```
+ */
+export declare function stopWatching(handleId: number): string
 
 export interface SubComponent {
   name: string
@@ -2736,6 +3195,34 @@ export interface WatchChangeEvent {
   kind: string
   path: string
 }
+
+/**
+ * Start file watching on a directory
+ *
+ * # Arguments
+ * * `root_dir` - Root directory path to start watching
+ * * `options_json` - Optional JSON configuration for watch behavior
+ *
+ * # Returns
+ * Result containing watch handle ID or error message
+ *
+ * # Configuration Options
+ * - `recursive`: bool - Watch subdirectories (default: true)
+ * - `ignored_patterns`: string[] - Glob patterns to ignore
+ * - `max_queue_size`: u32 - Maximum events to queue (default: 1000)
+ *
+ * # Example
+ * ```js
+ * const options = {
+ *   "recursive": true,
+ *   "ignored_patterns": ["node_modules/**", ".git/**"],
+ *   "max_queue_size": 5000
+ * };
+ * const result = watchFiles("/project/src", JSON.stringify(options));
+ * // Returns: '{"status":"ok","handle_id":0,"message":"Watch started"}'
+ * ```
+ */
+export declare function watchFiles(rootDir: string, optionsJson?: string | undefined | null): string
 
 export interface WatchStartResult {
   status: string

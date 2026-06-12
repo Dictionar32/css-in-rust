@@ -1,0 +1,13 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 7a79f37b0f500caa40a443cbf2255a0718fa8a76f326b906ceaa138c0575dc9b # shrinks to theme_id = 2682, num_rapid = 164
+cc 93db49c544996e20390f79b6d249cb43c4e01b7dd69570e32eb76ace43f68a29 # shrinks to theme_id = 15778, num_accesses = 44
+cc ea5cbebcb7c5803daf394854b12b34d58cb578eb65e4f91349fb75143ece8e1c # shrinks to ids_vec = [214860, 830826, 46735, 773929, 128443, 69719]
+cc bddc21f4b30f42ec0b7d59b4ad8bc2051398c3f4aac927c7bc97dfadc3e45db4 # shrinks to theme_id = 2349, num_accesses = 38
+cc 65b360f59124eaf3b6c4ee35270b28af8b70465edd9a0bccef5482eba8bba762 # shrinks to ids_vec = [129513, 321454, 407653, 615601, 757268, 368935, 807525, 207633, 870404]
+cc 09c4d287629cedec32cc23a9d708d9dd94ca119f8fc1e2e0e43a0e28784322b9 # shrinks to theme_id = 437413, num_threads = 14
+cc bdf01a1e8cb0bb37352dc1a1d1ddf85d7fe840c1f3a3ecd613ae12adb8f3c7c9 # shrinks to theme_id = 48275, num_accesses = 20

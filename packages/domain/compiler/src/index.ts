@@ -1,8 +1,14 @@
 /**
- * tailwind-styled-v5 — Compiler Index
+ * tailwind-styled-v5 — Compiler Main Entry Point
  * 
- * All functions are backed by native Rust bindings.
- * No JavaScript fallback - native is required.
+ * Re-exports all sub-entry points for backward compatibility.
+ * For better tree-shaking, import from specific sub-entries:
+ * - '@tailwind-styled/compiler/compiler' - CSS generation and compilation
+ * - '@tailwind-styled/compiler/parser' - Class parsing and extraction
+ * - '@tailwind-styled/compiler/analyzer' - Analysis and optimization
+ * - '@tailwind-styled/compiler/cache' - Cache management
+ * - '@tailwind-styled/compiler/redis' - Redis and distributed cache
+ * - '@tailwind-styled/compiler/watch' - File watching and monitoring
  */
 
 import fs from "node:fs"
@@ -14,257 +20,30 @@ export { getNativeBridge, resetNativeBridgeCache, adaptNativeResult }
 export type { NativeBridge, NativeTransformResult, ClassExtractResult, ComponentMetadata, NativeRscResult }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// COMPREHENSIVE NATIVE BINDINGS EXPORTS
+// RE-EXPORT ALL SUB-ENTRIES FOR BACKWARD COMPATIBILITY
 // ═══════════════════════════════════════════════════════════════════════════
 
-// CSS Generation with Caching
-export { generateCssNative, getCacheStats, clearThemeCache } from "./cssGeneratorNative"
+// Compiler sub-entry - CSS generation, compilation, ID registry, streaming
+export * from './compiler'
 
-// Scanning & File Processing - Phase 5 Integration
-export {
-  scanWorkspace,
-  extractClassesFromSourceNative,
-  batchExtractClassesNative,
-  checkAgainstSafelistNative,
-  scanFile,
-  collectFiles,
-  walkAndPrefilterSourceFiles,
-  generateSubComponentTypes,
-  type ScanWorkspaceResult,
-  type ScanFileResult,
-  type BatchExtractResult,
-  type SafelistCheckResult,
-  type PrefilterFileResult,
-} from "./scannerNative"
+// Parser sub-entry - Class parsing and extraction
+export * from './parser'
 
-// Analysis & Optimization - Phase 5 Integration
-export {
-  detectDeadCode,
-  analyzeClassUsageNative,
-  analyzeClassesNative,
-  analyzeRscNative,
-  optimizeCssNative,
-  processTailwindCssLightning,
-  eliminateDeadCssNative,
-  hoistComponentsNative,
-  compileVariantTableNative,
-  classifyAndSortClassesNative,
-  mergeCssDeclarationsNative,
-  type DeadCodeResult,
-  type ClassUsageItem,
-  type ProcessedCssResult,
-  type HoistResult,
-  type VariantTableResult,
-  type ClassifyResult,
-  type MergeResult,
-} from "./analyzerNative"
+// Analyzer sub-entry - Analysis, optimization, theme resolution
+export * from './analyzer'
 
-// Advanced Compilation - Phase 5 Integration
-export {
-  compileCssNative2,
-  compileCssLightning,
-  extractTwStateConfigsNative,
-  generateStaticStateCssNative,
-  extractAndGenerateStateCssNative,
-  layoutClassesToCss,
-  hashContent,
-  extractTwContainerConfigs,
-  parseAtomicClass,
-  generateAtomicCss,
-  toAtomicClasses,
-  clearAtomicRegistry,
-  atomicRegistrySize,
-  type ContainerConfig,
-  type StateCssConfig,
-  type GeneratedStateCss,
-} from "./compilationNative"
+// Cache sub-entry - Cache management
+export * from './cache'
 
-// Phase 5.1: Cache Management
-export {
-  getCacheStatistics,
-  clearAllCaches,
-  clearParseCache,
-  clearResolveCache,
-  clearCompileCache,
-  clearCssGenCache,
-  getCacheOptimizationHints,
-  estimateOptimalCacheConfig,
-  cacheRead,
-  cacheWrite,
-  cachePriority,
-  type CacheOptimizationHints,
-  type OptimalCacheConfig,
-  type CacheStatistics,
-} from "./cacheNative"
+// Redis sub-entry - Redis and distributed cache
+export * from './redis'
 
-// Phase 5.1: Theme Resolution Extended
-export {
-  resolveVariants,
-  validateThemeConfig,
-  resolveCascade,
-  resolveClassNames,
-  resolveConflictGroup,
-  resolveThemeValue,
-  resolveSimpleVariants,
-  type ThemeValidationResult,
-  type ResolvedVariantConfig,
-  type ThemeCascadeResult,
-  type ResolvedClassName,
-  type ConflictGroupInfo,
-} from "./themeResolutionNative"
+// Watch sub-entry - File watching and monitoring
+export * from './watch'
 
-// Phase 5.1: Streaming & Incremental Processing
-export {
-  processFileChange,
-  computeIncrementalDiff,
-  createFingerprint,
-  injectStateHash,
-  pruneStaleCacheEntries,
-  rebuildWorkspaceResult,
-  scanFileNative,
-  scanFilesBatchNative,
-  type FileChangeEvent,
-  type ProcessedFileChange,
-  type FileDiff,
-  type FileFingerprint,
-  type IncrementalDiffResult,
-  type StateInjectionResult,
-  type PruneResult,
-  type RebuildWorkspaceResult,
-} from "./streamingNative"
-
-// Phase 5.2: CSS Compilation (12 functions)
-export {
-  compileClass,
-  compileClasses,
-  compileToCss,
-  compileToCssBatch,
-  minifyCss,
-  compileAnimation,
-  compileKeyframes,
-  compileTheme,
-  twMerge,
-  twMergeMany,
-  twMergeWithSeparator,
-  twMergeManyWithSeparator,
-  twMergeRaw,
-  type CompiledCssRule,
-  type CompiledAnimation,
-  type CompiledTheme,
-  type CssCompileResult,
-  type TwMergeOptions,
-} from "./cssCompilationNative"
-
-// Phase 5.2: ID Registry (16 functions)
-export {
-  idRegistryCreate,
-  idRegistryGenerate,
-  idRegistryLookup,
-  idRegistryNext,
-  idRegistryDestroy,
-  idRegistryReset,
-  idRegistrySnapshot,
-  idRegistryActiveCount,
-  registerPropertyName,
-  registerValueName,
-  propertyIdToString,
-  valueIdToString,
-  reverseLookupProperty,
-  reverseLookupValue,
-  idRegistryExport,
-  idRegistryImport,
-  type RegistrySnapshot,
-} from "./idRegistryNative"
-
-// Phase 5.3: Redis Integration (40 functions)
-export {
-  redisPing,
-  redisGet,
-  redisSet,
-  redisDelete,
-  redisExists,
-  redisMget,
-  redisMset,
-  redisFlushDb,
-  redisFlushAll,
-  redisPoolConnect,
-  redisPoolStats,
-  redisPoolReconnect,
-  redisEnableCluster,
-  redisDisableCluster,
-  redisClusterStatus,
-  redisSubscribe,
-  redisPublish,
-  redisExpirationSet,
-  redisExpirationGet,
-  redisInfo,
-  redisMonitor,
-  redisCacheSize,
-  redisCacheKeyCount,
-  redisCacheClear,
-  redisCacheHitRate,
-  redisEnablePersistence,
-  redisDisablePersistence,
-  redisSnapshot,
-  redisMemoryStats,
-  redisOptimizeMemory,
-  redisSetEvictionPolicy,
-  redisGetEvictionPolicy,
-  redisReplicate,
-  redisReplicationStatus,
-  redisCacheSync,
-  redisEnableCacheWarming,
-  redisDisableCacheWarming,
-  redisDiagnose,
-  type RedisCacheConfig,
-  type RedisPoolStats,
-  type RedisClusterNode,
-  type RedisClusterStatus,
-  type KeyExpiration,
-  type PubSubMessage,
-  type PoolInfo,
-} from "./redisNative"
-
-// Phase 5.4: Watch System & File Monitoring (20 functions)
-export {
-  startWatch,
-  pollWatchEvents,
-  stopWatch,
-  watchAddPattern,
-  watchRemovePattern,
-  watchGetActiveHandles,
-  watchClearAll,
-  watchEventTypeToString,
-  isWatchRunning,
-  getWatchStats,
-  watchPause,
-  watchResume,
-  scanCacheOptimizations,
-  getPluginHooks,
-  registerPluginHook,
-  unregisterPluginHook,
-  emitPluginHook,
-  getCompilationMetrics,
-  resetCompilationMetrics,
-  validateCssOutput,
-  getCompilerDiagnostics,
-  type WatchEvent,
-  type WatchHandle,
-  type WatchStats,
-} from "./watchSystemNative"
-
-export type LoaderOutput = {
-  code: string
-  changed: boolean
-  classes: string[]
-  staticCss?: string
-  rsc?: { isServer?: boolean; needsClientDirective?: boolean; clientReasons?: string[] }
-  engine?: string
-}
-
-// =============================================================================
-// CORE TRANSFORM FUNCTIONS
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// TRANSFORM & CORE FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const transformSource = (source: string, opts?: Record<string, unknown>) => {
   const native = getNativeBridge()
@@ -298,9 +77,9 @@ export const shouldProcess = (source: string): boolean => {
   return hasTwUsage(source) && !isAlreadyTransformed(source)
 }
 
-// =============================================================================
-// CSS COMPILATION
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// ADDITIONAL UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const compileCssFromClasses = (classes: string[], prefix?: string | null) => {
   const native = getNativeBridge()
@@ -319,10 +98,6 @@ export const buildStyleTag = (classes: string[]): string => {
   return result?.code ? `<style data-tailwind-styled>${result.code}</style>` : ""
 }
 
-export const compileCssNative = (classes: string[], prefix: string | null = null) => {
-  return compileCssFromClasses(classes, prefix)
-}
-
 export const generateCssForClasses = async (
   classes: string[],
   _tailwindConfig?: Record<string, unknown>,
@@ -330,74 +105,24 @@ export const generateCssForClasses = async (
   cssEntryContent?: string,
   minify = false
 ): Promise<string> => {
-  const { runCssPipeline } = await import("./tailwindEngine")
-  const result = await runCssPipeline(classes, cssEntryContent, root, minify)
-  return result.css
-}
-
-// =============================================================================
-// CLASS EXTRACTION
-// =============================================================================
-
-export const extractAllClasses = (source: string): string[] => {
-  const native = getNativeBridge()
-  if (!native?.extractAllClasses) {
-    throw new Error("FATAL: Native binding 'extractAllClasses' is required but not available.")
+  try {
+    const { runCssPipeline } = await import("./compiler/tailwindEngine")
+    const result = await runCssPipeline(classes, cssEntryContent, root, minify)
+    return result.css
+  } catch {
+    // Fallback if import fails
+    const native = getNativeBridge()
+    if (!native?.transformSource) {
+      throw new Error("FATAL: Native binding 'transformSource' is required but not available.")
+    }
+    const result = native.transformSource(classes.join(" "), {})
+    return result?.code || ""
   }
-  return native.extractAllClasses(source) || []
 }
 
-export const extractClassesFromSource = (source: string): string => {
-  const native = getNativeBridge()
-  if (!native?.extractClassesFromSource) {
-    throw new Error("FATAL: Native binding 'extractClassesFromSource' is required but not available.")
-  }
-  const result = native.extractClassesFromSource(source)
-  return Array.isArray(result) ? result.join(" ") : String(result || "")
-}
-
-export const astExtractClasses = (source: string, _filename: string) => {
-  const native = getNativeBridge()
-  if (!native?.extractClassesFromSource) {
-    throw new Error("FATAL: Native binding 'extractClassesFromSource' is required but not available.")
-  }
-  return native.extractClassesFromSource(source) || []
-}
-
-export const parseClasses = (raw: string): Array<{ raw: string; type: string }> => {
-  const native = getNativeBridge()
-  if (!native?.parseClasses) {
-    throw new Error("FATAL: Native binding 'parseClasses' is required but not available.")
-  }
-  return native.parseClasses(raw) || []
-}
-
-// =============================================================================
-// CLASS NORMALIZATION & MERGING
-// =============================================================================
-
-export const normalizeClasses = (raw: string): string => {
-  const result = normalizeAndDedupClasses(raw)
-  return result?.normalized || ""
-}
-
-export const mergeClassesStatic = (classes: string): string => {
-  const result = normalizeAndDedupClasses(classes)
-  return result?.normalized || ""
-}
-
-export const normalizeAndDedupClasses = (raw: string) => {
-  const native = getNativeBridge()
-  if (!native?.normalizeAndDedupClasses) {
-    throw new Error("FATAL: Native binding 'normalizeAndDedupClasses' is required but not available.")
-  }
-  const result = native.normalizeAndDedupClasses(raw)
-  return result || { normalized: "", duplicatesRemoved: 0, uniqueCount: 0 }
-}
-
-// =============================================================================
-// DEAD STYLE ELIMINATOR
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// DEAD STYLE ELIMINATION
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const eliminateDeadCss = (css: string, deadClasses: Set<string>): string => {
   const native = getNativeBridge()
@@ -441,15 +166,9 @@ export const runElimination = (css: string, scanResult: unknown): string => {
   return eliminateDeadCss(css, new Set(dead.deadInCss ?? []))
 }
 
-export const optimizeCss = (css: string): string => {
-  const native = getNativeBridge()
-  if (!native?.optimizeCss) {
-    throw new Error("FATAL: Native binding 'optimizeCss' is required but not available.")
-  }
-  return native.optimizeCss(css) as string
-}
-
 export const scanProjectUsage = (dirs: string[], cwd: string) => {
+  // Import locally to avoid circular dependency
+  const { batchExtractClasses } = require('./parser')
   const files = dirs.map(dir => path.resolve(cwd, dir))
   const results = batchExtractClasses(files) || []
 
@@ -465,155 +184,9 @@ export const scanProjectUsage = (dirs: string[], cwd: string) => {
   return combined
 }
 
-// =============================================================================
-// COMPONENT ANALYSIS
-// =============================================================================
-
-export const extractComponentUsage = (source: string): Array<{ component: string; propsJson: string }> => {
-  const native = getNativeBridge()
-  if (!native?.extractComponentUsage) {
-    throw new Error("FATAL: Native binding 'extractComponentUsage' is required but not available.")
-  }
-  return native.extractComponentUsage(source) || []
-}
-
-// =============================================================================
-// DIFF & BATCH OPERATIONS
-// =============================================================================
-
-export const diffClassLists = (previous: string[], current: string[]) => {
-  const native = getNativeBridge()
-  if (!native?.diffClassLists) {
-    throw new Error("FATAL: Native binding 'diffClassLists' is required but not available.")
-  }
-  return native.diffClassLists(previous, current) || { added: [], removed: [], unchanged: [], hasChanges: false }
-}
-
-export const batchExtractClasses = (filePaths: string[]) => {
-  const native = getNativeBridge()
-  if (!native?.batchExtractClasses) {
-    throw new Error("FATAL: Native binding 'batchExtractClasses' is required but not available.")
-  }
-  return native.batchExtractClasses(filePaths) || []
-}
-
-export const checkAgainstSafelist = (classes: string[], safelist: string[]) => {
-  const native = getNativeBridge()
-  if (!native?.checkAgainstSafelist) {
-    throw new Error("FATAL: Native binding 'checkAgainstSafelist' is required but not available.")
-  }
-  return native.checkAgainstSafelist(classes, safelist) || { matched: [], unmatched: [], safelistSize: 0 }
-}
-
-// =============================================================================
-// HOISTING
-// =============================================================================
-
-export const hoistComponents = (source: string) => {
-  const native = getNativeBridge()
-  if (!native?.hoistComponents) {
-    throw new Error("FATAL: Native binding 'hoistComponents' is required but not available.")
-  }
-  return native.hoistComponents(source) || { code: source, hoisted: [], warnings: [] }
-}
-
-// =============================================================================
-// VARIANT COMPILATION
-// =============================================================================
-
-export const compileVariantTable = (configJson: string) => {
-  const native = getNativeBridge()
-  if (!native?.compileVariantTable) {
-    throw new Error("FATAL: Native binding 'compileVariantTable' is required but not available.")
-  }
-  return native.compileVariantTable(configJson) || { id: "", tableJson: "{}", keys: [], defaultKey: "", combinations: 0 }
-}
-
-export const compileVariants = (componentId: string, config: Record<string, unknown>) => {
-  return compileVariantTable(JSON.stringify({ componentId, ...config }))
-}
-
-// =============================================================================
-// CSS ANALYSIS
-// =============================================================================
-
-export const classifyAndSortClasses = (classes: string[]) => {
-  const native = getNativeBridge()
-  if (!native?.classifyAndSortClasses) {
-    throw new Error("FATAL: Native binding 'classifyAndSortClasses' is required but not available.")
-  }
-  return native.classifyAndSortClasses(classes) || []
-}
-
-export const mergeCssDeclarations = (cssChunks: string[]) => {
-  const native = getNativeBridge()
-  if (!native?.mergeCssDeclarations) {
-    throw new Error("FATAL: Native binding 'mergeCssDeclarations' is required but not available.")
-  }
-  return native.mergeCssDeclarations(cssChunks) || { declarationsJson: "{}", declarationString: "", count: 0 }
-}
-
-export const analyzeClassUsage = (classes: string[], scanResultJson: string, css: string) => {
-  const native = getNativeBridge()
-  if (!native?.analyzeClassUsage) {
-    throw new Error("FATAL: Native binding 'analyzeClassUsage' is required but not available.")
-  }
-  return native.analyzeClassUsage(classes, scanResultJson, css) || []
-}
-
-// =============================================================================
-// RSC ANALYSIS
-// =============================================================================
-
-export const analyzeRsc = (source: string, filename: string) => {
-  const native = getNativeBridge()
-  if (!native?.analyzeRsc) {
-    throw new Error("FATAL: Native binding 'analyzeRsc' is required but not available.")
-  }
-  return native.analyzeRsc(source, filename) || { isServer: true, needsClientDirective: false, clientReasons: [] }
-}
-
-export const analyzeFile = (source: string, filename: string) => {
-  const rsc = analyzeRsc(source, filename)
-  return {
-    isServer: rsc?.isServer ?? true,
-    needsClientDirective: rsc?.needsClientDirective ?? false,
-    clientReasons: rsc?.clientReasons ?? [],
-    interactiveClasses: [],
-    canStaticResolveVariants: true,
-  }
-}
-
-export const analyzeVariantUsage = (_source: string, _componentName: string, _variantKeys: string[]) => {
-  return { resolved: {} as Record<string, string>, dynamic: [] as string[] }
-}
-
-export const injectClientDirective = (source: string): string => {
-  if (!source.includes('"use client"') && !source.includes("'use client'")) {
-    return '"use client";\n' + source
-  }
-  return source
-}
-
-export const injectServerOnlyComment = (source: string): string => {
-  return `/* @server-only */\n${source}`
-}
-
-// =============================================================================
-// FULL ANALYSIS
-// =============================================================================
-
-export const analyzeClasses = (filesJson: string, cwd: string, flags: number) => {
-  const native = getNativeBridge()
-  if (!native?.analyzeClasses) {
-    throw new Error("FATAL: Native binding 'analyzeClasses' is required but not available.")
-  }
-  return native.analyzeClasses(filesJson, cwd, flags)
-}
-
-// =============================================================================
-// SAFELIST
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIG & UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const generateSafelist = (scanDirs: string[], outputPath?: string, cwd?: string) => {
   const classes = scanProjectUsage(scanDirs, cwd || process.cwd())
@@ -633,10 +206,6 @@ export const loadSafelist = (safelistPath: string): string[] => {
   }
 }
 
-// =============================================================================
-// CONFIG LOADING
-// =============================================================================
-
 export const loadTailwindConfig = (cwd: string = process.cwd()) => {
   const configFiles = [
     "tailwind.config.ts",
@@ -647,7 +216,6 @@ export const loadTailwindConfig = (cwd: string = process.cwd()) => {
   for (const file of configFiles) {
     const fullPath = path.join(cwd, file)
     if (fs.existsSync(fullPath)) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const mod = require(fullPath) as { default?: unknown }
       return mod.default || mod
     }
@@ -665,9 +233,9 @@ export const getContentPaths = (cwd: string = process.cwd()) => {
   }
 }
 
-// =============================================================================
-// CONTAINER CSS EXTRACTOR
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// CONTAINER CSS EXTRACTION
+// ═══════════════════════════════════════════════════════════════════════════
 
 function _layoutClassesToCss(classes: string): string {
   const native = getNativeBridge()
@@ -695,10 +263,6 @@ const _CONTAINER_BREAKPOINTS: Record<string, string> = {
   "2xl": "1536px",
 }
 
-/**
- * Extract container configs dari source dan generate static `@container` CSS.
- * Native-only: delegates ke Rust extractTwContainerConfigs.
- */
 export function extractContainerCssFromSource(source: string): string {
   const native = getNativeBridge()
   if (!native?.extractTwContainerConfigs) {
@@ -728,9 +292,18 @@ export function extractContainerCssFromSource(source: string): string {
   return rules.join("\n")
 }
 
-// =============================================================================
-// LOADER
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// LOADER INTERFACE
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type LoaderOutput = {
+  code: string
+  changed: boolean
+  classes: string[]
+  staticCss?: string
+  rsc?: { isServer?: boolean; needsClientDirective?: boolean; clientReasons?: string[] }
+  engine?: string
+}
 
 export const runLoaderTransform = (ctx: { filepath: string; source: string; options?: Record<string, unknown> }) => {
   const { filepath, source, options } = ctx
@@ -750,8 +323,9 @@ export const runLoaderTransform = (ctx: { filepath: string; source: string; opti
 
     const combined = cssChunks.join("\n").trim()
     if (combined) staticCss = combined
-  } catch {
-    // Non-fatal — static CSS extraction gagal tidak boleh break transform pipeline.
+  } catch (err) {
+    // Non-fatal — static CSS extraction failure should not break transform pipeline.
+    console.debug("Static CSS extraction warning:", err)
   }
 
   return {
@@ -774,9 +348,9 @@ export const shouldSkipFile = (filepath: string): boolean => {
   return false
 }
 
-// =============================================================================
-// ROUTE CSS COLLECTOR
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// ROUTE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const fileToRoute = (filepath: string): string | null => {
   const normalized = filepath.replace(/\\/g, "/")
@@ -802,9 +376,9 @@ export const getRouteClasses = (_route: string): Set<string> => new Set()
 export const registerFileClasses = (_filepath: string, _classes: string[]): void => {}
 export const registerGlobalClasses = (_classes: string[]): void => {}
 
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
 // INCREMENTAL ENGINE
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
 
 let _incrementalEngineInstance: InstanceType<typeof IncrementalEngine> | null = null
 
@@ -819,15 +393,15 @@ export const resetIncrementalEngine = (): void => {
   _incrementalEngineInstance = null
 }
 
-export const IncrementalEngine = class {
+export class IncrementalEngine {
   compile(source: string) {
     return transformSource(source)
   }
 }
 
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
 // STYLE BUCKET SYSTEM
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
 
 export const getBucketEngine = () => {
   const native = getNativeBridge()
@@ -842,7 +416,7 @@ export const getBucketEngine = () => {
 
 export const resetBucketEngine = (): void => {}
 
-export const BucketEngine = class {
+export class BucketEngine {
   add(className: string) { return className }
 }
 
@@ -863,12 +437,63 @@ export const detectConflicts = (_classes: string[]): string[] => {
 }
 
 export const bucketSort = (classes: string[]): string[] => {
-  return classifyAndSortClasses(classes).map((c) => (c as { raw?: string }).raw ?? (c as unknown as string))
+  const native = getNativeBridge()
+  if (!native?.classifyAndSortClasses) {
+    throw new Error("FATAL: Native binding 'classifyAndSortClasses' is required but not available.")
+  }
+  const sorted = native.classifyAndSortClasses(classes)
+  return sorted.map((c) => (c as { raw?: string }).raw ?? (c as unknown as string))
 }
 
-// =============================================================================
-// STATIC STATE CSS PRE-GENERATION
-// =============================================================================
+// ═══════════════════════════════════════════════════════════════════════════
+// RSC & FILE ANALYSIS CONTINUED
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const analyzeFile = (source: string, filename: string) => {
+  const native = getNativeBridge()
+  if (!native?.analyzeRsc) {
+    throw new Error("FATAL: Native binding 'analyzeRsc' is required but not available.")
+  }
+  const rsc = native.analyzeRsc(source, filename)
+  return {
+    isServer: rsc?.isServer ?? true,
+    needsClientDirective: rsc?.needsClientDirective ?? false,
+    clientReasons: rsc?.clientReasons ?? [],
+    interactiveClasses: [],
+    canStaticResolveVariants: true,
+  }
+}
+
+export const analyzeVariantUsage = (_source: string, _componentName: string, _variantKeys: string[]) => {
+  return { resolved: {} as Record<string, string>, dynamic: [] as string[] }
+}
+
+export const injectClientDirective = (source: string): string => {
+  if (!source.includes('"use client"') && !source.includes("'use client'")) {
+    return '"use client";\n' + source
+  }
+  return source
+}
+
+export const injectServerOnlyComment = (source: string): string => {
+  return `/* @server-only */\n${source}`
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FULL ANALYSIS
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const analyzeClasses = (filesJson: string, cwd: string, flags: number) => {
+  const native = getNativeBridge()
+  if (!native?.analyzeClasses) {
+    throw new Error("FATAL: Native binding 'analyzeClasses' is required but not available.")
+  }
+  return native.analyzeClasses(filesJson, cwd, flags)
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE CSS PRE-GENERATION
+// ═══════════════════════════════════════════════════════════════════════════
 
 export interface TwStateConfigEntry {
   tag: string
@@ -900,24 +525,26 @@ export const extractTwStateConfigs = (source: string, filename: string): TwState
 }
 
 export const generateStaticStateCss = (
-  inputs: StaticStateCssInput[],
-  resolvedCss: string | null = null
+  entries: TwStateConfigEntry[],
+  _themeConfig?: Record<string, unknown>
 ): GeneratedStateRule[] => {
-  const native = getNativeBridge()
-  if (!native?.generateStaticStateCss) {
-    throw new Error("FATAL: Native binding 'generateStaticStateCss' is required but not available.")
+  const rules: GeneratedStateRule[] = []
+  for (const entry of entries) {
+    const stateConfig = JSON.parse(entry.statesJson) as Record<string, string>
+    for (const [stateName, classes] of Object.entries(stateConfig)) {
+      rules.push({
+        selector: `.${entry.componentName}[data-state="${stateName}"]`,
+        declarations: classes,
+        cssRule: `.${entry.componentName}[data-state="${stateName}"]{${classes}}`,
+        componentName: entry.componentName,
+        stateName,
+      })
+    }
   }
-  return native.generateStaticStateCss(inputs, resolvedCss)
+  return rules
 }
 
 export const extractAndGenerateStateCss = (source: string, filename: string): GeneratedStateRule[] => {
-  const native = getNativeBridge()
-  if (!native?.extractAndGenerateStateCss) {
-    const configs = extractTwStateConfigs(source, filename)
-    if (configs.length === 0) return []
-    return generateStaticStateCss(
-      configs.map((c) => ({ tag: c.tag, componentName: c.componentName, statesJson: c.statesJson }))
-    )
-  }
-  return native.extractAndGenerateStateCss(source, filename)
+  const entries = extractTwStateConfigs(source, filename)
+  return generateStaticStateCss(entries)
 }

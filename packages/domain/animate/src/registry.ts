@@ -111,6 +111,10 @@ export interface AnimationRegistry {
   reset(): void
   /** Check apakah className sudah terdaftar di registry */
   has(className: string): boolean
+  /** Expand animation to include browser-specific prefixes using native Rust optimization */
+  expandAnimation(css: string): Promise<string>
+  /** Transform animation for better compatibility */
+  transformAnimationForCompatibility(css: string): Promise<string>
 }
 
 export function createAnimationRegistry(
@@ -215,6 +219,32 @@ export function createAnimationRegistry(
 
     has(className: string): boolean {
       return classNames.has(className)
+    },
+
+    async expandAnimation(css: string): Promise<string> {
+      const binding = await getAnimateBinding()
+      // Use native expandAnimationNapi to add browser prefixes
+      if (binding.expandAnimationNapi) {
+        try {
+          return binding.expandAnimationNapi(css) || css
+        } catch {
+          return css // Fallback to original CSS
+        }
+      }
+      return css
+    },
+
+    async transformAnimationForCompatibility(css: string): Promise<string> {
+      const binding = await getAnimateBinding()
+      // Use native transformAnimation for compatibility optimizations
+      if (binding.transformAnimation) {
+        try {
+          return binding.transformAnimation(css) || css
+        } catch {
+          return css // Fallback to original CSS
+        }
+      }
+      return css
     },
   }
 }

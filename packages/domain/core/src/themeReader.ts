@@ -47,7 +47,94 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   return result
 }
 
-// ─── generateTypeDefinitions — build-time CLI codegen ────────────────────────
+// ─── parseThemeColors — Native Rust color parsing ────────────────────────────
+
+export function parseThemeColors(colorsObj: Record<string, string>): Record<string, string> {
+  const binding = getNativeBinding()
+  if (!binding?.parseColorsNapi) {
+    // Fallback: return as-is if native parsing unavailable
+    return colorsObj
+  }
+  try {
+    const parsed = binding.parseColorsNapi(JSON.stringify(colorsObj))
+    return typeof parsed === "string" ? JSON.parse(parsed) : parsed
+  } catch {
+    return colorsObj // Fallback on error
+  }
+}
+
+// ─── parseThemeSpacing — Native Rust spacing parsing ────────────────────────────
+
+export function parseThemeSpacing(spacingObj: Record<string, string>): Record<string, string> {
+  const binding = getNativeBinding()
+  if (!binding?.parseSpacingNapi) {
+    return spacingObj
+  }
+  try {
+    const parsed = binding.parseSpacingNapi(JSON.stringify(spacingObj))
+    return typeof parsed === "string" ? JSON.parse(parsed) : parsed
+  } catch {
+    return spacingObj
+  }
+}
+
+// ─── parseThemeTransform — Native Rust transform parsing ────────────────────────
+
+export function parseThemeTransform(transformObj: Record<string, string>): Record<string, string> {
+  const binding = getNativeBinding()
+  if (!binding?.parseTransformNapi) {
+    return transformObj
+  }
+  try {
+    const parsed = binding.parseTransformNapi(JSON.stringify(transformObj))
+    return typeof parsed === "string" ? JSON.parse(parsed) : parsed
+  } catch {
+    return transformObj
+  }
+}
+
+// ─── normalizeThemeColor — Native color normalization ──────────────────────────
+
+export function normalizeThemeColor(color: string, opacity?: number): string {
+  const binding = getNativeBinding()
+  if (!binding?.normalizeColorNapi) {
+    return color
+  }
+  try {
+    return binding.normalizeColorNapi(color, opacity?.toString() ?? "100") || color
+  } catch {
+    return color
+  }
+}
+
+// ─── sanitizeThemeColor — Native color sanitization ────────────────────────────
+
+export function sanitizeThemeColor(color: string): string {
+  const binding = getNativeBinding()
+  if (!binding?.sanitizeColorNapi) {
+    return color
+  }
+  try {
+    return binding.sanitizeColorNapi(color) || color
+  } catch {
+    return color
+  }
+}
+
+// ─── splitRgba — Native RGBA splitting ────────────────────────────────────────
+
+export function splitRgbaColor(color: string): { r: number; g: number; b: number; a: number } | null {
+  const binding = getNativeBinding()
+  if (!binding?.splitRgbaNapi) {
+    return null
+  }
+  try {
+    const result = binding.splitRgbaNapi(color)
+    return typeof result === "string" ? JSON.parse(result) : result
+  } catch {
+    return null
+  }
+}
 
 export function generateTypeDefinitions(theme: ThemeConfig): string {
   const binding = getNativeBinding()

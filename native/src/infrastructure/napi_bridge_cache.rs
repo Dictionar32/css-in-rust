@@ -120,18 +120,44 @@ pub fn configure_cache_backend(config_json: String) -> napi::Result<String> {
         .map_err(|e| error_to_napi("configure_cache_backend", e))
 }
 
-/// Get current cache statistics
+/// Get current cache statistics including resolver pool stats
 ///
 /// # Returns
-/// JSON object containing cache hit rates, sizes, and metrics
+/// JSON object containing cache hit rates, sizes, metrics, and theme resolver pool statistics
+///
+/// # Structure
+/// ```json
+/// {
+///   "status": "ok",
+///   "data": {
+///     "total_hits": 1000,
+///     "total_misses": 200,
+///     "hit_rate": 0.833,
+///     "cache_backends": { ... },
+///     "theme_resolver_pool": {
+///       "hits": 99,
+///       "misses": 1,
+///       "total": 100,
+///       "hit_rate": 0.99,
+///       "cached_resolvers": 5
+///     }
+///   }
+/// }
+/// ```
 ///
 /// # Example
 /// ```js
 /// const stats = getCacheStats();
-/// // Returns: '{"hits":1000,"misses":200,"hit_rate":0.833,...}'
+/// // Returns full stats including resolver pool metrics
+/// console.log(stats.data.theme_resolver_pool.hit_rate); // 0.99
 /// ```
 #[napi]
 pub fn get_cache_stats() -> napi::Result<String> {
+    use crate::application::theme_resolver_pool::THEME_RESOLVER_POOL;
+
+    // Get resolver pool statistics
+    let pool_stats = THEME_RESOLVER_POOL.stats();
+
     let stats = serde_json::json!({
         "status": "ok",
         "data": {
@@ -143,6 +169,13 @@ pub fn get_cache_stats() -> napi::Result<String> {
                 "resolve": { "hits": 0, "misses": 0 },
                 "compile": { "hits": 0, "misses": 0 },
                 "css_gen": { "hits": 0, "misses": 0 }
+            },
+            "theme_resolver_pool": {
+                "hits": pool_stats.hits,
+                "misses": pool_stats.misses,
+                "total": pool_stats.total,
+                "hit_rate": pool_stats.hit_rate,
+                "cached_resolvers": pool_stats.cached_resolvers
             }
         }
     });
@@ -247,6 +280,95 @@ pub fn clear_compile_cache_napi() -> napi::Result<()> {
 pub fn clear_css_gen_cache_napi() -> napi::Result<()> {
     Ok(())
 }
+
+/// Get theme resolver pool statistics
+///
+/// # Returns
+/// JSON object containing resolver pool performance metrics
+///
+/// # Structure
+/// ```json
+/// {
+///   "status": "ok",
+///   "hits": 99,
+///   "misses": 1,
+///   "total": 100,
+///   "hit_rate": 0.99,
+///   "cached_resolvers": 5,
+///   "description": "Resolver pool reuse statistics for performance monitoring"
+/// }
+/// ```
+///
+/// # Metrics Explanation
+/// - **hits**: Number of times a cached resolver was reused
+/// - **misses**: Number of times a new resolver had to be created
+/// - **total**: Total resolver access requests (hits + misses)
+/// - **hit_rate**: Cache effectiveness as fraction 0.0-1.0 (hits / total)
+/// - **cached_resolvers**: Number of unique resolver instances currently in pool
+///
+/// # Performance Insights
+/// - High hit_rate (>0.9) indicates good pool effectiveness
+/// - Low cached_resolvers with high total suggests few unique themes
+/// - Spike in misses after deployment indicates new themes being added
+///
+/// # Example
+/// ```js
+/// const poolStats = getResolverPoolStats();
+/// // Returns: '{"status":"ok","hits":99,"misses":1,...}'
+/// console.log(`Pool effectiveness: ${(poolStats.hit_rate * 100).toFixed(1)}%`);
+/// ```
+#[napi]
+pub fn get_resolver_pool_stats() -> napi::Result<String> {
+    use crate::application::theme_resolver_pool::THEME_RESOLVER_POOL;
+
+    let pool_stats = THEME_RESOLVER_POOL.stats();
+
+    let response = serde_json::json!({
+        "status": "ok",
+        "hits": pool_stats.hits,
+        "misses": pool_stats.misses,
+        "total": pool_stats.total,
+        "hit_rate": pool_stats.hit_rate,
+        "cached_resolvers": pool_stats.cached_resolvers,
+        "description": "Resolver pool reuse statistics for performance monitoring"
+    });
+
+    serde_json::to_string(&response)
+        .map_err(|e| error_to_napi("get_resolver_pool_stats", e))
+}
+
+/// Clear resolver pool cache
+///
+/// Removes all cached resolver instances and resets statistics.
+/// Useful for testing, memory cleanup, or when theme configuration changes.
+///
+/// # Returns
+/// Confirmation message with new pool state
+///
+/// # Example
+/// ```js
+/// const result = clearResolverPool();
+/// // Returns: '{"status":"ok","message":"Pool cleared","cached_resolvers":0}'
+/// ```
+#[napi]
+pub fn clear_resolver_pool() -> napi::Result<String> {
+    use crate::application::theme_resolver_pool::THEME_RESOLVER_POOL;
+
+    THEME_RESOLVER_POOL.clear();
+    let stats = THEME_RESOLVER_POOL.stats();
+
+    let response = serde_json::json!({
+        "status": "ok",
+        "message": "Resolver pool cleared and statistics reset",
+        "cached_resolvers": stats.cached_resolvers,
+        "hits": stats.hits,
+        "misses": stats.misses
+    });
+
+    serde_json::to_string(&response)
+        .map_err(|e| error_to_napi("clear_resolver_pool", e))
+}
+
 
 /// Get cache optimization hints
 ///

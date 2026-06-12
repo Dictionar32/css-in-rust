@@ -18,7 +18,6 @@ import {
   isAlreadyTransformed,
   shouldProcess,
   compileCssFromClasses,
-  compileCssNative,
   buildStyleTag,
   extractAllClasses,
   extractClassesFromSource,
@@ -30,24 +29,11 @@ import {
   eliminateDeadCss,
   findDeadVariants,
   runElimination,
-  optimizeCss,
   scanProjectUsage,
   extractComponentUsage,
   diffClassLists,
   batchExtractClasses,
   checkAgainstSafelist,
-  hoistComponents,
-  compileVariantTable,
-  compileVariants,
-  classifyAndSortClasses,
-  mergeCssDeclarations,
-  analyzeClassUsage,
-  analyzeRsc,
-  analyzeFile,
-  analyzeVariantUsage,
-  injectClientDirective,
-  injectServerOnlyComment,
-  analyzeClasses,
   generateSafelist,
   loadSafelist,
   loadTailwindConfig,
@@ -67,6 +53,11 @@ import {
   detectConflicts,
   bucketSort,
   generateCssForClasses,
+  analyzeFile,
+  analyzeVariantUsage,
+  injectClientDirective,
+  injectServerOnlyComment,
+  analyzeClasses,
   // Static state CSS pre-generation
   extractTwStateConfigs,
   generateStaticStateCss,
@@ -82,7 +73,6 @@ export {
   isAlreadyTransformed,
   shouldProcess,
   compileCssFromClasses,
-  compileCssNative,
   buildStyleTag,
   extractAllClasses,
   extractClassesFromSource,
@@ -94,24 +84,11 @@ export {
   eliminateDeadCss,
   findDeadVariants,
   runElimination,
-  optimizeCss,
   scanProjectUsage,
   extractComponentUsage,
   diffClassLists,
   batchExtractClasses,
   checkAgainstSafelist,
-  hoistComponents,
-  compileVariantTable,
-  compileVariants,
-  classifyAndSortClasses,
-  mergeCssDeclarations,
-  analyzeClassUsage,
-  analyzeRsc,
-  analyzeFile,
-  analyzeVariantUsage,
-  injectClientDirective,
-  injectServerOnlyComment,
-  analyzeClasses,
   generateSafelist,
   loadSafelist,
   loadTailwindConfig,
@@ -131,6 +108,11 @@ export {
   detectConflicts,
   bucketSort,
   generateCssForClasses,
+  analyzeFile,
+  analyzeVariantUsage,
+  injectClientDirective,
+  injectServerOnlyComment,
+  analyzeClasses,
   // Static state + container CSS pre-generation
   extractTwStateConfigs,
   generateStaticStateCss,
@@ -144,4 +126,13 @@ export type CssCompileResult = NativeTransformResult
 
 // CSS pipeline — Tailwind → LightningCSS
 // PHASE 0: Includes LRU caching for 30-40% performance improvement
-export { runCssPipeline, runCssPipelineSync, generateRawCss, getCacheStats, clearCache, type CssPipelineResult } from "./tailwindEngine"
+export { runCssPipeline, runCssPipelineSync, getCacheStats, clearCache, type CssPipelineResult } from "./compiler/tailwindEngine"
+
+// Re-export all sub-entries directly for convenience
+export * from "./compiler"
+export * from "./parser"
+export * from "./analyzer"
+export * from "./cache"
+export * from "./redis"
+export * from "./watch"
+

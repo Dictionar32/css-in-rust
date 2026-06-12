@@ -372,12 +372,17 @@ Diukur di Node.js 22, Rust 1.75.
 tailwind-styled-v4/
 ├── native/                    # Rust engine (NAPI-RS)
 │   ├── src/application/
-│   │   └── ast_extract.rs     # Extract Tailwind classes dari source files
+│   │   ├── ast_extract.rs     # Extract Tailwind classes dari source files
+│   │   ├── variant_resolver.rs # Variant resolution with precedence
+│   │   ├── variant_system.rs   # Variant composition system
+│   │   └── theme_resolver_pool.rs # Multi-tier caching
 │   ├── src/domain/
 │   │   ├── variants.rs        # Variant resolution (props override defaults)
+│   │   ├── variant_precedence.rs # Precedence calculation
 │   │   └── transform.rs       # Transform object config → JS component
 │   └── src/infrastructure/
-│       └── cache_store.rs     # Persistent cache dengan bracket-aware parser
+│       ├── napi_bridge_*.rs   # Modularized NAPI bridges
+│       └── cache_*.rs         # Multi-tier cache backends
 │
 ├── packages/
 │   ├── domain/
@@ -385,10 +390,29 @@ tailwind-styled-v4/
 │   │   ├── compiler/          # Tailwind JS + LightningCSS pipeline
 │   │   └── scanner/           # File scanner (Rust-backed)
 │   ├── presentation/
-│   │   └── next/              # Next.js plugin (withTailwindStyled)
+│   │   ├── next/              # Next.js plugin (withTailwindStyled)
+│   │   ├── vite/              # Vite plugin
+│   │   └── rspack/            # Rspack plugin
 │   └── infrastructure/
 │       └── cli/               # CLI (tw setup, tw audit, dll)
+│
+├── config/                    # Configuration files (centralized)
+│   ├── biome.json
+│   ├── tsconfig.base.json
+│   ├── turbo.json
+│   └── ...
+│
+├── docs/
+│   ├── archive/               # Phase docs, session summaries, reference
+│   ├── phase-4/, phase-5/, phase-6/ # Phase-specific documentation
+│   └── api/                   # API reference
 ```
+
+**New Structure (Phase 7):**
+- Configuration files centralized in `config/` directory
+- Documentation archived in `docs/archive/` for cleaner root
+- Modularized NAPI bridges (`napi_bridge_*.rs`) for better maintainability
+- Phase-specific docs in dedicated directories
 
 ---
 
@@ -436,24 +460,77 @@ Card.xyz     // ❌ TypeScript error
 
 ## Architecture Updates (Phase 7)
 
-**Parser Consolidation (R1)** ✅ Completed 2026-06-12
+### R1-R6: Parser Consolidation through Resolver Caching ✅ Completed 2026-06-12
 
-As of Phase 7, the class parser implementation has been consolidated to a single unified production parser (v2-based), reducing technical debt and binary size by ~5%. This is a **100% backward compatible** change: all public APIs remain identical, zero breaking changes, all 545+ tests passing. The codebase is now cleaner with a single parser implementation.
+Recent Phase 7 updates span multiple refactoring rounds:
 
-- ✅ All public APIs remain identical
-- ✅ Zero breaking changes for users
-- ✅ All 545+ tests passing
-- ✅ ~5% binary size reduction achieved
-- 📖 [See consolidation details & migration guide](docs/archive/PARSER_V1_DEPRECATION_NOTES.md)
+**R1: Parser Consolidation** ✅
+- Single unified production parser (v2-based)
+- ~5% binary size reduction
+- 100% backward compatible, all 545+ tests passing
+
+**R2-R3: Infrastructure Modularization** ✅
+- NAPI bridge modularized into specialized modules
+- Comprehensive integration tests covering all layers
+- Cache backend infrastructure refactored
+
+**R4: Property Testing Framework** ✅
+- 6 core properties verified across 53 test cases
+- Parser determinism property testing
+- Round-trip parsing validation
+- Cache consistency & eviction properties
+
+**R5: Variant Precedence System** ✅
+- Native variant resolution with precedence handling
+- Compound variant support
+- Theme-aware variant composition
+
+**R6: Resolver Caching** ✅ 
+- Multi-tier caching for theme resolver
+- Performance optimization verified
 
 For architecture details and improvements roadmap, see:
-- [Phase 7 R1 Completion Report](PHASE_7_R1_COMPLETE.md)
-- [Architecture Improvement Roadmap](ARCHITECTURE_IMPROVEMENT_ROADMAP.md)
-- [Full Design Document](.kiro/specs/phase-7-architecture/design.md)
+- [Phase 7 Architecture Design](.kiro/specs/phase-7-architecture/design.md)
+- [R4 Property Tests Design](.kiro/specs/phase-7-architecture/R4_PROPERTY_TESTS_DESIGN.md)
+- [R5 Variant Precedence Design](.kiro/specs/phase-7-architecture/R5_VARIANT_PRECEDENCE_DESIGN.md)
+- [Full spec directory](.kiro/specs/phase-7-architecture/)
 
 ---
 
-## Development
+## Recent Changes (82 commits, not yet pushed)
+
+### Infrastructure & Organization 🏗️
+- **Config centralization** — moved 6 root config files to `config/` directory
+- **Docs reorganization** — 42 summary/reference files moved to `docs/archive/`
+- **Benchmarking suite** — added comprehensive performance benchmarking (`native/benches/`)
+
+### Rust Engine Enhancements 🦀
+- **Modularized NAPI bridges** — split monolithic bridge into specialized modules:
+  - `napi_bridge_cache.rs` — caching layer
+  - `napi_bridge_redis.rs` — distributed cache
+  - `napi_bridge_theme.rs` — theme resolution
+  - `napi_bridge_variants.rs` — variant composition
+  - And 5 more specialized modules
+- **Theme resolver pool** — multi-tier caching with adaptive strategies
+- **Variant system improvements** — precedence calculation, compound variant support
+
+### Testing & Validation ✅
+- **Property testing** — 6 core properties across 53 test cases
+- **Integration tests** — comprehensive NAPI module tests (1000+ tests added)
+- **Variant precedence tests** — 493+ test cases for variant resolution
+- **Performance benchmarks** — week8, week9 scale testing suites
+
+### TypeScript/JS Improvements
+- **Native bridge refactor** — simplified async/sync patterns, improved error handling
+- **Cache integration** — unified cache interface across Redis, LRU, and file-based backends
+- **Stream support** — added streaming CSS compilation
+
+### Documentation 📚
+- **Phase 7 specs** — comprehensive design docs in `.kiro/specs/phase-7-architecture/`
+- **NAPI module guide** — `MIGRATION_GUIDE_PHASE_7_3.md`
+- **Architecture docs** — modular bridge patterns and integration guide
+
+---
 
 ```bash
 git clone https://github.com/Dictionar32/tailwind-styled-v4.git

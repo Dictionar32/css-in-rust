@@ -22,6 +22,7 @@ import { hasFlag } from "./utils/args"
 import { errorExitCode, errorToJson } from "./utils/errors"
 import { ensureFileSafe, pathExists, readFileSafe, readJsonSafe } from "./utils/fs"
 import { writeJsonSuccess } from "./utils/json"
+import { getNativeBridge } from "@tailwind-styled/compiler"
 
 interface PackageJsonLike {
   dependencies?: Record<string, string>
@@ -66,6 +67,103 @@ const DEFAULT_TW_CONFIG = `${JSON.stringify(
 
 function pkgHasDep(pkg: PackageJsonLike, name: string): boolean {
   return Boolean(pkg.dependencies?.[name] || pkg.devDependencies?.[name])
+}
+
+async function validateThemeConfig(cwd: string): Promise<Array<{ type: string; valid: boolean; message: string }>> {
+  const results: Array<{ type: string; valid: boolean; message: string }> = []
+
+  try {
+    const native = getNativeBridge()
+    if (!native) {
+      results.push({ type: "theme", valid: false, message: "Native binding not available" })
+      return results
+    }
+
+    // Attempt to load tailwind.config.ts/js
+    const twConfigFiles = ["tailwind.config.ts", "tailwind.config.js", "tailwind.config.mjs"]
+    let configPath: string | null = null
+
+    for (const file of twConfigFiles) {
+      if (await pathExists(path.join(cwd, file))) {
+        configPath = path.join(cwd, file)
+        break
+      }
+    }
+
+    if (!configPath) {
+      results.push({ type: "theme-config-missing", valid: false, message: "No tailwind.config found" })
+      return results
+    }
+
+    try {
+      const configUrl = pathToFileURL(configPath)
+      const configModule = await import(configUrl.href)
+      const config = configModule.default || configModule
+      const theme = config.theme || {}
+
+      // Validate colors using native function
+      if (theme.colors && native.validateColorsNapi) {
+        try {
+          const colorsJson = JSON.stringify(theme.colors)
+          const isValid = native.validateColorsNapi(colorsJson)
+          results.push({
+            type: "theme-colors",
+            valid: isValid,
+            message: isValid ? "Colors theme validated OK" : "Invalid colors in theme",
+          })
+        } catch (err) {
+          results.push({
+            type: "theme-colors",
+            valid: false,
+            message: `Color validation error: ${err instanceof Error ? err.message : String(err)}`,
+          })
+        }
+      }
+
+      // Validate breakpoints using native function
+      if (theme.screens && native.validateBreakpointsNapi) {
+        try {
+          const screensJson = JSON.stringify(theme.screens)
+          const isValid = native.validateBreakpointsNapi(screensJson)
+          results.push({
+            type: "theme-breakpoints",
+            valid: isValid,
+            message: isValid ? "Breakpoints validated OK" : "Invalid breakpoints in theme",
+          })
+        } catch (err) {
+          results.push({
+            type: "theme-breakpoints",
+            valid: false,
+            message: `Breakpoints validation error: ${err instanceof Error ? err.message : String(err)}`,
+          })
+        }
+      }
+
+      // Check theme integrity using Rust
+      if (native.runHealthCheck) {
+        try {
+          native.runHealthCheck()
+          results.push({ type: "theme-integrity", valid: true, message: "Theme integrity check passed" })
+        } catch {
+          results.push({ type: "theme-integrity", valid: false, message: "Theme integrity check failed" })
+        }
+      }
+    } catch (err) {
+      results.push({
+        type: "theme-load",
+        valid: false,
+        message: `Failed to load theme config: ${err instanceof Error ? err.message : String(err)}`,
+      })
+    }
+  } catch (err) {
+    results.push({
+      type: "theme-validation",
+      valid: false,
+      message: `Theme validation failed: ${err instanceof Error ? err.message : String(err)}`,
+    })
+  }
+
+  return results
 }
 
 function nodeVersion(): { major: number; full: string } {
@@ -225,6 +323,18 @@ export async function runPreflightCli(rawArgs: string[]): Promise<PreflightRepor
         ? `Deprecated: ${hasOldJit ? '"mode: jit"' : ""} ${hasOldPurge ? '"purge"' : ""} -> use Tailwind v4 CSS-first`
         : "No deprecated patterns found OK",
       "Run: tw migrate --dry-run to see migration steps"
+    )
+  }
+
+  // Validate theme configuration using native Rust validators
+  const themeValidation = await validateThemeConfig(cwd)
+  for (const validation of themeValidation) {
+    check(
+      results,
+      `theme-${validation.type}`,
+      `Theme ${validation.type}`,
+      validation.valid,
+      validation.message
     )
   }
 

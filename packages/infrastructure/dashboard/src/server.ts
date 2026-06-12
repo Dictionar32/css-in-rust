@@ -18,6 +18,7 @@ import fs from "node:fs"
 import path from "node:path"
 
 import { currentMetrics, getMetricsSummary, history, resetHistory, updateMetrics } from "./state.js" // converted
+import { getNativeBinding } from "@tailwind-styled/compiler"
 
 const port = Number(process.env.PORT ?? 3000)
 const METRICS_FILE = path.join(process.cwd(), ".tw-cache", "metrics.json")

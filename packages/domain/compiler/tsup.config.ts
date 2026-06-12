@@ -4,6 +4,12 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     internal: "src/internal.ts",
+    "compiler/index": "src/compiler/index.ts",
+    "parser/index": "src/parser/index.ts",
+    "analyzer/index": "src/analyzer/index.ts",
+    "cache/index": "src/cache/index.ts",
+    "redis/index": "src/redis/index.ts",
+    "watch/index": "src/watch/index.ts",
   },
   format: ["esm", "cjs"],
   dts: true,

@@ -1,11 +1,8 @@
 /**
- * Centralized hash utilities — Node.js only.
+ * Centralized hash utilities — Rust-only via NAPI binding.
  *
- * Native-first via NAPI binding (Rust FNV/MD5/SHA256).
- * Node.js crypto fallback jika native tidak tersedia (mis. test runner tanpa .node binary).
- *
- * Browser fallbacks DIHAPUS — package ini Node.js-only (dipanggil dari
- * compiler, engine, CLI — tidak pernah dari browser bundle).
+ * Uses Rust FNV/MD5/SHA256 for superior performance.
+ * No Node.js crypto fallback - fail fast if native binding unavailable.
  *
  * Native functions:
  *   hashContent → native/src/application/hashing.rs :: hash_content()
@@ -13,8 +10,6 @@
  */
 
 import { loadNativeBinding, resolveNativeBindingCandidates, resolveRuntimeDir } from "./nativeBinding"
-import crypto from "node:crypto"
-import fs from "node:fs"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Native binding type
@@ -61,27 +56,7 @@ function getNativeHashBinding(): NativeHashBinding | null {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Node.js fallback — Node crypto (no browser dead code)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function nodeHashContent(content: string, algorithm: string, length: number): string {
-  return crypto.createHash(algorithm === "fnv" ? "md5" : algorithm)
-    .update(content)
-    .digest("hex")
-    .slice(0, length)
-}
-
-function nodeHashFile(filePath: string, algorithm: string, length: number): string {
-  try {
-    const content = fs.readFileSync(filePath, "utf8")
-    return nodeHashContent(content, algorithm, length)
-  } catch {
-    return "00000000"
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Public API
+// Public API - Rust-only
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -97,10 +72,13 @@ function nodeHashFile(filePath: string, algorithm: string, length: number): stri
  */
 export function hashContent(content: string, algorithm = "md5", length = 8): string {
   const native = getNativeHashBinding()
-  if (native) {
-    return native.hashContent(content, algorithm as "md5" | "sha256" | "fnv", length)
+  if (!native) {
+    throw new Error(
+      "FATAL: Rust hash binding (hashContent) is required but not available. " +
+      "Ensure native binding is properly loaded. Check that native/.node binary exists."
+    )
   }
-  return nodeHashContent(content, algorithm, length)
+  return native.hashContent(content, algorithm as "md5" | "sha256" | "fnv", length)
 }
 
 /**
@@ -114,8 +92,11 @@ export function hashContent(content: string, algorithm = "md5", length = 8): str
  */
 export function hashFile(filePath: string, algorithm = "md5", length = 8): string {
   const native = getNativeHashBinding()
-  if (native) {
-    return native.hashFile(filePath, algorithm as "md5" | "sha256" | "fnv", length)
+  if (!native) {
+    throw new Error(
+      "FATAL: Rust hash binding (hashFile) is required but not available. " +
+      "Ensure native binding is properly loaded. Check that native/.node binary exists."
+    )
   }
-  return nodeHashFile(filePath, algorithm, length)
+  return native.hashFile(filePath, algorithm as "md5" | "sha256" | "fnv", length)
 }
