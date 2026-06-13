@@ -42,6 +42,15 @@ export * from './redis'
 export * from './watch'
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PURE RUST SYNC API (v5.0.19+) — NO FALLBACK
+// ═══════════════════════════════════════════════════════════════════════════
+// These are the ONLY scanning/generation paths for production builds
+// All must go through native Rust module — fail-fast if unavailable
+
+export { scanWorkspaceSynchronously } from './scannerSync'
+export { generateCssSync } from './cssGeneratorSync'
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TRANSFORM & CORE FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
