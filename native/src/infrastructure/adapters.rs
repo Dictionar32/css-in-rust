@@ -10,10 +10,18 @@ use std::sync::{Arc, Mutex};
 pub struct RedisCacheAdapter {
     pool: Arc<Mutex<crate::infrastructure::redis_cache::RedisPool>>,
     stats: Arc<Mutex<CacheStats>>,
+    ttl_seconds: Option<u64>,
 }
 
 impl RedisCacheAdapter {
     pub fn new(pool: Arc<Mutex<crate::infrastructure::redis_cache::RedisPool>>) -> Self {
+        Self::new_with_ttl(pool, None)
+    }
+
+    pub fn new_with_ttl(
+        pool: Arc<Mutex<crate::infrastructure::redis_cache::RedisPool>>,
+        ttl_seconds: Option<u64>,
+    ) -> Self {
         Self {
             pool,
             stats: Arc::new(Mutex::new(CacheStats {
@@ -24,6 +32,7 @@ impl RedisCacheAdapter {
                 evictions: 0,
                 hit_rate: 0.0,
             })),
+            ttl_seconds,
         }
     }
 }
@@ -49,7 +58,7 @@ impl CacheBackend for RedisCacheAdapter {
 
     fn put(&self, key: String, value: String) {
         if let Ok(mut pool) = self.pool.lock() {
-            let result = pool.set(&key, &value, None);
+            let result = pool.set(&key, &value, self.ttl_seconds);
             if result.success {
                 if let Ok(mut stats) = self.stats.lock() {
                     stats.current_size += 1;

@@ -130,11 +130,34 @@ impl CacheFactory {
             CacheConfig::Persistent { path, ttl_seconds: _ } => {
                 Arc::new(crate::infrastructure::adapters::PersistentCacheAdapter::new(path, 10000))
             }
-            CacheConfig::Redis { url: _, ttl_seconds: _ } => {
-                // Redis backend requires external service connection
-                // For now, return LRU cache as fallback
-                // TODO: Implement RedisPool adapter for CacheBackend
-                Arc::new(crate::infrastructure::lru_cache::LruCache::new(10000))
+            CacheConfig::Redis { url, ttl_seconds } => {
+                let mut config = crate::infrastructure::redis_cache::RedisCacheConfig::default();
+                if !url.is_empty() {
+                    if let Some(host_port) = url.strip_prefix("redis://") {
+                        let parts: Vec<&str> = host_port.split(':').collect();
+                        if !parts.is_empty() {
+                            config.host = parts[0].to_string();
+                        }
+                        if parts.len() > 1 {
+                            if let Some(port_part) = parts[1].split('/').next() {
+                                if let Ok(port) = port_part.parse::<u16>() {
+                                    config.port = port;
+                                }
+                            }
+                        }
+                    }
+                }
+                if let Some(ttl) = ttl_seconds {
+                    config.default_ttl_seconds = ttl;
+                }
+                if let Ok(pool) = crate::infrastructure::redis_cache::RedisPool::new(config) {
+                    Arc::new(crate::infrastructure::adapters::RedisCacheAdapter::new_with_ttl(
+                        Arc::new(std::sync::Mutex::new(pool)),
+                        ttl_seconds,
+                    ))
+                } else {
+                    Arc::new(crate::infrastructure::lru_cache::LruCache::new(10000))
+                }
             }
             CacheConfig::Distributed { coordinator_url: _ } => {
                 // Distributed backend requires coordinator connection

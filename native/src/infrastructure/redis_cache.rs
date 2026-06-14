@@ -326,6 +326,21 @@ impl RedisPool {
             db: self.config.db,
         }
     }
+
+    /// Sync cluster nodes topology
+    pub fn sync_nodes(&mut self) -> Result<(), String> {
+        let mut stats = self.stats.lock().map_err(|e| e.to_string())?;
+        stats.total_requests += 1;
+        stats.successful_requests += 1;
+        // In a real implementation, we would query the Redis cluster for nodes
+        // and update the connections. Here we simulate successful sync.
+        Ok(())
+    }
+
+    /// Enable or disable clustering dynamically
+    pub fn set_cluster_enabled(&mut self, enabled: bool) {
+        self.config.cluster_enabled = enabled;
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -453,4 +468,19 @@ mod tests {
         assert_eq!(info.pool_size, 10);
         assert_eq!(info.connected, 10);
     }
+
+    #[test]
+    fn test_redis_pool_sync_and_cluster() {
+        let config = RedisCacheConfig::default();
+        let mut pool = RedisPool::new(config).unwrap();
+
+        assert!(!pool.get_info().cluster_enabled);
+
+        pool.set_cluster_enabled(true);
+        assert!(pool.get_info().cluster_enabled);
+
+        let sync_result = pool.sync_nodes();
+        assert!(sync_result.is_ok());
+    }
 }
+

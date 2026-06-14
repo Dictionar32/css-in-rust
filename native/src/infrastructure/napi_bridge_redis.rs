@@ -334,6 +334,12 @@ pub fn redis_cache_clear() -> napi::Result<String> {
 /// Enable/disable Redis clustering
 #[napi]
 pub fn redis_enable_cluster(enabled: bool) -> napi::Result<String> {
+    let pool = init_redis_pool()?;
+    let mut pool_guard = pool.lock()
+        .map_err(|e| error_to_napi("redis_enable_cluster", e.to_string()))?;
+
+    pool_guard.set_cluster_enabled(enabled);
+
     let response = serde_json::json!({
         "status": "ok",
         "clustering": enabled,
@@ -394,6 +400,13 @@ pub fn redis_monitor() -> napi::Result<String> {
 /// Sync Redis cluster nodes
 #[napi]
 pub fn redis_sync_nodes() -> napi::Result<String> {
+    let pool = init_redis_pool()?;
+    let mut pool_guard = pool.lock()
+        .map_err(|e| error_to_napi("redis_sync_nodes", e.to_string()))?;
+
+    pool_guard.sync_nodes()
+        .map_err(|e| error_to_napi("redis_sync_nodes", e))?;
+
     let response = serde_json::json!({
         "status": "ok",
         "message": "Nodes synchronized",

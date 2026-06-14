@@ -175,6 +175,21 @@ mod redis_adapter_extended_tests {
         // Mock Redis returns success for any operation
         assert!(adapter.remove("key4") || !adapter.remove("key4"));
     }
+
+    #[test]
+    fn test_redis_adapter_with_ttl() {
+        let pool = Arc::new(Mutex::new(
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
+                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
+            ).unwrap()
+        ));
+        
+        let adapter = RedisCacheAdapter::new_with_ttl(pool, Some(3600));
+        adapter.put("ttl_key".to_string(), "ttl_value".to_string());
+        
+        let stats = adapter.stats();
+        assert_eq!(stats.current_size, 1);
+    }
 }
 
 #[cfg(test)]
