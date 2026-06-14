@@ -22,6 +22,15 @@ export const parseClasses = (raw: string): Array<{ raw: string; type: string }> 
   return native.parseClasses(raw) || []
 }
 
+export const parseClass = (input: string): Record<string, unknown> => {
+  const native = getNativeBridge()
+  if (!native?.parseClass) {
+    throw new Error('FATAL: Native binding \'parseClass\' is required but not available.')
+  }
+  const result = native.parseClass(input)
+  return typeof result === 'string' ? JSON.parse(result) : result
+}
+
 // ============================================================================
 // CLASS EXTRACTION
 // ============================================================================

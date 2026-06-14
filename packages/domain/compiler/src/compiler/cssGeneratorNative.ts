@@ -78,9 +78,8 @@ export async function generateCssNative(
  * ```
  */
 export function getCacheStats(): { hits: number; misses: number } | null {
+  const native = getNativeBridge()
   try {
-    const native = getNativeBridge()
-    
     if (!native?.getCacheStats) {
       return null
     }
@@ -108,14 +107,28 @@ export function getCacheStats(): { hits: number; misses: number } | null {
  * ```
  */
 export function clearThemeCache(): void {
+  const native = getNativeBridge()
   try {
-    const native = getNativeBridge()
-    
     if (!native?.clearThemeCache) {
       return
     }
 
     native.clearThemeCache()
+  } catch {
+    // Silently ignore if native binding unavailable
+  }
+}
+
+/**
+ * Reset cache statistics in the Rust compiler.
+ */
+export function resetCacheStats(): void {
+  const native = getNativeBridge()
+  try {
+    if (!native?.resetCacheStats) {
+      return
+    }
+    native.resetCacheStats()
   } catch {
     // Silently ignore if native binding unavailable
   }

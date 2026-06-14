@@ -96,6 +96,7 @@ export interface TailwindConfigCacheEntry {
 }
 
 export interface NativeAnalyzerBinding {
+  analyzeClassesWorkspace?(filesJson: string, cwd: string, flags: number): unknown
   analyzeClasses(filesJson: string, cwd: string, flags: number): unknown
   compileCss?: (classes: string[], prefix: string | null) => unknown
   /** Detect conflicting Tailwind utilities in a usage list. */

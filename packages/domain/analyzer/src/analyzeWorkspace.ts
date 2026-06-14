@@ -126,7 +126,8 @@ export async function analyzeWorkspace(
   // 2. Native report - const dengan IIFE
   const nativeReport = (() => {
     try {
-      const report = binding.analyzeClasses(filesJson, resolvedRoot, topLimit)
+      const fn = binding.analyzeClassesWorkspace || binding.analyzeClasses
+      const report = fn(filesJson, resolvedRoot, topLimit)
       if (!report) {
         throw new Error(`Native analyzer returned no report for "${resolvedRoot}".`)
       }

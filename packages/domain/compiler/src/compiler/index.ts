@@ -12,6 +12,7 @@ export {
   generateCssNative,
   getCacheStats,
   clearThemeCache,
+  resetCacheStats,
 } from './cssGeneratorNative'
 
 export {
@@ -34,6 +35,8 @@ export {
 } from './compilationNative'
 
 export {
+  generateCss,
+  generateCssBatch,
   compileClass,
   compileClasses,
   compileToCss,

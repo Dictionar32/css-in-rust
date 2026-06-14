@@ -50,6 +50,11 @@ import {
   redis_set_eviction_policy,
   redis_get_eviction_policy,
   redis_monitor,
+  redis_expiration_set,
+  redis_expiration_get,
+  redis_get_config,
+  redis_shutdown,
+  redis_sync_nodes,
 } from '../nativeBridgeWrappers'
 
 export interface RedisManagerConfig extends ManagerConfig {
@@ -1628,8 +1633,69 @@ export class RedisManager extends BaseManager {
 
   protected async onShutdown(): Promise<void> {
     // Cleanup Redis resources
+    try {
+      redis_shutdown()
+    } catch {
+      // ignore errors during shutdown
+    }
     this.poolStats = null
     this.clusterStatus = null
     this.replicationStatus = null
+  }
+
+  /**
+   * Set key expiration in TTL seconds
+   */
+  async setExpiration(key: string, ttlSeconds: number): Promise<number> {
+    this.ensureReady()
+    try {
+      return redis_expiration_set(key, ttlSeconds)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'setExpiration')
+      throw error
+    }
+  }
+
+  /**
+   * Get key expiration / TTL info
+   */
+  async getExpiration(key: string): Promise<Record<string, unknown>> {
+    this.ensureReady()
+    try {
+      return redis_expiration_get(key)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getExpiration')
+      throw error
+    }
+  }
+
+  /**
+   * Synchronize cluster nodes manually
+   */
+  async syncClusterNodes(): Promise<{ status: string; message: string }> {
+    this.ensureReady()
+    try {
+      return redis_sync_nodes()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'syncClusterNodes')
+      throw error
+    }
+  }
+
+  /**
+   * Get native Redis client configuration
+   */
+  async getNativeConfig(): Promise<Record<string, unknown>> {
+    this.ensureReady()
+    try {
+      return redis_get_config()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getNativeConfig')
+      throw error
+    }
   }
 }

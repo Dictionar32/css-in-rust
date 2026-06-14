@@ -335,8 +335,19 @@ export const redis_cluster_status = (): ClusterStatus => {
  */
 export const redis_expiration_set = (key: string, ttlSeconds: number): number => {
   const bridge = getNativeBridge()
-  if (!bridge.redis_expiration_set) throw new Error("redis_expiration_set not available")
-  return safeCallNative("redis_expiration_set", () => bridge.redis_expiration_set!(key, ttlSeconds))
+  if (bridge.redisExpire) {
+    const result = safeCallNative("redisExpire", () => bridge.redisExpire!(key, ttlSeconds))
+    try {
+      const parsed = JSON.parse(result)
+      return parsed.status === "ok" ? 1 : 0
+    } catch {
+      return 0
+    }
+  } else if (bridge.redis_expiration_set) {
+    const result = safeCallNative("redis_expiration_set", () => bridge.redis_expiration_set!(key, ttlSeconds))
+    return result
+  }
+  throw new Error("redisExpire not available")
 }
 
 /**
@@ -346,9 +357,10 @@ export const redis_expiration_set = (key: string, ttlSeconds: number): number =>
  */
 export const redis_expiration_get = (key: string): Record<string, unknown> => {
   const bridge = getNativeBridge()
-  if (!bridge.redis_expiration_get) throw new Error("redis_expiration_get not available")
-  const result = safeCallNative("redis_expiration_get", () => bridge.redis_expiration_get!(key))
-  return parseNativeJson<Record<string, unknown>>(result, "redis_expiration_get")
+  const fn = bridge.redisTtl || bridge.redis_expiration_get
+  if (!fn) throw new Error("redisTtl not available")
+  const result = safeCallNative("redisTtl", () => fn(key))
+  return parseNativeJson<Record<string, unknown>>(result, "redisTtl")
 }
 
 /**
@@ -1030,6 +1042,31 @@ export const resolve_simple_variants = (configJson: string): string => {
   return safeCallNative("resolve_simple_variants", () => bridge.resolve_simple_variants!(configJson))
 }
 
+
+/**
+ * Generates CSS from a single CSS rule
+ * @param ruleJson JSON representation of CssRule
+ * @param minify Whether to minify the CSS output
+ * @returns Generated CSS string
+ */
+export const generate_css = (ruleJson: string, minify?: boolean | null): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.generate_css) throw new Error("generate_css not available")
+  return safeCallNative("generate_css", () => bridge.generate_css!(ruleJson, minify))
+}
+
+/**
+ * Generates CSS from multiple CSS rules in batch
+ * @param rulesJson JSON array of CssRule objects
+ * @param minify Whether to minify the CSS output
+ * @returns Combined CSS string
+ */
+export const generate_css_batch = (rulesJson: string, minify?: boolean | null): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.generate_css_batch) throw new Error("generate_css_batch not available")
+  return safeCallNative("generate_css_batch", () => bridge.generate_css_batch!(rulesJson, minify))
+}
+
 // ── CSS OPTIMIZATION FUNCTIONS (12 total) ──────────────────────────────────
 
 /**
@@ -1428,6 +1465,54 @@ export const clear_resolver_pool = (): { status: string } => {
   return parseNativeJson(result, "clearResolverPool")
 }
 
+/**
+ * Resolves a color value using the resolver pool (cached per themeId)
+ * @param themeId Unique identifier for the theme configuration
+ * @param color Color name or reference (e.g., "blue-600")
+ * @param configJson Theme configuration as JSON string
+ * @returns Resolved color value
+ */
+export const resolve_color_cached = (themeId: number, color: string, configJson: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveColorCached) throw new Error("resolveColorCached not available")
+  return safeCallNative("resolveColorCached", () => bridge.resolveColorCached!(themeId, color, configJson))
+}
+
+/**
+ * Resolves a spacing value using the resolver pool (cached per themeId)
+ * @param themeId Unique identifier for the theme configuration
+ * @param spacing Spacing key (e.g., "4", "px")
+ * @param configJson Theme configuration as JSON string
+ * @returns Resolved spacing value
+ */
+export const resolve_spacing_cached = (themeId: number, spacing: string, configJson: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveSpacingCached) throw new Error("resolveSpacingCached not available")
+  return safeCallNative("resolveSpacingCached", () => bridge.resolveSpacingCached!(themeId, spacing, configJson))
+}
+
+/**
+ * Resolves a font size value using the resolver pool (cached per themeId)
+ * @param themeId Unique identifier for the theme configuration
+ * @param size Font size key (e.g., "sm", "lg")
+ * @param configJson Theme configuration as JSON string
+ * @returns Resolved font size value
+ */
+export const resolve_font_size_cached = (themeId: number, size: string, configJson: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveFontSizeCached) throw new Error("resolveFontSizeCached not available")
+  return safeCallNative("resolveFontSizeCached", () => bridge.resolveFontSizeCached!(themeId, size, configJson))
+}
+
+/**
+ * Resets resolver pool statistics while keeping cached resolvers
+ */
+export const reset_resolver_pool_stats = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.resetResolverPoolStats) throw new Error("resetResolverPoolStats not available")
+  safeCallNative("resetResolverPoolStats", () => bridge.resetResolverPoolStats!())
+}
+
 /** Get cache optimization hints based on current stats. */
 export const get_cache_optimization_hints = (): CacheOptimizationHintsResult => {
   const bridge = getNativeBridge()
@@ -1753,4 +1838,163 @@ export const scan_cache_stats = (): ScanCacheStatsResult => {
   const bridge = getNativeBridge()
   if (!bridge.scanCacheStats) throw new Error("scanCacheStats not available")
   return safeCallNative("scanCacheStats", () => bridge.scanCacheStats!())
+}
+
+// ── TYPE DEFINITIONS: Analysis & Memory Profiling ───────────────────────────
+
+export interface MemoryStatsResult {
+  status: string
+  memory: {
+    allocated_bytes: number
+    freed_bytes: number
+    in_use_bytes: number
+    allocated_mb: number
+    freed_mb: number
+    in_use_mb: number
+  }
+  system: {
+    cache_entries: number
+    active_operations: number
+  }
+}
+
+export interface MemoryRecommendationsResult {
+  status: string
+  current_memory_mb: number
+  recommendation: string
+  priority: string
+  suggestions: string[]
+}
+
+export interface OptimalCacheConfigResult {
+  status: string
+  workload_type: string
+  expected_entries: number
+  recommended_backend: string
+  recommended_capacity: number
+  estimated_memory_mb: number
+  ttl_seconds: number
+  details: {
+    backend_explanation: string
+    capacity_explanation: string
+    memory_estimate: string
+  }
+}
+
+export interface Week6FeaturesStatusResult {
+  status: string
+  week: number
+  features: Record<string, {
+    implemented: boolean
+    status: string
+    capacity?: string
+    hit_rate_optimization?: boolean
+    metrics?: string[]
+  }>
+  optimization_hints: Record<string, string>
+}
+
+// ── ANALYSIS & MEMORY PROFILING WRAPPERS ────────────────────────────────────
+
+/** Get Week 6 features status */
+export const get_week6_features_status = (): Week6FeaturesStatusResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getWeek6FeaturesStatus) throw new Error("getWeek6FeaturesStatus not available")
+  const result = safeCallNative("getWeek6FeaturesStatus", () => bridge.getWeek6FeaturesStatus!())
+  return parseNativeJson(result, "getWeek6FeaturesStatus")
+}
+
+/** Get current memory statistics */
+export const get_memory_stats_native = (): MemoryStatsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getMemoryStatsNative) throw new Error("getMemoryStatsNative not available")
+  const result = safeCallNative("getMemoryStatsNative", () => bridge.getMemoryStatsNative!())
+  return parseNativeJson(result, "getMemoryStatsNative")
+}
+
+/** Get memory recommendations */
+export const get_memory_recommendations_native = (): MemoryRecommendationsResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.getMemoryRecommendationsNative) throw new Error("getMemoryRecommendationsNative not available")
+  const result = safeCallNative("getMemoryRecommendationsNative", () => bridge.getMemoryRecommendationsNative!())
+  return parseNativeJson(result, "getMemoryRecommendationsNative")
+}
+
+/** Estimate optimal cache configuration from analysis */
+export const estimate_optimal_cache_config_native = (
+  workloadType: string,
+  expectedEntries: number
+): OptimalCacheConfigResult => {
+  const bridge = getNativeBridge()
+  if (!bridge.estimateOptimalCacheConfigNative) throw new Error("estimateOptimalCacheConfigNative not available")
+  const result = safeCallNative("estimateOptimalCacheConfigNative", () =>
+    bridge.estimateOptimalCacheConfigNative!(workloadType, expectedEntries)
+  )
+  return parseNativeJson(result, "estimateOptimalCacheConfigNative")
+}
+
+/** Reset memory statistics */
+export const reset_memory_stats = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.resetMemoryStats) throw new Error("resetMemoryStats not available")
+  safeCallNative("resetMemoryStats", () => bridge.resetMemoryStats!())
+}
+
+/** Resolve a color value from the theme without cache */
+export const resolve_color = (color: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveColor) throw new Error("resolveColor not available")
+  return safeCallNative("resolveColor", () => bridge.resolveColor!(color))
+}
+
+/** Resolve a spacing value from the theme without cache */
+export const resolve_spacing = (spacing: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveSpacing) throw new Error("resolveSpacing not available")
+  return safeCallNative("resolveSpacing", () => bridge.resolveSpacing!(spacing))
+}
+
+/** Resolve a font size value from the theme without cache */
+export const resolve_font_size = (size: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveFontSize) throw new Error("resolveFontSize not available")
+  return safeCallNative("resolveFontSize", () => bridge.resolveFontSize!(size))
+}
+
+/** Resolve a breakpoint value from the theme without cache */
+export const resolve_breakpoint = (breakpoint: string): string => {
+  const bridge = getNativeBridge()
+  if (!bridge.resolveBreakpoint) throw new Error("resolveBreakpoint not available")
+  return safeCallNative("resolveBreakpoint", () => bridge.resolveBreakpoint!(breakpoint))
+}
+
+/** Gets Redis configuration info from native client */
+export const redis_get_config = (): Record<string, unknown> => {
+  const bridge = getNativeBridge()
+  if (!bridge.redisGetConfig) throw new Error("redisGetConfig not available")
+  const result = safeCallNative("redisGetConfig", () => bridge.redisGetConfig!())
+  return parseNativeJson<Record<string, unknown>>(result, "redisGetConfig")
+}
+
+/** Shutdown Redis connection from native client */
+export const redis_shutdown = (): { status: string; message: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.redisShutdown) throw new Error("redisShutdown not available")
+  const result = safeCallNative("redisShutdown", () => bridge.redisShutdown!())
+  return parseNativeJson<{ status: string; message: string }>(result, "redisShutdown")
+}
+
+/** Synchronizes Redis cluster nodes manually */
+export const redis_sync_nodes = (): { status: string; message: string } => {
+  const bridge = getNativeBridge()
+  if (!bridge.redisSyncNodes) throw new Error("redisSyncNodes not available")
+  const result = safeCallNative("redisSyncNodes", () => bridge.redisSyncNodes!())
+  return parseNativeJson<{ status: string; message: string }>(result, "redisSyncNodes")
+}
+
+/** Reset native compiler caches statistics */
+export const reset_cache_stats = (): void => {
+  const bridge = getNativeBridge()
+  if (!bridge.resetCacheStats) throw new Error("resetCacheStats not available")
+  safeCallNative("resetCacheStats", () => bridge.resetCacheStats!())
 }

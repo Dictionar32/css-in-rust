@@ -278,6 +278,8 @@ export interface NativeBridge {
   scan_files_batch_native?: (filesJson: string) => string  // Returns JSON
   
   // Phase 5.2: CSS Compilation (12 functions)
+  generate_css?: (rule_json: string, minify?: boolean | null) => string
+  generate_css_batch?: (rules_json: string, minify?: boolean | null) => string
   compile_class?: (input: string) => string  // Returns JSON
   compile_classes?: (inputs: string[]) => string  // Returns JSON
   compile_to_css?: (input: string, minify: boolean) => string
@@ -382,6 +384,10 @@ export interface NativeBridge {
   clearCssGenCacheNapi?: () => void
   getResolverPoolStats?: () => string
   clearResolverPool?: () => string
+  resolveColorCached?: (themeId: number, color: string, configJson: string) => string
+  resolveSpacingCached?: (themeId: number, spacing: string, configJson: string) => string
+  resolveFontSizeCached?: (themeId: number, size: string, configJson: string) => string
+  resetResolverPoolStats?: () => void
   getCacheOptimizationHints?: () => string
   estimateStreamingBatchSize?: (targetMemoryMb: number) => string
 
@@ -420,11 +426,30 @@ export interface NativeBridge {
   benchmarkStreamingVsBuffered?: (classCount: number) => string
   getWeek6OptimizationStatus?: () => string
 
+  // ── Analysis & Memory Profiling (napi_bridge_analysis.rs) ──────────────────
+  getWeek6FeaturesStatus?: () => string
+  getMemoryStatsNative?: () => string
+  getMemoryRecommendationsNative?: () => string
+  estimateOptimalCacheConfigNative?: (workloadType: string, expectedEntries: number) => string
+  resetMemoryStats?: () => void
+
   // ── Scan Cache (scan_cache_api.rs) ────────────────────────────────────────
   scanCacheGet?: (filePath: string, contentHash: string) => string[] | null
   scanCachePut?: (filePath: string, contentHash: string, classes: string[], mtimeMs: number, size: number) => void
   scanCacheInvalidate?: (filePath: string) => void
   scanCacheStats?: () => { size: number }
+
+  // ── Missing Theme, Redis, and Utility Functions ──────────────────────────
+  resolveColor?: (color: string) => string
+  resolveSpacing?: (spacing: string) => string
+  resolveFontSize?: (size: string) => string
+  resolveBreakpoint?: (breakpoint: string) => string
+  redisExpire?: (key: string, ttlSeconds: number) => string
+  redisTtl?: (key: string) => string
+  redisGetConfig?: () => string
+  redisShutdown?: () => string
+  redisSyncNodes?: () => string
+  resetCacheStats?: () => void
 }
 
 export interface NativeTransformResult {
@@ -492,8 +517,44 @@ export const getNativeBridge = (): NativeBridge => {
       try {
         const binding = _loadNative(result.path) as NativeBridge
         if (isValidNativeBridge(binding)) {
-          nativeBridge = binding
-          log("Native bridge loaded successfully from:", result.path)
+          const toCamelCase = (str: string): string => {
+            return str.replace(/_([a-z0-9])/g, (_, g) => g.toUpperCase())
+          }
+          nativeBridge = new Proxy(binding, {
+            get(target, prop) {
+              if (typeof prop === "string") {
+                if (prop in target) {
+                  return target[prop as keyof typeof target]
+                }
+                const camelKey = toCamelCase(prop)
+                if (camelKey in target) {
+                  const val = target[camelKey as keyof typeof target]
+                  if (typeof val === "function") {
+                    return (val as Function).bind(target)
+                  }
+                  return val
+                }
+                const napiKey = `${camelKey}Napi`
+                if (napiKey in target) {
+                  const val = target[napiKey as keyof typeof target]
+                  if (typeof val === "function") {
+                    return (val as Function).bind(target)
+                  }
+                  return val
+                }
+                const napiInnerKey = `${camelKey}NapiInner`
+                if (napiInnerKey in target) {
+                  const val = target[napiInnerKey as keyof typeof target]
+                  if (typeof val === "function") {
+                    return (val as Function).bind(target)
+                  }
+                  return val
+                }
+              }
+              return target[prop as keyof typeof target]
+            }
+          }) as NativeBridge
+          log("Native bridge loaded successfully and proxy-wrapped from:", result.path)
           return nativeBridge
         }
       } catch (e) {
@@ -641,4 +702,15 @@ export {
   resolve_conflict_group,
   resolve_theme_value,
   resolve_simple_variants,
+  generate_css,
+  generate_css_batch,
+  resolve_color_cached,
+  resolve_spacing_cached,
+  resolve_font_size_cached,
+  reset_resolver_pool_stats,
+  get_week6_features_status,
+  get_memory_stats_native,
+  get_memory_recommendations_native,
+  estimate_optimal_cache_config_native,
+  reset_memory_stats,
 } from "./nativeBridgeWrappers"

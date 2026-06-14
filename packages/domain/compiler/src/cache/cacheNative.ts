@@ -6,6 +6,8 @@
  */
 
 import { getNativeBridge } from "../nativeBridge"
+import { type ResolverPoolStatsResult } from "../nativeBridgeWrappers"
+export { type ResolverPoolStatsResult }
 
 /**
  * Cache optimization hints and recommendations
@@ -330,4 +332,93 @@ export function cachePriority(mtimeMs: number, sizeBytes: number, hitCount: numb
   const native = getNativeBridge()
   if (!native?.cache_priority) throw new Error("cache_priority not available")
   return native.cache_priority(mtimeMs, sizeBytes, hitCount)
+}
+
+/**
+ * Get theme resolver pool statistics.
+ *
+ * @returns Resolver pool statistics (hits, misses, etc.)
+ */
+export function getResolverPoolStats(): ResolverPoolStatsResult {
+  const native = getNativeBridge()
+  if (!native?.getResolverPoolStats) throw new Error("getResolverPoolStats not available")
+  const statsJson = native.getResolverPoolStats()
+  try {
+    return JSON.parse(statsJson)
+  } catch {
+    return {
+      hits: 0,
+      misses: 0,
+      total: 0,
+      hit_rate: 0,
+      cached_resolvers: 0,
+    }
+  }
+}
+
+/**
+ * Clear and reset the theme resolver pool.
+ *
+ * @returns Status of the operation
+ */
+export function clearResolverPool(): { status: string } {
+  const native = getNativeBridge()
+  if (!native?.clearResolverPool) throw new Error("clearResolverPool not available")
+  const resultJson = native.clearResolverPool()
+  try {
+    return JSON.parse(resultJson)
+  } catch {
+    return { status: "error" }
+  }
+}
+
+/**
+ * Resolve a color value using the resolver pool (cached per themeId)
+ *
+ * @param themeId - Unique theme identifier
+ * @param color - Color name or path
+ * @param configJson - Theme configuration as JSON string
+ * @returns Resolved color value
+ */
+export function resolveColorCached(themeId: number, color: string, configJson: string): string {
+  const native = getNativeBridge()
+  if (!native?.resolveColorCached) throw new Error("resolveColorCached not available")
+  return native.resolveColorCached(themeId, color, configJson)
+}
+
+/**
+ * Resolve a spacing value using the resolver pool (cached per themeId)
+ *
+ * @param themeId - Unique theme identifier
+ * @param spacing - Spacing key or path
+ * @param configJson - Theme configuration as JSON string
+ * @returns Resolved spacing value
+ */
+export function resolveSpacingCached(themeId: number, spacing: string, configJson: string): string {
+  const native = getNativeBridge()
+  if (!native?.resolveSpacingCached) throw new Error("resolveSpacingCached not available")
+  return native.resolveSpacingCached(themeId, spacing, configJson)
+}
+
+/**
+ * Resolve a font size value using the resolver pool (cached per themeId)
+ *
+ * @param themeId - Unique theme identifier
+ * @param size - Font size key or path
+ * @param configJson - Theme configuration as JSON string
+ * @returns Resolved font size value
+ */
+export function resolveFontSizeCached(themeId: number, size: string, configJson: string): string {
+  const native = getNativeBridge()
+  if (!native?.resolveFontSizeCached) throw new Error("resolveFontSizeCached not available")
+  return native.resolveFontSizeCached(themeId, size, configJson)
+}
+
+/**
+ * Reset resolver pool statistics while keeping cached resolvers.
+ */
+export function resetResolverPoolStats(): void {
+  const native = getNativeBridge()
+  if (!native?.resetResolverPoolStats) throw new Error("resetResolverPoolStats not available")
+  native.resetResolverPoolStats()
 }

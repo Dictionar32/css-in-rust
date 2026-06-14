@@ -120,3 +120,108 @@ export function mergeCssDeclarationsNative(cssChunks: string[]) {
   if (!native?.mergeCssDeclarations) throw new Error("mergeCssDeclarations not available")
   return native.mergeCssDeclarations(cssChunks)
 }
+
+// ── TYPE DEFINITIONS: Analysis & Memory Profiling ───────────────────────────
+
+export interface MemoryStats {
+  status: string
+  memory: {
+    allocated_bytes: number
+    freed_bytes: number
+    in_use_bytes: number
+    allocated_mb: number
+    freed_mb: number
+    in_use_mb: number
+  }
+  system: {
+    cache_entries: number
+    active_operations: number
+  }
+}
+
+export interface MemoryRecommendations {
+  status: string
+  current_memory_mb: number
+  recommendation: string
+  priority: string
+  suggestions: string[]
+}
+
+export interface OptimalCacheConfigAnalysis {
+  status: string
+  workload_type: string
+  expected_entries: number
+  recommended_backend: string
+  recommended_capacity: number
+  estimated_memory_mb: number
+  ttl_seconds: number
+  details: {
+    backend_explanation: string
+    capacity_explanation: string
+    memory_estimate: string
+  }
+}
+
+export interface Week6FeaturesStatus {
+  status: string
+  week: number
+  features: Record<string, {
+    implemented: boolean
+    status: string
+    capacity?: string
+    hit_rate_optimization?: boolean
+    metrics?: string[]
+  }>
+  optimization_hints: Record<string, string>
+}
+
+// ── EXPORTED WRAPPERS ───────────────────────────────────────────────────────
+
+/**
+ * Get Week 6 features status.
+ */
+export function getWeek6FeaturesStatus(): Week6FeaturesStatus {
+  const native = getNativeBridge()
+  if (!native?.getWeek6FeaturesStatus) throw new Error("getWeek6FeaturesStatus not available")
+  const resultJson = native.getWeek6FeaturesStatus()
+  return JSON.parse(resultJson)
+}
+
+/**
+ * Get current memory statistics from native Rust engine.
+ */
+export function getMemoryStatsNative(): MemoryStats {
+  const native = getNativeBridge()
+  if (!native?.getMemoryStatsNative) throw new Error("getMemoryStatsNative not available")
+  const resultJson = native.getMemoryStatsNative()
+  return JSON.parse(resultJson)
+}
+
+/**
+ * Get memory recommendations based on current usage.
+ */
+export function getMemoryRecommendationsNative(): MemoryRecommendations {
+  const native = getNativeBridge()
+  if (!native?.getMemoryRecommendationsNative) throw new Error("getMemoryRecommendationsNative not available")
+  const resultJson = native.getMemoryRecommendationsNative()
+  return JSON.parse(resultJson)
+}
+
+/**
+ * Estimate optimal cache config based on workload and entries count.
+ */
+export function estimateOptimalCacheConfigNative(workloadType: string, expectedEntries: number): OptimalCacheConfigAnalysis {
+  const native = getNativeBridge()
+  if (!native?.estimateOptimalCacheConfigNative) throw new Error("estimateOptimalCacheConfigNative not available")
+  const resultJson = native.estimateOptimalCacheConfigNative(workloadType, expectedEntries)
+  return JSON.parse(resultJson)
+}
+
+/**
+ * Reset memory statistics tracking counters.
+ */
+export function resetMemoryStats(): void {
+  const native = getNativeBridge()
+  if (!native?.resetMemoryStats) throw new Error("resetMemoryStats not available")
+  native.resetMemoryStats()
+}

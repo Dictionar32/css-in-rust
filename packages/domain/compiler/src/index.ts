@@ -47,9 +47,6 @@ export * from './watch'
 // These are the ONLY scanning/generation paths for production builds
 // All must go through native Rust module — fail-fast if unavailable
 
-export { scanWorkspaceSynchronously } from './scannerSync'
-export { generateCssSync } from './cssGeneratorSync'
-
 // ═══════════════════════════════════════════════════════════════════════════
 // TRANSFORM & CORE FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -366,9 +363,9 @@ export const fileToRoute = (filepath: string): string | null => {
   if (normalized.includes("/layout.") || normalized.includes("/loading.") || normalized.includes("/error.")) {
     return "__global"
   }
-  const pageMatch = normalized.match(/\/app\/(.+?)\/page\.[tj]sx?$/)
+  const pageMatch = normalized.match(/(?:^|\/)app\/(.+?)\/page\.[tj]sx?$/)
   if (pageMatch) return `/${pageMatch[1]}`
-  const rootPage = normalized.match(/\/app\/page\.[tj]sx?$/)
+  const rootPage = normalized.match(/(?:^|\/)app\/page\.[tj]sx?$/)
   if (rootPage) return "/"
   return null
 }

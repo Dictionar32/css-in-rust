@@ -1,4 +1,4 @@
-﻿//! ThemeConfig - Tailwind theme configuration
+//! ThemeConfig - Tailwind theme configuration
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -8,18 +8,25 @@ use std::fmt;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThemeConfig {
     /// Color definitions
+    #[serde(default)]
     pub colors: HashMap<String, ThemeValue>,
     /// Spacing values
+    #[serde(default)]
     pub spacing: HashMap<String, String>,
     /// Font sizes
+    #[serde(default)]
     pub font_sizes: HashMap<String, Vec<String>>,
     /// Opacity scale
+    #[serde(default)]
     pub opacity: HashMap<String, String>,
     /// Responsive breakpoints
+    #[serde(default)]
     pub breakpoints: HashMap<String, String>,
     /// Custom utilities defined by user
+    #[serde(default)]
     pub extend: HashMap<String, HashMap<String, String>>,
     /// Dark mode strategy
+    #[serde(default, alias = "darkMode")]
     pub dark_mode: DarkModeStrategy,
 }
 

@@ -26,7 +26,7 @@ pub struct AnalyzerReport {
 ///
 /// `files_json` is a JSON string: `[{"file":"...","classes":["cls1","cls2"]},...]`
 /// This mirrors the ScanWorkspaceResult shape from @tailwind-styled/scanner.
-#[napi]
+#[napi(js_name = "analyzeClassesWorkspace")]
 pub fn analyze_classes(files_json: String, root: String, top_n: u32) -> AnalyzerReport {
     // Parse input JSON — fallback to empty on any parse error
     let files: Vec<serde_json_classes::FileEntry> =

@@ -181,6 +181,33 @@ export function minifyCss(css: string): string {
 }
 
 /**
+ * Generate CSS from a single CSS rule representation
+ * 
+ * @param ruleJson - JSON representation of CssRule
+ * @param minify - Whether to minify the CSS output
+ * @returns Generated CSS string
+ */
+export function generateCss(ruleJson: string, minify?: boolean | null): string {
+  const native = getNativeBridge()
+  if (!native?.generate_css) throw new Error("generate_css not available")
+  return native.generate_css(ruleJson, minify)
+}
+
+/**
+ * Generate CSS from multiple CSS rules in batch
+ * 
+ * @param rulesJson - JSON array of CssRule objects
+ * @param minify - Whether to minify the CSS output
+ * @returns Combined CSS string
+ */
+export function generateCssBatch(rulesJson: string, minify?: boolean | null): string {
+  const native = getNativeBridge()
+  if (!native?.generate_css_batch) throw new Error("generate_css_batch not available")
+  return native.generate_css_batch(rulesJson, minify)
+}
+
+
+/**
  * Compile animation from from/to states
  * Generates @keyframes and animation rule
  *

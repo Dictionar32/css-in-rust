@@ -14,6 +14,19 @@
 import { BaseManager, ManagerConfig } from './BaseManager'
 import { getNativeBridge } from '../nativeBridge'
 import { performance } from 'perf_hooks'
+import {
+  watch_files,
+  stop_watching,
+  get_watch_events,
+  get_watch_performance,
+  clear_watch_stats,
+  get_active_watches,
+  set_watch_metrics,
+  set_watch_aggregation,
+  type WatchHandleResult,
+  type WatchFileEvent,
+  type WatchPerformanceResult,
+} from '../nativeBridgeWrappers'
 
 export interface WatchManagerConfig extends ManagerConfig {
   enabled?: boolean
@@ -657,7 +670,7 @@ export class WatchManager extends BaseManager {
 
   /**
    * Task 3.2: Clear all watches
-   * Integrates Rust watch_clear_all function
+   * Integrates Rust watch_clear_all function and native infrastructure layer
    */
   async clearAllWatches(): Promise<void> {
     this.ensureReady()
@@ -673,6 +686,13 @@ export class WatchManager extends BaseManager {
             console.warn('[WatchManager] Rust watch_clear_all failed:', err)
           }
         }
+      }
+
+      // Also clear native infrastructure watcher stats
+      try {
+        clear_watch_stats()
+      } catch {
+        // Native stats clearing not available
       }
 
       // Clear local state
@@ -960,6 +980,160 @@ export class WatchManager extends BaseManager {
       const error = err instanceof Error ? err : new Error(String(err))
       this.handleError(error, 'getPluginHooks', { logOnly: true })
       throw error
+    }
+  }
+
+  // ── NEW: Infrastructure watcher layer (napi_bridge_watch.rs) ─────────────
+
+  /**
+   * Start a native Rust file watcher (infrastructure layer)
+   *
+   * Calls Rust function: watchFiles (napi_bridge_watch.rs)
+   * Low-level alternative to startWatch() — uses the Rust watcher infrastructure
+   * directly for maximum performance. Useful for custom watch scenarios.
+   *
+   * @param rootDir Root directory to watch
+   * @param options Watch options (patterns, debounce, etc.)
+   * @returns Watcher result with handle ID and initial file count
+   */
+  startWatchNative(
+    rootDir: string,
+    options?: { patterns?: string[]; debounce_ms?: number; recursive?: boolean }
+  ): WatchHandleResult {
+    try {
+      return watch_files(rootDir, options)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'startWatchNative')
+      throw error
+    }
+  }
+
+  /**
+   * Stop a native Rust file watcher (infrastructure layer)
+   *
+   * Calls Rust function: stopWatching (napi_bridge_watch.rs)
+   *
+   * @param handleId Watcher handle ID from startWatchNative
+   */
+  stopWatchNative(handleId: number): { status: string } {
+    try {
+      return stop_watching(handleId)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'stopWatchNative', { logOnly: true })
+      return { status: 'error' }
+    }
+  }
+
+  /**
+   * Drain queued events from a native Rust file watcher
+   *
+   * Calls Rust function: getWatchEvents (napi_bridge_watch.rs)
+   *
+   * @param handleId Watcher handle ID
+   * @param maxEvents Maximum events to drain (null = all)
+   * @returns Queued events from the Rust watcher
+   */
+  getWatchEventsNative(handleId: number, maxEvents?: number): WatchFileEvent[] {
+    try {
+      return get_watch_events(handleId, maxEvents)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getWatchEventsNative', { logOnly: true })
+      return []
+    }
+  }
+
+  /**
+   * Get native Rust watcher performance metrics
+   *
+   * Calls Rust function: getWatchPerformance (napi_bridge_watch.rs)
+   * Returns latency, throughput, and event processing metrics from the Rust layer
+   */
+  getPerformanceMetrics(): WatchPerformanceResult {
+    try {
+      return get_watch_performance()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getPerformanceMetrics', { logOnly: true })
+      return {
+        avg_event_latency_ms: 0,
+        max_event_latency_ms: 0,
+        min_event_latency_ms: 0,
+        total_processed: 0,
+      }
+    }
+  }
+
+  /**
+   * Get number of active native Rust watchers
+   *
+   * Calls Rust function: getActiveWatches (napi_bridge_watch.rs)
+   * Returns the count of active watch handles in the Rust layer
+   */
+  getActiveWatchCount(): number {
+    try {
+      return get_active_watches()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'getActiveWatchCount', { logOnly: true })
+      return this.watchStates.size
+    }
+  }
+
+  /**
+   * Set a custom metric on the native Rust watcher
+   *
+   * Calls Rust function: setWatchMetrics (napi_bridge_watch.rs)
+   * Useful for tracking custom performance counters from TypeScript
+   *
+   * @param metricName Name of the metric (e.g., "css_gen_time_ms")
+   * @param value Metric value as string
+   */
+  setCustomMetric(metricName: string, value: string): { status: string; metric: string; value: string } {
+    try {
+      return set_watch_metrics(metricName, value)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'setCustomMetric', { logOnly: true })
+      return { status: 'error', metric: metricName, value }
+    }
+  }
+
+  /**
+   * Set event aggregation strategy for the native Rust watcher
+   *
+   * Calls Rust function: setWatchAggregation (napi_bridge_watch.rs)
+   * Controls how file change events are batched before delivery
+   *
+   * @param aggregationType "debounce" | "throttle" | "batch" | "immediate"
+   */
+  setAggregationStrategy(
+    aggregationType: 'debounce' | 'throttle' | 'batch' | 'immediate'
+  ): { status: string; aggregation_type: string } {
+    try {
+      return set_watch_aggregation(aggregationType)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'setAggregationStrategy', { logOnly: true })
+      return { status: 'error', aggregation_type: aggregationType }
+    }
+  }
+
+  /**
+   * Clear native Rust watcher statistics
+   *
+   * Calls Rust function: clearWatchStats (napi_bridge_watch.rs)
+   * Resets all native performance counters and latency history
+   */
+  clearNativeStats(): { status: string } {
+    try {
+      return clear_watch_stats()
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err))
+      this.handleError(error, 'clearNativeStats', { logOnly: true })
+      return { status: 'error' }
     }
   }
 

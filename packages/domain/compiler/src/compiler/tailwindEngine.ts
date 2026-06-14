@@ -10,6 +10,7 @@
 import { createRequire } from "node:module"
 import { getNativeBridge } from "../nativeBridge"
 import { generateCssNative as generateCssNativeImpl } from "./cssGeneratorNative"
+import { minifyCss } from "./cssCompilationNative"
 
 const require = createRequire(import.meta.url)
 
@@ -179,7 +180,8 @@ export async function runCssPipeline(
   classes: string[],
   cssEntryContent?: string,
   root?: string,
-  minify = true
+  minify = true,
+  minifier: "lightning" | "fast" = "lightning"
 ): Promise<CssPipelineResult> {
   // Deduplicate classes while preserving Array compatibility
   const filtered = classes.filter(Boolean)
@@ -192,7 +194,7 @@ export async function runCssPipeline(
   }
 
   // ✅ PHASE 0: Check cache first (30-40% faster for cache hits)
-  const cacheKey = _getCacheKey(unique, minify, cssEntryContent, root)
+  const cacheKey = _getCacheKey(unique, minify, cssEntryContent, root) + `|${minifier}`
   const cached = _cssCache.get(cacheKey)
   if (cached) {
     _cacheHits++
@@ -214,8 +216,15 @@ export async function runCssPipeline(
   rawCss = await generateCssNativeImpl(unique, { theme })
   usedRustCompiler = true
 
-  // Phase 2: Optional post-processing with LightningCSS (if minify=true)
-  const finalCss = minify ? postProcessWithLightning(rawCss) : rawCss
+  // Phase 2: Optional post-processing with LightningCSS or fast minifier (if minify=true)
+  let finalCss = rawCss
+  if (minify) {
+    if (minifier === "fast") {
+      finalCss = minifyCss(rawCss)
+    } else {
+      finalCss = postProcessWithLightning(rawCss)
+    }
+  }
 
   if (process.env.DEBUG?.includes("compiler")) {
     console.log(

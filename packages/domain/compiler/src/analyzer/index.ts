@@ -20,6 +20,11 @@ export {
   compileVariantTableNative,
   classifyAndSortClassesNative,
   mergeCssDeclarationsNative,
+  getWeek6FeaturesStatus,
+  getMemoryStatsNative,
+  getMemoryRecommendationsNative,
+  estimateOptimalCacheConfigNative,
+  resetMemoryStats,
   type DeadCodeResult,
   type ClassUsageItem,
   type ProcessedCssResult,
@@ -27,6 +32,10 @@ export {
   type VariantTableResult,
   type ClassifyResult,
   type MergeResult,
+  type MemoryStats,
+  type MemoryRecommendations,
+  type OptimalCacheConfigAnalysis,
+  type Week6FeaturesStatus,
 } from './analyzerNative'
 
 export {

@@ -63,8 +63,15 @@ pub fn generate_css(rule_json: String, minify: Option<bool>) -> napi::Result<Str
     init_css_cache();
     let cache = CSS_GEN_CACHE.get().unwrap();
     
+    let minify_css = minify.unwrap_or(false);
+    let cache_key = if minify_css {
+        format!("{}:minified", rule_json)
+    } else {
+        format!("{}:raw", rule_json)
+    };
+
     // Check cache first
-    if let Some(cached) = cache.get(&rule_json) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -72,11 +79,10 @@ pub fn generate_css(rule_json: String, minify: Option<bool>) -> napi::Result<Str
     let rule: CssRule = parse_json(&rule_json, "CssRule")?;
 
     // Build CSS string
-    let minify_css = minify.unwrap_or(false);
     let css = build_css_string(&rule, minify_css);
 
     // Store in cache
-    cache.put(rule_json, css.clone());
+    cache.put(cache_key, css.clone());
 
     Ok(css)
 }
@@ -113,8 +119,15 @@ pub fn compile_to_css(input: String, minify: Option<bool>) -> napi::Result<Strin
     init_css_cache();
     let cache = CSS_GEN_CACHE.get().unwrap();
     
+    let minify_css = minify.unwrap_or(false);
+    let cache_key = if minify_css {
+        format!("{}:minified", input)
+    } else {
+        format!("{}:raw", input)
+    };
+
     // Check cache first
-    if let Some(cached) = cache.get(&input) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -149,11 +162,10 @@ pub fn compile_to_css(input: String, minify: Option<bool>) -> napi::Result<Strin
         pseudo: None,
     };
 
-    let minify_css = minify.unwrap_or(false);
     let css = build_css_string(&rule, minify_css);
 
     // Store in cache
-    cache.put(input, css.clone());
+    cache.put(cache_key, css.clone());
 
     Ok(css)
 }
@@ -171,7 +183,8 @@ pub fn compile_to_css_batch(inputs: Vec<String>, minify: Option<bool>) -> napi::
         .collect();
 
     let css_strings = results?;
-    Ok(css_strings.join("\n"))
+    let join_str = if minify_css { "" } else { "\n" };
+    Ok(css_strings.join(join_str))
 }
 
 /// Minify CSS string (remove whitespace and comments)
@@ -294,3 +307,84 @@ fn property_for_prefix(prefix: &str) -> String {
     }
     .to_string()
 }
+
+#[napi(object)]
+pub struct ProcessedCssResult {
+    pub css: String,
+    pub size_bytes: u32,
+    pub resolved_classes: Vec<String>,
+    pub unknown_classes: Vec<String>,
+}
+
+#[napi]
+pub fn process_tailwind_css_lightning(css: String) -> napi::Result<ProcessedCssResult> {
+    let result = crate::domain::css_compiler::process_tailwind_css_lightning(css);
+    Ok(ProcessedCssResult {
+        css: result.css,
+        size_bytes: result.size_bytes as u32,
+        resolved_classes: Vec::new(),
+        unknown_classes: Vec::new(),
+    })
+}
+
+#[napi]
+pub fn process_tailwind_css_with_targets(
+    css: String,
+    targets: Option<String>,
+) -> napi::Result<ProcessedCssResult> {
+    let target_list = targets
+        .map(|t| t.split(',').map(|s| s.trim().to_string()).collect())
+        .unwrap_or_else(Vec::new);
+    let result = crate::domain::css_compiler::process_tailwind_css_with_targets(css, target_list);
+    Ok(ProcessedCssResult {
+        css: result.css,
+        size_bytes: result.size_bytes as u32,
+        resolved_classes: Vec::new(),
+        unknown_classes: Vec::new(),
+    })
+}
+
+/// Eliminate unused class rules from CSS
+#[napi]
+pub fn eliminate_dead_css(css: String, dead_classes: Vec<String>) -> napi::Result<String> {
+    use regex::Regex;
+    let mut result = css;
+    for dead_class in dead_classes {
+        let escaped = regex::escape(&dead_class);
+        let pattern = r"\.CLASS\s*\{[^{}]*\}".replace("CLASS", &escaped);
+        if let Ok(re) = Regex::new(&pattern) {
+            result = re.replace_all(&result, "").into_owned();
+        }
+    }
+    Ok(result)
+}
+
+/// Optimize CSS: deduplicate rules with identical declaration blocks
+#[napi]
+pub fn optimize_css(css: String) -> napi::Result<String> {
+    use regex::Regex;
+    use std::collections::BTreeMap;
+    
+    let re = Regex::new(r"([^{}]+)\s*\{([^{}]*)\}").unwrap();
+    let mut rules: BTreeMap<String, Vec<String>> = BTreeMap::new();
+    
+    for cap in re.captures_iter(&css) {
+        if let (Some(sel), Some(decl)) = (cap.get(1), cap.get(2)) {
+            let selector = sel.as_str().trim().to_string();
+            let declaration = decl.as_str().trim().to_string();
+            rules.entry(declaration).or_default().push(selector);
+        }
+    }
+    
+    if rules.is_empty() {
+        return Ok(css);
+    }
+    
+    let mut optimized = Vec::new();
+    for (decl, selectors) in rules {
+        optimized.push(format!("{} {{ {} }}", selectors.join(", "), decl));
+    }
+    
+    Ok(optimized.join("\n"))
+}
+

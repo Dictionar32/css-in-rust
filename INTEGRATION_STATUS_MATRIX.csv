@@ -19,49 +19,49 @@ redis_monitor,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.monitor()
 redis_sync_nodes,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.syncNodes(),LOW,0.5,✅ INTEGRATED,Cluster sync
 redis_get_config,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.getConfig(),LOW,0.5,✅ INTEGRATED,Get config
 redis_shutdown,Redis,napi_bridge_redis,✅ Yes,✅ Yes,✅ RedisManager.shutdown(),LOW,0.5,✅ INTEGRATED,Graceful shutdown
-watch_files,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,4,❌ NOT INTEGRATED,Core watch lifecycle - CRITICAL
-stop_watching,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Stop watching handle
-get_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Watch statistics
-get_watch_events,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Poll file events - CRITICAL
-get_watch_performance,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Performance metrics
-clear_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,0.5,❌ NOT INTEGRATED,Reset statistics
-get_active_watches,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,0.5,❌ NOT INTEGRATED,Count active watches
-set_watch_metrics,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Configure metrics
-set_watch_aggregation,Watch,napi_bridge_watch,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,1,❌ NOT INTEGRATED,Event aggregation mode
+watch_files,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.startWatchNative(),🔴 CRITICAL,4,✅ INTEGRATED,Core watch lifecycle - CRITICAL
+stop_watching,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.stopWatchNative(),🔴 CRITICAL,2,✅ INTEGRATED,Stop watching handle
+get_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.getWatchStats(),🔴 CRITICAL,1,✅ INTEGRATED,Watch statistics
+get_watch_events,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.getWatchEventsNative(),🔴 CRITICAL,2,✅ INTEGRATED,Poll file events - CRITICAL
+get_watch_performance,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.getPerformanceMetrics(),🔴 CRITICAL,1,✅ INTEGRATED,Performance metrics
+clear_watch_stats,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.clearNativeStats(),🔴 CRITICAL,0.5,✅ INTEGRATED,Reset statistics
+get_active_watches,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.getActiveWatchCount(),🔴 CRITICAL,0.5,✅ INTEGRATED,Count active watches
+set_watch_metrics,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.setCustomMetric(),🔴 CRITICAL,1,✅ INTEGRATED,Configure metrics
+set_watch_aggregation,Watch,napi_bridge_watch,✅ Yes,✅ Yes,✅ WatchManager.setAggregationStrategy(),🔴 CRITICAL,1,✅ INTEGRATED,Event aggregation mode
 resolve_color,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveColor(),LOW,0.5,✅ INTEGRATED,Color resolution
 resolve_spacing,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveSpacing(),LOW,0.5,✅ INTEGRATED,Spacing resolution
 resolve_font_size,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveFontSize(),LOW,0.5,✅ INTEGRATED,Font size resolution
 resolve_breakpoint,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveBreakpoint(),LOW,0.5,✅ INTEGRATED,Breakpoint resolution
-apply_opacity,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Opacity modifier - NOT USED
+apply_opacity,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.applyOpacity(),🟡 MEDIUM,2,✅ INTEGRATED,Opacity modifier
 clear_theme_cache_napi,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.clearCache(),LOW,0.5,✅ INTEGRATED,Cache clearing
-get_theme_cache_stats,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Cache statistics - NOT USED
-resolve_color_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached color resolution - NOT USED
-resolve_spacing_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached spacing resolution - NOT USED
-resolve_font_size_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Cached font size - NOT USED
+get_theme_cache_stats,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.getThemeCacheStats(),🟡 MEDIUM,1,✅ INTEGRATED,Cache statistics
+resolve_color_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveColorCached(),🟡 MEDIUM,3,✅ INTEGRATED,Cached color resolution
+resolve_spacing_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveSpacingCached(),🟡 MEDIUM,3,✅ INTEGRATED,Cached spacing resolution
+resolve_font_size_cached,Theme,napi_bridge_theme,✅ Yes,✅ Yes,✅ ThemeManager.resolveFontSizeCached(),🟡 MEDIUM,3,✅ INTEGRATED,Cached font size
 parse_class,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Single class parsing
 parse_classes,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Batch class parsing
-analyze_classes,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Pattern analysis - NOT USED
+analyze_classes,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ AnalysisManager.analyzeClasses(),🟡 MEDIUM,2,✅ INTEGRATED,Pattern analysis
 compile_class_napi,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ Parsing pipeline,LOW,0.5,✅ INTEGRATED,Full compilation
-get_parse_stats,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Parse statistics - NOT USED
-clear_parse_cache_napi,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,0.5,⏳ PARTIALLY INTEGRATED,Cache management - NOT USED
+get_parse_stats,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ AnalysisManager.getParseStats(),🟡 MEDIUM,1,✅ INTEGRATED,Parse statistics
+clear_parse_cache_napi,Parsing,napi_bridge_parsing,✅ Yes,✅ Yes,✅ AnalysisManager.clearParseCache(),🟡 MEDIUM,0.5,✅ INTEGRATED,Cache management
 generate_css_native,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssGeneratorNative,LOW,0.5,✅ INTEGRATED,Main CSS generator
-generate_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Rule-based generation - NOT USED
-generate_css_batch,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Batch processing - NOT USED
-compile_to_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Full compile pipeline - NOT USED
-minify_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,CSS minification - NOT USED
-configure_cache_backend,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,3,⏳ PARTIALLY INTEGRATED,Dynamic configuration - NOT USED
+generate_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssGeneratorNative / cssCompilationNative,🟡 MEDIUM,2,✅ INTEGRATED,Rule-based generation
+generate_css_batch,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssGeneratorNative / cssCompilationNative,🟡 MEDIUM,3,✅ INTEGRATED,Batch processing
+compile_to_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssCompilationNative,🟡 MEDIUM,2,✅ INTEGRATED,Full compile pipeline
+minify_css,CSS,napi_bridge_css,✅ Yes,✅ Yes,✅ cssCompilationNative / cssGeneratorNative,🟡 MEDIUM,2,✅ INTEGRATED,CSS minification
+configure_cache_backend,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ AnalysisManager.configureCacheBackend(),🟡 MEDIUM,3,✅ INTEGRATED,Dynamic configuration
 get_cache_stats,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ Multi-manager,LOW,0.5,✅ INTEGRATED,Cache statistics
-get_recommended_cache_config,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Config recommendations - NOT USED
-clear_all_caches_napi,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Global cache clear - NOT USED
-get_cache_optimization_hints,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Optimization hints - NOT USED
-estimate_streaming_batch_size,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,2,⏳ PARTIALLY INTEGRATED,Batch estimation - NOT USED
+get_recommended_cache_config,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ AnalysisManager.getRecommendations(),🟡 MEDIUM,2,✅ INTEGRATED,Config recommendations
+clear_all_caches_napi,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ ThemeManager.clearAllNativeCaches(),🟡 MEDIUM,1,✅ INTEGRATED,Global cache clear
+get_cache_optimization_hints,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ AnalysisManager.getOptimizationHints(),🟡 MEDIUM,1,✅ INTEGRATED,Optimization hints
+estimate_streaming_batch_size,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ AnalysisManager.estimateOptimalCacheConfig(),🟡 MEDIUM,2,✅ INTEGRATED,Batch estimation
 get_resolver_pool_stats,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ Multi-manager,LOW,0.5,✅ INTEGRATED,Resolver pool metrics
-clear_resolver_pool,Cache,napi_bridge_cache,✅ Yes,✅ Yes,❌ NOT USED,🟡 MEDIUM,1,⏳ PARTIALLY INTEGRATED,Pool cleanup - NOT USED
-get_week6_features_status,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,1,❌ NOT INTEGRATED,Feature status
-get_memory_stats_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🔴 CRITICAL,2,❌ NOT INTEGRATED,Memory tracking - IMPORTANT
-get_memory_recommendations_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,2,❌ NOT INTEGRATED,Memory recommendations
-estimate_optimal_cache_config_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,3,❌ NOT INTEGRATED,Cache config estimation
-reset_memory_stats,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,❌ NOT INTEGRATED,🟡 MEDIUM,0.5,❌ NOT INTEGRATED,Reset statistics
+clear_resolver_pool,Cache,napi_bridge_cache,✅ Yes,✅ Yes,✅ AnalysisManager.clearResolverPool(),🟡 MEDIUM,1,✅ INTEGRATED,Pool cleanup
+get_week6_features_status,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,✅ AnalysisManager.getWeek6FeaturesStatus(),🟡 MEDIUM,1,✅ INTEGRATED,Feature status
+get_memory_stats_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,✅ AnalysisManager.getMemoryStatsNative(),🔴 CRITICAL,2,✅ INTEGRATED,Memory tracking - IMPORTANT
+get_memory_recommendations_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,✅ AnalysisManager.getMemoryRecommendationsNative(),🟡 MEDIUM,2,✅ INTEGRATED,Memory recommendations
+estimate_optimal_cache_config_native,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,✅ AnalysisManager.estimateOptimalCacheConfigNative(),🟡 MEDIUM,3,✅ INTEGRATED,Cache config estimation
+reset_memory_stats,Analysis,napi_bridge_analysis,✅ Yes,✅ Yes,✅ AnalysisManager.resetMemoryStats(),🟡 MEDIUM,0.5,✅ INTEGRATED,Reset statistics
 error_to_napi,Error/Utility,napi_bridge_errors,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,Error conversion
 validate_string_input,Error/Utility,napi_bridge_errors,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,Input validation
 parse_json,Marshalling,napi_bridge_marshalling,✅ Yes,✅ Yes,✅ Internal,LOW,0.5,✅ INTEGRATED,JSON parsing

@@ -9,7 +9,7 @@ import { debugLog } from "./utils"
 
 const isAnalyzerModule = (module: unknown): module is NativeAnalyzerBinding => {
   const candidate = module as Partial<NativeAnalyzerBinding> | null | undefined
-  return typeof candidate?.analyzeClasses === "function"
+  return typeof candidate?.analyzeClasses === "function" || typeof candidate?.analyzeClassesWorkspace === "function"
 }
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ const createAnalyzerBindingLoader = () => {
         runtimeDir,
         candidates,
         isValid: isAnalyzerModule,
-        invalidExportMessage: "Module loaded but missing `analyzeClasses` export.",
+        invalidExportMessage: "Module loaded but missing `analyzeClasses` or `analyzeClassesWorkspace` export.",
       })
 
       if (binding) {
@@ -93,7 +93,7 @@ export async function requireNativeBinding(): Promise<NativeAnalyzerBinding> {
     runtimeDir,
     candidates,
     isValid: isAnalyzerModule,
-    invalidExportMessage: "Module loaded but missing `analyzeClasses` export.",
+    invalidExportMessage: "Module loaded but missing `analyzeClasses` or `analyzeClassesWorkspace` export.",
   })
 
   const lines = [

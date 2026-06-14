@@ -27,6 +27,8 @@
 pub use crate::infrastructure::napi_bridge_css::{
     generate_css_native, generate_css, generate_css_batch, 
     compile_to_css, compile_to_css_batch, minify_css,
+    process_tailwind_css_lightning, process_tailwind_css_with_targets,
+    eliminate_dead_css, optimize_css,
 };
 
 pub use crate::infrastructure::napi_bridge_parsing::{
