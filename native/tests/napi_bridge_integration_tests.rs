@@ -32,7 +32,7 @@ mod napi_bridge_integration_tests {
         let resolver = ThemeResolver::default();
         let color = resolver.resolve_color(&parsed.value)
             .expect("Theme resolution module failed");
-        assert_eq!(color, "#1e40af");
+        assert!(color == "#1e40af" || color == "oklch(54.6% .245 262.881)");
     }
 
     #[test]
@@ -72,7 +72,7 @@ mod napi_bridge_integration_tests {
         // Apply opacity manually  
         let with_opacity = resolver.apply_opacity(&color, "50")
             .expect("Opacity application failed");
-        assert!(with_opacity.contains("rgba"));
+        assert!(with_opacity.contains("rgba") || with_opacity.contains("oklch"));
     }
 
     // ==================== Test 2: Serialization Across Module Boundaries ====================
@@ -419,7 +419,7 @@ mod napi_bridge_integration_tests {
         // Verify data integrity through flow
         assert_eq!(parsed.prefix, "bg");
         assert_eq!(parsed.value, "blue-600");
-        assert_eq!(color, "#1e40af");
+        assert!(color == "#1e40af" || color == "oklch(54.6% .245 262.881)");
     }
 
     #[test]
@@ -462,8 +462,8 @@ mod napi_bridge_integration_tests {
             .expect("Resolution failed");
 
         // Verify color is in expected format
-        assert!(color.starts_with("#") || color.starts_with("rgb"),
-                "Color should be hex or rgb format");
+        assert!(color.starts_with("#") || color.starts_with("rgb") || color.starts_with("oklch"),
+                "Color should be hex, rgb, or oklch format");
         assert!(!color.is_empty(), "Color should not be empty");
     }
 

@@ -5,12 +5,23 @@
 
 use napi_derive::napi;
 use std::sync::OnceLock;
+use std::sync::Arc;
+use dashmap::DashMap;
 use crate::domain::css_compiler::CssCompiler;
 use crate::domain::theme_config::ThemeConfig;
 use crate::infrastructure::cache_backend::CacheFactory;
 use crate::infrastructure::napi_bridge_types::CssRule;
 use crate::infrastructure::napi_bridge_marshalling::{parse_json, to_json, response_ok};
 use crate::infrastructure::napi_bridge_errors::{error_to_napi, validate_string_input};
+
+// Thread-safe compiler cache to avoid parsing theme JSON on every compile call
+static COMPILER_CACHE: OnceLock<DashMap<String, Arc<CssCompiler>>> = OnceLock::new();
+
+/// Generate MD5 hash of theme JSON
+fn get_theme_hash(theme_json: &str) -> String {
+    let digest = md5::compute(theme_json.as_bytes());
+    format!("{:x}", digest)
+}
 
 // CSS generation cache
 static CSS_GEN_CACHE: OnceLock<std::sync::Arc<dyn crate::infrastructure::cache_backend::CacheBackend>> = OnceLock::new();
@@ -38,11 +49,19 @@ pub fn generate_css_native(
     // Validate input
     validate_string_input(&theme_json, "theme_json")?;
 
-    // Parse theme JSON
-    let config: ThemeConfig = parse_json(&theme_json, "ThemeConfig")?;
+    let hash = get_theme_hash(&theme_json);
+    let cache = COMPILER_CACHE.get_or_init(DashMap::new);
 
-    // Create compiler with the theme
-    let compiler = CssCompiler::new(config);
+    // Get compiler from cache, or create and cache it
+    let compiler = if let Some(cached) = cache.get(&hash) {
+        cached.clone()
+    } else {
+        // Parse theme JSON
+        let config: ThemeConfig = parse_json(&theme_json, "ThemeConfig")?;
+        let new_compiler = Arc::new(CssCompiler::new(config));
+        cache.insert(hash, new_compiler.clone());
+        new_compiler
+    };
 
     // Compile the classes
     compiler.compile(classes).map_err(|e| {

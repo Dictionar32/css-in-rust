@@ -4,6 +4,9 @@ use regex::Regex;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use smallvec::SmallVec;
+
+pub type VariantList = SmallVec<[crate::domain::variant::Variant; 4]>;
 
 use crate::ast_optimizer;
 pub(crate) use crate::domain::transform_components::{
@@ -46,7 +49,7 @@ pub struct ParsedClass {
     pub base: String,
     pub prefix: String,
     pub value: String,
-    pub variants: Vec<crate::domain::variant::Variant>,
+    pub variants: VariantList,
     pub variants_str: Vec<String>,
     pub modifier_type: Option<String>,
     pub modifier_value: Option<String>,
@@ -75,7 +78,7 @@ impl ParsedClass {
     /// Create a new ParsedClass with Variant enum
     pub fn new(
         raw: String,
-        variants: Vec<crate::domain::variant::Variant>,
+        variants: VariantList,
         prefix: String,
         value: String,
         modifier: Option<String>,

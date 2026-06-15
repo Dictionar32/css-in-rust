@@ -45,6 +45,12 @@ impl ThemeResolver {
             return Ok(cached);
         }
 
+        // Special CSS color keywords
+        if color == "current" || color == "transparent" || color == "inherit" {
+            self.cache.lock().unwrap().insert(cache_key, color.to_string());
+            return Ok(color.to_string());
+        }
+
         // Try to find in custom colors first
         if let Some(val) = self.config.get_color(color) {
             self.cache.lock().unwrap().insert(cache_key, val.clone());

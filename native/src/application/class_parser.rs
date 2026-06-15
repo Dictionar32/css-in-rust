@@ -55,7 +55,7 @@
 //! - Architecture Roadmap: `ARCHITECTURE_IMPROVEMENT_ROADMAP.md` (Issue #1)
 
 use crate::domain::error::ParseError;
-use crate::domain::transform::ParsedClass;
+use crate::domain::transform::{ParsedClass, VariantList};
 use crate::domain::variant::Variant;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -76,6 +76,8 @@ lazy_static! {
 pub struct ClassParser {
     /// Known CSS prefixes (e.g., "px", "bg", "text")
     known_prefixes: HashMap<&'static str, &'static str>,
+    /// Sorted list of known prefixes (by length descending)
+    sorted_prefixes: Vec<&'static str>,
 }
 
 impl ClassParser {
@@ -127,7 +129,13 @@ impl ClassParser {
         // Ring
         known_prefixes.insert("ring", "ring");
 
-        Self { known_prefixes }
+        let mut sorted_prefixes: Vec<&'static str> = known_prefixes.keys().copied().collect();
+        sorted_prefixes.sort_by(|a, b| b.len().cmp(&a.len()));
+
+        Self {
+            known_prefixes,
+            sorted_prefixes,
+        }
     }
 
     /// Parse a single Tailwind class string
@@ -144,31 +152,19 @@ impl ClassParser {
             return Err(ParseError::EmptyInput);
         }
 
-        // Split by ':' to extract variants
-        let parts: Vec<&str> = trimmed.split(':').collect();
-
-        if parts.is_empty() {
-            return Err(ParseError::InvalidSyntax {
-                class: class.to_string(),
-                position: 0,
-                reason: Some("empty class".to_string()),
-            });
-        }
-
-        // Last part is the main class (prefix-value/modifier or arbitrary)
-        let final_part = parts[parts.len() - 1];
-        let variant_parts = &parts[..parts.len() - 1];
+        // Split variants and main class, taking bracket notation into account
+        let (variant_parts, final_part) = self.split_class_variants(trimmed);
 
         // Check if final part is arbitrary value
         if final_part.starts_with('[') && final_part.ends_with(']') {
-            let mut variants = Vec::new();
-            for variant_str in variant_parts {
+            let mut variants = VariantList::new();
+            for variant_str in &variant_parts {
                 // Parse each variant string to Variant enum
                 if let Ok(variant) = Variant::from_str(variant_str) {
                     variants.push(variant);
                 }
             }
-            return self.parse_arbitrary(final_part).map(|parsed| {
+            return self.parse_arbitrary(&final_part).map(|parsed| {
                 ParsedClass::new(
                     class.to_string(),
                     variants,
@@ -182,8 +178,8 @@ impl ClassParser {
         }
 
         // Parse variants
-        let mut variants = Vec::new();
-        for variant_str in variant_parts {
+        let mut variants = VariantList::new();
+        for variant_str in &variant_parts {
             // Parse variant string to Variant enum
             match Variant::from_str(variant_str) {
                 Ok(variant) => variants.push(variant),
@@ -199,7 +195,7 @@ impl ClassParser {
         }
 
         // Parse the final segment: "prefix-value[/modifier]"
-        let (prefix, value, modifier) = self.parse_final_segment(final_part)?;
+        let (prefix, value, modifier) = self.parse_final_segment(&final_part)?;
 
         let is_arbitrary = value.starts_with('[') && value.ends_with(']');
         let arbitrary_declaration = if is_arbitrary && value.contains(':') {
@@ -221,8 +217,15 @@ impl ClassParser {
 
     /// Parse final segment to extract prefix, value, and modifier
     fn parse_final_segment(&self, segment: &str) -> Result<(String, String, Option<String>), ParseError> {
+        let mut is_negative = false;
+        let mut main_segment = segment;
+        if segment.starts_with('-') && segment.len() > 1 {
+            is_negative = true;
+            main_segment = &segment[1..];
+        }
+
         // Check for double slash
-        if segment.contains("//") {
+        if main_segment.contains("//") {
             return Err(ParseError::InvalidSyntax {
                 class: segment.to_string(),
                 position: segment.find("//").unwrap_or(0),
@@ -231,8 +234,8 @@ impl ClassParser {
         }
 
         // Check for modifier (after "/")
-        let (main, modifier) = if let Some(pos) = segment.rfind('/') {
-            let (m, mod_part) = segment.split_at(pos);
+        let (main, modifier) = if let Some(pos) = main_segment.rfind('/') {
+            let (m, mod_part) = main_segment.split_at(pos);
             let modifier_str = mod_part[1..].to_string();
 
             // Special case: single-digit fractions like "/2", "/3", "/4", "/5", "/6", "/12"
@@ -241,7 +244,7 @@ impl ClassParser {
                 || (modifier_str == "12" && m.ends_with(char::is_numeric)); // e.g. "11/12"
 
             if is_fraction {
-                (segment, None)
+                (main_segment, None)
             } else if !OPACITY_PERCENT_PATTERN.is_match(&modifier_str) {
                 return Err(ParseError::InvalidSyntax {
                     class: segment.to_string(),
@@ -252,12 +255,12 @@ impl ClassParser {
                 (m, Some(modifier_str))
             }
         } else {
-            (segment, None)
+            (main_segment, None)
         };
 
         // Find the prefix
         let prefix = self.extract_prefix(main)?;
-        let value = if main.len() > prefix.len() && main.chars().nth(prefix.len()) == Some('-') {
+        let mut value = if main.len() > prefix.len() && main.chars().nth(prefix.len()) == Some('-') {
             main[prefix.len() + 1..].to_string()
         } else if main == prefix {
             "default".to_string()
@@ -271,6 +274,10 @@ impl ClassParser {
                 position: prefix.len(),
                 reason: Some("missing value after prefix".to_string()),
             });
+        }
+
+        if is_negative {
+            value = format!("-{}", value);
         }
 
         // Validate matched brackets
@@ -288,11 +295,7 @@ impl ClassParser {
     /// Extract prefix from class segment
     fn extract_prefix(&self, segment: &str) -> Result<String, ParseError> {
         // Try known prefixes (longest match first)
-        let prefixes: Vec<&&str> = self.known_prefixes.keys().collect();
-        let mut prefixes: Vec<&str> = prefixes.iter().map(|s| **s).collect();
-        prefixes.sort_by(|a, b| b.len().cmp(&a.len())); // Sort by length descending
-
-        for prefix in prefixes {
+        for prefix in &self.sorted_prefixes {
             if segment.starts_with(prefix) {
                 // Make sure it's followed by '-' or end of string
                 let remaining = &segment[prefix.len()..];
@@ -361,13 +364,39 @@ impl ClassParser {
 
         Ok(ParsedClass::new(
             segment.to_string(),
-            vec![],
+            VariantList::new(),
             String::new(),
             String::new(),
             None,
             true,
             Some(declaration),
         ))
+    }
+
+    /// Split class into variant segments and main segment, taking bracket notation into account
+    fn split_class_variants(&self, class: &str) -> (Vec<String>, String) {
+        let mut variants = Vec::new();
+        let mut current_start = 0;
+        let mut in_bracket = 0;
+        let bytes = class.as_bytes();
+        let mut i = 0;
+        
+        while i < bytes.len() {
+            match bytes[i] {
+                b'[' => in_bracket += 1,
+                b']' => if in_bracket > 0 { in_bracket -= 1; },
+                b':' if in_bracket == 0 => {
+                    let segment = &class[current_start..i];
+                    variants.push(segment.to_string());
+                    current_start = i + 1;
+                }
+                _ => {}
+            }
+            i += 1;
+        }
+        
+        let main_part = class[current_start..].to_string();
+        (variants, main_part)
     }
 }
 

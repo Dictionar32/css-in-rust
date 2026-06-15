@@ -10,10 +10,12 @@ mod tests {
     #[test]
     fn parse_classes_keeps_variants_and_modifiers() {
         use crate::domain::variant::Variant;
+        use smallvec::smallvec;
         let out = parse_classes("hover:bg-blue-500 text-white/80 bg-(--brand)".to_string());
         assert_eq!(out.len(), 3);
         assert_eq!(out[0].raw, "hover:bg-blue-500");
-        assert_eq!(out[0].variants, vec![Variant::State("hover".to_string())]);
+        let expected_variants: smallvec::SmallVec<[Variant; 4]> = smallvec![Variant::State("hover".to_string())];
+        assert_eq!(out[0].variants, expected_variants);
         assert_eq!(out[1].modifier_type.as_deref(), Some("opacity"));
         assert_eq!(out[2].modifier_type.as_deref(), Some("arbitrary"));
     }

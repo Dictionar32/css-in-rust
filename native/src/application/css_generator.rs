@@ -375,10 +375,11 @@ mod tests {
 
     #[test]
     fn test_extract_media_queries() {
+        use smallvec::smallvec;
         let gen = CssGenerator;
         let parsed = ParsedClass::new(
             "md:px-4".to_string(),
-            vec![Variant::Responsive("md".to_string())],
+            smallvec![Variant::Responsive("md".to_string())],
             "px".to_string(),
             "4".to_string(),
             None,

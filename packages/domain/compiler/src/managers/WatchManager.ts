@@ -131,9 +131,9 @@ export interface AfterCompileHookData {
   generated_classes: number
 }
 
-export type PluginHookData = 
-  | FileChangeHookData 
-  | BeforeRecompileHookData 
+export type PluginHookData =
+  | FileChangeHookData
+  | BeforeRecompileHookData
   | AfterCompileHookData
 
 export interface PluginHookHandler {

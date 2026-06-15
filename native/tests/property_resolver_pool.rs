@@ -36,12 +36,13 @@
 //! - Verify pool statistics match expectations (1 miss, n-1 hits)
 //! - Test concurrent patterns with same and different theme_ids
 //! - Use proptest shrinking to find minimal counterexamples
+//! 
 
 use proptest::prelude::*;
 use std::sync::Arc;
 use std::thread;
 
-use tailwind_styled_parser::application::theme_resolver_pool::THEME_RESOLVER_POOL;
+use tailwind_styled_parser::application::theme_resolver_pool::ThemeResolverPool;
 use tailwind_styled_parser::domain::theme_config::ThemeConfig;
 
 // Strategy for generating theme_ids (positive integers)
@@ -51,7 +52,7 @@ fn theme_id_strategy() -> impl Strategy<Value = u64> {
 
 // Helper to create a valid ThemeConfig for testing
 fn create_test_theme_config() -> ThemeConfig {
-    ThemeConfig::default()
+    ThemeConfig::new()
 }
 
 // ============================================================================
@@ -71,20 +72,17 @@ proptest! {
         theme_id in theme_id_strategy(),
         num_accesses in 2usize..50,
     ) {
-        // Clear pool to ensure clean state for test
-        THEME_RESOLVER_POOL.clear();
-        THEME_RESOLVER_POOL.reset_stats();
-        
+        let pool = ThemeResolverPool::new();
         let config = create_test_theme_config();
         
         // First access - creates resolver
-        let resolver1 = THEME_RESOLVER_POOL.get_or_create(theme_id, config.clone());
+        let resolver1 = pool.get_or_create(theme_id, config.clone());
         let ptr1 = Arc::as_ptr(&resolver1);
         
         // Subsequent accesses - should return same Arc instance
         let mut all_same = true;
         for _ in 1..num_accesses {
-            let resolver_n = THEME_RESOLVER_POOL.get_or_create(theme_id, config.clone());
+            let resolver_n = pool.get_or_create(theme_id, config.clone());
             let ptr_n = Arc::as_ptr(&resolver_n);
             
             if ptr1 != ptr_n {
@@ -108,17 +106,15 @@ proptest! {
         theme_id in theme_id_strategy(),
         num_accesses in 2usize..50,
     ) {
-        THEME_RESOLVER_POOL.clear();
-        THEME_RESOLVER_POOL.reset_stats();
-        
+        let pool = ThemeResolverPool::new();
         let config = create_test_theme_config();
         
         // Perform accesses
         for _ in 0..num_accesses {
-            THEME_RESOLVER_POOL.get_or_create(theme_id, config.clone());
+            pool.get_or_create(theme_id, config.clone());
         }
         
-        let stats = THEME_RESOLVER_POOL.stats();
+        let stats = pool.stats();
         
         // Expected: 1 miss, (num_accesses - 1) hits
         prop_assert_eq!(
@@ -148,12 +144,11 @@ proptest! {
     ) {
         prop_assume!(id1 != id2, "IDs must be different for this test");
         
-        THEME_RESOLVER_POOL.clear();
-        
+        let pool = ThemeResolverPool::new();
         let config = create_test_theme_config();
         
-        let resolver1 = THEME_RESOLVER_POOL.get_or_create(id1, config.clone());
-        let resolver2 = THEME_RESOLVER_POOL.get_or_create(id2, config.clone());
+        let resolver1 = pool.get_or_create(id1, config.clone());
+        let resolver2 = pool.get_or_create(id2, config.clone());
         
         let ptr1 = Arc::as_ptr(&resolver1);
         let ptr2 = Arc::as_ptr(&resolver2);
@@ -172,17 +167,16 @@ proptest! {
     fn prop_pool_size_reflects_unique_ids(
         ids_vec in prop::collection::vec(theme_id_strategy(), 1..100)
     ) {
-        THEME_RESOLVER_POOL.clear();
-        
+        let pool = ThemeResolverPool::new();
         let config = create_test_theme_config();
         let unique_count = ids_vec.iter().collect::<std::collections::HashSet<_>>().len();
         
         // Add all IDs to pool
         for id in ids_vec.iter() {
-            THEME_RESOLVER_POOL.get_or_create(*id, config.clone());
+            pool.get_or_create(*id, config.clone());
         }
         
-        let stats = THEME_RESOLVER_POOL.stats();
+        let stats = pool.stats();
         
         prop_assert_eq!(
             stats.cached_resolvers, unique_count,
@@ -200,8 +194,7 @@ proptest! {
         theme_id in theme_id_strategy(),
         num_threads in 2usize..20,
     ) {
-        THEME_RESOLVER_POOL.clear();
-        
+        let pool = Arc::new(ThemeResolverPool::new());
         let config = create_test_theme_config();
         let shared_config = Arc::new(config);
         
@@ -212,9 +205,10 @@ proptest! {
         for _ in 0..num_threads {
             let config_clone = Arc::clone(&shared_config);
             let ptrs_clone = Arc::clone(&pointers);
+            let pool_clone = Arc::clone(&pool);
             
             let handle = thread::spawn(move || {
-                let resolver = THEME_RESOLVER_POOL.get_or_create(
+                let resolver = pool_clone.get_or_create(
                     theme_id,
                     (*config_clone).clone()
                 );
@@ -260,8 +254,7 @@ proptest! {
         
         prop_assume!(ids.len() >= 2, "Need at least 2 unique IDs");
         
-        THEME_RESOLVER_POOL.clear();
-        
+        let pool = Arc::new(ThemeResolverPool::new());
         let config = create_test_theme_config();
         let shared_config = Arc::new(config);
         let ids_shared = Arc::new(ids.clone());
@@ -273,9 +266,10 @@ proptest! {
         for (idx, &id) in ids_shared.iter().enumerate() {
             let config_clone = Arc::clone(&shared_config);
             let ptrs_clone = Arc::clone(&pointers);
+            let pool_clone = Arc::clone(&pool);
             
             let handle = thread::spawn(move || {
-                let resolver = THEME_RESOLVER_POOL.get_or_create(id, (*config_clone).clone());
+                let resolver = pool_clone.get_or_create(id, (*config_clone).clone());
                 let ptr = Arc::as_ptr(&resolver) as usize;
                 ptrs_clone.lock().unwrap().push((idx, ptr));
             });
@@ -311,15 +305,14 @@ proptest! {
         theme_id in theme_id_strategy(),
         num_rapid in 10usize..1000,
     ) {
-        THEME_RESOLVER_POOL.clear();
-        
+        let pool = ThemeResolverPool::new();
         let config = create_test_theme_config();
-        let first_ptr = Arc::as_ptr(&THEME_RESOLVER_POOL.get_or_create(theme_id, config.clone()));
+        let first_ptr = Arc::as_ptr(&pool.get_or_create(theme_id, config.clone()));
         
         // Rapid accesses
         let mut all_same = true;
         for _ in 0..num_rapid {
-            let resolver = THEME_RESOLVER_POOL.get_or_create(theme_id, config.clone());
+            let resolver = pool.get_or_create(theme_id, config.clone());
             if Arc::as_ptr(&resolver) != first_ptr {
                 all_same = false;
                 break;
@@ -329,7 +322,7 @@ proptest! {
         prop_assert!(all_same, "Rapid accesses should all return same instance");
         
         // Verify stats
-        let stats = THEME_RESOLVER_POOL.stats();
+        let stats = pool.stats();
         prop_assert_eq!(stats.misses, 1, "Should have exactly 1 miss");
         prop_assert_eq!(stats.hits, num_rapid as u64, "Should have {} hits", num_rapid);
     }
@@ -341,11 +334,10 @@ proptest! {
 
 #[test]
 fn test_edge_case_zero_theme_id() {
-    THEME_RESOLVER_POOL.clear();
-    
+    let pool = ThemeResolverPool::new();
     let config = create_test_theme_config();
-    let resolver1 = THEME_RESOLVER_POOL.get_or_create(0, config.clone());
-    let resolver2 = THEME_RESOLVER_POOL.get_or_create(0, config.clone());
+    let resolver1 = pool.get_or_create(0, config.clone());
+    let resolver2 = pool.get_or_create(0, config.clone());
     
     assert_eq!(
         Arc::as_ptr(&resolver1),
@@ -356,13 +348,12 @@ fn test_edge_case_zero_theme_id() {
 
 #[test]
 fn test_edge_case_max_theme_id() {
-    THEME_RESOLVER_POOL.clear();
-    
+    let pool = ThemeResolverPool::new();
     let config = create_test_theme_config();
     let max_id = u64::MAX;
     
-    let resolver1 = THEME_RESOLVER_POOL.get_or_create(max_id, config.clone());
-    let resolver2 = THEME_RESOLVER_POOL.get_or_create(max_id, config.clone());
+    let resolver1 = pool.get_or_create(max_id, config.clone());
+    let resolver2 = pool.get_or_create(max_id, config.clone());
     
     assert_eq!(
         Arc::as_ptr(&resolver1),
@@ -373,14 +364,13 @@ fn test_edge_case_max_theme_id() {
 
 #[test]
 fn test_edge_case_sequential_ids() {
-    THEME_RESOLVER_POOL.clear();
-    
+    let pool = ThemeResolverPool::new();
     let config = create_test_theme_config();
     
     // Access sequential IDs
-    let resolver1 = THEME_RESOLVER_POOL.get_or_create(1, config.clone());
-    let resolver2 = THEME_RESOLVER_POOL.get_or_create(2, config.clone());
-    let resolver3 = THEME_RESOLVER_POOL.get_or_create(3, config.clone());
+    let resolver1 = pool.get_or_create(1, config.clone());
+    let resolver2 = pool.get_or_create(2, config.clone());
+    let resolver3 = pool.get_or_create(3, config.clone());
     
     // All should be different instances
     assert_ne!(Arc::as_ptr(&resolver1), Arc::as_ptr(&resolver2));
@@ -388,22 +378,21 @@ fn test_edge_case_sequential_ids() {
     assert_ne!(Arc::as_ptr(&resolver1), Arc::as_ptr(&resolver3));
     
     // Accessing again should return same instances
-    let resolver1_repeat = THEME_RESOLVER_POOL.get_or_create(1, config.clone());
+    let resolver1_repeat = pool.get_or_create(1, config.clone());
     assert_eq!(Arc::as_ptr(&resolver1), Arc::as_ptr(&resolver1_repeat));
 }
 
 #[test]
 fn test_hit_rate_precision() {
-    THEME_RESOLVER_POOL.clear();
-    
+    let pool = ThemeResolverPool::new();
     let config = create_test_theme_config();
     
     // Create exact scenario: 1 miss, 9 hits = 90% hit rate
     for _ in 0..10 {
-        THEME_RESOLVER_POOL.get_or_create(42, config.clone());
+        pool.get_or_create(42, config.clone());
     }
     
-    let stats = THEME_RESOLVER_POOL.stats();
+    let stats = pool.stats();
     
     assert_eq!(stats.misses, 1);
     assert_eq!(stats.hits, 9);
@@ -412,18 +401,17 @@ fn test_hit_rate_precision() {
 
 #[test]
 fn test_multiple_unique_ids_independent() {
-    THEME_RESOLVER_POOL.clear();
-    
+    let pool = ThemeResolverPool::new();
     let config = create_test_theme_config();
     
     // Access three unique IDs multiple times each
     for _ in 0..5 {
-        THEME_RESOLVER_POOL.get_or_create(100, config.clone());
-        THEME_RESOLVER_POOL.get_or_create(200, config.clone());
-        THEME_RESOLVER_POOL.get_or_create(300, config.clone());
+        pool.get_or_create(100, config.clone());
+        pool.get_or_create(200, config.clone());
+        pool.get_or_create(300, config.clone());
     }
     
-    let stats = THEME_RESOLVER_POOL.stats();
+    let stats = pool.stats();
     
     // Expected: 3 misses (one per unique ID), 12 hits (5*3 - 3)
     assert_eq!(stats.misses, 3, "Should have 3 misses for 3 unique IDs");

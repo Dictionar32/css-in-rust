@@ -136,6 +136,6 @@ impl ThemeConfig {
 
 impl Default for ThemeConfig {
     fn default() -> Self {
-        Self::new()
+        crate::utils::constants::default_theme()
     }
 }

@@ -48,6 +48,7 @@ mod redis_adapter_extended_tests {
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         adapter.put("existing".to_string(), "value".to_string());
         
@@ -91,6 +92,7 @@ mod redis_adapter_extended_tests {
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         adapter.put("key1".to_string(), "value1".to_string());
         assert_eq!(adapter.size(), 1);
@@ -109,6 +111,7 @@ mod redis_adapter_extended_tests {
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         adapter.put("key1".to_string(), "value1".to_string());
         adapter.get("key1");
@@ -130,6 +133,7 @@ mod redis_adapter_extended_tests {
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         // With capacity 10000, unlikely to be full
         assert!(!adapter.is_full());
@@ -145,6 +149,7 @@ mod redis_adapter_extended_tests {
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         adapter.put("key1".to_string(), "value1".to_string());
         
@@ -160,13 +165,14 @@ mod redis_adapter_extended_tests {
     fn test_redis_adapter_multiple_removes() {
         // Coverage: Multiple remove operations
         // Note: Mock Redis always returns true for remove on non-empty keys
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 12;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
+        adapter.clear();
         
         adapter.put("key1".to_string(), "value1".to_string());
         adapter.put("key2".to_string(), "value2".to_string());
@@ -180,13 +186,14 @@ mod redis_adapter_extended_tests {
 
     #[test]
     fn test_redis_adapter_with_ttl() {
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 13;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new_with_ttl(pool, Some(3600));
+        adapter.clear();
         adapter.put("ttl_key".to_string(), "ttl_value".to_string());
         
         let stats = adapter.stats();

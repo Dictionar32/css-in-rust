@@ -8,6 +8,7 @@ description = "Native Rust engine for tailwind-styled-v5"
 # cdylib  → .node file for Node.js N-API
 # rlib → Rust library for tests and other crates
 crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [dependencies]
 napi = { version = "3", features = ["napi4"] }
@@ -22,7 +23,7 @@ notify = "6"
 # ─ OPTIMIZATION (Phase 2): Parallel iterators for workspace scanning
 rayon = "1.7"
 num_cpus = "1.16"
-smallvec = "1.11"
+smallvec = { version = "1.11", features = ["serde"] }
 # ─ OPTIMIZATION (Phase 3): AST-based template detection
 oxc_parser = "0.55"
 oxc_allocator = "0.55"

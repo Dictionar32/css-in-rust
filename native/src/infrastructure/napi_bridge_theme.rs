@@ -45,8 +45,10 @@ pub fn resolve_color(color: String) -> napi::Result<String> {
     init_theme_cache();
     let cache = RESOLVE_CACHE.get().unwrap();
 
+    let cache_key = format!("color:{}", color);
+
     // Check cache first
-    if let Some(cached) = cache.get(&color) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -58,9 +60,9 @@ pub fn resolve_color(color: String) -> napi::Result<String> {
         .map_err(|e| error_to_napi("resolve_color", e))?;
 
     // Store in cache
-    cache.put(color, resolved.clone());
+    cache.put(cache_key, resolved.clone());
 
-    Ok(format!("\"{}\"", resolved))
+    Ok(resolved)
 }
 
 /// Resolve a spacing value from the theme
@@ -83,8 +85,10 @@ pub fn resolve_spacing(spacing: String) -> napi::Result<String> {
     init_theme_cache();
     let cache = RESOLVE_CACHE.get().unwrap();
 
+    let cache_key = format!("spacing:{}", spacing);
+
     // Check cache first
-    if let Some(cached) = cache.get(&spacing) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -96,9 +100,9 @@ pub fn resolve_spacing(spacing: String) -> napi::Result<String> {
         .map_err(|e| error_to_napi("resolve_spacing", e))?;
 
     // Store in cache
-    cache.put(spacing, resolved.clone());
+    cache.put(cache_key, resolved.clone());
 
-    Ok(format!("\"{}\"", resolved))
+    Ok(resolved)
 }
 
 /// Resolve a font size value from the theme
@@ -121,8 +125,10 @@ pub fn resolve_font_size(size: String) -> napi::Result<String> {
     init_theme_cache();
     let cache = RESOLVE_CACHE.get().unwrap();
 
+    let cache_key = format!("font:{}", size);
+
     // Check cache first
-    if let Some(cached) = cache.get(&size) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -134,9 +140,9 @@ pub fn resolve_font_size(size: String) -> napi::Result<String> {
         .map_err(|e| error_to_napi("resolve_font_size", e))?;
 
     // Store in cache
-    cache.put(size, resolved.clone());
+    cache.put(cache_key, resolved.clone());
 
-    Ok(format!("\"{}\"", resolved))
+    Ok(resolved)
 }
 
 /// Resolve a breakpoint value from the theme
@@ -159,8 +165,10 @@ pub fn resolve_breakpoint(breakpoint: String) -> napi::Result<String> {
     init_theme_cache();
     let cache = RESOLVE_CACHE.get().unwrap();
 
+    let cache_key = format!("breakpoint:{}", breakpoint);
+
     // Check cache first
-    if let Some(cached) = cache.get(&breakpoint) {
+    if let Some(cached) = cache.get(&cache_key) {
         return Ok(cached);
     }
 
@@ -172,9 +180,9 @@ pub fn resolve_breakpoint(breakpoint: String) -> napi::Result<String> {
         .map_err(|e| error_to_napi("resolve_breakpoint", e))?;
 
     // Store in cache
-    cache.put(breakpoint, resolved.clone());
+    cache.put(cache_key, resolved.clone());
 
-    Ok(format!("\"{}\"", resolved))
+    Ok(resolved)
 }
 
 /// Apply opacity modifier to a color
@@ -198,7 +206,7 @@ pub fn apply_opacity(color: String, opacity: String) -> napi::Result<String> {
     validate_string_input(&color, "color")?;
     validate_string_input(&opacity, "opacity")?;
 
-    let cache_key = format!("{}:{}", color, opacity);
+    let cache_key = format!("opacity:{}:{}", color, opacity);
 
     init_theme_cache();
     let cache = RESOLVE_CACHE.get().unwrap();
@@ -218,7 +226,7 @@ pub fn apply_opacity(color: String, opacity: String) -> napi::Result<String> {
     // Store in cache
     cache.put(cache_key, resolved.clone());
 
-    Ok(format!("\"{}\"", resolved))
+    Ok(resolved)
 }
 
 /// Clear the theme resolution cache

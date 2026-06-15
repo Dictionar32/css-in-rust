@@ -38,7 +38,7 @@ pub fn parse_classes_inner(input: &str) -> Vec<ParsedClass> {
         }
 
         // Parse variants to Variant enum
-        let mut variants = Vec::new();
+        let mut variants = crate::domain::transform::VariantList::new();
         for var_str in &variants_str {
             if let Ok(variant) = var_str.parse::<crate::domain::variant::Variant>() {
                 variants.push(variant);

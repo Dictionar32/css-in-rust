@@ -7,7 +7,7 @@ use tailwind_styled_parser::domain::variant::Variant;
 use std::str::FromStr;
 
 // Helper to convert string slices to Variant enum
-fn to_variants(v: Vec<&str>) -> Vec<Variant> {
+fn to_variants(v: Vec<&str>) -> smallvec::SmallVec<[Variant; 4]> {
     v.into_iter().map(|s| Variant::from_str(s).unwrap()).collect()
 }
 
@@ -231,7 +231,7 @@ fn test_unknown_color_handling() {
 fn test_unknown_spacing_handling() {
     let mut resolver = ThemeResolver::default();
     
-    let result = resolver.resolve_spacing("999");
+    let result = resolver.resolve_spacing("unknown-spacing");
     assert!(result.is_err());
 }
 

@@ -377,9 +377,13 @@ pub fn set_watch_aggregation(aggregation_type: String) -> napi::Result<String> {
 mod tests {
     use super::*;
     use crate::infrastructure::atomic_watch_state::increment_handle_count;
+    use std::sync::Mutex;
+
+    static TEST_MUTEX: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_watch_files() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         let result = watch_files("/tmp".to_string(), None);
         assert!(result.is_ok());
@@ -390,6 +394,7 @@ mod tests {
 
     #[test]
     fn test_stop_watching() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         watch_files("/tmp".to_string(), None).ok();
         let result = stop_watching(0);
@@ -400,6 +405,7 @@ mod tests {
 
     #[test]
     fn test_get_watch_stats() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         watch_files("/tmp".to_string(), None).ok();
         let result = get_watch_stats();
@@ -411,6 +417,7 @@ mod tests {
 
     #[test]
     fn test_get_watch_events() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         let result = get_watch_events(0, Some(50));
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -419,6 +426,7 @@ mod tests {
 
     #[test]
     fn test_get_watch_performance() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         track_event_processed();
         track_event_processed();
@@ -430,6 +438,7 @@ mod tests {
 
     #[test]
     fn test_clear_watch_stats() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         track_event_processed();
         track_event_dropped();
@@ -445,6 +454,7 @@ mod tests {
 
     #[test]
     fn test_event_tracking() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         
         track_event_processed();
@@ -462,6 +472,7 @@ mod tests {
 
     #[test]
     fn test_get_active_watches() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         reset_watch_stats();
         increment_handle_count();
         increment_handle_count();
@@ -474,6 +485,7 @@ mod tests {
 
     #[test]
     fn test_set_watch_metrics() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         let result = set_watch_metrics("max_queue_size".to_string(), "5000".to_string());
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -483,6 +495,7 @@ mod tests {
 
     #[test]
     fn test_set_watch_aggregation() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         let result = set_watch_aggregation("batched".to_string());
         assert!(result.is_ok());
         let response = result.unwrap();
@@ -492,6 +505,7 @@ mod tests {
 
     #[test]
     fn test_invalid_input() {
+        let _lock = TEST_MUTEX.lock().unwrap();
         // Empty directory is rejected by validation
         let result = watch_files("".to_string(), None);
         // This should fail because empty string is not a valid directory path

@@ -113,7 +113,7 @@ pub struct ThemeResolverPool {
 
 impl ThemeResolverPool {
     /// Create a new empty ThemeResolverPool
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             resolvers: DashMap::new(),
             configs: DashMap::new(),

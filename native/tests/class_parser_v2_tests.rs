@@ -11,7 +11,7 @@ fn parse(class: &str) -> Result<ParsedClass, ParseError> {
     parser.parse(class)
 }
 
-fn to_variants(v: Vec<&str>) -> Vec<Variant> {
+fn to_variants(v: Vec<&str>) -> smallvec::SmallVec<[Variant; 4]> {
     v.into_iter().map(|s| s.parse::<Variant>().unwrap()).collect()
 }
 

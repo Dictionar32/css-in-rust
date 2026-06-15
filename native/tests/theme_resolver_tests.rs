@@ -13,7 +13,7 @@ fn test_resolve_color_slate_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("slate-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#475569");
+    assert_eq!(result.unwrap(), "oklch(44.6% .043 257.281)");
 }
 
 #[test]
@@ -21,7 +21,7 @@ fn test_resolve_color_gray_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("gray-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#4b5563");
+    assert_eq!(result.unwrap(), "oklch(44.6% .03 256.802)");
 }
 
 #[test]
@@ -43,7 +43,7 @@ fn test_resolve_color_red_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("red-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#dc2626");
+    assert_eq!(result.unwrap(), "oklch(57.7% .245 27.325)");
 }
 
 #[test]
@@ -51,7 +51,7 @@ fn test_resolve_color_orange_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("orange-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#ea580c");
+    assert_eq!(result.unwrap(), "oklch(64.6% .222 41.116)");
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn test_resolve_color_amber_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("amber-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#d97706");
+    assert_eq!(result.unwrap(), "oklch(66.6% .179 58.318)");
 }
 
 #[test]
@@ -67,7 +67,7 @@ fn test_resolve_color_yellow_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("yellow-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#ca8a04");
+    assert_eq!(result.unwrap(), "oklch(68.1% .162 75.834)");
 }
 
 #[test]
@@ -75,7 +75,7 @@ fn test_resolve_color_lime_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("lime-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#65a30d");
+    assert_eq!(result.unwrap(), "oklch(64.8% .2 131.684)");
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn test_resolve_color_green_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("green-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#16a34a");
+    assert_eq!(result.unwrap(), "oklch(62.7% .194 149.214)");
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn test_resolve_color_emerald_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("emerald-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#059669");
+    assert_eq!(result.unwrap(), "oklch(59.6% .145 163.225)");
 }
 
 #[test]
@@ -99,7 +99,7 @@ fn test_resolve_color_teal_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("teal-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#0d9488");
+    assert_eq!(result.unwrap(), "oklch(60% .118 184.704)");
 }
 
 #[test]
@@ -107,7 +107,7 @@ fn test_resolve_color_cyan_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("cyan-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#0891b2");
+    assert_eq!(result.unwrap(), "oklch(60.9% .126 221.723)");
 }
 
 #[test]
@@ -115,7 +115,7 @@ fn test_resolve_color_sky_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("sky-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#0284c7");
+    assert_eq!(result.unwrap(), "oklch(58.8% .158 241.966)");
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn test_resolve_color_blue_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("blue-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#1e40af");
+    assert_eq!(result.unwrap(), "oklch(54.6% .245 262.881)");
 }
 
 #[test]
@@ -131,7 +131,7 @@ fn test_resolve_color_indigo_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("indigo-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#4f46e5");
+    assert_eq!(result.unwrap(), "oklch(51.1% .262 276.966)");
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn test_resolve_color_violet_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("violet-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#7c3aed");
+    assert_eq!(result.unwrap(), "oklch(54.1% .281 293.009)");
 }
 
 #[test]
@@ -147,7 +147,7 @@ fn test_resolve_color_purple_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("purple-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#9333ea");
+    assert_eq!(result.unwrap(), "oklch(55.8% .288 302.321)");
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn test_resolve_color_fuchsia_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("fuchsia-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#d946ef");
+    assert_eq!(result.unwrap(), "oklch(59.1% .293 322.896)");
 }
 
 #[test]
@@ -163,7 +163,7 @@ fn test_resolve_color_pink_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("pink-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#ec4899");
+    assert_eq!(result.unwrap(), "oklch(59.2% .249 .584)");
 }
 
 #[test]
@@ -171,7 +171,7 @@ fn test_resolve_color_rose_600() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_color("rose-600");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), "#e11d48");
+    assert_eq!(result.unwrap(), "oklch(58.6% .253 17.585)");
 }
 
 // ============================================================================
@@ -487,35 +487,35 @@ fn test_resolve_font_size_9xl() {
 fn test_resolve_breakpoint_sm() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_breakpoint("sm");
-    assert_eq!(result, Ok("640px".to_string()));
+    assert_eq!(result, Ok("40rem".to_string()));
 }
 
 #[test]
 fn test_resolve_breakpoint_md() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_breakpoint("md");
-    assert_eq!(result, Ok("768px".to_string()));
+    assert_eq!(result, Ok("48rem".to_string()));
 }
 
 #[test]
 fn test_resolve_breakpoint_lg() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_breakpoint("lg");
-    assert_eq!(result, Ok("1024px".to_string()));
+    assert_eq!(result, Ok("64rem".to_string()));
 }
 
 #[test]
 fn test_resolve_breakpoint_xl() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_breakpoint("xl");
-    assert_eq!(result, Ok("1280px".to_string()));
+    assert_eq!(result, Ok("80rem".to_string()));
 }
 
 #[test]
 fn test_resolve_breakpoint_2xl() {
     let mut resolver = ThemeResolver::default();
     let result = resolver.resolve_breakpoint("2xl");
-    assert_eq!(result, Ok("1536px".to_string()));
+    assert_eq!(result, Ok("96rem".to_string()));
 }
 
 #[test]
@@ -609,7 +609,7 @@ fn test_error_unknown_color() {
 #[test]
 fn test_error_unknown_spacing() {
     let mut resolver = ThemeResolver::default();
-    let result = resolver.resolve_spacing("999");
+    let result = resolver.resolve_spacing("unknown-spacing");
     assert!(result.is_err());
 }
 
