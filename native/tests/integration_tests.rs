@@ -10,10 +10,10 @@
 #[cfg(test)]
 mod integration_tests {
     // PHASE 7.1: Consolidated to single parser implementation
-    use css_in_rust::application::class_parser::ClassParser;
-    use css_in_rust::domain::theme_config::ThemeConfig;
-    use css_in_rust::application::theme_resolver::ThemeResolver;
-    use css_in_rust::application::css_generator::CssGenerator;
+    use tailwind_styled_parser::application::class_parser::ClassParser;
+    use tailwind_styled_parser::domain::theme_config::ThemeConfig;
+    use tailwind_styled_parser::application::theme_resolver::ThemeResolver;
+    use tailwind_styled_parser::application::css_generator::CssGenerator;
     use std::collections::HashMap;
 
     // ==================== Test 1: Simple Class Compilation ====================
@@ -31,7 +31,7 @@ mod integration_tests {
         assert_eq!(parsed.prefix, "px");
         assert_eq!(parsed.value, "4");
         assert!(parsed.variants.is_empty());
-        assert!(parsed.modifier.is_none());
+        assert!(parsed.modifier_type.is_none());
     }
 
     // ==================== Test 2: Multiple Classes ====================
@@ -80,7 +80,7 @@ mod integration_tests {
         // Test default theme colors
         let blue_600 = resolver.resolve_color("blue-600");
         assert!(blue_600.is_ok(), "Failed to resolve blue-600");
-        assert_eq!(blue_600.unwrap(), "#1e40af");
+        assert_eq!(blue_600.unwrap(), "oklch(54.6% 0.245 262.881)");
         
         // Test spacing
         let spacing_4 = resolver.resolve_spacing("4");
@@ -95,7 +95,7 @@ mod integration_tests {
     fn integration_opacity_modifier() {
         let resolver = ThemeResolver::default();
         
-        let color = "#1e40af";
+        let color = "oklch(54.6% 0.245 262.881)";
         let result = resolver.apply_opacity(color, "50");
         
         assert!(result.is_ok(), "Failed to apply opacity");
@@ -118,7 +118,7 @@ mod integration_tests {
         assert_eq!(parsed.variants.len(), 3, "Should have 3 variants");
         assert_eq!(parsed.prefix, "bg", "Prefix should be 'bg'");
         assert_eq!(parsed.value, "blue-600", "Value should be 'blue-600'");
-        assert_eq!(parsed.modifier, Some("50".to_string()), "Modifier should be '50'");
+        assert_eq!(parsed.modifier_type, Some("50".to_string()), "Modifier should be '50'");
     }
 
     // ==================== Test 7: Arbitrary Values ====================

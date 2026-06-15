@@ -66,7 +66,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> AdaptiveCache<K, V> {
             self.max_size.store(new_size, Ordering::Relaxed);
         }
         // Scale down if hit rate is low
-        else if hit_rate < 60.0 && current_size > 1000 {
+        else if hit_rate < 60.0 && current_size > 100 {
             let new_size = (current_size as f32 * 0.9) as u32;
             self.max_size.store(new_size, Ordering::Relaxed);
         }

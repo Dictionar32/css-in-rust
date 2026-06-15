@@ -11,10 +11,10 @@ mod redis_adapter_tests {
     #[test]
     fn test_redis_adapter_put_get() {
         // Create mock Redis pool
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 1;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
@@ -23,17 +23,17 @@ mod redis_adapter_tests {
         adapter.put("key1".to_string(), "value1".to_string());
         let result = adapter.get("key1");
         
-        // RedisPool mock returns "value-{key}" format
+        // RedisPool fallback returns the actual value stored
         assert!(result.is_some());
-        assert_eq!(result, Some("value-key1".to_string()));
+        assert_eq!(result, Some("value1".to_string()));
     }
 
     #[test]
     fn test_redis_adapter_remove() {
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 2;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
@@ -45,10 +45,10 @@ mod redis_adapter_tests {
 
     #[test]
     fn test_redis_adapter_stats() {
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 3;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new(pool);
@@ -63,10 +63,10 @@ mod redis_adapter_tests {
 
     #[test]
     fn test_redis_adapter_clear() {
+        let mut config = tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default();
+        config.db = 4;
         let pool = Arc::new(Mutex::new(
-            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(
-                tailwind_styled_parser::infrastructure::redis_cache::RedisCacheConfig::default()
-            ).unwrap()
+            tailwind_styled_parser::infrastructure::redis_cache::RedisPool::new(config).unwrap()
         ));
         
         let adapter = RedisCacheAdapter::new(pool);

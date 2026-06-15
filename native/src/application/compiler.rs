@@ -1,11 +1,8 @@
 //! Compiler - orchestrates the complete CSS compilation pipeline
 
-// PHASE 7.1: Consolidated to single parser implementation
 use crate::application::class_parser::ClassParser;
 use crate::application::css_generator::CssGenerator;
 use crate::application::theme_resolver::ThemeResolver;
-use crate::application::variant_resolver::VariantResolver;
-use crate::domain::css_rule::CssRule;
 use crate::domain::error::CompileError;
 use crate::domain::theme_config::ThemeConfig;
 use std::collections::HashMap;
@@ -37,39 +34,25 @@ impl Compiler {
 
     /// Compile a single class to CSS
     pub fn compile_class(&self, class: &str) -> Result<String, CompileError> {
-        // TODO: Phase 7.1 - Fix ParsedClass type mismatch between class_parser and transform modules
-        // Currently this function cannot compile due to incompatible ParsedClass types
-        // Use domain::css_compiler instead for actual compilation
-        Err(CompileError::Other("compile_class not yet updated for Phase 7.1 consolidation".to_string()))
-        /*
         // Parse the class
         let parsed = self.parser.parse(class)?;
 
         // Resolve theme values
-        let mut resolver = ThemeResolver::new(self.theme.clone());
-        let color = if !parsed.is_arbitrary {
-            match parsed.prefix.as_str() {
-                "bg" | "text" => {
-                    resolver.resolve_color(&parsed.value).ok()
-                }
-                _ => None,
-            }
-        } else {
-            None
+        let resolver = ThemeResolver::new(self.theme.clone());
+        let resolved_value = match parsed.prefix.as_str() {
+            "bg" | "text" => resolver.resolve_color(&parsed.value).ok(),
+            "p" | "px" | "py" | "pt" | "pr" | "pb" | "pl" |
+            "m" | "mx" | "my" | "mt" | "mr" | "mb" | "ml" => resolver.resolve_spacing(&parsed.value).ok(),
+            _ => None,
         };
 
         // Build theme map for CSS generation
         let mut theme_map = HashMap::new();
-        if let Some(c) = color {
-            theme_map.insert(parsed.value.clone(), c);
+        if let Some(val) = resolved_value {
+            theme_map.insert(parsed.value.clone(), val);
         }
 
-        // Add spacing values
-        for (key, val) in &self.theme.spacing {
-            theme_map.insert(key.clone(), val.clone());
-        }
-
-        // Add breakpoints
+        // Add breakpoints to theme_map so responsive variants can extract media query min-widths
         for (key, val) in &self.theme.breakpoints {
             theme_map.insert(key.clone(), val.clone());
         }
@@ -78,7 +61,6 @@ impl Compiler {
         let rule = self.generator.generate(&parsed, &theme_map)?;
 
         Ok(rule.to_css_string())
-        */
     }
 
     /// Compile multiple classes to CSS
@@ -120,7 +102,7 @@ impl Compiler {
 
 impl Default for Compiler {
     fn default() -> Self {
-        Self::new(ThemeConfig::default())
+        Self::new(crate::utils::constants::parse_tailwind_config_with_lightning())
     }
 }
 
@@ -178,9 +160,7 @@ mod tests {
     #[test]
     fn test_compile_state_class() {
         let compiler = Compiler::default();
-        let result = compiler.compile_class("hover:bg-blue");
-        // This might error because we need full color resolution
-        // But the structure should work
-        let _ = result;
+        let result = compiler.compile_class("hover:bg-blue-600");
+        assert!(result.is_ok());
     }
 }

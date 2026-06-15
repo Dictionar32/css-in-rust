@@ -163,7 +163,7 @@ impl VariantResolver {
 
 impl Default for VariantResolver {
     fn default() -> Self {
-        Self::new(ThemeConfig::default())
+        Self::new(crate::utils::constants::parse_tailwind_config_with_lightning())
     }
 }
 
@@ -176,7 +176,7 @@ mod tests {
         let resolver = VariantResolver::default();
         let result = resolver.resolve_responsive("md");
         assert!(result.is_ok());
-        assert!(result.unwrap().contains("768px"));
+        assert!(result.unwrap().contains("48rem"));
     }
 
     #[test]
@@ -271,3 +271,4 @@ mod tests {
         assert!(result.unwrap().contains("group"));
     }
 }
+

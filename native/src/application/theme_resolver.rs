@@ -3,8 +3,22 @@
 use crate::domain::error::ResolveError;
 use crate::domain::theme_config::{ThemeConfig, ThemeValue};
 use crate::infrastructure::cache::LruCache;
-use crate::utils::constants::DEFAULT_COLORS;
 use std::sync::Mutex;
+
+/// Helper to multiply numeric spacing (e.g., "0.25rem" * 4 -> "1rem")
+fn multiply_spacing(base_str: &str, multiplier: f64) -> Option<String> {
+    let trim_base = base_str.trim();
+    let unit_idx = trim_base.find(|c: char| !c.is_numeric() && c != '.' && c != '-');
+    if let Some(idx) = unit_idx {
+        let num_part = &trim_base[..idx];
+        let unit_part = &trim_base[idx..];
+        if let Ok(num) = num_part.parse::<f64>() {
+            let result_num = num * multiplier;
+            return Some(format!("{}{}", result_num, unit_part));
+        }
+    }
+    None
+}
 
 /// Resolves theme values with LRU caching for performance
 pub struct ThemeResolver {
@@ -23,8 +37,7 @@ impl ThemeResolver {
 
     /// Resolve a color value from theme
     /// 
-    /// Supports nested lookups like "blue-600" -> "#1e40af"
-    /// Falls back to Tailwind defaults if custom not found
+    /// Supports nested lookups like "blue-600" -> "oklch(54.6% 0.237 262.881)"
     pub fn resolve_color(&self, color: &str) -> Result<String, ResolveError> {
         // Check cache first
         let cache_key = format!("color:{}", color);
@@ -33,15 +46,9 @@ impl ThemeResolver {
         }
 
         // Try to find in custom colors first
-        if let Some(ThemeValue::Simple(hex)) = self.config.colors.get(color) {
-            self.cache.lock().unwrap().insert(cache_key, hex.clone());
-            return Ok(hex.clone());
-        }
-
-        // Fall back to default colors
-        if let Some(hex) = DEFAULT_COLORS.get(color) {
-            self.cache.lock().unwrap().insert(cache_key, hex.clone());
-            return Ok(hex.clone());
+        if let Some(val) = self.config.get_color(color) {
+            self.cache.lock().unwrap().insert(cache_key, val.clone());
+            return Ok(val);
         }
 
         // Not found
@@ -61,6 +68,33 @@ impl ThemeResolver {
         if let Some(value) = self.config.spacing.get(spacing) {
             self.cache.lock().unwrap().insert(cache_key, value.clone());
             return Ok(value.clone());
+        }
+
+        // Dynamic spacing multiplier
+        let base_spacing = self.config.spacing.get("spacing")
+            .or_else(|| self.config.spacing.get("--spacing"))
+            .map(|s| s.as_str())
+            .unwrap_or("0.25rem");
+
+        if let Ok(multiplier) = spacing.parse::<f64>() {
+            if let Some(resolved) = multiply_spacing(base_spacing, multiplier) {
+                self.cache.lock().unwrap().insert(cache_key, resolved.clone());
+                return Ok(resolved);
+            }
+        }
+
+        // Special Tailwind spacing keys
+        let special_value = match spacing {
+            "px" => Some("1px".to_string()),
+            "full" => Some("100%".to_string()),
+            "screen" => Some("100vw".to_string()),
+            "auto" => Some("auto".to_string()),
+            _ => None,
+        };
+
+        if let Some(val) = special_value {
+            self.cache.lock().unwrap().insert(cache_key, val.clone());
+            return Ok(val);
         }
 
         Err(ResolveError::ValueNotFound {
@@ -106,7 +140,7 @@ impl ThemeResolver {
         })
     }
 
-    /// Apply opacity modifier to a color (hex or rgba)
+    /// Apply opacity modifier to a color (hex, oklch, or rgba)
     pub fn apply_opacity(&self, color: &str, opacity: &str) -> Result<String, ResolveError> {
         // Validate opacity is 0-100
         let opacity_val: u32 = opacity.parse().map_err(|_| ResolveError::InvalidOpacity {
@@ -122,7 +156,7 @@ impl ThemeResolver {
         // Convert opacity percentage to alpha (0-1)
         let alpha = opacity_val as f64 / 100.0;
 
-        // If color is already hex, convert to rgba
+        // If color is hex, convert to rgba
         if color.starts_with('#') {
             let rgba = hex_to_rgba(color, alpha)?;
             return Ok(rgba);
@@ -131,6 +165,12 @@ impl ThemeResolver {
         // If already rgba, adjust alpha
         if color.starts_with("rgba") {
             return Ok(format!("rgba({})", color));
+        }
+
+        // If oklch, format properly
+        if color.starts_with("oklch(") && color.ends_with(')') {
+            let inner = &color[6..color.len() - 1];
+            return Ok(format!("oklch({} / {})", inner, alpha));
         }
 
         Ok(color.to_string())
@@ -195,7 +235,7 @@ mod tests {
     fn test_resolve_color_default() {
         let resolver = ThemeResolver::default();
         let result = resolver.resolve_color("blue-600");
-        assert_eq!(result, Ok("#1e40af".to_string()));
+        assert_eq!(result, Ok("oklch(54.6% .245 262.881)".to_string()));
     }
 
     #[test]
@@ -216,7 +256,7 @@ mod tests {
     fn test_resolve_breakpoint() {
         let resolver = ThemeResolver::default();
         let result = resolver.resolve_breakpoint("md");
-        assert_eq!(result, Ok("768px".to_string()));
+        assert_eq!(result, Ok("48rem".to_string()));
     }
 
     #[test]
@@ -249,11 +289,7 @@ mod tests {
     #[test]
     fn test_cache_performance() {
         let resolver = ThemeResolver::default();
-        
-        // First call - miss
         let _ = resolver.resolve_color("blue-600");
-        
-        // Second call - hit
         let result = resolver.resolve_color("blue-600");
         assert!(result.is_ok());
     }

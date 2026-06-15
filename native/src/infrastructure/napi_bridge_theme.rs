@@ -539,9 +539,17 @@ pub fn reset_resolver_pool_stats() -> napi::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::theme_config::ThemeConfig;
+    use std::sync::Mutex;
+    use lazy_static::lazy_static;
+
+    lazy_static! {
+        static ref TEST_MUTEX: Mutex<()> = Mutex::new(());
+    }
 
     #[test]
     fn test_resolve_color() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         init_theme_cache();
         let result = resolve_color("blue-600".to_string());
         assert!(result.is_ok());
@@ -549,6 +557,7 @@ mod tests {
 
     #[test]
     fn test_resolve_spacing() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         init_theme_cache();
         let result = resolve_spacing("4".to_string());
         assert!(result.is_ok());
@@ -556,6 +565,7 @@ mod tests {
 
     #[test]
     fn test_validate_empty_input() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let result = resolve_color("".to_string());
         assert!(result.is_err());
     }
@@ -564,6 +574,7 @@ mod tests {
 
     #[test]
     fn test_resolve_color_cached_valid_theme_id() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_color_cached(1, "blue-600".to_string(), config_json.to_string());
@@ -572,6 +583,7 @@ mod tests {
 
     #[test]
     fn test_resolve_color_cached_reuses_resolver() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}, \"red\": {\"500\": \"#ef4444\"}}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         
@@ -593,6 +605,7 @@ mod tests {
 
     #[test]
     fn test_resolve_color_cached_invalid_theme_id() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let config_json = "{\"colors\": {}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_color_cached(0, "blue-600".to_string(), config_json.to_string());
         assert!(result.is_err(), "resolve_color_cached should reject theme_id = 0");
@@ -600,12 +613,14 @@ mod tests {
 
     #[test]
     fn test_resolve_color_cached_invalid_config_json() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let result = resolve_color_cached(1, "blue-600".to_string(), "invalid json".to_string());
         assert!(result.is_err(), "resolve_color_cached should reject invalid JSON");
     }
 
     #[test]
     fn test_resolve_spacing_cached_valid() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {}, \"spacing\": {\"4\": \"1rem\"}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_spacing_cached(1, "4".to_string(), config_json.to_string());
@@ -614,6 +629,7 @@ mod tests {
 
     #[test]
     fn test_resolve_spacing_cached_invalid_theme_id() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let config_json = "{\"colors\": {}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_spacing_cached(0, "4".to_string(), config_json.to_string());
         assert!(result.is_err());
@@ -621,6 +637,7 @@ mod tests {
 
     #[test]
     fn test_resolve_font_size_cached_valid() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {}, \"spacing\": {}, \"font_sizes\": {\"lg\": [\"1.125rem\", \"1.75rem\"]}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_font_size_cached(1, "lg".to_string(), config_json.to_string());
@@ -629,6 +646,7 @@ mod tests {
 
     #[test]
     fn test_resolve_font_size_cached_invalid_theme_id() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let config_json = "{\"colors\": {}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let result = resolve_font_size_cached(0, "lg".to_string(), config_json.to_string());
         assert!(result.is_err());
@@ -636,6 +654,7 @@ mod tests {
 
     #[test]
     fn test_get_resolver_pool_stats() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}}, \"spacing\": {\"4\": \"1rem\"}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         
@@ -655,6 +674,7 @@ mod tests {
 
     #[test]
     fn test_clear_resolver_pool() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let _ = resolve_color_cached(1, "blue-600".to_string(), config_json.to_string());
         
@@ -669,6 +689,8 @@ mod tests {
 
     #[test]
     fn test_reset_resolver_pool_stats() {
+        let _guard = TEST_MUTEX.lock().unwrap();
+        clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}, \"red\": {\"500\": \"#ef4444\"}}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         let _ = resolve_color_cached(1, "blue-600".to_string(), config_json.to_string());
         let _ = resolve_color_cached(1, "red-500".to_string(), config_json.to_string());
@@ -684,6 +706,7 @@ mod tests {
 
     #[test]
     fn test_multiple_theme_ids_separate_caches() {
+        let _guard = TEST_MUTEX.lock().unwrap();
         clear_resolver_pool().unwrap();
         let config_json = "{\"colors\": {\"blue\": {\"600\": \"#1e40af\"}, \"red\": {\"500\": \"#ef4444\"}}, \"spacing\": {}, \"font_sizes\": {}, \"breakpoints\": {}, \"extend\": {}, \"dark_mode\": \"media\"}";
         

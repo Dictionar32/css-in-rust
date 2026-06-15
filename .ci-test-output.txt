@@ -1,0 +1,3379 @@
+TAP version 13
+# Subtest: classToCss()
+    # Subtest: exports classToCss function
+    ok 1 - exports classToCss function
+      ---
+      duration_ms: 1.79
+      type: 'test'
+      ...
+    # Subtest: handles known class (if native available)
+    ok 2 - handles known class (if native available)
+      ---
+      duration_ms: 47.9484
+      type: 'test'
+      ...
+    # Subtest: handles empty class gracefully
+    ok 3 - handles empty class gracefully
+      ---
+      duration_ms: 0.4733
+      type: 'test'
+      ...
+    1..3
+ok 1 - classToCss()
+  ---
+  duration_ms: 56.348
+  type: 'suite'
+  ...
+# Subtest: analyzeWorkspace()
+    # Subtest: exports analyzeWorkspace function
+    ok 1 - exports analyzeWorkspace function
+      ---
+      duration_ms: 0.3774
+      type: 'test'
+      ...
+    # Subtest: returns AnalyzerReport shape for valid directory
+    ok 2 - returns AnalyzerReport shape for valid directory
+      ---
+      duration_ms: 101.7393
+      type: 'test'
+      ...
+    1..2
+ok 2 - analyzeWorkspace()
+  ---
+  duration_ms: 102.8555
+  type: 'suite'
+  ...
+# Subtest: AnimationRegistry
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 1.6629
+      type: 'test'
+      ...
+    # Subtest: can be instantiated
+    ok 2 - can be instantiated
+      ---
+      duration_ms: 0.3768
+      type: 'test'
+      ...
+    1..2
+ok 3 - AnimationRegistry
+  ---
+  duration_ms: 4.3579
+  type: 'suite'
+  ...
+# Subtest: animations preset object
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 0.739
+      type: 'test'
+      ...
+    # Subtest: contains animation definitions
+    ok 2 - contains animation definitions
+      ---
+      duration_ms: 0.4104
+      type: 'test'
+      ...
+    1..2
+ok 4 - animations preset object
+  ---
+  duration_ms: 1.5828
+  type: 'suite'
+  ...
+# Subtest: animate()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 0.4615
+      type: 'test'
+      ...
+    # Subtest: returns CSS class string
+    ok 2 - returns CSS class string
+      ---
+      duration_ms: 48.9417
+      type: 'test'
+      ...
+    1..2
+ok 5 - animate()
+  ---
+  duration_ms: 50.5815
+  type: 'suite'
+  ...
+# Subtest: compileAnimation()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 0.6369
+      type: 'test'
+      ...
+    # Subtest: compiles animation to CSS
+    ok 2 - compiles animation to CSS
+      ---
+      duration_ms: 0.5596
+      type: 'test'
+      ...
+    1..2
+ok 6 - compileAnimation()
+  ---
+  duration_ms: 1.7327
+  type: 'suite'
+  ...
+# Subtest: keyframes()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 0.5878
+      type: 'test'
+      ...
+    1..1
+ok 7 - keyframes()
+  ---
+  duration_ms: 1.1189
+  type: 'suite'
+  ...
+# Subtest: extractAnimationCss()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 0.4255
+      type: 'test'
+      ...
+    1..1
+ok 8 - extractAnimationCss()
+  ---
+  duration_ms: 0.6121
+  type: 'suite'
+  ...
+# TEST IMPORT FAILED. WARNING: ReferenceError: targetPath is not defined
+#     at file:///C:/Users/User/Documents/demoPackageNpm/focus/css-in-rust/packages/domain/compiler/tests/cssCompilation.test.mjs:10:3
+#     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:647:26)
+#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+# TEST FALLBACK SUCCESS. KEYS: [
+#   'atomicRegistrySize',
+#   'clearAtomicRegistry',
+#   'clearThemeCache',
+#   'compileAnimation',
+#   'compileClass',
+#   'compileClasses',
+#   'compileCssLightning',
+#   'compileCssNative2',
+#   'compileKeyframes',
+#   'compileTheme',
+#   'compileToCss',
+#   'compileToCssBatch',
+#   'computeIncrementalDiff',
+#   'createFingerprint',
+#   'extractAndGenerateStateCssNative',
+#   'extractTwContainerConfigs',
+#   'extractTwStateConfigsNative',
+#   'generateAtomicCss',
+#   'generateCss',
+#   'generateCssBatch',
+#   'generateCssNative',
+#   'generateStaticStateCssNative',
+#   'getCacheStats',
+#   'hashContent',
+#   'idRegistryActiveCount',
+#   'idRegistryCreate',
+#   'idRegistryDestroy',
+#   'idRegistryExport',
+#   'idRegistryGenerate',
+#   'idRegistryImport',
+#   'idRegistryLookup',
+#   'idRegistryNext',
+#   'idRegistryReset',
+#   'idRegistrySnapshot',
+#   'injectStateHash',
+#   'layoutClassesToCss',
+#   'minifyCss',
+#   'parseAtomicClass',
+#   'processFileChange',
+#   'propertyIdToString',
+#   'pruneStaleCacheEntries',
+#   'rebuildWorkspaceResult',
+#   'registerPropertyName',
+#   'registerValueName',
+#   'resetCacheStats',
+#   'reverseLookupProperty',
+#   'reverseLookupValue',
+#   'runCssPipeline',
+#   'scanFileNative',
+#   'scanFilesBatchNative',
+#   'toAtomicClasses',
+#   'twMerge',
+#   'twMergeMany',
+#   'twMergeManyWithSeparator',
+#   'twMergeRaw',
+#   'twMergeWithSeparator',
+#   'valueIdToString'
+# ]
+# TEST BINARY RESOLUTION: {
+#   path: 'C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\native\\\\tailwind-styled-native.node',
+#   source: 'local',
+#   platform: 'win32-x64',
+#   tried: [
+#     'prebuilt:@tailwind-styled/native-win32-x64-msvc (not installed)',
+#     'prebuilt:@tailwind-styled/native-win32-x64 (not installed)',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind-styled-native.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind_styled_parser.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind-styled-native.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind_styled_parser.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind-styled-native.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind-styled-native.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind_styled_parser.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'self-bundled:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\native\\\\tailwind_styled_parser.win32-x64.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind-styled-native.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\tailwind-styled-native.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind-styled-native.win32-x64.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind-styled-native.win32-x64.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind_styled_parser.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\tailwind_styled_parser.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind_styled_parser.win32-x64.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\packages\\\\domain\\\\compiler\\\\dist\\\\compiler\\\\tailwind_styled_parser.win32-x64.node',
+#     'local:C:\\\\Users\\\\User\\\\Documents\\\\demoPackageNpm\\\\focus\\\\css-in-rust\\\\native\\\\tailwind-styled-native.node'
+#   ]
+# }
+# TEST CSS OUTPUT: ".bg-blue-600{background-color:\#1e40af;}.p-4{padding:1rem;}"
+# Subtest: CSS Compilation & Optimization Native Integrations
+    # Subtest: minifyCss
+        # Subtest: should compress css by stripping spaces, comments and lines
+        ok 1 - should compress css by stripping spaces, comments and lines
+          ---
+          duration_ms: 1.9888
+          type: 'test'
+          ...
+        1..1
+    ok 1 - minifyCss
+      ---
+      duration_ms: 3.877
+      type: 'suite'
+      ...
+    # Subtest: compileToCss & compileToCssBatch
+        # Subtest: should compile a single class to CSS
+        ok 1 - should compile a single class to CSS
+          ---
+          duration_ms: 4.6491
+          type: 'test'
+          ...
+        # Subtest: should batch compile multiple classes and combine them
+        ok 2 - should batch compile multiple classes and combine them
+          ---
+          duration_ms: 2.1508
+          type: 'test'
+          ...
+        # Subtest: should batch compile multiple classes and minify if requested
+        ok 3 - should batch compile multiple classes and minify if requested
+          ---
+          duration_ms: 222.6835
+          type: 'test'
+          ...
+        1..3
+    ok 2 - compileToCss & compileToCssBatch
+      ---
+      duration_ms: 230.1695
+      type: 'suite'
+      ...
+    # Subtest: generateCss & generateCssBatch
+        # Subtest: should generate CSS from a single CssRule object
+        ok 1 - should generate CSS from a single CssRule object
+          ---
+          duration_ms: 6.5607
+          type: 'test'
+          ...
+        # Subtest: should batch generate CSS from multiple CssRule objects
+        ok 2 - should batch generate CSS from multiple CssRule objects
+          ---
+          duration_ms: 0.5601
+          type: 'test'
+          ...
+        1..2
+    ok 3 - generateCss & generateCssBatch
+      ---
+      duration_ms: 8.0127
+      type: 'suite'
+      ...
+    # Subtest: runCssPipeline with minifier option
+        # Subtest: should support the fast minifier in the pipeline
+        ok 1 - should support the fast minifier in the pipeline
+          ---
+          duration_ms: 2.4707
+          type: 'test'
+          ...
+        # Subtest: should support the default lightning minifier in the pipeline
+        ok 2 - should support the default lightning minifier in the pipeline
+          ---
+          duration_ms: 0.9638
+          type: 'test'
+          ...
+        1..2
+    ok 4 - runCssPipeline with minifier option
+      ---
+      duration_ms: 4.1606
+      type: 'suite'
+      ...
+    1..4
+ok 9 - CSS Compilation & Optimization Native Integrations
+  ---
+  duration_ms: 249.928
+  type: 'suite'
+  ...
+# Subtest: Dead Style Eliminator
+    # Subtest: eliminates unused class rules from CSS
+    ok 1 - eliminates unused class rules from CSS
+      ---
+      duration_ms: 6.7395
+      type: 'test'
+      ...
+    # Subtest: keeps all classes when no dead classes
+    ok 2 - keeps all classes when no dead classes
+      ---
+      duration_ms: 0.6853
+      type: 'test'
+      ...
+    # Subtest: handles empty CSS
+    ok 3 - handles empty CSS
+      ---
+      duration_ms: 1.2875
+      type: 'test'
+      ...
+    # Subtest: optimizeCss deduplicates identical rules
+    ok 4 - optimizeCss deduplicates identical rules
+      ---
+      duration_ms: 0.5274
+      type: 'test'
+      ...
+    # Subtest: findDeadVariants returns report
+    ok 5 - findDeadVariants returns report
+      ---
+      duration_ms: 0.6768
+      type: 'test'
+      ...
+    1..5
+ok 10 - Dead Style Eliminator
+  ---
+  duration_ms: 15.2566
+  type: 'suite'
+  ...
+# Subtest: Error types created successfully
+ok 11 - Error types created successfully
+  ---
+  duration_ms: 2.9454
+  type: 'test'
+  ...
+# Subtest: Fallback implementations available
+ok 12 - Fallback implementations available
+  ---
+  duration_ms: 0.2984
+  type: 'test'
+  ...
+# Subtest: Logging and diagnostics system available
+ok 13 - Logging and diagnostics system available
+  ---
+  duration_ms: 0.2635
+  type: 'test'
+  ...
+# Subtest: Recovery strategies implemented
+ok 14 - Recovery strategies implemented
+  ---
+  duration_ms: 0.2545
+  type: 'test'
+  ...
+# Subtest: Error type guards and utilities
+ok 15 - Error type guards and utilities
+  ---
+  duration_ms: 0.467
+  type: 'test'
+  ...
+# Subtest: BaseManager integration with error handling
+ok 16 - BaseManager integration with error handling
+  ---
+  duration_ms: 0.313
+  type: 'test'
+  ...
+# Subtest: Documentation complete
+ok 17 - Documentation complete
+  ---
+  duration_ms: 1.0699
+  type: 'test'
+  ...
+# Subtest: All error codes defined
+ok 18 - All error codes defined
+  ---
+  duration_ms: 0.3619
+  type: 'test'
+  ...
+# Subtest: Fallback manager provides all subsystem fallbacks
+ok 19 - Fallback manager provides all subsystem fallbacks
+  ---
+  duration_ms: 1.3905
+  type: 'test'
+  ...
+# Subtest: Logger provides all log levels and filtering
+ok 20 - Logger provides all log levels and filtering
+  ---
+  duration_ms: 1.048
+  type: 'test'
+  ...
+# Subtest: Diagnostics manager generates full reports
+ok 21 - Diagnostics manager generates full reports
+  ---
+  duration_ms: 0.4332
+  type: 'test'
+  ...
+# Subtest: Recovery manager implements full resilience
+ok 22 - Recovery manager implements full resilience
+  ---
+  duration_ms: 0.279
+  type: 'test'
+  ...
+# Subtest: Retry strategy implements exponential backoff
+ok 23 - Retry strategy implements exponential backoff
+  ---
+  duration_ms: 0.2136
+  type: 'test'
+  ...
+# Subtest: Circuit breaker implements state machine
+ok 24 - Circuit breaker implements state machine
+  ---
+  duration_ms: 0.1808
+  type: 'test'
+  ...
+# Subtest: Error type guards work correctly
+ok 25 - Error type guards work correctly
+  ---
+  duration_ms: 0.1891
+  type: 'test'
+  ...
+# Subtest: Fallback results helper functions
+ok 26 - Fallback results helper functions
+  ---
+  duration_ms: 0.2082
+  type: 'test'
+  ...
+# Subtest: Task 1.4 requirements satisfied
+ok 27 - Task 1.4 requirements satisfied
+  ---
+  duration_ms: 0.1917
+  type: 'test'
+  ...
+# Subtest: All 63 function failures handled gracefully
+ok 28 - All 63 function failures handled gracefully
+  ---
+  duration_ms: 18.1863
+  type: 'test'
+  ...
+# Subtest: Diagnostics dependencies
+ok 29 - Diagnostics dependencies
+  ---
+  duration_ms: 0.2691
+  type: 'test'
+  ...
+# Subtest: Main entry point exports all functions
+ok 30 - Main entry point exports all functions
+  ---
+  duration_ms: 346.4843
+  type: 'test'
+  ...
+# Subtest: Compiler sub-entry exports CSS generation functions
+ok 31 - Compiler sub-entry exports CSS generation functions
+  ---
+  duration_ms: 8.1866
+  type: 'test'
+  ...
+# Subtest: Parser sub-entry exports parsing functions
+ok 32 - Parser sub-entry exports parsing functions
+  ---
+  duration_ms: 31.3253
+  type: 'test'
+  ...
+# Subtest: Analyzer sub-entry exports analysis functions
+ok 33 - Analyzer sub-entry exports analysis functions
+  ---
+  duration_ms: 14.0797
+  type: 'test'
+  ...
+# Subtest: Cache sub-entry exports cache functions
+ok 34 - Cache sub-entry exports cache functions
+  ---
+  duration_ms: 8.5616
+  type: 'test'
+  ...
+# Subtest: Redis sub-entry exports Redis functions
+ok 35 - Redis sub-entry exports Redis functions
+  ---
+  duration_ms: 4.5366
+  type: 'test'
+  ...
+# Subtest: Watch sub-entry exports watch functions
+ok 36 - Watch sub-entry exports watch functions
+  ---
+  duration_ms: 7.7776
+  type: 'test'
+  ...
+# Subtest: Internal entry point re-exports functions
+ok 37 - Internal entry point re-exports functions
+  ---
+  duration_ms: 16.824
+  type: 'test'
+  ...
+# Subtest: extractAllClasses
+    # Subtest: extracts classes from JSX className prop
+    ok 1 - extracts classes from JSX className prop
+      ---
+      duration_ms: 15.7838
+      type: 'test'
+      ...
+    # Subtest: extracts classes from tw template literals
+    ok 2 - extracts classes from tw template literals
+      ---
+      duration_ms: 1.039
+      type: 'test'
+      ...
+    # Subtest: returns empty array for source with no classes
+    ok 3 - returns empty array for source with no classes
+      ---
+      duration_ms: 0.4368
+      type: 'test'
+      ...
+    # Subtest: handles multiline className
+    ok 4 - handles multiline className
+      ---
+      duration_ms: 0.5395
+      type: 'test'
+      ...
+    1..4
+ok 38 - extractAllClasses
+  ---
+  duration_ms: 21.8686
+  type: 'suite'
+  ...
+# Subtest: Pure JS utilities work without native binary
+ok 39 - Pure JS utilities work without native binary
+  ---
+  duration_ms: 312.8303
+  type: 'test'
+  ...
+# Subtest: Core compiler functions throw native unavailable error
+ok 40 - Core compiler functions throw native unavailable error
+  ---
+  duration_ms: 20.8072
+  type: 'test'
+  ...
+# Subtest: Compiler sub-entry NAPI wrappers throw native unavailable error
+ok 41 - Compiler sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 16.3038
+  type: 'test'
+  ...
+# Subtest: Parser sub-entry NAPI wrappers throw native unavailable error
+ok 42 - Parser sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 9.186
+  type: 'test'
+  ...
+# Subtest: Analyzer sub-entry NAPI wrappers throw native unavailable error
+ok 43 - Analyzer sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 7.6773
+  type: 'test'
+  ...
+# Subtest: Cache sub-entry NAPI wrappers throw native unavailable error
+ok 44 - Cache sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 14.5673
+  type: 'test'
+  ...
+# Subtest: Redis sub-entry NAPI wrappers throw native unavailable error
+ok 45 - Redis sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 13.1533
+  type: 'test'
+  ...
+# Subtest: Watch sub-entry NAPI wrappers throw native unavailable error
+ok 46 - Watch sub-entry NAPI wrappers throw native unavailable error
+  ---
+  duration_ms: 14.1202
+  type: 'test'
+  ...
+# Subtest: Task 4.3.51: snapshot should include all metadata
+ok 47 - Task 4.3.51: snapshot should include all metadata
+  ---
+  duration_ms: 4.6114
+  type: 'test'
+  ...
+# Subtest: Task 4.3.52: snapshot should preserve component names exactly
+ok 48 - Task 4.3.52: snapshot should preserve component names exactly
+  ---
+  duration_ms: 0.5681
+  type: 'test'
+  ...
+# Subtest: Task 4.3.53: snapshot should preserve exact IDs
+ok 49 - Task 4.3.53: snapshot should preserve exact IDs
+  ---
+  duration_ms: 0.5452
+  type: 'test'
+  ...
+# Subtest: Task 4.3.54: export should include timestamp
+ok 50 - Task 4.3.54: export should include timestamp
+  ---
+  duration_ms: 0.7481
+  type: 'test'
+  ...
+# Subtest: Task 4.3.55: export should include registry creation info
+ok 51 - Task 4.3.55: export should include registry creation info
+  ---
+  duration_ms: 0.7424
+  type: 'test'
+  ...
+# Subtest: Task 4.3.56: imported registry should have new handle
+ok 52 - Task 4.3.56: imported registry should have new handle
+  ---
+  duration_ms: 0.9423
+  type: 'test'
+  ...
+# Subtest: Task 4.3.57: imported registry should maintain component order
+ok 53 - Task 4.3.57: imported registry should maintain component order
+  ---
+  duration_ms: 0.852
+  type: 'test'
+  ...
+# Subtest: Task 4.3.58: reproducibility: same names produce same IDs
+ok 54 - Task 4.3.58: reproducibility: same names produce same IDs
+  ---
+  duration_ms: 0.3584
+  type: 'test'
+  ...
+# Subtest: Task 4.3.59: reproducibility: different names produce different IDs
+ok 55 - Task 4.3.59: reproducibility: different names produce different IDs
+  ---
+  duration_ms: 1.058
+  type: 'test'
+  ...
+# Subtest: Task 4.3.60: reproducibility: export/import preserves exact IDs
+ok 56 - Task 4.3.60: reproducibility: export/import preserves exact IDs
+  ---
+  duration_ms: 2.4029
+  type: 'test'
+  ...
+# Subtest: Task 4.3.61: reproducibility: property/value IDs consistent
+ok 57 - Task 4.3.61: reproducibility: property/value IDs consistent
+  ---
+  duration_ms: 2.4571
+  type: 'test'
+  ...
+# Subtest: Task 4.3.62: reset should allow fresh start
+ok 58 - Task 4.3.62: reset should allow fresh start
+  ---
+  duration_ms: 0.3987
+  type: 'test'
+  ...
+# Subtest: Task 4.3.63: reset then regenerate preserves IDs
+ok 59 - Task 4.3.63: reset then regenerate preserves IDs
+  ---
+  duration_ms: 0.2299
+  type: 'test'
+  ...
+# Subtest: Task 4.3.64: concurrent registries maintain isolation
+ok 60 - Task 4.3.64: concurrent registries maintain isolation
+  ---
+  duration_ms: 0.3019
+  type: 'test'
+  ...
+# Subtest: Task 4.3.65: export/import maintains isolation
+ok 61 - Task 4.3.65: export/import maintains isolation
+  ---
+  duration_ms: 0.4025
+  type: 'test'
+  ...
+# Subtest: Task 4.3.66: snapshot for large registry (10K+ entries)
+ok 62 - Task 4.3.66: snapshot for large registry (10K+ entries)
+  ---
+  duration_ms: 49.4002
+  type: 'test'
+  ...
+# Subtest: Task 4.3.67: export for large registry (10K+ entries)
+ok 63 - Task 4.3.67: export for large registry (10K+ entries)
+  ---
+  duration_ms: 81.3513
+  type: 'test'
+  ...
+# Subtest: Task 4.3.68: import for large registry (10K+ entries)
+ok 64 - Task 4.3.68: import for large registry (10K+ entries)
+  ---
+  duration_ms: 63.9583
+  type: 'test'
+  ...
+# Subtest: Task 4.3.69: getActiveCount tracks all registries
+ok 65 - Task 4.3.69: getActiveCount tracks all registries
+  ---
+  duration_ms: 0.3373
+  type: 'test'
+  ...
+# Subtest: Task 4.3.70: listActiveRegistries returns all active handles
+ok 66 - Task 4.3.70: listActiveRegistries returns all active handles
+  ---
+  duration_ms: 0.2976
+  type: 'test'
+  ...
+# Subtest: Task 4.3.71: export contains exact component count
+ok 67 - Task 4.3.71: export contains exact component count
+  ---
+  duration_ms: 0.4314
+  type: 'test'
+  ...
+# Subtest: Task 4.3.72: round-trip export/import preserves properties and values
+ok 68 - Task 4.3.72: round-trip export/import preserves properties and values
+  ---
+  duration_ms: 0.4744
+  type: 'test'
+  ...
+# Subtest: Task 4.3.73: destruction releases handle for reuse
+ok 69 - Task 4.3.73: destruction releases handle for reuse
+  ---
+  duration_ms: 0.7595
+  type: 'test'
+  ...
+# Subtest: Task 4.3.74: multiple export/import cycles preserve IDs
+ok 70 - Task 4.3.74: multiple export/import cycles preserve IDs
+  ---
+  duration_ms: 0.4876
+  type: 'test'
+  ...
+# Subtest: Task 4.3.75: stress test - 1000 concurrent operations
+ok 71 - Task 4.3.75: stress test - 1000 concurrent operations
+  ---
+  duration_ms: 1.5911
+  type: 'test'
+  ...
+# Subtest: Task 4.3.76: JSON exported data should be valid and parseable
+ok 72 - Task 4.3.76: JSON exported data should be valid and parseable
+  ---
+  duration_ms: 4.4274
+  type: 'test'
+  ...
+# Subtest: Task 4.3.77: snapshot timestamp should be current
+ok 73 - Task 4.3.77: snapshot timestamp should be current
+  ---
+  duration_ms: 0.3086
+  type: 'test'
+  ...
+# Subtest: IncrementalEngine
+    # Subtest: exports IncrementalEngine class
+    ok 1 - exports IncrementalEngine class
+      ---
+      duration_ms: 2.3855
+      type: 'test'
+      ...
+    # Subtest: getIncrementalEngine returns singleton
+    ok 2 - getIncrementalEngine returns singleton
+      ---
+      duration_ms: 1.9249
+      type: 'test'
+      ...
+    # Subtest: reset creates new instance
+    ok 3 - reset creates new instance
+      ---
+      duration_ms: 1.449
+      type: 'test'
+      ...
+    # Subtest: processes source and returns result
+    ok 4 - processes source and returns result
+      ---
+      duration_ms: 0.8158
+      type: 'test'
+      ...
+    1..4
+ok 74 - IncrementalEngine
+  ---
+  duration_ms: 10.0721
+  type: 'suite'
+  ...
+# Subtest: Manager infrastructure created successfully
+ok 75 - Manager infrastructure created successfully
+  ---
+  duration_ms: 2.1174
+  type: 'test'
+  ...
+# Subtest: Manager instantiation and configuration
+ok 76 - Manager instantiation and configuration
+  ---
+  duration_ms: 0.3167
+  type: 'test'
+  ...
+# Subtest: BaseManager state machine
+ok 77 - BaseManager state machine
+  ---
+  duration_ms: 0.2476
+  type: 'test'
+  ...
+# Subtest: Domain-specific manager methods
+ok 78 - Domain-specific manager methods
+  ---
+  duration_ms: 1.7331
+  type: 'test'
+  ...
+# Subtest: RedisManager - Connection Pool Management
+    # Subtest: pool size configuration is reflected in stats
+    ok 1 - pool size configuration is reflected in stats
+      ---
+      duration_ms: 2.2482
+      type: 'test'
+      ...
+    # Subtest: pool stats contain all required fields
+    ok 2 - pool stats contain all required fields
+      ---
+      duration_ms: 0.3385
+      type: 'test'
+      ...
+    # Subtest: available connections never exceed pool size
+    ok 3 - available connections never exceed pool size
+      ---
+      duration_ms: 0.3438
+      type: 'test'
+      ...
+    # Subtest: active + available connections equals pool size
+    ok 4 - active + available connections equals pool size
+      ---
+      duration_ms: 0.2943
+      type: 'test'
+      ...
+    # Subtest: pool stats are non-negative
+    ok 5 - pool stats are non-negative
+      ---
+      duration_ms: 0.5049
+      type: 'test'
+      ...
+    # Subtest: reconnect is idempotent - multiple reconnects succeed
+    ok 6 - reconnect is idempotent - multiple reconnects succeed
+      ---
+      duration_ms: 0.2852
+      type: 'test'
+      ...
+    # Subtest: connection pool handles custom configuration
+    ok 7 - connection pool handles custom configuration
+      ---
+      duration_ms: 0.4556
+      type: 'test'
+      ...
+    # Subtest: manager lifecycle - initialize and shutdown
+    ok 8 - manager lifecycle - initialize and shutdown
+      ---
+      duration_ms: 0.5509
+      type: 'test'
+      ...
+    # Subtest: disabled manager is not ready
+    ok 9 - disabled manager is not ready
+      ---
+      duration_ms: 0.6756
+      type: 'test'
+      ...
+    # Subtest: operations throw before initialization
+    ok 10 - operations throw before initialization
+      ---
+      duration_ms: 0.9623
+      type: 'test'
+      ...
+    # Subtest: default pool size is 10
+    ok 11 - default pool size is 10
+      ---
+      duration_ms: 0.6961
+      type: 'test'
+      ...
+    # Subtest: connection establishment is tracked
+    ok 12 - connection establishment is tracked
+      ---
+      duration_ms: 0.3128
+      type: 'test'
+      ...
+    # Subtest: connection recovery with reconnect
+    ok 13 - connection recovery with reconnect
+      ---
+      duration_ms: 0.22
+      type: 'test'
+      ...
+    1..13
+ok 79 - RedisManager - Connection Pool Management
+  ---
+  duration_ms: 11.5728
+  type: 'suite'
+  ...
+# Subtest: Property: Pool size configuration persists
+ok 80 - Property: Pool size configuration persists
+  ---
+  duration_ms: 0.322
+  type: 'test'
+  ...
+# Subtest: Property: Available connections invariant
+ok 81 - Property: Available connections invariant
+  ---
+  duration_ms: 0.3112
+  type: 'test'
+  ...
+# Subtest: Property: Connection accounting invariant
+ok 82 - Property: Connection accounting invariant
+  ---
+  duration_ms: 0.6076
+  type: 'test'
+  ...
+# Subtest: Property: Reconnect idempotency
+ok 83 - Property: Reconnect idempotency
+  ---
+  duration_ms: 1.9008
+  type: 'test'
+  ...
+# Subtest: Property: Uptime monotonicity
+ok 84 - Property: Uptime monotonicity
+  ---
+  duration_ms: 0.2356
+  type: 'test'
+  ...
+# Subtest: Requirement 1.1: redis_pool_connect creates pool with configurable size
+ok 85 - Requirement 1.1: redis_pool_connect creates pool with configurable size
+  ---
+  duration_ms: 0.2232
+  type: 'test'
+  ...
+# Subtest: Requirement 1.2: Pool statistics tracked accurately
+ok 86 - Requirement 1.2: Pool statistics tracked accurately
+  ---
+  duration_ms: 0.2166
+  type: 'test'
+  ...
+# Subtest: Requirement 1.2: Automatic reconnection with health checks
+ok 87 - Requirement 1.2: Automatic reconnection with health checks
+  ---
+  duration_ms: 0.1982
+  type: 'test'
+  ...
+# Subtest: analyzeFile() — RSC Boundary Detection (QA \#3)
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 2.1216
+      type: 'test'
+      ...
+    # Subtest: detects 'use client' directive → client component
+    ok 2 - detects 'use client' directive → client component
+      ---
+      duration_ms: 1.0476
+      type: 'test'
+      ...
+    # Subtest: detects 'use server' directive → server component
+    ok 3 - detects 'use server' directive → server component
+      ---
+      duration_ms: 1.392
+      type: 'test'
+      ...
+    # Subtest: detects useState → needs client directive
+    ok 4 - detects useState → needs client directive
+      ---
+      duration_ms: 0.766
+      type: 'test'
+      ...
+    # Subtest: detects onClick → needs client directive
+    ok 5 - detects onClick → needs client directive
+      ---
+      duration_ms: 0.4079
+      type: 'test'
+      ...
+    # Subtest: pure server component → no client needed
+    ok 6 - pure server component → no client needed
+      ---
+      duration_ms: 0.3062
+      type: 'test'
+      ...
+    # Subtest: returns clientReasons array
+    ok 7 - returns clientReasons array
+      ---
+      duration_ms: 0.3294
+      type: 'test'
+      ...
+    1..7
+ok 88 - analyzeFile() — RSC Boundary Detection (QA \#3)
+  ---
+  duration_ms: 9.3923
+  type: 'suite'
+  ...
+# Subtest: transformSource
+    # Subtest: transforms basic tw template literal
+    ok 1 - transforms basic tw template literal
+      ---
+      duration_ms: 44.6387
+      type: 'test'
+      ...
+    # Subtest: extracts classes from template literal
+    ok 2 - extracts classes from template literal
+      ---
+      duration_ms: 0.5716
+      type: 'test'
+      ...
+    # Subtest: handles tw object config with variants
+    ok 3 - handles tw object config with variants
+      ---
+      duration_ms: 22.3055
+      type: 'test'
+      ...
+    # Subtest: returns null or passthrough for non-tw source
+    ok 4 - returns null or passthrough for non-tw source
+      ---
+      duration_ms: 0.7571
+      type: 'test'
+      ...
+    # Subtest: handles empty source
+    ok 5 - handles empty source
+      ---
+      duration_ms: 0.4465
+      type: 'test'
+      ...
+    1..5
+ok 89 - transformSource
+  ---
+  duration_ms: 71.9243
+  type: 'suite'
+  ...
+# Subtest: Variants
+    # Subtest: StaticVariantResolver resolves basic variant
+    ok 1 - StaticVariantResolver resolves basic variant
+      ---
+      duration_ms: 1.9489
+      type: 'test'
+      ...
+    # Subtest: StaticVariantResolver uses defaultVariants
+    ok 2 - StaticVariantResolver uses defaultVariants
+      ---
+      duration_ms: 0.5226
+      type: 'test'
+      ...
+    # Subtest: StaticVariantResolver handles compound variants
+    ok 3 - StaticVariantResolver handles compound variants
+      ---
+      duration_ms: 0.4026
+      type: 'test'
+      ...
+    1..3
+ok 90 - Variants
+  ---
+  duration_ms: 6.8804
+  type: 'suite'
+  ...
+# [core] detectTailwind not exported, skipping
+# Subtest: detectTailwind() — QA \#2
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 3.1257
+      type: 'test'
+      ...
+    # Subtest: returns TailwindInfo shape
+    ok 2 - returns TailwindInfo shape
+      ---
+      duration_ms: 0.4108
+      type: 'test'
+      ...
+    # Subtest: tailwindcss installed → returns version info
+    ok 3 - tailwindcss installed → returns version info
+      ---
+      duration_ms: 0.5032
+      type: 'test'
+      ...
+    # Subtest: v4 is supported, v3 is not fully supported
+    ok 4 - v4 is supported, v3 is not fully supported
+      ---
+      duration_ms: 0.3646
+      type: 'test'
+      ...
+    1..4
+ok 91 - detectTailwind() — QA \#2
+  ---
+  duration_ms: 7.2472
+  type: 'suite'
+  ...
+# Subtest: assertTailwindCompatibility() — QA \#2
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 0.5936
+      type: 'test'
+      ...
+    # Subtest: does not throw when tailwind installed
+    ok 2 - does not throw when tailwind installed
+      ---
+      duration_ms: 0.2826
+      type: 'test'
+      ...
+    1..2
+ok 92 - assertTailwindCompatibility() — QA \#2
+  ---
+  duration_ms: 1.2692
+  type: 'suite'
+  ...
+# Subtest: createComponent() subcomponent isolation
+    # Subtest: strips bracket subcomponent blocks from the base className
+    ok 1 - strips bracket subcomponent blocks from the base className
+      ---
+      duration_ms: 30.6275
+      type: 'test'
+      ...
+    # Subtest: registers bracket subcomponents with their own classes
+    ok 2 - registers bracket subcomponents with their own classes
+      ---
+      duration_ms: 1.9747
+      type: 'test'
+      ...
+    1..2
+ok 93 - createComponent() subcomponent isolation
+  ---
+  duration_ms: 36.6446
+  type: 'suite'
+  ...
+# [core] validateVariantConfig not exported, skipping
+# Subtest: cv() — class variant
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 2.1386
+      type: 'test'
+      ...
+    # Subtest: resolves base classes
+    ok 2 - resolves base classes
+      ---
+      duration_ms: 28.3541
+      type: 'test'
+      ...
+    # Subtest: resolves variant classes
+    ok 3 - resolves variant classes
+      ---
+      duration_ms: 0.8813
+      type: 'test'
+      ...
+    # Subtest: uses defaultVariants when props not provided
+    ok 4 - uses defaultVariants when props not provided
+      ---
+      duration_ms: 0.8621
+      type: 'test'
+      ...
+    # Subtest: handles compound variants
+    ok 5 - handles compound variants
+      ---
+      duration_ms: 0.7119
+      type: 'test'
+      ...
+    # Subtest: handles empty config
+    ok 6 - handles empty config
+      ---
+      duration_ms: 0.8295
+      type: 'test'
+      ...
+    1..6
+ok 94 - cv() — class variant
+  ---
+  duration_ms: 37.0605
+  type: 'suite'
+  ...
+# Subtest: cx() — class merger
+    # Subtest: merges class strings
+    ok 1 - merges class strings
+      ---
+      duration_ms: 0.9878
+      type: 'test'
+      ...
+    # Subtest: filters falsy values
+    ok 2 - filters falsy values
+      ---
+      duration_ms: 0.6672
+      type: 'test'
+      ...
+    # Subtest: handles arrays
+    ok 3 - handles arrays
+      ---
+      duration_ms: 0.7272
+      type: 'test'
+      ...
+    1..3
+ok 95 - cx() — class merger
+  ---
+  duration_ms: 3.3547
+  type: 'suite'
+  ...
+# Subtest: cxm() — class merger with twMerge
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 0.4437
+      type: 'test'
+      ...
+    # Subtest: resolves Tailwind conflicts
+    ok 2 - resolves Tailwind conflicts
+      ---
+      duration_ms: 0.2639
+      type: 'test'
+      ...
+    1..2
+ok 96 - cxm() — class merger with twMerge
+  ---
+  duration_ms: 0.957
+  type: 'suite'
+  ...
+# Subtest: extend() type overloads (behavioral test via plain types)
+    # Subtest: ComponentConfig interface is stable
+    ok 1 - ComponentConfig interface is stable
+      ---
+      duration_ms: 0.3734
+      type: 'test'
+      ...
+    1..1
+ok 97 - extend() type overloads (behavioral test via plain types)
+  ---
+  duration_ms: 0.5422
+  type: 'suite'
+  ...
+# Subtest: validateVariantConfig() — QA \#6
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 1.7661
+      type: 'test'
+      ...
+    # Subtest: returns valid for correct config
+    ok 2 - returns valid for correct config
+      ---
+      duration_ms: 0.2439
+      type: 'test'
+      ...
+    # Subtest: reports unknown key in defaultVariants
+    ok 3 - reports unknown key in defaultVariants
+      ---
+      duration_ms: 0.2046
+      type: 'test'
+      ...
+    # Subtest: reports unknown value in defaultVariants
+    ok 4 - reports unknown value in defaultVariants
+      ---
+      duration_ms: 0.2222
+      type: 'test'
+      ...
+    # Subtest: returns warnings for compound variants with unknown values
+    ok 5 - returns warnings for compound variants with unknown values
+      ---
+      duration_ms: 0.1943
+      type: 'test'
+      ...
+    1..5
+ok 98 - validateVariantConfig() — QA \#6
+  ---
+  duration_ms: 3.2294
+  type: 'suite'
+  ...
+# Subtest: engine facade — scanWorkspace()
+    # Subtest: exports scanWorkspace function
+    ok 1 - exports scanWorkspace function
+      ---
+      duration_ms: 1.6368
+      type: 'test'
+      ...
+    # Subtest: accepts options object
+    ok 2 - accepts options object
+      ---
+      duration_ms: 79.5889
+      type: 'test'
+      ...
+    1..2
+ok 99 - engine facade — scanWorkspace()
+  ---
+  duration_ms: 85.0294
+  type: 'suite'
+  ...
+# Subtest: engine facade — generateSafelist()
+    # Subtest: exports generateSafelist function
+    ok 1 - exports generateSafelist function
+      ---
+      duration_ms: 0.4557
+      type: 'test'
+      ...
+    # Subtest: returns array
+    ok 2 - returns array
+      ---
+      duration_ms: 9.8406
+      type: 'test'
+      ...
+    1..2
+ok 100 - engine facade — generateSafelist()
+  ---
+  duration_ms: 12.8256
+  type: 'suite'
+  ...
+# Subtest: engine facade — createEngine()
+    # Subtest: exports createEngine function
+    ok 1 - exports createEngine function
+      ---
+      duration_ms: 0.6414
+      type: 'test'
+      ...
+    # Subtest: createEngine returns engine with expected interface
+    ok 2 - createEngine returns engine with expected interface
+      ---
+      duration_ms: 2.9915
+      type: 'test'
+      ...
+    1..2
+ok 101 - engine facade — createEngine()
+  ---
+  duration_ms: 4.4698
+  type: 'suite'
+  ...
+# Subtest: createPluginRegistry()
+    # Subtest: creates registry with empty collections
+    ok 1 - creates registry with empty collections
+      ---
+      duration_ms: 1.5098
+      type: 'test'
+      ...
+    1..1
+ok 102 - createPluginRegistry()
+  ---
+  duration_ms: 3.5825
+  type: 'suite'
+  ...
+# Subtest: createPluginContext()
+    # Subtest: returns context object with plugin methods
+    ok 1 - returns context object with plugin methods
+      ---
+      duration_ms: 0.6426
+      type: 'test'
+      ...
+    # Subtest: addVariant registers in registry
+    ok 2 - addVariant registers in registry
+      ---
+      duration_ms: 0.5517
+      type: 'test'
+      ...
+    # Subtest: addToken registers token
+    ok 3 - addToken registers token
+      ---
+      duration_ms: 5.0951
+      type: 'test'
+      ...
+    1..3
+ok 103 - createPluginContext()
+  ---
+  duration_ms: 6.7745
+  type: 'suite'
+  ...
+# Subtest: getGlobalRegistry()
+    # Subtest: returns singleton registry
+    ok 1 - returns singleton registry
+      ---
+      duration_ms: 0.6576
+      type: 'test'
+      ...
+    1..1
+ok 104 - getGlobalRegistry()
+  ---
+  duration_ms: 0.9149
+  type: 'suite'
+  ...
+# Subtest: resetGlobalRegistry()
+    # Subtest: resets and returns new registry
+    ok 1 - resets and returns new registry
+      ---
+      duration_ms: 0.9802
+      type: 'test'
+      ...
+    1..1
+ok 105 - resetGlobalRegistry()
+  ---
+  duration_ms: 1.9232
+  type: 'suite'
+  ...
+# Subtest: createTwPlugin()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 3.1678
+      type: 'test'
+      ...
+    # Subtest: creates context with plugin API
+    ok 2 - creates context with plugin API
+      ---
+      duration_ms: 3.6181
+      type: 'test'
+      ...
+    # Subtest: addVariant registers variant
+    ok 3 - addVariant registers variant
+      ---
+      duration_ms: 1.1175
+      type: 'test'
+      ...
+    # Subtest: addToken registers token and getToken retrieves it
+    ok 4 - addToken registers token and getToken retrieves it
+      ---
+      duration_ms: 6.1885
+      type: 'test'
+      ...
+    # Subtest: addTransform registers transform function
+    ok 5 - addTransform registers transform function
+      ---
+      duration_ms: 3.1873
+      type: 'test'
+      ...
+    1..5
+ok 106 - createTwPlugin()
+  ---
+  duration_ms: 21.9515
+  type: 'suite'
+  ...
+# Subtest: getGlobalRegistry()
+    # Subtest: returns singleton
+    ok 1 - returns singleton
+      ---
+      duration_ms: 0.3725
+      type: 'test'
+      ...
+    1..1
+ok 107 - getGlobalRegistry()
+  ---
+  duration_ms: 0.8121
+  type: 'suite'
+  ...
+# Subtest: re-exports from plugin-api
+    # Subtest: plugin re-exports plugin-api surface
+    ok 1 - plugin re-exports plugin-api surface
+      ---
+      duration_ms: 0.3463
+      type: 'test'
+      ...
+    1..1
+ok 108 - re-exports from plugin-api
+  ---
+  duration_ms: 0.8259
+  type: 'suite'
+  ...
+# Subtest: defaultPreset
+    # Subtest: is an object
+    ok 1 - is an object
+      ---
+      duration_ms: 2.1168
+      type: 'test'
+      ...
+    # Subtest: has content array
+    ok 2 - has content array
+      ---
+      duration_ms: 0.5329
+      type: 'test'
+      ...
+    # Subtest: has darkMode set
+    ok 3 - has darkMode set
+      ---
+      duration_ms: 0.3415
+      type: 'test'
+      ...
+    # Subtest: has theme.extend with colors
+    ok 4 - has theme.extend with colors
+      ---
+      duration_ms: 0.3087
+      type: 'test'
+      ...
+    1..4
+ok 109 - defaultPreset
+  ---
+  duration_ms: 6.0426
+  type: 'suite'
+  ...
+# Subtest: designTokens
+    # Subtest: has colors object
+    ok 1 - has colors object
+      ---
+      duration_ms: 0.6188
+      type: 'test'
+      ...
+    # Subtest: has spacing object
+    ok 2 - has spacing object
+      ---
+      duration_ms: 0.4159
+      type: 'test'
+      ...
+    # Subtest: has breakpoints
+    ok 3 - has breakpoints
+      ---
+      duration_ms: 0.6452
+      type: 'test'
+      ...
+    # Subtest: has fontFamily
+    ok 4 - has fontFamily
+      ---
+      duration_ms: 0.7872
+      type: 'test'
+      ...
+    # Subtest: has borderRadius
+    ok 5 - has borderRadius
+      ---
+      duration_ms: 0.7096
+      type: 'test'
+      ...
+    # Subtest: has animation definitions
+    ok 6 - has animation definitions
+      ---
+      duration_ms: 1.0466
+      type: 'test'
+      ...
+    1..6
+ok 110 - designTokens
+  ---
+  duration_ms: 5.8419
+  type: 'suite'
+  ...
+# Subtest: defaultThemeCss
+    # Subtest: is a string containing @theme
+    ok 1 - is a string containing @theme
+      ---
+      duration_ms: 6.9937
+      type: 'test'
+      ...
+    # Subtest: includes color tokens
+    ok 2 - includes color tokens
+      ---
+      duration_ms: 0.2766
+      type: 'test'
+      ...
+    # Subtest: includes font tokens
+    ok 3 - includes font tokens
+      ---
+      duration_ms: 0.2813
+      type: 'test'
+      ...
+    1..3
+ok 111 - defaultThemeCss
+  ---
+  duration_ms: 8.0049
+  type: 'suite'
+  ...
+# Subtest: defaultGlobalCss
+    # Subtest: is a string containing @import
+    ok 1 - is a string containing @import
+      ---
+      duration_ms: 0.2727
+      type: 'test'
+      ...
+    1..1
+ok 112 - defaultGlobalCss
+  ---
+  duration_ms: 0.4593
+  type: 'suite'
+  ...
+# Subtest: generateTailwindCss()
+    # Subtest: is a function
+    ok 1 - is a function
+      ---
+      duration_ms: 0.278
+      type: 'test'
+      ...
+    # Subtest: returns string with @import tailwindcss
+    ok 2 - returns string with @import tailwindcss
+      ---
+      duration_ms: 0.3152
+      type: 'test'
+      ...
+    # Subtest: accepts custom content paths
+    ok 3 - accepts custom content paths
+      ---
+      duration_ms: 0.5441
+      type: 'test'
+      ...
+    1..3
+ok 113 - generateTailwindCss()
+  ---
+  duration_ms: 1.696
+  type: 'suite'
+  ...
+# [runtime-css/tests] dist not found
+# Subtest: packages\\domain\\runtime-css\\tests\\batchedInjector.test.mjs
+ok 23 - packages\\domain\\runtime-css\\tests\\batchedInjector.test.mjs
+  ---
+  duration_ms: 238.1551
+  type: 'test'
+  ...
+# Subtest: cx()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 3.5439
+      type: 'test'
+      ...
+    # Subtest: merges class strings
+    ok 2 - merges class strings
+      ---
+      duration_ms: 0.5761
+      type: 'test'
+      ...
+    # Subtest: filters falsy values
+    ok 3 - filters falsy values
+      ---
+      duration_ms: 0.3306
+      type: 'test'
+      ...
+    # Subtest: handles nested arrays
+    ok 4 - handles nested arrays
+      ---
+      duration_ms: 0.4814
+      type: 'test'
+      ...
+    # Subtest: handles empty input
+    ok 5 - handles empty input
+      ---
+      duration_ms: 2.2156
+      type: 'test'
+      ...
+    # Subtest: handles number input
+    ok 6 - handles number input
+      ---
+      duration_ms: 0.3381
+      type: 'test'
+      ...
+    1..6
+ok 115 - cx()
+  ---
+  duration_ms: 10.9061
+  type: 'suite'
+  ...
+# Subtest: createComponent()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 0.5061
+      type: 'test'
+      ...
+    1..1
+ok 116 - createComponent()
+  ---
+  duration_ms: 1.1945
+  type: 'suite'
+  ...
+# Subtest: runtime re-exports
+    # Subtest: exports liveToken utilities
+    ok 1 - exports liveToken utilities
+      ---
+      duration_ms: 0.6105
+      type: 'test'
+      ...
+    1..1
+ok 117 - runtime re-exports
+  ---
+  duration_ms: 0.9712
+  type: 'suite'
+  ...
+# [scanner] cache MISS C:\\Users\\User\\AppData\\Local\\Temp\\tw-ws-1781481425828\\Button.tsx
+# [scanner] [native] using native parser from C:\\Users\\User\\Documents\\demoPackageNpm\\focus\\css-in-rust\\native\\tailwind-styled-native.node
+# [scanner] cache MISS C:\\Users\\User\\AppData\\Local\\Temp\\tw-ws-1781481425828\\Card.tsx
+# Subtest: isScannableFile
+    # Subtest: returns true for .tsx file
+    ok 1 - returns true for .tsx file
+      ---
+      duration_ms: 2.4463
+      type: 'test'
+      ...
+    # Subtest: returns true for .ts file
+    ok 2 - returns true for .ts file
+      ---
+      duration_ms: 0.5448
+      type: 'test'
+      ...
+    # Subtest: returns true for .jsx file
+    ok 3 - returns true for .jsx file
+      ---
+      duration_ms: 0.305
+      type: 'test'
+      ...
+    # Subtest: returns false for .css file
+    ok 4 - returns false for .css file
+      ---
+      duration_ms: 0.3871
+      type: 'test'
+      ...
+    # Subtest: returns false for .json file
+    ok 5 - returns false for .json file
+      ---
+      duration_ms: 0.2888
+      type: 'test'
+      ...
+    # Subtest: returns false for .png file
+    ok 6 - returns false for .png file
+      ---
+      duration_ms: 0.4051
+      type: 'test'
+      ...
+    # Subtest: respects custom extensions list
+    ok 7 - respects custom extensions list
+      ---
+      duration_ms: 0.3307
+      type: 'test'
+      ...
+    1..7
+ok 118 - isScannableFile
+  ---
+  duration_ms: 8.3428
+  type: 'suite'
+  ...
+# Subtest: DEFAULT_EXTENSIONS
+    # Subtest: is an array of strings
+    ok 1 - is an array of strings
+      ---
+      duration_ms: 0.7401
+      type: 'test'
+      ...
+    # Subtest: includes common extensions
+    ok 2 - includes common extensions
+      ---
+      duration_ms: 2.2935
+      type: 'test'
+      ...
+    1..2
+ok 119 - DEFAULT_EXTENSIONS
+  ---
+  duration_ms: 5.4198
+  type: 'suite'
+  ...
+# Subtest: DEFAULT_IGNORES
+    # Subtest: is an array
+    ok 1 - is an array
+      ---
+      duration_ms: 0.5222
+      type: 'test'
+      ...
+    # Subtest: includes node_modules
+    ok 2 - includes node_modules
+      ---
+      duration_ms: 0.2963
+      type: 'test'
+      ...
+    1..2
+ok 120 - DEFAULT_IGNORES
+  ---
+  duration_ms: 1.1664
+  type: 'suite'
+  ...
+# Subtest: scanFile()
+    # Subtest: scans a file with Tailwind classes
+    ok 1 - scans a file with Tailwind classes
+      ---
+      duration_ms: 14.8479
+      type: 'test'
+      ...
+    # Subtest: returns empty classes for file with no Tailwind usage
+    ok 2 - returns empty classes for file with no Tailwind usage
+      ---
+      duration_ms: 1.9193
+      type: 'test'
+      ...
+    1..2
+ok 121 - scanFile()
+  ---
+  duration_ms: 17.0576
+  type: 'suite'
+  ...
+# Subtest: scanWorkspace()
+    # Subtest: scans a directory
+    ok 1 - scans a directory
+      ---
+      duration_ms: 41.754
+      type: 'test'
+      ...
+    1..1
+ok 122 - scanWorkspace()
+  ---
+  duration_ms: 41.9846
+  type: 'suite'
+  ...
+# [scanner] scanWorkspaceParallel not exported, skipping
+# Subtest: scanWorkspaceParallel()
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 3.0032
+      type: 'test'
+      ...
+    # Subtest: scans small workspace sequentially (< threshold)
+    ok 2 - scans small workspace sequentially (< threshold)
+      ---
+      duration_ms: 0.3993
+      type: 'test'
+      ...
+    # Subtest: handles empty directory
+    ok 3 - handles empty directory
+      ---
+      duration_ms: 0.3511
+      type: 'test'
+      ...
+    # Subtest: returns sorted unique classes
+    ok 4 - returns sorted unique classes
+      ---
+      duration_ms: 0.6232
+      type: 'test'
+      ...
+    1..4
+ok 123 - scanWorkspaceParallel()
+  ---
+  duration_ms: 7.4241
+  type: 'suite'
+  ...
+# Subtest: LRUCache
+    # Subtest: stores and retrieves values
+    ok 1 - stores and retrieves values
+      ---
+      duration_ms: 2.7408
+      type: 'test'
+      ...
+    # Subtest: returns undefined for missing keys
+    ok 2 - returns undefined for missing keys
+      ---
+      duration_ms: 0.3559
+      type: 'test'
+      ...
+    # Subtest: evicts oldest entry when at capacity
+    ok 3 - evicts oldest entry when at capacity
+      ---
+      duration_ms: 0.3641
+      type: 'test'
+      ...
+    # Subtest: has() returns correct boolean
+    ok 4 - has() returns correct boolean
+      ---
+      duration_ms: 0.7598
+      type: 'test'
+      ...
+    # Subtest: delete() removes entry
+    ok 5 - delete() removes entry
+      ---
+      duration_ms: 0.6583
+      type: 'test'
+      ...
+    # Subtest: clear() empties cache
+    ok 6 - clear() empties cache
+      ---
+      duration_ms: 0.3814
+      type: 'test'
+      ...
+    1..6
+ok 124 - LRUCache
+  ---
+  duration_ms: 8.5802
+  type: 'suite'
+  ...
+# Subtest: generateComponentCode()
+    # Subtest: generates basic component
+    ok 1 - generates basic component
+      ---
+      duration_ms: 2.4237
+      type: 'test'
+      ...
+    # Subtest: generates variants
+    ok 2 - generates variants
+      ---
+      duration_ms: 0.4803
+      type: 'test'
+      ...
+    # Subtest: generates TypeScript types
+    ok 3 - generates TypeScript types
+      ---
+      duration_ms: 0.5195
+      type: 'test'
+      ...
+    # Subtest: generates Vue component
+    ok 4 - generates Vue component
+      ---
+      duration_ms: 0.8436
+      type: 'test'
+      ...
+    # Subtest: generates compound variants
+    ok 5 - generates compound variants
+      ---
+      duration_ms: 0.5734
+      type: 'test'
+      ...
+    1..5
+ok 125 - generateComponentCode()
+  ---
+  duration_ms: 7.9548
+  type: 'suite'
+  ...
+# Subtest: generateStorybookStory()
+    # Subtest: generates valid story file
+    ok 1 - generates valid story file
+      ---
+      duration_ms: 1.3744
+      type: 'test'
+      ...
+    # Subtest: generates variant stories
+    ok 2 - generates variant stories
+      ---
+      duration_ms: 0.8059
+      type: 'test'
+      ...
+    1..2
+ok 126 - generateStorybookStory()
+  ---
+  duration_ms: 3.7668
+  type: 'suite'
+  ...
+# Subtest: generateClassRenameCodemod()
+    # Subtest: generates valid codemod script
+    ok 1 - generates valid codemod script
+      ---
+      duration_ms: 1.0416
+      type: 'test'
+      ...
+    # Subtest: handles multiple renames
+    ok 2 - handles multiple renames
+      ---
+      duration_ms: 0.645
+      type: 'test'
+      ...
+    1..2
+ok 127 - generateClassRenameCodemod()
+  ---
+  duration_ms: 2.5651
+  type: 'suite'
+  ...
+# Subtest: generateBarrelFile()
+    # Subtest: generates barrel exports
+    ok 1 - generates barrel exports
+      ---
+      duration_ms: 0.6702
+      type: 'test'
+      ...
+    # Subtest: includes directory in comment
+    ok 2 - includes directory in comment
+      ---
+      duration_ms: 0.5017
+      type: 'test'
+      ...
+    1..2
+ok 128 - generateBarrelFile()
+  ---
+  duration_ms: 1.6642
+  type: 'suite'
+  ...
+# Subtest: ScanCacheSchema
+    # Subtest: validates correct scan cache
+    ok 1 - validates correct scan cache
+      ---
+      duration_ms: 10.5499
+      type: 'test'
+      ...
+    # Subtest: rejects empty className name
+    ok 2 - rejects empty className name
+      ---
+      duration_ms: 2.3972
+      type: 'test'
+      ...
+    1..2
+ok 129 - ScanCacheSchema
+  ---
+  duration_ms: 15.6809
+  type: 'suite'
+  ...
+# Subtest: TailwindConfigSchema
+    # Subtest: validates minimal config
+    ok 1 - validates minimal config
+      ---
+      duration_ms: 2.1965
+      type: 'test'
+      ...
+    # Subtest: validates full config
+    ok 2 - validates full config
+      ---
+      duration_ms: 1.2242
+      type: 'test'
+      ...
+    # Subtest: allows extra keys (passthrough)
+    ok 3 - allows extra keys (passthrough)
+      ---
+      duration_ms: 0.7595
+      type: 'test'
+      ...
+    1..3
+ok 130 - TailwindConfigSchema
+  ---
+  duration_ms: 5.1638
+  type: 'suite'
+  ...
+# Subtest: RegistryFileSchema
+    # Subtest: validates registry file
+    ok 1 - validates registry file
+      ---
+      duration_ms: 2.6207
+      type: 'test'
+      ...
+    1..1
+ok 131 - RegistryFileSchema
+  ---
+  duration_ms: 3.3203
+  type: 'suite'
+  ...
+# Subtest: PackageJsonSchema
+    # Subtest: validates minimal package.json
+    ok 1 - validates minimal package.json
+      ---
+      duration_ms: 3.1611
+      type: 'test'
+      ...
+    # Subtest: rejects missing name
+    ok 2 - rejects missing name
+      ---
+      duration_ms: 0.9936
+      type: 'test'
+      ...
+    1..2
+ok 132 - PackageJsonSchema
+  ---
+  duration_ms: 4.8777
+  type: 'suite'
+  ...
+# Subtest: parseJsonWithSchema()
+    # Subtest: parses valid JSON with schema
+    ok 1 - parses valid JSON with schema
+      ---
+      duration_ms: 1.0792
+      type: 'test'
+      ...
+    # Subtest: throws readable error for invalid JSON
+    ok 2 - throws readable error for invalid JSON
+      ---
+      duration_ms: 1.9664
+      type: 'test'
+      ...
+    # Subtest: throws readable error for schema failure
+    ok 3 - throws readable error for schema failure
+      ---
+      duration_ms: 0.7541
+      type: 'test'
+      ...
+    1..3
+ok 133 - parseJsonWithSchema()
+  ---
+  duration_ms: 4.2291
+  type: 'suite'
+  ...
+# Subtest: TwError
+    # Subtest: constructs with source, code, message
+    ok 1 - constructs with source, code, message
+      ---
+      duration_ms: 3.2975
+      type: 'test'
+      ...
+    # Subtest: fromRust wraps plain object
+    ok 2 - fromRust wraps plain object
+      ---
+      duration_ms: 0.8103
+      type: 'test'
+      ...
+    # Subtest: fromRust wraps Error instance
+    ok 3 - fromRust wraps Error instance
+      ---
+      duration_ms: 0.8912
+      type: 'test'
+      ...
+    # Subtest: fromRust is idempotent for TwError
+    ok 4 - fromRust is idempotent for TwError
+      ---
+      duration_ms: 0.6429
+      type: 'test'
+      ...
+    # Subtest: fromZod extracts path and message
+    ok 5 - fromZod extracts path and message
+      ---
+      duration_ms: 0.6672
+      type: 'test'
+      ...
+    # Subtest: fromZod handles empty errors array
+    ok 6 - fromZod handles empty errors array
+      ---
+      duration_ms: 0.3505
+      type: 'test'
+      ...
+    # Subtest: toJSON serializes correctly
+    ok 7 - toJSON serializes correctly
+      ---
+      duration_ms: 0.5856
+      type: 'test'
+      ...
+    # Subtest: toCliMessage formats with prefix
+    ok 8 - toCliMessage formats with prefix
+      ---
+      duration_ms: 0.721
+      type: 'test'
+      ...
+    # Subtest: wrapUnknownError wraps Error
+    ok 9 - wrapUnknownError wraps Error
+      ---
+      duration_ms: 0.9405
+      type: 'test'
+      ...
+    # Subtest: wrapUnknownError is idempotent for TwError
+    ok 10 - wrapUnknownError is idempotent for TwError
+      ---
+      duration_ms: 1.0355
+      type: 'test'
+      ...
+    # Subtest: isTwError distinguishes TwError from plain Error
+    ok 11 - isTwError distinguishes TwError from plain Error
+      ---
+      duration_ms: 0.426
+      type: 'test'
+      ...
+    # Subtest: domain is backward-compatible alias for source
+    ok 12 - domain is backward-compatible alias for source
+      ---
+      duration_ms: 0.2868
+      type: 'test'
+      ...
+    1..12
+ok 134 - TwError
+  ---
+  duration_ms: 15.1592
+  type: 'suite'
+  ...
+# Subtest: hash
+    # Subtest: hashContent is deterministic
+    ok 1 - hashContent is deterministic
+      ---
+      duration_ms: 3.3517
+      type: 'test'
+      ...
+    # Subtest: hashContent produces different output for different inputs
+    ok 2 - hashContent produces different output for different inputs
+      ---
+      duration_ms: 0.4288
+      type: 'test'
+      ...
+    # Subtest: hashContent returns string
+    ok 3 - hashContent returns string
+      ---
+      duration_ms: 0.4679
+      type: 'test'
+      ...
+    # Subtest: hashContent handles empty string
+    ok 4 - hashContent handles empty string
+      ---
+      duration_ms: 0.5691
+      type: 'test'
+      ...
+    # Subtest: createHash (if exported) is consistent
+    ok 5 - createHash (if exported) is consistent
+      ---
+      duration_ms: 0.2784
+      type: 'test'
+      ...
+    1..5
+ok 135 - hash
+  ---
+  duration_ms: 10.5415
+  type: 'suite'
+  ...
+# Subtest: resolveNativeBinary() — QA \#1
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 10.2304
+      type: 'test'
+      ...
+    # Subtest: returns not-found for nonexistent env path
+    ok 2 - returns not-found for nonexistent env path
+      ---
+      duration_ms: 10.7792
+      type: 'test'
+      ...
+    # Subtest: returns not-found result when disabled via TWS_NO_NATIVE (canonical)
+    ok 3 - returns not-found result when disabled via TWS_NO_NATIVE (canonical)
+      ---
+      duration_ms: 1.9034
+      type: 'test'
+      ...
+    # Subtest: returns not-found result when disabled via TWS_DISABLE_NATIVE (backward compat)
+    ok 4 - returns not-found result when disabled via TWS_DISABLE_NATIVE (backward compat)
+      ---
+      duration_ms: 1.4424
+      type: 'test'
+      ...
+    # Subtest: includes platform in result
+    ok 5 - includes platform in result
+      ---
+      duration_ms: 5.4265
+      type: 'test'
+      ...
+    # Subtest: result has expected shape
+    ok 6 - result has expected shape
+      ---
+      duration_ms: 8.8337
+      type: 'test'
+      ...
+    1..6
+ok 136 - resolveNativeBinary() — QA \#1
+  ---
+  duration_ms: 43.2856
+  type: 'suite'
+  ...
+# Subtest: formatNativeNotFoundError()
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 0.4685
+      type: 'test'
+      ...
+    # Subtest: includes platform and solutions
+    ok 2 - includes platform and solutions
+      ---
+      duration_ms: 0.6496
+      type: 'test'
+      ...
+    1..2
+ok 137 - formatNativeNotFoundError()
+  ---
+  duration_ms: 1.8071
+  type: 'suite'
+  ...
+# Subtest: NativeScanResultSchema
+    # Subtest: validates correct scan result
+    ok 1 - validates correct scan result
+      ---
+      duration_ms: 7.8537
+      type: 'test'
+      ...
+    # Subtest: rejects missing totalFiles
+    ok 2 - rejects missing totalFiles
+      ---
+      duration_ms: 2.1249
+      type: 'test'
+      ...
+    # Subtest: rejects negative totalFiles
+    ok 3 - rejects negative totalFiles
+      ---
+      duration_ms: 1.549
+      type: 'test'
+      ...
+    # Subtest: rejects empty file path
+    ok 4 - rejects empty file path
+      ---
+      duration_ms: 0.8416
+      type: 'test'
+      ...
+    1..4
+ok 138 - NativeScanResultSchema
+  ---
+  duration_ms: 15.3011
+  type: 'suite'
+  ...
+# Subtest: NativeTransformResultSchema
+    # Subtest: validates correct transform result
+    ok 1 - validates correct transform result
+      ---
+      duration_ms: 1.4001
+      type: 'test'
+      ...
+    # Subtest: validates with rsc field
+    ok 2 - validates with rsc field
+      ---
+      duration_ms: 1.1106
+      type: 'test'
+      ...
+    1..2
+ok 139 - NativeTransformResultSchema
+  ---
+  duration_ms: 3.0152
+  type: 'suite'
+  ...
+# Subtest: NativeCssCompileResultSchema
+    # Subtest: validates css compile result
+    ok 1 - validates css compile result
+      ---
+      duration_ms: 1.284
+      type: 'test'
+      ...
+    1..1
+ok 140 - NativeCssCompileResultSchema
+  ---
+  duration_ms: 2.0984
+  type: 'suite'
+  ...
+# Subtest: safeParseNative()
+    # Subtest: returns parsed data for valid input
+    ok 1 - returns parsed data for valid input
+      ---
+      duration_ms: 1.2304
+      type: 'test'
+      ...
+    # Subtest: returns fallback for invalid input
+    ok 2 - returns fallback for invalid input
+      ---
+      duration_ms: 3.3665
+      type: 'test'
+      ...
+    1..2
+ok 141 - safeParseNative()
+  ---
+  duration_ms: 6.128
+  type: 'suite'
+  ...
+# Subtest: parseNative()
+    # Subtest: returns data for valid input
+    ok 1 - returns data for valid input
+      ---
+      duration_ms: 1.8839
+      type: 'test'
+      ...
+    # Subtest: throws for invalid input with context
+    ok 2 - throws for invalid input with context
+      ---
+      duration_ms: 2.7347
+      type: 'test'
+      ...
+    1..2
+ok 142 - parseNative()
+  ---
+  duration_ms: 5.1224
+  type: 'suite'
+  ...
+# Subtest: nativeBinding
+    # Subtest: resolveNativeBindingCandidates returns array
+    ok 1 - resolveNativeBindingCandidates returns array
+      ---
+      duration_ms: 7.5293
+      type: 'test'
+      ...
+    # Subtest: resolveNativeBindingCandidates env override goes first
+    ok 2 - resolveNativeBindingCandidates env override goes first
+      ---
+      duration_ms: 1.5116
+      type: 'test'
+      ...
+    # Subtest: formatErrorMessage handles Error instance
+    ok 3 - formatErrorMessage handles Error instance
+      ---
+      duration_ms: 0.4539
+      type: 'test'
+      ...
+    # Subtest: formatErrorMessage handles string
+    ok 4 - formatErrorMessage handles string
+      ---
+      duration_ms: 0.29
+      type: 'test'
+      ...
+    # Subtest: formatErrorMessage handles null/undefined gracefully
+    ok 5 - formatErrorMessage handles null/undefined gracefully
+      ---
+      duration_ms: 0.5217
+      type: 'test'
+      ...
+    1..5
+ok 143 - nativeBinding
+  ---
+  duration_ms: 13.3796
+  type: 'suite'
+  ...
+# Subtest: TelemetryCollector
+    # Subtest: records builds
+    ok 1 - records builds
+      ---
+      duration_ms: 3.6855
+      type: 'test'
+      ...
+    # Subtest: respects ring buffer size (max 100)
+    ok 2 - respects ring buffer size (max 100)
+      ---
+      duration_ms: 1.4982
+      type: 'test'
+      ...
+    # Subtest: summary() returns correct stats
+    ok 3 - summary() returns correct stats
+      ---
+      duration_ms: 1.3761
+      type: 'test'
+      ...
+    # Subtest: summary() returns null for empty data
+    ok 4 - summary() returns null for empty data
+      ---
+      duration_ms: 0.8684
+      type: 'test'
+      ...
+    # Subtest: formatCli() returns string
+    ok 5 - formatCli() returns string
+      ---
+      duration_ms: 1.6068
+      type: 'test'
+      ...
+    # Subtest: reset() clears data
+    ok 6 - reset() clears data
+      ---
+      duration_ms: 1.3683
+      type: 'test'
+      ...
+    # Subtest: does not record when disabled
+    ok 7 - does not record when disabled
+      ---
+      duration_ms: 0.8204
+      type: 'test'
+      ...
+    # Subtest: toJSON() includes summary and history
+    ok 8 - toJSON() includes summary and history
+      ---
+      duration_ms: 0.6097
+      type: 'test'
+      ...
+    1..8
+ok 144 - TelemetryCollector
+  ---
+  duration_ms: 15.9427
+  type: 'suite'
+  ...
+# Subtest: createBuildTimer
+    # Subtest: records phase timings
+    ok 1 - records phase timings
+      ---
+      duration_ms: 3.7794
+      type: 'test'
+      ...
+    # Subtest: auto-records to global telemetry
+    ok 2 - auto-records to global telemetry
+      ---
+      duration_ms: 0.6886
+      type: 'test'
+      ...
+    1..2
+ok 145 - createBuildTimer
+  ---
+  duration_ms: 5.244
+  type: 'suite'
+  ...
+# Subtest: getGlobalTelemetry()
+    # Subtest: returns singleton
+    ok 1 - returns singleton
+      ---
+      duration_ms: 0.7902
+      type: 'test'
+      ...
+    # Subtest: resetGlobalTelemetry() creates new instance
+    ok 2 - resetGlobalTelemetry() creates new instance
+      ---
+      duration_ms: 0.6184
+      type: 'test'
+      ...
+    1..2
+ok 146 - getGlobalTelemetry()
+  ---
+  duration_ms: 1.9131
+  type: 'suite'
+  ...
+# Subtest: resolveWorkerPath()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 2.2722
+      type: 'test'
+      ...
+    # Subtest: finds existing file
+    ok 2 - finds existing file
+      ---
+      duration_ms: 4.8019
+      type: 'test'
+      ...
+    # Subtest: throws when required and not found
+    ok 3 - throws when required and not found
+      ---
+      duration_ms: 2.5145
+      type: 'test'
+      ...
+    # Subtest: returns empty path when not required and not found
+    ok 4 - returns empty path when not required and not found
+      ---
+      duration_ms: 1.9402
+      type: 'test'
+      ...
+    1..4
+ok 147 - resolveWorkerPath()
+  ---
+  duration_ms: 15.8919
+  type: 'suite'
+  ...
+# Subtest: resolveLoaderPath()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 1.8009
+      type: 'test'
+      ...
+    # Subtest: throws for missing loader
+    ok 2 - throws for missing loader
+      ---
+      duration_ms: 2.6954
+      type: 'test'
+      ...
+    1..2
+ok 148 - resolveLoaderPath()
+  ---
+  duration_ms: 5.7024
+  type: 'suite'
+  ...
+# Subtest: parseClasses()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 2.1862
+      type: 'test'
+      ...
+    # Subtest: parses space-separated classes
+    ok 2 - parses space-separated classes
+      ---
+      duration_ms: 17.7586
+      type: 'test'
+      ...
+    # Subtest: parses newline-separated classes
+    ok 3 - parses newline-separated classes
+      ---
+      duration_ms: 0.3666
+      type: 'test'
+      ...
+    # Subtest: filters invalid tokens
+    ok 4 - filters invalid tokens
+      ---
+      duration_ms: 1.1652
+      type: 'test'
+      ...
+    # Subtest: handles empty string
+    ok 5 - handles empty string
+      ---
+      duration_ms: 1.871
+      type: 'test'
+      ...
+    # Subtest: handles modifier classes
+    ok 6 - handles modifier classes
+      ---
+      duration_ms: 0.4651
+      type: 'test'
+      ...
+    1..6
+ok 149 - parseClasses()
+  ---
+  duration_ms: 27.1502
+  type: 'suite'
+  ...
+# Subtest: extractAllClasses()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 2.9567
+      type: 'test'
+      ...
+    # Subtest: extracts from className attribute
+    ok 2 - extracts from className attribute
+      ---
+      duration_ms: 10.0077
+      type: 'test'
+      ...
+    1..2
+ok 150 - extractAllClasses()
+  ---
+  duration_ms: 13.7791
+  type: 'suite'
+  ...
+# Subtest: liveToken()
+    # Subtest: is a function
+    ok 1 - is a function
+      ---
+      duration_ms: 1.9901
+      type: 'test'
+      ...
+    # Subtest: registers token and returns TokenMap
+    ok 2 - registers token and returns TokenMap
+      ---
+      duration_ms: 1.0696
+      type: 'test'
+      ...
+    1..2
+ok 151 - liveToken()
+  ---
+  duration_ms: 6.2317
+  type: 'suite'
+  ...
+# Subtest: tokenRef() and tokenVar()
+    # Subtest: tokenRef generates CSS var reference
+    ok 1 - tokenRef generates CSS var reference
+      ---
+      duration_ms: 0.4744
+      type: 'test'
+      ...
+    # Subtest: tokenVar generates CSS custom property
+    ok 2 - tokenVar generates CSS custom property
+      ---
+      duration_ms: 0.2962
+      type: 'test'
+      ...
+    1..2
+ok 152 - tokenRef() and tokenVar()
+  ---
+  duration_ms: 1.348
+  type: 'suite'
+  ...
+# Subtest: generateTokenCssString()
+    # Subtest: is a function
+    ok 1 - is a function
+      ---
+      duration_ms: 0.4868
+      type: 'test'
+      ...
+    # Subtest: generates CSS string from token map
+    ok 2 - generates CSS string from token map
+      ---
+      duration_ms: 0.7091
+      type: 'test'
+      ...
+    1..2
+ok 153 - generateTokenCssString()
+  ---
+  duration_ms: 2.0401
+  type: 'suite'
+  ...
+# Subtest: ThemeRegistry
+    # Subtest: is exported
+    ok 1 - is exported
+      ---
+      duration_ms: 0.5863
+      type: 'test'
+      ...
+    # Subtest: can be instantiated
+    ok 2 - can be instantiated
+      ---
+      duration_ms: 0.3735
+      type: 'test'
+      ...
+    1..2
+ok 154 - ThemeRegistry
+  ---
+  duration_ms: 1.5227
+  type: 'suite'
+  ...
+# Subtest: compileDesignTokens()
+    # Subtest: is exported if available
+    ok 1 - is exported if available
+      ---
+      duration_ms: 0.5037
+      type: 'test'
+      ...
+    1..1
+ok 155 - compileDesignTokens()
+  ---
+  duration_ms: 1.2249
+  type: 'suite'
+  ...
+# Subtest: CLI arg utilities
+    # Subtest: parseCliArgs is exported if available
+    ok 1 - parseCliArgs is exported if available
+      ---
+      duration_ms: 3.9558
+      type: 'test'
+      ...
+    # Subtest: ensureFlag is exported if available
+    ok 2 - ensureFlag is exported if available
+      ---
+      duration_ms: 0.3095
+      type: 'test'
+      ...
+    # Subtest: createCliOutput is exported
+    ok 3 - createCliOutput is exported
+      ---
+      duration_ms: 1.1266
+      type: 'test'
+      ...
+    1..3
+ok 156 - CLI arg utilities
+  ---
+  duration_ms: 8.6223
+  type: 'suite'
+  ...
+# [cli] runPreflightCli not exported, skipping
+# Subtest: runPreflightCli()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 3.2665
+      type: 'test'
+      ...
+    # Subtest: runs without crashing on current directory
+    ok 2 - runs without crashing on current directory
+      ---
+      duration_ms: 0.4516
+      type: 'test'
+      ...
+    1..2
+ok 157 - runPreflightCli()
+  ---
+  duration_ms: 6.9376
+  type: 'suite'
+  ...
+# {
+#   "ok": true,
+#   "error": false,
+#   "command": "scan",
+#   "generatedAt": "2026-06-14T23:57:07.536Z",
+#   "data": {
+#     "root": "C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Temp\\\\cli-test-1781481427517",
+#     "totalFiles": 1,
+#     "uniqueClassCount": 2,
+#     "topClasses": [
+#       {
+#         "name": "flex",
+#         "count": 1
+#       },
+#       {
+#         "name": "px-4",
+#         "count": 1
+#       }
+#     ]
+#   }
+# }
+# Cache written    : C:\\Users\\User\\AppData\\Local\\Temp\\cli-save-1781481427542\\.tailwind-styled\\scan-cache.json
+# Cache entries    : 5 classes
+# Scan root       : C:\\Users\\User\\AppData\\Local\\Temp\\cli-save-1781481427542
+# Total files     : 1
+# Unique classes  : 5
+# Top classes:
+#   - bg-blue-500: 1
+#   - px-4: 1
+#   - py-2: 1
+#   - rounded: 1
+#   - text-white: 1
+# Subtest: runScanCli()
+    # Subtest: is exported as function
+    ok 1 - is exported as function
+      ---
+      duration_ms: 1.7921
+      type: 'test'
+      ...
+    # Subtest: runs without crashing on valid dir
+    ok 2 - runs without crashing on valid dir
+      ---
+      duration_ms: 25.4352
+      type: 'test'
+      ...
+    # Subtest: writes scan-cache.json with --save flag
+    ok 3 - writes scan-cache.json with --save flag
+      ---
+      duration_ms: 13.5994
+      type: 'test'
+      ...
+    1..3
+ok 158 - runScanCli()
+  ---
+  duration_ms: 43.7455
+  type: 'suite'
+  ...
+# Subtest: dashboard state
+    # Subtest: currentMetrics is exported
+    ok 1 - currentMetrics is exported
+      ---
+      duration_ms: 2.8974
+      type: 'test'
+      ...
+    # Subtest: getMetricsSummary is a function
+    ok 2 - getMetricsSummary is a function
+      ---
+      duration_ms: 0.7053
+      type: 'test'
+      ...
+    # Subtest: getMetricsSummary returns summary object
+    ok 3 - getMetricsSummary returns summary object
+      ---
+      duration_ms: 1.1235
+      type: 'test'
+      ...
+    # Subtest: normalizeMetrics is a function
+    ok 4 - normalizeMetrics is a function
+      ---
+      duration_ms: 0.7434
+      type: 'test'
+      ...
+    # Subtest: normalizeMetrics handles empty input
+    ok 5 - normalizeMetrics handles empty input
+      ---
+      duration_ms: 2.1507
+      type: 'test'
+      ...
+    # Subtest: normalizeMetrics with full metrics
+    ok 6 - normalizeMetrics with full metrics
+      ---
+      duration_ms: 1.3097
+      type: 'test'
+      ...
+    # Subtest: resetHistory clears history
+    ok 7 - resetHistory clears history
+      ---
+      duration_ms: 0.4924
+      type: 'test'
+      ...
+    # Subtest: updateMetrics is a function
+    ok 8 - updateMetrics is a function
+      ---
+      duration_ms: 0.3382
+      type: 'test'
+      ...
+    # Subtest: updateMetrics updates state without error
+    ok 9 - updateMetrics updates state without error
+      ---
+      duration_ms: 1.2189
+      type: 'test'
+      ...
+    1..9
+ok 159 - dashboard state
+  ---
+  duration_ms: 14.9737
+  type: 'suite'
+  ...
+# [devtools] currentMetrics not exported, skipping
+# [devtools] getMetricsSummary not exported, skipping
+# [devtools] normalizeMetrics not exported, skipping
+# [devtools] exports: DevToolsProvider, TwDevTools, fetchClassInspection, formatClassInspectionCli, formatClassInspectionJson, formatDuration, formatMemory, getBuildTimeColor, getHealthColor, getMemoryColor
+# Subtest: devtools exports
+    # Subtest: module is loadable
+    ok 1 - module is loadable
+      ---
+      duration_ms: 4.8418
+      type: 'test'
+      ...
+    # Subtest: currentMetrics is accessible
+    ok 2 - currentMetrics is accessible
+      ---
+      duration_ms: 1.5611
+      type: 'test'
+      ...
+    # Subtest: getMetricsSummary is a function
+    ok 3 - getMetricsSummary is a function
+      ---
+      duration_ms: 0.4327
+      type: 'test'
+      ...
+    # Subtest: normalizeMetrics handles build event
+    ok 4 - normalizeMetrics handles build event
+      ---
+      duration_ms: 0.3946
+      type: 'test'
+      ...
+    1..4
+ok 160 - devtools exports
+  ---
+  duration_ms: 10.2237
+  type: 'suite'
+  ...
+# Subtest: devtools panel data sources
+    # Subtest: module exports expected dashboard surface
+    ok 1 - module exports expected dashboard surface
+      ---
+      duration_ms: 1.1526
+      type: 'test'
+      ...
+    1..1
+ok 161 - devtools panel data sources
+  ---
+  duration_ms: 1.5873
+  type: 'suite'
+  ...
+# Subtest: generateArgTypes()
+    # Subtest: is a function
+    ok 1 - is a function
+      ---
+      duration_ms: 1.9524
+      type: 'test'
+      ...
+    # Subtest: generates argTypes from config
+    ok 2 - generates argTypes from config
+      ---
+      duration_ms: 0.9627
+      type: 'test'
+      ...
+    # Subtest: argType has control and options
+    ok 3 - argType has control and options
+      ---
+      duration_ms: 0.4626
+      type: 'test'
+      ...
+    # Subtest: returns empty object for config without variants
+    ok 4 - returns empty object for config without variants
+      ---
+      duration_ms: 1.5899
+      type: 'test'
+      ...
+    1..4
+ok 162 - generateArgTypes()
+  ---
+  duration_ms: 7.4796
+  type: 'suite'
+  ...
+# Subtest: enumerateVariantProps()
+    # Subtest: generates all combinations
+    ok 1 - generates all combinations
+      ---
+      duration_ms: 0.8765
+      type: 'test'
+      ...
+    # Subtest: returns [{}] for empty matrix
+    ok 2 - returns [{}] for empty matrix
+      ---
+      duration_ms: 0.6043
+      type: 'test'
+      ...
+    # Subtest: handles single dimension
+    ok 3 - handles single dimension
+      ---
+      duration_ms: 0.5981
+      type: 'test'
+      ...
+    1..3
+ok 163 - enumerateVariantProps()
+  ---
+  duration_ms: 3.3448
+  type: 'suite'
+  ...
+# Subtest: getVariantClass()
+    # Subtest: returns correct class for variant props
+    ok 1 - returns correct class for variant props
+      ---
+      duration_ms: 0.9552
+      type: 'test'
+      ...
+    # Subtest: uses defaultVariants when prop not provided
+    ok 2 - uses defaultVariants when prop not provided
+      ---
+      duration_ms: 0.9162
+      type: 'test'
+      ...
+    # Subtest: includes compound variant classes
+    ok 3 - includes compound variant classes
+      ---
+      duration_ms: 0.8372
+      type: 'test'
+      ...
+    # Subtest: includes base classes
+    ok 4 - includes base classes
+      ---
+      duration_ms: 0.6825
+      type: 'test'
+      ...
+    1..4
+ok 164 - getVariantClass()
+  ---
+  duration_ms: 4.0942
+  type: 'suite'
+  ...
+# Subtest: createVariantStoryArgs()
+    # Subtest: returns matrix and combinations
+    ok 1 - returns matrix and combinations
+      ---
+      duration_ms: 0.4923
+      type: 'test'
+      ...
+    # Subtest: returns empty result for config without variants
+    ok 2 - returns empty result for config without variants
+      ---
+      duration_ms: 0.2487
+      type: 'test'
+      ...
+    1..2
+ok 165 - createVariantStoryArgs()
+  ---
+  duration_ms: 1.0274
+  type: 'suite'
+  ...
+# Subtest: generateDefaultArgs()
+    # Subtest: returns defaultVariants as args
+    ok 1 - returns defaultVariants as args
+      ---
+      duration_ms: 0.3478
+      type: 'test'
+      ...
+    # Subtest: returns empty object when no defaultVariants
+    ok 2 - returns empty object when no defaultVariants
+      ---
+      duration_ms: 0.2036
+      type: 'test'
+      ...
+    1..2
+ok 166 - generateDefaultArgs()
+  ---
+  duration_ms: 0.815
+  type: 'suite'
+  ...
+# [next/tests] dist not found
+# Subtest: packages\\presentation\\next\\tests\\turbopackLoader.test.mjs
+ok 45 - packages\\presentation\\next\\tests\\turbopackLoader.test.mjs
+  ---
+  duration_ms: 206.8581
+  type: 'test'
+  ...
+# [next/tests] dist not found — run npm run build first
+# Subtest: packages\\presentation\\next\\tests\\withTailwindStyled.test.mjs
+ok 46 - packages\\presentation\\next\\tests\\withTailwindStyled.test.mjs
+  ---
+  duration_ms: 284.2993
+  type: 'test'
+  ...
+# [rspack] apply() with mock compiler: AssertionError [ERR_ASSERTION]: Got unwanted exception.
+# Actual message: "require not available"
+# Subtest: TailwindStyledRspackPlugin
+    # Subtest: is exported as a class/constructor
+    ok 1 - is exported as a class/constructor
+      ---
+      duration_ms: 2.5286
+      type: 'test'
+      ...
+    # Subtest: can be instantiated with no options
+    ok 2 - can be instantiated with no options
+      ---
+      duration_ms: 3.7414
+      type: 'test'
+      ...
+    # Subtest: instance has apply() method
+    ok 3 - instance has apply() method
+      ---
+      duration_ms: 0.4197
+      type: 'test'
+      ...
+    # Subtest: instance has apply() that accepts compiler without crash
+    ok 4 - instance has apply() that accepts compiler without crash
+      ---
+      duration_ms: 5.3434
+      type: 'test'
+      ...
+    1..4
+ok 169 - TailwindStyledRspackPlugin
+  ---
+  duration_ms: 16.0887
+  type: 'suite'
+  ...
+# Subtest: parseRspackPluginOptions()
+    # Subtest: is exported if available
+    ok 1 - is exported if available
+      ---
+      duration_ms: 0.8627
+      type: 'test'
+      ...
+    1..1
+ok 170 - parseRspackPluginOptions()
+  ---
+  duration_ms: 1.2811
+  type: 'suite'
+  ...
+# [vite/tests] dist not found — run npm run build first
+# Subtest: packages\\presentation\\vite\\tests\\plugin.test.mjs
+ok 48 - packages\\presentation\\vite\\tests\\plugin.test.mjs
+  ---
+  duration_ms: 227.144
+  type: 'test'
+  ...
+# [adapters] vite dist not built, skipping
+# [adapters] next dist not built, skipping
+# Subtest: Adapter smoke: vite
+    # Subtest: vite plugin module is loadable
+    ok 1 - vite plugin module is loadable
+      ---
+      duration_ms: 6.0695
+      type: 'test'
+      ...
+    # Subtest: tailwindStyledPlugin is exported and returns plugin object
+    ok 2 - tailwindStyledPlugin is exported and returns plugin object
+      ---
+      duration_ms: 5.7491
+      type: 'test'
+      ...
+    # Subtest: parseVitePluginOptions is exported
+    ok 3 - parseVitePluginOptions is exported
+      ---
+      duration_ms: 1.8038
+      type: 'test'
+      ...
+    1..3
+ok 172 - Adapter smoke: vite
+  ---
+  duration_ms: 34.5621
+  type: 'suite'
+  ...
+# Subtest: Adapter smoke: next
+    # Subtest: next module is loadable
+    ok 1 - next module is loadable
+      ---
+      duration_ms: 6.6886
+      type: 'test'
+      ...
+    # Subtest: withTailwindStyled is exported
+    ok 2 - withTailwindStyled is exported
+      ---
+      duration_ms: 1.6855
+      type: 'test'
+      ...
+    # Subtest: withTailwindStyled wraps config correctly
+    ok 3 - withTailwindStyled wraps config correctly
+      ---
+      duration_ms: 1.4709
+      type: 'test'
+      ...
+    1..3
+ok 173 - Adapter smoke: next
+  ---
+  duration_ms: 10.8356
+  type: 'suite'
+  ...
+# Subtest: Adapter smoke: rspack
+    # Subtest: rspack module is loadable
+    ok 1 - rspack module is loadable
+      ---
+      duration_ms: 258.2623
+      type: 'test'
+      ...
+    # Subtest: TailwindStyledRspackPlugin is exported
+    ok 2 - TailwindStyledRspackPlugin is exported
+      ---
+      duration_ms: 0.8073
+      type: 'test'
+      ...
+    # Subtest: TailwindStyledRspackPlugin can be instantiated
+    ok 3 - TailwindStyledRspackPlugin can be instantiated
+      ---
+      duration_ms: 4.2345
+      type: 'test'
+      ...
+    1..3
+ok 174 - Adapter smoke: rspack
+  ---
+  duration_ms: 264.6865
+  type: 'suite'
+  ...
+# Subtest: Adapter smoke: vue
+    # Subtest: vue adapter is loadable
+    ok 1 - vue adapter is loadable
+      ---
+      duration_ms: 335.9984
+      type: 'test'
+      ...
+    1..1
+ok 175 - Adapter smoke: vue
+  ---
+  duration_ms: 336.1717
+  type: 'suite'
+  ...
+# Subtest: Adapter smoke: svelte
+    # Subtest: svelte adapter is loadable
+    ok 1 - svelte adapter is loadable
+      ---
+      duration_ms: 32.1521
+      type: 'test'
+      ...
+    1..1
+ok 176 - Adapter smoke: svelte
+  ---
+  duration_ms: 32.4538
+  type: 'suite'
+  ...
+# Subtest: Pipeline smoke: scanner
+    # Subtest: scanner module is loadable
+    ok 1 - scanner module is loadable
+      ---
+      duration_ms: 1.9547
+      type: 'test'
+      ...
+    # Subtest: scanFile works on a temp file
+    ok 2 - scanFile works on a temp file
+      ---
+      duration_ms: 12.0422
+      type: 'test'
+      ...
+    1..2
+ok 177 - Pipeline smoke: scanner
+  ---
+  duration_ms: 19.5918
+  type: 'suite'
+  ...
+# Subtest: Pipeline smoke: compiler
+    # Subtest: compiler module is loadable
+    ok 1 - compiler module is loadable
+      ---
+      duration_ms: 2.2099
+      type: 'test'
+      ...
+    # Subtest: transformSource is exported
+    ok 2 - transformSource is exported
+      ---
+      duration_ms: 0.6075
+      type: 'test'
+      ...
+    # Subtest: transformSource handles basic input
+    ok 3 - transformSource handles basic input
+      ---
+      duration_ms: 21.7394
+      type: 'test'
+      ...
+    1..3
+ok 178 - Pipeline smoke: compiler
+  ---
+  duration_ms: 25.517
+  type: 'suite'
+  ...
+# Subtest: Pipeline smoke: engine
+    # Subtest: engine module is loadable
+    ok 1 - engine module is loadable
+      ---
+      duration_ms: 0.5442
+      type: 'test'
+      ...
+    # Subtest: createEngine is exported
+    ok 2 - createEngine is exported
+      ---
+      duration_ms: 0.583
+      type: 'test'
+      ...
+    # Subtest: scanWorkspace facade is exported
+    ok 3 - scanWorkspace facade is exported
+      ---
+      duration_ms: 0.6491
+      type: 'test'
+      ...
+    # Subtest: generateSafelist facade is exported
+    ok 4 - generateSafelist facade is exported
+      ---
+      duration_ms: 0.4134
+      type: 'test'
+      ...
+    # Subtest: build facade is exported
+    ok 5 - build facade is exported
+      ---
+      duration_ms: 0.4599
+      type: 'test'
+      ...
+    1..5
+ok 179 - Pipeline smoke: engine
+  ---
+  duration_ms: 3.3972
+  type: 'suite'
+  ...
+# Subtest: Pipeline smoke: analyzer
+    # Subtest: analyzer module is loadable
+    ok 1 - analyzer module is loadable
+      ---
+      duration_ms: 0.3469
+      type: 'test'
+      ...
+    # Subtest: analyzeWorkspace is exported
+    ok 2 - analyzeWorkspace is exported
+      ---
+      duration_ms: 0.184
+      type: 'test'
+      ...
+    1..2
+ok 180 - Pipeline smoke: analyzer
+  ---
+  duration_ms: 0.7874
+  type: 'suite'
+  ...
+# Subtest: Root package exports
+    # Subtest: exports tw function
+    ok 1 - exports tw function
+      ---
+      duration_ms: 3.031
+      type: 'test'
+      ...
+    # Subtest: exports cv function
+    ok 2 - exports cv function
+      ---
+      duration_ms: 0.4413
+      type: 'test'
+      ...
+    # Subtest: exports cx/cn utilities
+    ok 3 - exports cx/cn utilities
+      ---
+      duration_ms: 0.4128
+      type: 'test'
+      ...
+    # Subtest: exports createEngine
+    ok 4 - exports createEngine
+      ---
+      duration_ms: 0.5582
+      type: 'test'
+      ...
+    # Subtest: exports liveToken
+    ok 5 - exports liveToken
+      ---
+      duration_ms: 0.3998
+      type: 'test'
+      ...
+    1..5
+ok 181 - Root package exports
+  ---
+  duration_ms: 8.8592
+  type: 'suite'
+  ...
+# Subtest: Root subpath exports
+    # Subtest: @tailwind-styled/engine is importable via workspace
+    ok 1 - @tailwind-styled/engine is importable via workspace
+      ---
+      duration_ms: 279.4018
+      type: 'test'
+      ...
+    # Subtest: @tailwind-styled/scanner is importable via workspace
+    ok 2 - @tailwind-styled/scanner is importable via workspace
+      ---
+      duration_ms: 1.8785
+      type: 'test'
+      ...
+    # Subtest: @tailwind-styled/shared is importable
+    ok 3 - @tailwind-styled/shared is importable
+      ---
+      duration_ms: 22.2326
+      type: 'test'
+      ...
+    1..3
+ok 182 - Root subpath exports
+  ---
+  duration_ms: 304.1932
+  type: 'suite'
+  ...
+# Subtest: Root umbrella package — thin wrapper assertion
+    # Subtest: umbrella directory exists
+    ok 1 - umbrella directory exists
+      ---
+      duration_ms: 4.5417
+      type: 'test'
+      ...
+    # Subtest: each umbrella file is a thin re-export (no implementation)
+    ok 2 - each umbrella file is a thin re-export (no implementation)
+      ---
+      duration_ms: 20.7762
+      type: 'test'
+      ...
+    # Subtest: root src/ files are thin wrappers or bin stubs
+    ok 3 - root src/ files are thin wrappers or bin stubs
+      ---
+      duration_ms: 1.5841
+      type: 'test'
+      ...
+    1..3
+ok 183 - Root umbrella package — thin wrapper assertion
+  ---
+  duration_ms: 30.9995
+  type: 'suite'
+  ...
+1..183
+# tests 409
+# suites 109
+# pass 409
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5220.6568

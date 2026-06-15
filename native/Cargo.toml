@@ -36,6 +36,7 @@ schemars = "0.8"
 md5 = "0.7"
 tempfile = "3"
 ahash = "0.8"
+redis = { version = "0.24.0", features = ["cluster"] }
 # Di bagian [dependencies], tambahkan:
 lightningcss = { version = "1.0.0-alpha.60", features = ["default"] }
 

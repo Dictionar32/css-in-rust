@@ -201,34 +201,56 @@ impl ClassParser {
         // Parse the final segment: "prefix-value[/modifier]"
         let (prefix, value, modifier) = self.parse_final_segment(final_part)?;
 
+        let is_arbitrary = value.starts_with('[') && value.ends_with(']');
+        let arbitrary_declaration = if is_arbitrary && value.contains(':') {
+            Some(value[1..value.len() - 1].replace('_', " "))
+        } else {
+            None
+        };
+
         Ok(ParsedClass::new(
             class.to_string(),
             variants,
             prefix,
             value,
             modifier,
-            false,
-            None,
+            is_arbitrary,
+            arbitrary_declaration,
         ))
     }
 
     /// Parse final segment to extract prefix, value, and modifier
     fn parse_final_segment(&self, segment: &str) -> Result<(String, String, Option<String>), ParseError> {
+        // Check for double slash
+        if segment.contains("//") {
+            return Err(ParseError::InvalidSyntax {
+                class: segment.to_string(),
+                position: segment.find("//").unwrap_or(0),
+                reason: Some("double slash is invalid".to_string()),
+            });
+        }
+
         // Check for modifier (after "/")
         let (main, modifier) = if let Some(pos) = segment.rfind('/') {
             let (m, mod_part) = segment.split_at(pos);
             let modifier_str = mod_part[1..].to_string();
 
-            // Validate modifier is numeric
-            if !OPACITY_PERCENT_PATTERN.is_match(&modifier_str) {
+            // Special case: single-digit fractions like "/2", "/3", "/4", "/5", "/6", "/12"
+            // (w-1/2, w-11/12, etc.)
+            let is_fraction = (modifier_str.len() == 1 && modifier_str.chars().all(|c| c.is_numeric()))
+                || (modifier_str == "12" && m.ends_with(char::is_numeric)); // e.g. "11/12"
+
+            if is_fraction {
+                (segment, None)
+            } else if !OPACITY_PERCENT_PATTERN.is_match(&modifier_str) {
                 return Err(ParseError::InvalidSyntax {
                     class: segment.to_string(),
                     position: pos + 1,
                     reason: Some(format!("invalid modifier: {}", modifier_str)),
                 });
+            } else {
+                (m, Some(modifier_str))
             }
-
-            (m, Some(modifier_str))
         } else {
             (segment, None)
         };
@@ -237,6 +259,8 @@ impl ClassParser {
         let prefix = self.extract_prefix(main)?;
         let value = if main.len() > prefix.len() && main.chars().nth(prefix.len()) == Some('-') {
             main[prefix.len() + 1..].to_string()
+        } else if main == prefix {
+            "default".to_string()
         } else {
             main[prefix.len()..].to_string()
         };
@@ -246,6 +270,15 @@ impl ClassParser {
                 class: segment.to_string(),
                 position: prefix.len(),
                 reason: Some("missing value after prefix".to_string()),
+            });
+        }
+
+        // Validate matched brackets
+        if value.starts_with('[') && !value.ends_with(']') {
+            return Err(ParseError::InvalidSyntax {
+                class: segment.to_string(),
+                position: prefix.len() + 1,
+                reason: Some("unmatched bracket".to_string()),
             });
         }
 
@@ -267,6 +300,19 @@ impl ClassParser {
                     return Ok(prefix.to_string());
                 }
             }
+        }
+
+        // Fallback: Jika tidak cocok dengan whitelist, coba belah berdasarkan '-' pertama
+        if let Some(dash_idx) = segment.find('-') {
+            let prefix = &segment[..dash_idx];
+            if !prefix.is_empty() && prefix.chars().all(|c| c.is_alphanumeric() || c == '-') {
+                return Ok(prefix.to_string());
+            }
+        }
+
+        // Special case: standalone classes without dash (e.g. "border", "flex", "grid")
+        if !segment.contains('-') && segment.chars().all(|c| c.is_alphanumeric()) {
+            return Ok(segment.to_string());
         }
 
         Err(ParseError::InvalidSyntax {
@@ -437,7 +483,11 @@ mod tests {
     fn test_parse_unknown_prefix() {
         let parser = ClassParser::new();
         let result = parser.parse("unknown-value");
-        assert!(result.is_err());
+        // In dynamic v2 parser, unknown prefixes are syntactically valid
+        assert!(result.is_ok());
+        let p = result.unwrap();
+        assert_eq!(p.prefix, "unknown");
+        assert_eq!(p.value, "value");
     }
 
     #[test]

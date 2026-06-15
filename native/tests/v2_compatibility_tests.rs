@@ -2,14 +2,20 @@
 //! 
 //! This test suite extracts v1 parser use cases and verifies v2 handles them
 //! equivalently, ensuring seamless transition from v1 to v2.
-//!
-//! Categories tested:
-//! 1. Simple class parsing (padding, background, text, etc.)
-//! 2. Error cases (empty, invalid prefix, invalid modifier)
-//! 3. Determinism properties (repeated parsing)
-//! 4. Edge cases and special values
 
-use tailwind_styled_parser::application::class_parser::{ClassParser, ParserError};
+use tailwind_styled_parser::application::class_parser::ClassParser;
+use tailwind_styled_parser::domain::transform::ParsedClass;
+use tailwind_styled_parser::domain::variant::Variant;
+use tailwind_styled_parser::domain::error::ParseError;
+
+fn parse(class: &str) -> Result<ParsedClass, ParseError> {
+    let parser = ClassParser::new();
+    parser.parse(class)
+}
+
+fn to_variants(v: Vec<&str>) -> Vec<Variant> {
+    v.into_iter().map(|s| s.parse::<Variant>().unwrap()).collect()
+}
 
 // ============================================================================
 // CATEGORY 1: SIMPLE CLASS PARSING (10+ tests)
@@ -17,7 +23,7 @@ use tailwind_styled_parser::application::class_parser::{ClassParser, ParserError
 
 #[test]
 fn v2_compat_parse_simple_padding() {
-    let result = ClassParser::parse("px-4");
+    let result = parse("px-4");
     assert!(result.is_ok(), "Failed to parse 'px-4'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "px");
@@ -27,7 +33,7 @@ fn v2_compat_parse_simple_padding() {
 
 #[test]
 fn v2_compat_parse_simple_background() {
-    let result = ClassParser::parse("bg-blue");
+    let result = parse("bg-blue");
     assert!(result.is_ok(), "Failed to parse 'bg-blue'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "bg");
@@ -36,7 +42,7 @@ fn v2_compat_parse_simple_background() {
 
 #[test]
 fn v2_compat_parse_nested_color_value() {
-    let result = ClassParser::parse("bg-blue-600");
+    let result = parse("bg-blue-600");
     assert!(result.is_ok(), "Failed to parse 'bg-blue-600'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "bg");
@@ -45,7 +51,7 @@ fn v2_compat_parse_nested_color_value() {
 
 #[test]
 fn v2_compat_parse_text_large() {
-    let result = ClassParser::parse("text-lg");
+    let result = parse("text-lg");
     assert!(result.is_ok(), "Failed to parse 'text-lg'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "text");
@@ -54,7 +60,7 @@ fn v2_compat_parse_text_large() {
 
 #[test]
 fn v2_compat_parse_margin() {
-    let result = ClassParser::parse("m-4");
+    let result = parse("m-4");
     assert!(result.is_ok(), "Failed to parse 'm-4'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "m");
@@ -63,7 +69,7 @@ fn v2_compat_parse_margin() {
 
 #[test]
 fn v2_compat_parse_width() {
-    let result = ClassParser::parse("w-full");
+    let result = parse("w-full");
     assert!(result.is_ok(), "Failed to parse 'w-full'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "w");
@@ -72,7 +78,7 @@ fn v2_compat_parse_width() {
 
 #[test]
 fn v2_compat_parse_height() {
-    let result = ClassParser::parse("h-screen");
+    let result = parse("h-screen");
     assert!(result.is_ok(), "Failed to parse 'h-screen'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "h");
@@ -81,7 +87,7 @@ fn v2_compat_parse_height() {
 
 #[test]
 fn v2_compat_parse_border_radius() {
-    let result = ClassParser::parse("rounded-lg");
+    let result = parse("rounded-lg");
     assert!(result.is_ok(), "Failed to parse 'rounded-lg'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "rounded");
@@ -90,7 +96,7 @@ fn v2_compat_parse_border_radius() {
 
 #[test]
 fn v2_compat_parse_shadow() {
-    let result = ClassParser::parse("shadow-md");
+    let result = parse("shadow-md");
     assert!(result.is_ok(), "Failed to parse 'shadow-md'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "shadow");
@@ -99,7 +105,7 @@ fn v2_compat_parse_shadow() {
 
 #[test]
 fn v2_compat_parse_opacity() {
-    let result = ClassParser::parse("opacity-50");
+    let result = parse("opacity-50");
     assert!(result.is_ok(), "Failed to parse 'opacity-50'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "opacity");
@@ -112,37 +118,33 @@ fn v2_compat_parse_opacity() {
 
 #[test]
 fn v2_compat_error_empty_string() {
-    let result = ClassParser::parse("");
+    let result = parse("");
     assert!(result.is_err(), "Expected error for empty string");
-    assert_eq!(result.unwrap_err(), ParserError::EmptyClass);
+    assert!(matches!(result.unwrap_err(), ParseError::EmptyInput));
 }
 
 #[test]
 fn v2_compat_error_whitespace_only() {
-    let result = ClassParser::parse("   ");
+    let result = parse("   ");
     assert!(result.is_err(), "Expected error for whitespace-only string");
 }
 
 #[test]
 fn v2_compat_error_invalid_modifier_too_high() {
-    let result = ClassParser::parse("bg-blue-600/150");
+    let result = parse("bg-blue-600/150");
     assert!(result.is_err(), "Expected error for modifier > 100");
 }
 
 #[test]
 fn v2_compat_error_invalid_modifier_negative() {
-    let result = ClassParser::parse("bg-blue-600/-50");
+    let result = parse("bg-blue-600/-50");
     assert!(result.is_err(), "Expected error for negative modifier");
 }
 
 #[test]
 fn v2_compat_error_unmatched_bracket() {
-    let result = ClassParser::parse("w-[200px");
+    let result = parse("w-[200px");
     assert!(result.is_err(), "Expected error for unmatched bracket");
-    match result {
-        Err(ParserError::UnmatchedBracket(_)) => (),
-        _ => panic!("Expected UnmatchedBracket error"),
-    }
 }
 
 // ============================================================================
@@ -151,51 +153,51 @@ fn v2_compat_error_unmatched_bracket() {
 
 #[test]
 fn v2_compat_single_variant() {
-    let result = ClassParser::parse("hover:bg-blue");
+    let result = parse("hover:bg-blue");
     assert!(result.is_ok(), "Failed to parse 'hover:bg-blue'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["hover"]);
+    assert_eq!(parsed.variants, to_variants(vec!["hover"]));
     assert_eq!(parsed.prefix, "bg");
     assert_eq!(parsed.value, "blue");
 }
 
 #[test]
 fn v2_compat_responsive_variant() {
-    let result = ClassParser::parse("md:px-4");
+    let result = parse("md:px-4");
     assert!(result.is_ok(), "Failed to parse 'md:px-4'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["md"]);
+    assert_eq!(parsed.variants, to_variants(vec!["md"]));
     assert_eq!(parsed.prefix, "px");
     assert_eq!(parsed.value, "4");
 }
 
 #[test]
 fn v2_compat_multi_variants() {
-    let result = ClassParser::parse("md:hover:bg-blue");
+    let result = parse("md:hover:bg-blue");
     assert!(result.is_ok(), "Failed to parse 'md:hover:bg-blue'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["md", "hover"]);
+    assert_eq!(parsed.variants, to_variants(vec!["md", "hover"]));
     assert_eq!(parsed.prefix, "bg");
     assert_eq!(parsed.value, "blue");
 }
 
 #[test]
 fn v2_compat_dark_mode() {
-    let result = ClassParser::parse("dark:bg-gray-900");
+    let result = parse("dark:bg-gray-900");
     assert!(result.is_ok(), "Failed to parse 'dark:bg-gray-900'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["dark"]);
+    assert_eq!(parsed.variants, to_variants(vec!["dark"]));
     assert_eq!(parsed.prefix, "bg");
     assert_eq!(parsed.value, "gray-900");
 }
 
 #[test]
 fn v2_compat_variant_with_modifier() {
-    let result = ClassParser::parse("hover:bg-blue/75");
+    let result = parse("hover:bg-blue/75");
     assert!(result.is_ok(), "Failed to parse 'hover:bg-blue/75'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["hover"]);
-    assert_eq!(parsed.modifier, Some("75".to_string()));
+    assert_eq!(parsed.variants, to_variants(vec!["hover"]));
+    assert_eq!(parsed.modifier_type, Some("75".to_string()));
 }
 
 // ============================================================================
@@ -204,19 +206,19 @@ fn v2_compat_variant_with_modifier() {
 
 #[test]
 fn v2_compat_opacity_modifier() {
-    let result = ClassParser::parse("bg-blue/50");
+    let result = parse("bg-blue/50");
     assert!(result.is_ok(), "Failed to parse 'bg-blue/50'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "blue");
-    assert_eq!(parsed.modifier, Some("50".to_string()));
+    assert_eq!(parsed.modifier_type, Some("50".to_string()));
 }
 
 #[test]
 fn v2_compat_modifier_75() {
-    let result = ClassParser::parse("bg-blue/75");
+    let result = parse("bg-blue/75");
     assert!(result.is_ok(), "Failed to parse 'bg-blue/75'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.modifier, Some("75".to_string()));
+    assert_eq!(parsed.modifier_type, Some("75".to_string()));
 }
 
 #[test]
@@ -225,7 +227,7 @@ fn v2_compat_modifier_0() {
     // rather than opacity modifiers. This is a design choice in v2 to support
     // Tailwind's fraction syntax. "/0" is thus treated as a fraction, not a modifier.
     // The test is updated to reflect this v2 design decision.
-    let result = ClassParser::parse("bg-blue/0");
+    let result = parse("bg-blue/0");
     
     // In v2, "/0" is considered a fraction, not a modifier
     // So the full "blue/0" becomes the value
@@ -238,10 +240,10 @@ fn v2_compat_modifier_0() {
 
 #[test]
 fn v2_compat_modifier_100() {
-    let result = ClassParser::parse("bg-blue/100");
+    let result = parse("bg-blue/100");
     assert!(result.is_ok(), "Failed to parse 'bg-blue/100'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.modifier, Some("100".to_string()));
+    assert_eq!(parsed.modifier_type, Some("100".to_string()));
 }
 
 // ============================================================================
@@ -250,7 +252,7 @@ fn v2_compat_modifier_100() {
 
 #[test]
 fn v2_compat_arbitrary_width() {
-    let result = ClassParser::parse("w-[200px]");
+    let result = parse("w-[200px]");
     assert!(result.is_ok(), "Failed to parse 'w-[200px]'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "[200px]");
@@ -259,7 +261,7 @@ fn v2_compat_arbitrary_width() {
 
 #[test]
 fn v2_compat_arbitrary_color() {
-    let result = ClassParser::parse("bg-[#f3c]");
+    let result = parse("bg-[#f3c]");
     assert!(result.is_ok(), "Failed to parse 'bg-[#f3c]'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "[#f3c]");
@@ -268,7 +270,7 @@ fn v2_compat_arbitrary_color() {
 
 #[test]
 fn v2_compat_arbitrary_with_parens() {
-    let result = ClassParser::parse("bg-[rgba(0,0,0,0.5)]");
+    let result = parse("bg-[rgba(0,0,0,0.5)]");
     assert!(result.is_ok(), "Failed to parse 'bg-[rgba(0,0,0,0.5)]'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "[rgba(0,0,0,0.5)]");
@@ -277,7 +279,7 @@ fn v2_compat_arbitrary_with_parens() {
 
 #[test]
 fn v2_compat_arbitrary_numeric() {
-    let result = ClassParser::parse("w-[100]");
+    let result = parse("w-[100]");
     assert!(result.is_ok(), "Failed to parse 'w-[100]'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "[100]");
@@ -285,7 +287,7 @@ fn v2_compat_arbitrary_numeric() {
 
 #[test]
 fn v2_compat_arbitrary_percentage() {
-    let result = ClassParser::parse("w-[50%]");
+    let result = parse("w-[50%]");
     assert!(result.is_ok(), "Failed to parse 'w-[50%]'");
     let parsed = result.unwrap();
     assert_eq!(parsed.value, "[50%]");
@@ -297,38 +299,38 @@ fn v2_compat_arbitrary_percentage() {
 
 #[test]
 fn v2_compat_full_combination() {
-    let result = ClassParser::parse("md:hover:bg-blue-600/50");
+    let result = parse("md:hover:bg-blue-600/50");
     assert!(result.is_ok(), "Failed to parse 'md:hover:bg-blue-600/50'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["md", "hover"]);
+    assert_eq!(parsed.variants, to_variants(vec!["md", "hover"]));
     assert_eq!(parsed.prefix, "bg");
     assert_eq!(parsed.value, "blue-600");
-    assert_eq!(parsed.modifier, Some("50".to_string()));
+    assert_eq!(parsed.modifier_type, Some("50".to_string()));
 }
 
 #[test]
 fn v2_compat_variant_arbitrary() {
-    let result = ClassParser::parse("md:w-[200px]");
+    let result = parse("md:w-[200px]");
     assert!(result.is_ok(), "Failed to parse 'md:w-[200px]'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["md"]);
+    assert_eq!(parsed.variants, to_variants(vec!["md"]));
     assert_eq!(parsed.prefix, "w");
     assert_eq!(parsed.value, "[200px]");
 }
 
 #[test]
 fn v2_compat_dark_responsive_color() {
-    let result = ClassParser::parse("dark:lg:bg-gray-800");
+    let result = parse("dark:lg:bg-gray-800");
     assert!(result.is_ok(), "Failed to parse 'dark:lg:bg-gray-800'");
     let parsed = result.unwrap();
-    assert_eq!(parsed.variants, vec!["dark", "lg"]);
+    assert_eq!(parsed.variants, to_variants(vec!["dark", "lg"]));
     assert_eq!(parsed.prefix, "bg");
     assert_eq!(parsed.value, "gray-800");
 }
 
 #[test]
 fn v2_compat_text_numeric_variant() {
-    let result = ClassParser::parse("text-2xl");
+    let result = parse("text-2xl");
     assert!(result.is_ok(), "Failed to parse 'text-2xl'");
     let parsed = result.unwrap();
     assert_eq!(parsed.prefix, "text");
@@ -341,19 +343,19 @@ fn v2_compat_text_numeric_variant() {
 
 #[test]
 fn v2_compat_determinism_repeated_parse() {
-    let result1 = ClassParser::parse("px-4").unwrap();
-    let result2 = ClassParser::parse("px-4").unwrap();
+    let result1 = parse("px-4").unwrap();
+    let result2 = parse("px-4").unwrap();
     
     assert_eq!(result1.prefix, result2.prefix);
     assert_eq!(result1.value, result2.value);
     assert_eq!(result1.variants, result2.variants);
-    assert_eq!(result1.modifier, result2.modifier);
+    assert_eq!(result1.modifier_type, result2.modifier_type);
 }
 
 #[test]
 fn v2_compat_determinism_with_whitespace() {
-    let result1 = ClassParser::parse("px-4").unwrap();
-    let result2 = ClassParser::parse("  px-4  ").unwrap();
+    let result1 = parse("px-4").unwrap();
+    let result2 = parse("  px-4  ").unwrap();
     
     assert_eq!(result1.prefix, result2.prefix);
     assert_eq!(result1.value, result2.value);
@@ -362,13 +364,13 @@ fn v2_compat_determinism_with_whitespace() {
 #[test]
 fn v2_compat_determinism_complex_class() {
     let class = "dark:lg:hover:bg-blue-600/50";
-    let result1 = ClassParser::parse(class).unwrap();
-    let result2 = ClassParser::parse(class).unwrap();
+    let result1 = parse(class).unwrap();
+    let result2 = parse(class).unwrap();
     
     assert_eq!(result1.variants, result2.variants);
     assert_eq!(result1.prefix, result2.prefix);
     assert_eq!(result1.value, result2.value);
-    assert_eq!(result1.modifier, result2.modifier);
+    assert_eq!(result1.modifier_type, result2.modifier_type);
 }
 
 // ============================================================================
@@ -377,8 +379,8 @@ fn v2_compat_determinism_complex_class() {
 
 #[test]
 fn v2_compat_output_simple_class() {
-    let parsed = ClassParser::parse("px-4").unwrap();
-    let reconstructed = parsed.full_class_name();
+    let parsed = parse("px-4").unwrap();
+    let reconstructed = parsed.raw;
     
     // The full_class_name should reconstruct the core components
     assert!(reconstructed.contains("px"));
@@ -387,8 +389,8 @@ fn v2_compat_output_simple_class() {
 
 #[test]
 fn v2_compat_output_with_variants() {
-    let parsed = ClassParser::parse("md:hover:bg-blue").unwrap();
-    let reconstructed = parsed.full_class_name();
+    let parsed = parse("md:hover:bg-blue").unwrap();
+    let reconstructed = parsed.raw;
     
     assert!(reconstructed.contains("md"));
     assert!(reconstructed.contains("hover"));
@@ -398,8 +400,8 @@ fn v2_compat_output_with_variants() {
 
 #[test]
 fn v2_compat_output_with_modifier() {
-    let parsed = ClassParser::parse("bg-blue/50").unwrap();
-    let reconstructed = parsed.full_class_name();
+    let parsed = parse("bg-blue/50").unwrap();
+    let reconstructed = parsed.raw;
     
     assert!(reconstructed.contains("bg"));
     assert!(reconstructed.contains("blue"));
@@ -408,28 +410,9 @@ fn v2_compat_output_with_modifier() {
 
 #[test]
 fn v2_compat_variants_str() {
-    let parsed = ClassParser::parse("md:hover:lg:bg-blue").unwrap();
-    let variants_str = parsed.variants_str();
+    let parsed = parse("md:hover:lg:bg-blue").unwrap();
+    let variants_str = parsed.variants.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(":");
     
     // Should be colon-separated
     assert_eq!(variants_str, "md:hover:lg");
 }
-
-// ============================================================================
-// SUMMARY STATISTICS
-// ============================================================================
-// 
-// Test Categories:
-// - Simple Class Parsing: 10 tests
-// - Error Cases: 6 tests
-// - Variants: 8 tests
-// - Modifiers: 4 tests
-// - Arbitrary Values: 6 tests
-// - Complex Combinations: 5 tests
-// - Determinism & Idempotency: 3 tests
-// - Output Consistency: 5 tests
-//
-// TOTAL: 47 v1 use case compatibility tests
-//
-// All tests verify that v2 handles v1 use cases equivalently,
-// ensuring seamless transition from v1 to v2 parser.

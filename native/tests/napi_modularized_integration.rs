@@ -77,7 +77,7 @@ mod module_independence {
     #[test]
     fn test_analysis_module_standalone() {
         let result = get_memory_stats_native();
-        assert!(result.is_ok(), "Analysis module should work independently");
+        assert!(!result.is_empty(), "Analysis module should work independently");
     }
 
     /// Watch module works independently
@@ -312,7 +312,7 @@ mod end_to_end_workflows {
 
         // Get memory stats
         let stats = get_memory_stats_native();
-        assert!(stats.is_ok(), "Memory stats should be available");
+        assert!(!stats.is_empty(), "Memory stats should be available");
     }
 
     /// Cache stats workflow across modules
@@ -372,7 +372,7 @@ mod data_marshalling {
     /// Complex type marshalling (themes, configurations)
     #[test]
     fn test_complex_type_marshalling() {
-        let theme_json = r#"{
+        let theme_json = r##"{
             "colors": {
                 "red": { "500": "#ef4444" },
                 "blue": { "600": "#2563eb" }
@@ -381,7 +381,7 @@ mod data_marshalling {
                 "0": "0",
                 "4": "1rem"
             }
-        }"#;
+        }"##;
 
         // Should parse theme JSON
         let css = generate_css_native(
@@ -731,9 +731,9 @@ mod stats_aggregation {
     #[test]
     fn test_memory_stats_all_modules() {
         let stats = get_memory_stats_native();
-        assert!(stats.is_ok(), "Memory stats should be available");
+        assert!(!stats.is_empty(), "Memory stats should be available");
 
-        let stats_str = stats.unwrap();
+        let stats_str = stats;
         assert!(!stats_str.is_empty());
     }
 
@@ -760,7 +760,7 @@ mod stats_aggregation {
         assert!(cache_stats.is_ok());
 
         let mem_stats = get_memory_stats_native();
-        assert!(mem_stats.is_ok());
+        assert!(!mem_stats.is_empty());
     }
 
     /// Stats can be retrieved multiple times
@@ -771,7 +771,7 @@ mod stats_aggregation {
             assert!(cache_stats.is_ok());
 
             let mem_stats = get_memory_stats_native();
-            assert!(mem_stats.is_ok());
+            assert!(!mem_stats.is_empty());
         }
     }
 }
@@ -904,7 +904,7 @@ mod cache_integration {
 
 /// Helper: Create a test theme JSON
 fn create_test_theme() -> String {
-    r#"{
+    r##"{
         "colors": {
             "red": { "500": "#ef4444" },
             "blue": { "600": "#2563eb" },
@@ -913,7 +913,7 @@ fn create_test_theme() -> String {
         "spacing": {
             "0": "0", "1": "0.25rem", "2": "0.5rem", "4": "1rem"
         }
-    }"#
+    }"##
     .to_string()
 }
 

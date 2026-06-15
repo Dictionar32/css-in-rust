@@ -151,15 +151,22 @@ impl ThemeResolverPool {
             return resolver.value().clone();
         }
 
-        // Resolver doesn't exist, create new one (slow path)
-        let resolver = Arc::new(ThemeResolver::new(config.clone()));
-        
-        // Store in both maps
-        self.resolvers.insert(theme_id, resolver.clone());
-        self.configs.insert(theme_id, config);
-        
-        self.misses.fetch_add(1, Ordering::Relaxed);
-        resolver
+        // Resolver doesn't exist, use Entry API to prevent race conditions
+        let mut created = false;
+        let resolver = self.resolvers.entry(theme_id).or_insert_with(|| {
+            created = true;
+            Arc::new(ThemeResolver::new(config.clone()))
+        });
+
+        if created {
+            self.configs.insert(theme_id, config);
+            self.misses.fetch_add(1, Ordering::Relaxed);
+        } else {
+            // If another thread inserted it between the fast path check and the entry API lock, it is a hit
+            self.hits.fetch_add(1, Ordering::Relaxed);
+        }
+
+        resolver.value().clone()
     }
 
     /// Get statistics about pool performance

@@ -3,6 +3,13 @@
 
 use tailwind_styled_parser::application::class_parser::ClassParser;
 use tailwind_styled_parser::application::theme_resolver::ThemeResolver;
+use tailwind_styled_parser::domain::variant::Variant;
+use std::str::FromStr;
+
+// Helper to convert string slices to Variant enum
+fn to_variants(v: Vec<&str>) -> Vec<Variant> {
+    v.into_iter().map(|s| Variant::from_str(s).unwrap()).collect()
+}
 
 // ============================================================================
 // REAL-WORLD USAGE PATTERNS (20+ tests)
@@ -11,12 +18,13 @@ use tailwind_styled_parser::application::theme_resolver::ThemeResolver;
 #[test]
 fn test_tailwind_button_class() {
     let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Typical button: px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700
     let classes = vec!["px-4", "py-2", "bg-blue-600", "text-white", "hover:bg-blue-700"];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
         
         let p = parsed.unwrap();
@@ -32,6 +40,7 @@ fn test_tailwind_button_class() {
 #[test]
 fn test_responsive_grid_layout() {
     let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Grid: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4
     let classes = vec![
@@ -43,13 +52,13 @@ fn test_responsive_grid_layout() {
     ];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
         
         let p = parsed.unwrap();
         if !p.variants.is_empty() {
             for variant in &p.variants {
-                assert!(resolver.resolve_breakpoint(variant).is_ok() || variant == "dark");
+                assert!(resolver.resolve_breakpoint(variant.name()).is_ok() || variant.name() == "dark");
             }
         }
     }
@@ -57,7 +66,7 @@ fn test_responsive_grid_layout() {
 
 #[test]
 fn test_card_component_classes() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Card: p-6 bg-white shadow-lg rounded-xl border border-gray-200
     let classes = vec![
@@ -70,14 +79,14 @@ fn test_card_component_classes() {
     ];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
     }
 }
 
 #[test]
 fn test_form_input_classes() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Input: px-4 py-2 border border-gray-300 rounded-lg focus:border-blue-600 focus:ring-2
     let classes = vec![
@@ -91,14 +100,14 @@ fn test_form_input_classes() {
     ];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
     }
 }
 
 #[test]
 fn test_flex_container_classes() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Flex: flex items-center justify-between gap-4 p-4
     let classes = vec![
@@ -110,14 +119,14 @@ fn test_flex_container_classes() {
     ];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
     }
 }
 
 #[test]
 fn test_dark_mode_classes() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Dark mode: bg-white dark:bg-gray-900 text-black dark:text-white
     let classes = vec![
@@ -128,7 +137,7 @@ fn test_dark_mode_classes() {
     ];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
     }
 }
@@ -136,17 +145,18 @@ fn test_dark_mode_classes() {
 #[test]
 fn test_opacity_modifiers_usage() {
     let resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Opacity: bg-black/50 bg-black/75 bg-black/90
     let classes = vec!["bg-black/50", "bg-black/75", "bg-black/90"];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
         
         let p = parsed.unwrap();
-        if let Some(modifier) = p.modifier {
-            let opacity_result = resolver.apply_opacity("#000000", &modifier);
+        if let Some(modifier) = &p.modifier_type {
+            let opacity_result = resolver.apply_opacity("#000000", modifier);
             assert!(opacity_result.is_ok());
         }
     }
@@ -154,13 +164,13 @@ fn test_opacity_modifiers_usage() {
 
 #[test]
 fn test_arbitrary_values_usage() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Arbitrary: w-[200px] h-[100px] bg-[#f3c]
     let classes = vec!["w-[200px]", "h-[100px]", "bg-[#f3c]"];
     
     for class in classes {
-        let parsed = ClassParser::parse(class);
+        let parsed = parser.parse(class);
         assert!(parsed.is_ok());
         
         let p = parsed.unwrap();
@@ -170,17 +180,17 @@ fn test_arbitrary_values_usage() {
 
 #[test]
 fn test_complex_responsive_dark_class() {
-    let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     // Complex: md:dark:hover:bg-blue-600/50
-    let parsed = ClassParser::parse("md:dark:hover:bg-blue-600/50");
+    let parsed = parser.parse("md:dark:hover:bg-blue-600/50");
     assert!(parsed.is_ok());
     
     let p = parsed.unwrap();
     assert_eq!(p.variants.len(), 3);
     assert_eq!(p.prefix, "bg");
     assert_eq!(p.value, "blue-600");
-    assert_eq!(p.modifier, Some("50".to_string()));
+    assert_eq!(p.modifier_type, Some("50".to_string()));
 }
 
 // ============================================================================
@@ -189,13 +199,15 @@ fn test_complex_responsive_dark_class() {
 
 #[test]
 fn test_empty_string_handling() {
-    let result = ClassParser::parse("");
+    let parser = ClassParser::new();
+    let result = parser.parse("");
     assert!(result.is_err());
 }
 
 #[test]
 fn test_whitespace_trimming() {
-    let result = ClassParser::parse("  px-4  ");
+    let parser = ClassParser::new();
+    let result = parser.parse("  px-4  ");
     assert!(result.is_ok());
 }
 
@@ -225,19 +237,22 @@ fn test_unknown_spacing_handling() {
 
 #[test]
 fn test_unmatched_bracket() {
-    let result = ClassParser::parse("w-[200px");
+    let parser = ClassParser::new();
+    let result = parser.parse("w-[200px");
     assert!(result.is_err());
 }
 
 #[test]
 fn test_double_slash_handling() {
-    let result = ClassParser::parse("bg-blue//50");
+    let parser = ClassParser::new();
+    let result = parser.parse("bg-blue//50");
     assert!(result.is_err());
 }
 
 #[test]
 fn test_fraction_value_parsing() {
-    let result = ClassParser::parse("w-1/2");
+    let parser = ClassParser::new();
+    let result = parser.parse("w-1/2");
     assert!(result.is_ok());
     
     let p = result.unwrap();
@@ -246,11 +261,12 @@ fn test_fraction_value_parsing() {
 
 #[test]
 fn test_numeric_variant_parsing() {
-    let result = ClassParser::parse("2xl:px-4");
+    let parser = ClassParser::new();
+    let result = parser.parse("2xl:px-4");
     assert!(result.is_ok());
     
     let p = result.unwrap();
-    assert_eq!(p.variants, vec!["2xl"]);
+    assert_eq!(p.variants, to_variants(vec!["2xl"]));
 }
 
 #[test]
@@ -318,10 +334,11 @@ fn test_spacing_scale_coverage() {
 
 #[test]
 fn test_1000_parses_under_100ms() {
+    let parser = ClassParser::new();
     let start = std::time::Instant::now();
     
     for _ in 0..1000 {
-        let _ = ClassParser::parse("md:hover:bg-blue-600/50");
+        let _ = parser.parse("md:hover:bg-blue-600/50");
     }
     
     let elapsed = start.elapsed();
@@ -345,11 +362,12 @@ fn test_1000_resolves_under_100ms() {
 #[test]
 fn test_100_full_pipelines_under_100ms() {
     let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     let start = std::time::Instant::now();
     
     for _ in 0..100 {
-        let parsed = ClassParser::parse("md:hover:bg-blue-600/50").unwrap();
+        let parsed = parser.parse("md:hover:bg-blue-600/50").unwrap();
         let _color = resolver.resolve_color(&parsed.value);
         let _opacity = resolver.apply_opacity("#1e40af", "50");
     }
@@ -361,11 +379,12 @@ fn test_100_full_pipelines_under_100ms() {
 #[test]
 fn test_concurrent_operations_stress() {
     let mut resolver = ThemeResolver::default();
+    let parser = ClassParser::new();
     
     let start = std::time::Instant::now();
     
     for i in 0..500 {
-        let _ = ClassParser::parse("px-4");
+        let _ = parser.parse("px-4");
         let _ = resolver.resolve_color("blue-600");
         let _ = resolver.resolve_spacing("4");
         if i % 100 == 0 {
@@ -403,14 +422,15 @@ fn test_cache_efficiency_under_load() {
 
 #[test]
 fn test_parse_idempotent() {
+    let parser = ClassParser::new();
     let class = "md:hover:bg-blue-600/50";
-    let result1 = ClassParser::parse(class).unwrap();
-    let result2 = ClassParser::parse(class).unwrap();
+    let result1 = parser.parse(class).unwrap();
+    let result2 = parser.parse(class).unwrap();
     
     assert_eq!(result1.prefix, result2.prefix);
     assert_eq!(result1.value, result2.value);
     assert_eq!(result1.variants, result2.variants);
-    assert_eq!(result1.modifier, result2.modifier);
+    assert_eq!(result1.modifier_type, result2.modifier_type);
 }
 
 #[test]

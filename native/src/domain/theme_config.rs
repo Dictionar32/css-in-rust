@@ -100,12 +100,20 @@ impl ThemeConfig {
         self.breakpoints.get(name).cloned()
     }
 
-    /// Resolve a nested value using dot notation
+    /// Resolve a nested value using dot notation, supporting flat and nested lookups
     fn resolve_nested_value(
         &self,
         values: &HashMap<String, ThemeValue>,
         path: &str,
     ) -> Option<String> {
+        // Try flat lookup first (used by default theme parsed from CSS)
+        if let Some(val) = values.get(path) {
+            if let ThemeValue::Simple(s) = val {
+                return Some(s.clone());
+            }
+        }
+
+        // Fallback to nested lookup (used by JSON config)
         let parts: Vec<&str> = path.split('-').collect();
         if parts.is_empty() {
             return None;
@@ -116,7 +124,8 @@ impl ThemeConfig {
             ThemeValue::Simple(s) => Some(s.clone()),
             ThemeValue::Nested(nested) => {
                 if parts.len() > 1 {
-                    nested.get(parts[1]).cloned()
+                    let sub_key = parts[1..].join("-");
+                    nested.get(&sub_key).cloned()
                 } else {
                     None
                 }

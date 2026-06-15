@@ -164,8 +164,7 @@ mod tests {
     fn test_escape_json_string() {
         let input = r#"test"value\with\quotes"#;
         let escaped = escape_json_string(input);
-        assert!(!escaped.contains('"'));
-        assert!(escaped.contains("\\\""));
+        assert_eq!(escaped, "test\\\"value\\\\with\\\\quotes");
     }
 
     #[test]
