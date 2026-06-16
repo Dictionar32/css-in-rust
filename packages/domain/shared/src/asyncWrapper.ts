@@ -134,8 +134,10 @@ export async function asyncWithRetry<T, E = Error>(
   const logger = createLogger(namespace)
   const attemptLabel = label ? `${label}:attempt` : "attempt"
 
+  let lastResult: AsyncResultWithError<T, E> | undefined
+
   for (let attempt = 0; attempt <= retries; attempt++) {
-    const result = await asyncWithLogging(namespace, fn, {
+    const result = await asyncWithLogging<T, E>(namespace, fn, {
       onStart: attempt === 0 ? onStart : onError,
       onComplete: false,
       onError: true,
@@ -149,18 +151,16 @@ export async function asyncWithRetry<T, E = Error>(
       return result
     }
 
+    lastResult = result
+
     if (attempt < retries) {
       logger.warn(`[${attemptLabel}:${attempt}] failed, retrying in ${delayMs}ms...`)
       await new Promise((r) => setTimeout(r, delayMs))
     }
   }
 
-  const finalResult = await asyncWithLogging<T, E>(namespace, fn, { onStart: false, onError: true, label: attemptLabel })
-  return {
-    ok: false,
-    error: finalResult.ok ? (new Error("Unexpected success after retries") as E) : finalResult.error,
-    durationMs: 0,
-  }
+  // All attempts exhausted — return the last failure result (preserves durationMs & error)
+  return lastResult as AsyncResultWithError<T, E>
 }
 
 /**

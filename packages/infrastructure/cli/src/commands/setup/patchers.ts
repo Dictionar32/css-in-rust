@@ -118,10 +118,15 @@ export function patchRspackConfigImpl(src: string): string | null {
 }
 
 /**
- * Hitung path relatif dari cssFilePath ke `.next/tailwind-styled-safelist.css`.
+ * Hitung path relatif dari cssFilePath ke `.next/tw-classes/[!_]*.css`.
+ * Pattern `[!_]*.css` — micromatch/picomatch glob yang didukung Tailwind v4 —
+ * match semua component CSS files (misal `component_button.css`) tapi
+ * EXCLUDE file dengan underscore prefix (`_tw-state-static.css`,
+ * `_initial-scan.css`, `_cycle.txt`, dll.) yang berisi raw CSS atau sentinels.
+ *
  * Contoh:
- *   cssFile = "src/app/globals.css" → "../../.next/tailwind-styled-safelist.css"
- *   cssFile = "src/globals.css"     → "../.next/tailwind-styled-safelist.css"
+ *   cssFile = "src/app/globals.css" → "../../.next/tw-classes/[!_]*.css"
+ *   cssFile = "src/globals.css"     → "../.next/tw-classes/[!_]*.css"
  */
 export function computeSafelistSourcePath(cssFilePath: string, cwd: string): string {
   try {
@@ -133,11 +138,12 @@ export function computeSafelistSourcePath(cssFilePath: string, cwd: string): str
     const safelistAbs = nodePath.resolve(cwd, ".next", "tw-classes")
     const rel = nodePath.relative(cssDir, safelistAbs).replace(/\\/g, "/")
     const relPath = rel.startsWith(".") ? rel : `./${rel}`
-    return `${relPath}/**`
+    // [!_]*.css — match component files only, exclude _sentinel files
+    return `${relPath}/[!_]*.css`
   } catch {
     const depth = cssFilePath.split("/").length - 1
     const ups = Array(depth).fill("..").join("/")
-    return `${ups}/.next/tw-classes/**`
+    return `${ups}/.next/tw-classes/[!_]*.css`
   }
 }
 

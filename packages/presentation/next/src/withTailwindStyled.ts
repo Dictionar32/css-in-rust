@@ -343,16 +343,20 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
           "utf-8"
         )
 
-        // Tulis placeholder _tw-state-static.css agar @import di globals.css
-        // tidak error saat cold start (sebelum staticStateExtractor jalan)
+        // Selalu timpa _tw-state-static.css dengan placeholder saat startup.
+        // PENTING: jangan pakai !fs.existsSync — file stale dari build sebelumnya
+        // yang berisi class name mentah (e.g. "w-full") harus segera ditimpa SEBELUM
+        // Turbopack sempat membaca dan memproses globals.css.
+        // Placeholder berisi komentar CSS yang valid → tidak menyebabkan PostCSS error.
+        // File akan ditimpa lagi dengan CSS yang benar oleh async block di bawah.
         const stateStaticPath = path.join(twClassesDir, TW_STATE_STATIC_FILENAME)
-        if (!fs.existsSync(stateStaticPath)) {
+        try {
           fs.writeFileSync(
             stateStaticPath,
             "/* tw-state-static.css — placeholder, akan di-generate setelah scan */\n",
             "utf-8"
           )
-        }
+        } catch { /* non-fatal — jika gagal, tetap lanjut */ }
 
         // ── Auto-inject @import "_tw-state-static.css" ke globals.css ─────────
         // Kalau globals.css belum import file ini, inject otomatis supaya

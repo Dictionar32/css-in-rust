@@ -13,6 +13,9 @@
 
 import fs from "node:fs"
 import path from "node:path"
+import { createRequire } from "node:module"
+
+const _require = createRequire(import.meta.url)
 
 import { getNativeBridge, resetNativeBridgeCache, adaptNativeResult, type NativeBridge, type NativeTransformResult, type ClassExtractResult, type ComponentMetadata, type NativeRscResult } from "./nativeBridge"
 
@@ -174,7 +177,7 @@ export const runElimination = (css: string, scanResult: unknown): string => {
 
 export const scanProjectUsage = (dirs: string[], cwd: string) => {
   // Import locally to avoid circular dependency
-  const { batchExtractClasses } = require('./parser')
+  const { batchExtractClasses } = _require('./parser')
   const files = dirs.map(dir => path.resolve(cwd, dir))
   const results = batchExtractClasses(files) || []
 
@@ -321,7 +324,19 @@ export const runLoaderTransform = (ctx: { filepath: string; source: string; opti
 
     const stateRules = extractAndGenerateStateCss(source, filepath)
     if (stateRules.length > 0) {
-      cssChunks.push(stateRules.map((r) => r.cssRule).join("\n"))
+      // Filter out unresolved rules: when Rust can't resolve a Tailwind class,
+      // `declarations` contains the raw class name (e.g. "w-full") instead of
+      // a real CSS declaration (e.g. "width: 100%"). Real declarations always
+      // contain ":". Emitting unresolved rules causes Tailwind v4 PostCSS to
+      // throw "CssSyntaxError: Invalid declaration: `w-full`".
+      // Mirror of the identical guard in staticStateExtractor.ts.
+      const resolvedRules = stateRules.filter((r) => {
+        const decl = r.declarations.trim()
+        return decl.length === 0 || decl.includes(":")
+      })
+      if (resolvedRules.length > 0) {
+        cssChunks.push(resolvedRules.map((r) => r.cssRule).join("\n"))
+      }
     }
 
     const containerCss = extractContainerCssFromSource(source)
@@ -532,25 +547,28 @@ export const extractTwStateConfigs = (source: string, filename: string): TwState
 
 export const generateStaticStateCss = (
   entries: TwStateConfigEntry[],
-  _themeConfig?: Record<string, unknown>
+  resolvedCssOrThemeConfig?: string | Record<string, unknown>
 ): GeneratedStateRule[] => {
-  const rules: GeneratedStateRule[] = []
-  for (const entry of entries) {
-    const stateConfig = JSON.parse(entry.statesJson) as Record<string, string>
-    for (const [stateName, classes] of Object.entries(stateConfig)) {
-      rules.push({
-        selector: `.${entry.componentName}[data-state="${stateName}"]`,
-        declarations: classes,
-        cssRule: `.${entry.componentName}[data-state="${stateName}"]{${classes}}`,
-        componentName: entry.componentName,
-        stateName,
-      })
-    }
+  const native = getNativeBridge()
+  if (!native?.generateStaticStateCss) {
+    throw new Error("FATAL: Native binding 'generateStaticStateCss' is required but not available.")
   }
-  return rules
+  // Normalize: resolvedCssOrThemeConfig bisa string (resolvedCss) atau object (legacy themeConfig)
+  const resolvedCss = typeof resolvedCssOrThemeConfig === "string" ? resolvedCssOrThemeConfig : null
+  const inputs = entries.map((e) => ({
+    tag: e.tag,
+    componentName: e.componentName,
+    statesJson: e.statesJson,
+  }))
+  return native.generateStaticStateCss(inputs, resolvedCss) as GeneratedStateRule[]
 }
 
 export const extractAndGenerateStateCss = (source: string, filename: string): GeneratedStateRule[] => {
-  const entries = extractTwStateConfigs(source, filename)
-  return generateStaticStateCss(entries)
+  const native = getNativeBridge()
+  if (!native?.extractAndGenerateStateCss) {
+    // Fallback: extract lalu generate secara terpisah
+    const entries = extractTwStateConfigs(source, filename)
+    return generateStaticStateCss(entries)
+  }
+  return native.extractAndGenerateStateCss(source, filename) as GeneratedStateRule[]
 }

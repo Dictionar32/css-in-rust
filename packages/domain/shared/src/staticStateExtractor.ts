@@ -316,16 +316,47 @@ export function extractStaticStateCss(
   // Tailwind class termasuk `w-full`, `ring-2`, dll yang tidak ada di TW_MAP statis.
 
   const allRules = native.generateStaticStateCss(uniqueConfigs, options.resolvedCss ?? null)
-  // Count skipped: state entries yang tidak ter-resolve
-  // (rules yang declarations-nya kosong sudah di-filter oleh Rust)
-  const rulesSkipped = uniqueConfigs.reduce((total, cfg) => {
-    try {
-      const stateMap = JSON.parse(cfg.statesJson) as Record<string, string>
-      return total + Object.keys(stateMap).length
-    } catch { return total }
-  }, 0) - allRules.length
+  // Count skipped: rules yang declarations-nya kosong atau unresolved (tidak mengandung ":")
+  // Lebih akurat daripada menghitung (total state entries - generated rules) karena Rust
+  // bisa generate multiple rules per state entry (misalnya untuk berbagai breakpoint).
+  const rulesSkipped = allRules.filter((r) => {
+    const decl = r.declarations.trim()
+    return decl.length === 0 || !decl.includes(":")
+  }).length
 
   // ── Step 4: Build CSS output ───────────────────────────────────────────────
+
+  /**
+   * Sanitize cssRule: filter out any declaration lines that are raw Tailwind
+   * class names (no ":") instead of real CSS property:value pairs.
+   *
+   * Rust may return mixed declarations when partial resolution succeeds —
+   * e.g. `declarations = "width: 100%\nw-full"`. The top-level isUnresolved
+   * check (which relies on `declarations.includes(":")`) would pass, but the
+   * resulting cssRule would still have `w-full` as an invalid CSS declaration.
+   *
+   * This function rebuilds the rule body keeping only valid `prop: val` lines.
+   * Returns null if no valid declarations remain (caller skips the rule).
+   */
+  function sanitizeCssRule(cssRule: string, declarations: string): string | null {
+    // Fast path: all declarations are valid (every non-empty segment has ":")
+    const segments = declarations.split(/[;\n]/).map(s => s.trim()).filter(Boolean)
+    const validSegs = segments.filter(s => s.includes(":"))
+    const invalidSegs = segments.filter(s => !s.includes(":"))
+
+    // Nothing invalid — emit as-is
+    if (invalidSegs.length === 0) return cssRule
+
+    // Everything invalid — skip entirely
+    if (validSegs.length === 0) return null
+
+    // Mixed: rebuild the rule with only valid declarations.
+    // Extract selector from cssRule (text before first "{")
+    const braceIdx = cssRule.indexOf("{")
+    if (braceIdx === -1) return null
+    const selector = cssRule.slice(0, braceIdx).trim()
+    return `${selector} {\n  ${validSegs.join(";\n  ")};\n}`
+  }
 
   // Group rules per component untuk komentar yang informatif
   const byComponent = new Map<string, GeneratedStateRule[]>()
@@ -340,7 +371,37 @@ export function extractStaticStateCss(
     cssBlocks.push(`/* ${componentName} */`)
     for (const rule of rules) {
       cssBlocks.push(`/* state: ${rule.stateName} */`)
-      cssBlocks.push(rule.cssRule)
+
+      // Detect unresolved Tailwind class names: real CSS declarations always
+      // contain ":" (e.g. "width: 100%"), but raw class names never do.
+      // When Rust can't resolve classes, declarations berisi raw class names
+      // (e.g. "w-full") — bukan valid CSS.
+      //
+      // PENTING: jangan tulis raw class names di output CSS — Tailwind v4 PostCSS
+      // akan throw CssSyntaxError: Invalid declaration ketika @import file ini.
+      // Rust seharusnya sudah resolve semua classes via resolvedCss; kalau masih
+      // unresolved, runtime stateEngine.ts akan handle sebagai fallback.
+      const isFullyUnresolved =
+        rule.declarations.trim().length > 0 &&
+        !rule.declarations.includes(":")
+
+      if (isFullyUnresolved) {
+        // Semua deklarasi unresolved — skip seluruh rule.
+        // Encode class names di komentar agar tidak di-scan Tailwind v4 @source.
+        const encoded = rule.declarations.replace(/([\w-]+)/g, "[$1]")
+        cssBlocks.push(`/* SKIP [unresolved]: ${encoded} */`)
+      } else {
+        // Partial or full resolution — sanitize before emitting.
+        // sanitizeCssRule strips any individual declarations without ":" so the
+        // emitted CSS is always syntactically valid even if Rust returned mixed content.
+        const sanitized = sanitizeCssRule(rule.cssRule, rule.declarations)
+        if (sanitized !== null) {
+          cssBlocks.push(sanitized)
+        } else {
+          const encoded = rule.declarations.replace(/([\w-]+)/g, "[$1]")
+          cssBlocks.push(`/* SKIP [sanitized-empty]: ${encoded} */`)
+        }
+      }
     }
     cssBlocks.push("")
   }
@@ -350,7 +411,7 @@ export function extractStaticStateCss(
     filesWithStates,
     componentsFound: allConfigs.length,
     rulesGenerated: allRules.length,
-    rulesSkipped: Math.max(0, rulesSkipped),
+    rulesSkipped,
     generatedCss: cssBlocks.join("\n"),
     rules: allRules,
   }
