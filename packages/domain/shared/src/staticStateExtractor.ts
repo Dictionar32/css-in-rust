@@ -390,7 +390,10 @@ export function appendStaticStateCssToSafelist(
     resolvedCss?: string
   } = {}
 ): string {
-  const result = extractStaticStateCss(srcDir, options)
+  const result = extractStaticStateCss(srcDir, {
+    verbose: options.verbose,
+    resolvedCss: options.resolvedCss || ""  // ← ensure always passed
+  })
 
   // Selalu tulis file (kosong jika tidak ada rules) supaya @import di globals.css
   // tidak error saat cold start sebelum ada komponen dengan states.

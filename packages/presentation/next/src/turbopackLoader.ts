@@ -106,8 +106,8 @@ function isSkippable(resourcePath: string): boolean {
     normalized.endsWith(".d.ts") ||
     normalized.endsWith(".d.mts") ||
     normalized.endsWith(".d.cts") ||
-    // Skip CSS/assets
-    /\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)$/.test(normalized) ||
+    // Skip non-JS files that Turbopack may pass to the loader (no rule-level exclude)
+    /\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot|md|mdx|txt|yaml|yml|json|tsbuildinfo)$/.test(normalized) ||
     // Skip Next.js RSC entry files — Turbopack tidak punya exclude di rule level,
     // jadi guard ini menggantikan NEXT_RSC_ENTRIES exclude yang ada di webpack path.
     NEXT_RSC_ENTRIES.test(normalized)
@@ -290,8 +290,14 @@ export default function turbopackLoader(
   source: string,
   options: TurbopackLoaderOptions = {}
 ): string {
-  // Skip files yang tidak perlu di-transform
-  if (isSkippable(this.resourcePath)) return source
+  // Skip files yang tidak perlu di-transform.
+  // Exception: RSC entry files (page.tsx, layout.tsx, etc.) that have "use client"
+  // are client components — they still need tw template literal transformation.
+  if (isSkippable(this.resourcePath)) {
+    const isRscEntry = NEXT_RSC_ENTRIES.test(this.resourcePath.replace(/\\/g, "/"))
+    const hasUseClient = /^\s*["'](use client)["']/.test(source)
+    if (!isRscEntry || !hasUseClient) return source
+  }
 
   // Detect router context
   const router = detectRouter(this.resourcePath)

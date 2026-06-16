@@ -1,5 +1,7 @@
 @import "tailwindcss";
+@import "./../../.next/tw-classes/_tw-state-static.css";
 @source "__tw_safelist.css";
+
 :root {
   --background: #f5f7fb;
   --foreground: #111827;
