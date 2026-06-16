@@ -3,7 +3,55 @@ import type { TwPluginOptions, TwContext } from "@tailwind-styled/plugin-api"
 import { createGlobalPluginContext, parseTwPluginOptions } from "@tailwind-styled/plugin-api"
 import type { LoadResult, PartialResolvedId, PluginContext, TransformResult } from "rollup"
 
-export * from "@tailwind-styled/plugin-api"
+// Type-only re-exports — emitted as `export type { }` so Turbopack ESM tracing
+// does not try to resolve them as runtime exports from plugin-api.mjs
+export type {
+  TwClassResult,
+  DesignTokens,
+  TwPluginOptions,
+  VariantResolver,
+  UtilityDefinition,
+  ComponentConfig,
+  TransformMeta,
+  TransformFn,
+  CssHook,
+  TwContext,
+  TwPlugin,
+  PluginRegistry,
+  TokenEngineAPI,
+  TransformContext,
+  TwGlobalRegistry,
+  CompoundCondition,
+  TokenMap,
+  PluginManifestInput,
+  TokenRegistrationInput,
+  TwPluginOptionsInput,
+} from "@tailwind-styled/plugin-api"
+
+// Runtime value re-exports
+export {
+  resolveTokenEngine,
+  readToken,
+  getGlobalRegistry,
+  registerTransform,
+  registerToken,
+  createPluginRegistry,
+  resetGlobalRegistry,
+  createPluginContext,
+  createTw,
+  createGlobalPluginContext,
+  use,
+  presetTokens,
+  presetVariants,
+  presetScrollbar,
+  PluginManifestSchema,
+  parsePluginManifest,
+  parseTokenRegistration,
+  parseTwPluginOptions,
+  TokenRegistrationSchema,
+  TransformRegistrationSchema,
+  TwPluginOptionsSchema,
+} from "@tailwind-styled/plugin-api"
 
 export interface TwVitePlugin extends TwContext {
   resolveId(
