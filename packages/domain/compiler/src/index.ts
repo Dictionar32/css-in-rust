@@ -59,7 +59,10 @@ export const transformSource = (source: string, opts?: Record<string, unknown>) 
   if (!native?.transformSource) {
     throw new Error("FATAL: Native binding 'transformSource' is required but not available.")
   }
-  const result = native.transformSource(source, opts as Record<string, string>)
+  const stringOpts = opts
+    ? Object.fromEntries(Object.entries(opts).map(([k, v]) => [k, String(v)]))
+    : undefined
+  const result = native.transformSource(source, stringOpts as Record<string, string>)
   if (!result) {
     throw new Error("FATAL: transformSource returned null")
   }

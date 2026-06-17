@@ -27,29 +27,39 @@ const _templateParseCache = new Map<string, _ParsedTemplate>()
 interface _StatesLookupEntry { lookup: Record<number, string>; keys: string[] }
 const _statesLookupCache = new Map<string, _StatesLookupEntry>()
 
+// Regex untuk detect sub-component block syntax: [name] { ... }
+// Berbeda dari arbitrary Tailwind values (word-[value]) karena tidak ada hyphen sebelum [
+const _SUB_BLOCK_RE = /(?:^|[\s])(\[\w[\w-]*\])\s*\{/
+
 function _getParsedTemplate(template: string): _ParsedTemplate {
   const cached = _templateParseCache.get(template)
   if (cached) return cached
 
-  let result: _ParsedTemplate
-
-  try {
-    const native = getNativeBinding()
-    if (native?.parseSubcomponentBlocksNapi) {
-      const r = native.parseSubcomponentBlocksNapi(template, "tw")
-      const raw = JSON.parse(r.subMapJson) as Record<string, string>
-      result = {
-        baseClasses: r.baseClasses.trim().replace(/\s+/g, " "),
-        subMap: new Map(Object.entries(raw)),
-      }
-      _templateParseCache.set(template, result)
-      return result
+  // Fast path: tidak ada sub-component block syntax — skip native entirely.
+  // Template literal Tailwind biasa (bg-blue-500, w-[100px], dll) tidak akan match.
+  // Path ini aman di browser karena tidak butuh native.
+  if (!_SUB_BLOCK_RE.test(template)) {
+    const result: _ParsedTemplate = {
+      baseClasses: template.trim().replace(/\s+/g, " "),
+      subMap: new Map(),
     }
-  } catch {
-    // fall through
+    _templateParseCache.set(template, result)
+    return result
   }
 
-  throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
+  // Template punya sub-block syntax → wajib native Rust untuk parse
+  const native = getNativeBinding()
+  if (!native?.parseSubcomponentBlocksNapi) {
+    throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
+  }
+  const r = native.parseSubcomponentBlocksNapi(template, "tw")
+  const raw = JSON.parse(r.subMapJson) as Record<string, string>
+  const result: _ParsedTemplate = {
+    baseClasses: r.baseClasses.trim().replace(/\s+/g, " "),
+    subMap: new Map(Object.entries(raw)),
+  }
+  _templateParseCache.set(template, result)
+  return result
 }
 
 /**
@@ -227,17 +237,12 @@ function resolveVariants(
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
 
-  try {
-    const binding = getNativeBinding()
-    if (binding?.resolveSimpleVariants) {
-      const result = binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
-      return result.trim().replace(/\s+/g, " ")
-    }
-  } catch {
-    // fall through
+  const binding = getNativeBinding()
+  if (!binding?.resolveSimpleVariants) {
+    throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
   }
-
-  throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
+  const result = binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
+  return result.trim().replace(/\s+/g, " ")
 }
 
 /**
