@@ -11,6 +11,7 @@ import { createRequire } from "node:module"
 import { getNativeBridge } from "../nativeBridge"
 import { generateCssNative as generateCssNativeImpl } from "./cssGeneratorNative"
 import { minifyCss } from "./cssCompilationNative"
+import { generateRawCss } from "../tailwindEngine"
 
 const require = createRequire(import.meta.url)
 
@@ -208,13 +209,14 @@ export async function runCssPipeline(
 
   _cacheMisses++
 
+  // Phase 1: Tailwind JS engine (primary path — generates real CSS)
   let rawCss: string
-  let usedRustCompiler = false
-
-  // Phase 1: Rust CSS Compiler (Only Path - no JS fallback)
-  const theme = getThemeConfig()
-  rawCss = await generateCssNativeImpl(unique, { theme })
-  usedRustCompiler = true
+  try {
+    rawCss = await generateRawCss(unique, cssEntryContent, root)
+  } catch {
+    // Fallback: Rust CSS compiler (stub — returns class list, not full CSS)
+    rawCss = await generateCssNativeImpl(unique, { theme: getThemeConfig() })
+  }
 
   // Phase 2: Optional post-processing with LightningCSS or fast minifier (if minify=true)
   let finalCss = rawCss
@@ -228,7 +230,7 @@ export async function runCssPipeline(
 
   if (process.env.DEBUG?.includes("compiler")) {
     console.log(
-      `[Compiler] Generated CSS from ${unique.length} classes (${usedRustCompiler ? "Rust" : "JavaScript"})`,
+      `[Compiler] Generated CSS from ${unique.length} classes`,
       `Size: ${finalCss.length} bytes`
     )
   }
