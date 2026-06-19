@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.32",
+  "version": "5.0.33",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -191,7 +191,7 @@
   "scripts": {
     "build": "npm run build:rust && npm run build:packages && rm -rf dist && tsup --config tsup.config.ts && tsup --config tsup.dts.config.ts && npm run example:build",
     "build:packages": "turbo run build --continue",
-    "build:rust": "cd native && napi build --release --platform",
+    "build:rust": "cd native && napi build --release --platform && cp tailwind-styled-native.$(node -e \"const p=process.platform+'-'+process.arch; console.log(p==='linux-x64'?'linux-x64-gnu':p==='linux-arm64'?'linux-arm64-gnu':p)\").node tailwind-styled-native.node",
     "build:dev": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --sourcemap --watch",
     "build:release": "npm run build:rust && npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --no-sourcemap && tsup --config tsup.dts.config.ts && npm run example:build",
     "verify:builds": "npm run build && cd examples/next-js-app && npm install --ignore-scripts && npx tsc --noEmit || echo \"[verify:builds] example typecheck done\"",
