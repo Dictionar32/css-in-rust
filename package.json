@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.27",
+  "version": "5.0.32",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -191,7 +191,7 @@
   "scripts": {
     "build": "npm run build:rust && npm run build:packages && rm -rf dist && tsup --config tsup.config.ts && tsup --config tsup.dts.config.ts && npm run example:build",
     "build:packages": "turbo run build --continue",
-    "build:rust": "cd native && napi build --release",
+    "build:rust": "cd native && napi build --release --platform",
     "build:dev": "npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --sourcemap --watch",
     "build:release": "npm run build:rust && npm run build:packages && rm -rf dist && tsup --config tsup.config.ts --no-sourcemap && tsup --config tsup.dts.config.ts && npm run example:build",
     "verify:builds": "npm run build && cd examples/next-js-app && npm install --ignore-scripts && npx tsc --noEmit || echo \"[verify:builds] example typecheck done\"",
@@ -285,5 +285,12 @@
   "dependencies": {
     "@clack/prompts": "^1.1.0",
     "ts-pattern": "^5.9.0"
-  }
+  },
+  "allowScripts": {
+  "electron@35.7.5": true,
+  "electron-winstaller@5.4.0": true,
+  "esbuild@0.27.7": true,
+  "esbuild@0.28.1": true,
+  "sharp@0.34.5": true
+}
 }

@@ -64,7 +64,7 @@ jobs:
 
       - name: Build native (cross)
         if: matrix.cross
-        run: cd native && cross build --release --target ${{ matrix.target }}
+        run: cd native && napi build --release --target ${{ matrix.target }} --use-napi-cross
 
       - name: Build native (native)
         if: '!matrix.cross'
@@ -74,7 +74,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: native/*.node
+          path: native/tailwind-styled-native.*.node
           retention-days: 1
 
   # ── Step 2: Publish ke NPM ─────────────────────────────────────────────────
@@ -101,6 +101,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: native/
+          merge-multiple: true
 
       - name: Build TypeScript
         run: npm run build

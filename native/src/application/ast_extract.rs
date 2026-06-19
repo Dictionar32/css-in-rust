@@ -469,3 +469,139 @@ pub fn inject_state_hash(source: String, _filename: String) -> InjectHashResult 
         injected_count,
     }
 }
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Container config extraction — untuk build-time @container CSS pre-generation
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Satu entry container config yang di-extract dari source file.
+#[napi(object)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
+pub struct TwContainerConfigEntry {
+    /// HTML tag dari tw.tag() call — misalnya "div", "section"
+    pub tag: String,
+    /// JSON string dari container config — misalnya `{"sm":"flex-col","lg":"grid-cols-3"}`
+    /// Dipakai sebagai bagian dari hash key oleh TypeScript side.
+    pub container_json: String,
+    /// containerName opsional — misalnya "sidebar", "card"
+    pub container_name: Option<String>,
+    /// Array of breakpoint entries yang di-parse dari container object
+    pub breakpoints: Vec<ContainerBreakpointEntry>,
+}
+
+/// Satu breakpoint entry dalam container config.
+#[napi(object)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
+pub struct ContainerBreakpointEntry {
+    pub key: String,
+    pub classes: String,
+}
+
+/// Extract semua `tw.tag({ container: {...} })` configs dari source file.
+///
+/// Return array of `TwContainerConfigEntry` — satu per komponen yang punya `container` config.
+/// Dipakai oleh `extractContainerCssFromSource()` untuk pre-generate @container CSS.
+///
+/// ```ts
+/// // Input source:
+/// const Card = tw.div({
+///   base: "p-4",
+///   container: { sm: "flex-col", lg: "grid-cols-3" },
+///   containerName: "card",
+/// })
+///
+/// // Output:
+/// [{
+///   tag: "div",
+///   containerJson: '{"lg":"grid-cols-3","sm":"flex-col"}',
+///   containerName: "card",
+///   breakpoints: [{ key: "sm", classes: "flex-col" }, { key: "lg", classes: "grid-cols-3" }]
+/// }]
+/// ```
+#[napi]
+pub fn extract_tw_container_configs(source: String) -> Vec<TwContainerConfigEntry> {
+    // Quick bail: skip file tanpa container config
+    if !source.contains("container:") && !source.contains("container :") {
+        return vec![];
+    }
+    if !source.contains("tw.") && !source.contains("from \"tailwind-styled") && !source.contains("from 'tailwind-styled") {
+        return vec![];
+    }
+
+    // Regex: `const ComponentName = tw.tag({` atau `tw.server.tag({`
+    static RE_COMPONENT_DECL: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"(?m)(?:const|let|var)\s+[A-Z][a-zA-Z0-9]*\s*=\s*tw(?:\.server)?\.(\w+)\s*\(").unwrap()
+    });
+
+    // Regex: `container: {` block — capture isi antara braces
+    // Tidak support nested braces di dalam values (cukup untuk string literals)
+    static RE_CONTAINER_BLOCK: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r"container\s*:\s*\{([^}]*)\}").unwrap()
+    });
+
+    // Regex: `containerName: "value"` atau `containerName: 'value'`
+    static RE_CONTAINER_NAME: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r#"containerName\s*:\s*["'`]([^"'`]*)["'`]"#).unwrap()
+    });
+
+    // Regex: parse key-value di dalam container block
+    // key: "classes" atau key: 'classes' atau key: `classes`
+    static RE_CONTAINER_ENTRY: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r#"(\w+)\s*:\s*["'`]([^"'`]*)["'`]"#).unwrap()
+    });
+
+    let mut results: Vec<TwContainerConfigEntry> = Vec::new();
+
+    for comp_cap in RE_COMPONENT_DECL.captures_iter(&source) {
+        let tag = comp_cap[1].to_string();
+        let comp_start = comp_cap.get(0).unwrap().end();
+
+        // Window 2000 chars — cukup untuk satu component definition
+        let search_window = &source[comp_start..std::cmp::min(comp_start + 2000, source.len())];
+
+        let container_cap = match RE_CONTAINER_BLOCK.captures(search_window) {
+            Some(c) => c,
+            None => continue,
+        };
+        let container_body = &container_cap[1];
+
+        // Parse breakpoint key-value pairs — BTreeMap untuk sorted JSON
+        let mut bp_map: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+        for entry_cap in RE_CONTAINER_ENTRY.captures_iter(container_body) {
+            let key = entry_cap[1].to_string();
+            let classes = entry_cap[2].split_whitespace().collect::<Vec<_>>().join(" ");
+            if !classes.is_empty() {
+                bp_map.insert(key, classes);
+            }
+        }
+
+        if bp_map.is_empty() {
+            continue;
+        }
+
+        // containerName — opsional, cari di window yang sama
+        let container_name = RE_CONTAINER_NAME.captures(search_window)
+            .map(|c| c[1].to_string())
+            .filter(|s| !s.is_empty());
+
+        // containerJson — sorted JSON untuk deterministic hashing di TS side
+        let container_json = match serde_json::to_string(&bp_map) {
+            Ok(j) => j,
+            Err(_) => continue,
+        };
+
+        let breakpoints: Vec<ContainerBreakpointEntry> = bp_map
+            .into_iter()
+            .map(|(key, classes)| ContainerBreakpointEntry { key, classes })
+            .collect();
+
+        results.push(TwContainerConfigEntry {
+            tag,
+            container_json,
+            container_name,
+            breakpoints,
+        });
+    }
+
+    results
+}

@@ -948,6 +948,12 @@ export interface ContainerBreakpoint {
   classes: string
 }
 
+/** Satu breakpoint entry dalam container config. */
+export interface ContainerBreakpointEntry {
+  key: string
+  classes: string
+}
+
 /**
  * Generate a short fingerprint string from a list of parts.
  *
@@ -1162,6 +1168,31 @@ export declare function extractThemeFromCss(css: string): Array<CssThemeVar>
  * 5. Return struct sekali — zero round-trips
  */
 export declare function extractThemeFromCssClassified(css: string): ClassifiedThemeConfig
+
+/**
+ * Extract semua `tw.tag({ container: {...} })` configs dari source file.
+ *
+ * Return array of `TwContainerConfigEntry` — satu per komponen yang punya `container` config.
+ * Dipakai oleh `extractContainerCssFromSource()` untuk pre-generate @container CSS.
+ *
+ * ```ts
+ * // Input source:
+ * const Card = tw.div({
+ *   base: "p-4",
+ *   container: { sm: "flex-col", lg: "grid-cols-3" },
+ *   containerName: "card",
+ * })
+ *
+ * // Output:
+ * [{
+ *   tag: "div",
+ *   containerJson: '{"lg":"grid-cols-3","sm":"flex-col"}',
+ *   containerName: "card",
+ *   breakpoints: [{ key: "sm", classes: "flex-col" }, { key: "lg", classes: "grid-cols-3" }]
+ * }]
+ * ```
+ */
+export declare function extractTwContainerConfigs(source: string): Array<TwContainerConfigEntry>
 
 /**
  * Extract semua `tw.tag({ states: {...} })` configs dari source file.
@@ -3022,6 +3053,21 @@ export declare function transformSource(source: string, opts?: Record<string, st
  * ```
  */
 export declare function twClassesToCss(classes: string): string
+
+/** Satu entry container config yang di-extract dari source file. */
+export interface TwContainerConfigEntry {
+  /** HTML tag dari tw.tag() call — misalnya "div", "section" */
+  tag: string
+  /**
+   * JSON string dari container config — misalnya `{"sm":"flex-col","lg":"grid-cols-3"}`
+   * Dipakai sebagai bagian dari hash key oleh TypeScript side.
+   */
+  containerJson: string
+  /** containerName opsional — misalnya "sidebar", "card" */
+  containerName?: string
+  /** Array of breakpoint entries yang di-parse dari container object */
+  breakpoints: Array<ContainerBreakpointEntry>
+}
 
 /**
  * Conflict-aware Tailwind class merger.
