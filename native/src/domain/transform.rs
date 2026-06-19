@@ -307,28 +307,60 @@ struct SubEntry {
 /// Parse the `sub: { key: { tag: "...", base: \`...\` }, ... }` block.
 fn parse_sub_map(content: &str) -> HashMap<String, SubEntry> {
     let mut result = HashMap::new();
-    let re_key = Regex::new(r"(\w[\w-]*)\s*:\s*\{").expect("parse_sub_map regex");
+
+    // Matches each sub entry in one of two forms:
+    //   Shorthand: ("name" | "tag:name" | word)  :  ("cls" | `cls` | 'cls')
+    //   Object:    ("name" | word)                :  {
+    //
+    // Groups: 1=dq-key  2=word-key  3=dq-value  4=bt-value  5=sq-value
+    // No capture for `{` — object form detected when 3/4/5 are all absent.
+    let re = Regex::new(
+        r#"(?:"([^"\\]+)"|(\w[\w-]*))\s*:\s*(?:"([^"\\]*)"|`([^`]*)`|'([^']*)'|\{)"#,
+    )
+    .expect("parse_sub_map");
+
     let mut search_from = 0usize;
     loop {
         let slice = &content[search_from..];
-        let cap = match re_key.captures(slice) {
+        let cap = match re.captures(slice) {
             Some(c) => c,
             None => break,
         };
-        let sub_name = cap[1].to_string();
-        let rel_end = cap.get(0).unwrap().end();
-        let abs_inner_start = search_from + rel_end;
-        match extract_brace_inner(content, abs_inner_start) {
-            Some(inner) => {
-                let inner_len = inner.len();
-                let tag = extract_string_for_key(inner, "tag")
-                    .unwrap_or_else(|| "div".to_string());
-                let base_raw = extract_string_for_key(inner, "base").unwrap_or_default();
-                let base = normalise_classes(&base_raw).join(" ");
-                result.insert(sub_name, SubEntry { tag, base });
-                search_from = abs_inner_start + inner_len + 1;
+
+        let raw_key = cap
+            .get(1)
+            .or_else(|| cap.get(2))
+            .map(|m| m.as_str())
+            .unwrap_or("");
+
+        // "div:action" → tag="div", sub_name="action"
+        // "header"     → tag="header", sub_name="header"
+        let (tag, sub_name) = if let Some(pos) = raw_key.find(':') {
+            (raw_key[..pos].to_string(), raw_key[pos + 1..].to_string())
+        } else {
+            (raw_key.to_string(), raw_key.to_string())
+        };
+
+        let abs_end = search_from + cap.get(0).unwrap().end();
+
+        if let Some(classes_raw) = cap.get(3).or_else(|| cap.get(4)).or_else(|| cap.get(5)) {
+            // Shorthand string form
+            let base = normalise_classes(classes_raw.as_str()).join(" ");
+            result.insert(sub_name, SubEntry { tag, base });
+            search_from = abs_end;
+        } else {
+            // Object form — abs_end is right after the opening `{`
+            match extract_brace_inner(content, abs_end) {
+                Some(inner) => {
+                    let inner_len = inner.len();
+                    let obj_tag = extract_string_for_key(inner, "tag").unwrap_or(tag);
+                    let base_raw = extract_string_for_key(inner, "base").unwrap_or_default();
+                    let base = normalise_classes(&base_raw).join(" ");
+                    result.insert(sub_name, SubEntry { tag: obj_tag, base });
+                    search_from = abs_end + inner_len + 1;
+                }
+                None => break,
             }
-            None => break,
         }
     }
     result
