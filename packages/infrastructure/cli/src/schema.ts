@@ -30,6 +30,7 @@ export const TailwindStyledConfigSchema = z
     compiler: z
       .object({
         engine: z.enum(["rust", "js", "none"]).optional(),
+        incremental: z.boolean().optional(),
       })
       .optional(),
     css: z

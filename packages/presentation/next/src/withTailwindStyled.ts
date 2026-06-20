@@ -22,6 +22,7 @@ function getDirnameFromUrl(importMetaUrl: string): string {
 import { resolveLoaderPath as sharedResolveLoaderPath } from "@tailwind-styled/shared"
 import { scanWorkspace } from "@tailwind-styled/scanner"
 import { appendStaticStateCssToSafelist, TW_STATE_STATIC_FILENAME, setGlobalLogFile } from "@tailwind-styled/shared"
+import { hasSourceChanged, isIncrementalEnabled } from "./incrementalOrchestrator"
 
 import { parseNextAdapterOptions } from "./schemas"
 import { StaticCssWebpackPlugin } from "./staticCssWebpackPlugin"
@@ -551,6 +552,14 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                   initialScanPath,
                   "/* tw-classes: initial scan — generating... */\n@layer utilities {}\n"
                 )
+              }
+
+              // Incremental: skip regenerate kalau tidak ada file yang berubah
+              const sourceFiles = result.files?.map((f: { file: string }) => f.file) ?? []
+              const incremental = isIncrementalEnabled(process.cwd())
+              if (incremental && fs.existsSync(initialScanPath) && !hasSourceChanged(sourceFiles)) {
+                if (options.verbose) console.log("[tailwind-styled] Incremental: tidak ada perubahan, skip regenerate CSS")
+                return
               }
 
               // Generate real CSS via Tailwind JS API + LightningCSS
