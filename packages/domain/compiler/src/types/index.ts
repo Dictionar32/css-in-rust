@@ -98,9 +98,12 @@ export type {
   WatchManager,
 } from './watch'
 
-export {
+export type {
   PluginHookName,
   WatchEventType,
+} from './watch'
+
+export {
   WatchErrorType,
   isWatchEventType,
   isPluginHookName,
@@ -201,8 +204,11 @@ export type {
   IncrementalManager,
 } from './incremental'
 
-export {
+export type {
   FileChangeType,
+} from './incremental'
+
+export {
   isFileChangeType,
   isFileFingerprint,
   isFileChangeDiff,
@@ -377,57 +383,45 @@ export type {
 // AGGREGATED EXPORTS FOR CONVENIENCE
 // ============================================================================
 
-/**
- * All manager types for easy import
- */
-export namespace Managers {
-  export type {
-    RedisManager,
-    WatchManager,
-    IDRegistryManager,
-    IncrementalManager,
-    ThemeManager,
-    OptimizationManager,
-    ComponentAnalysisManager,
-  } from '.'
+export type Managers = {
+  RedisManager: import('./redis').RedisManager
+  WatchManager: import('./watch').WatchManager
+  IDRegistryManager: import('./id-registry').IDRegistryManager
+  IncrementalManager: import('./incremental').IncrementalManager
+  ThemeManager: import('./theme').ThemeManager
+  OptimizationManager: import('./optimization').OptimizationManager
+  ComponentAnalysisManager: import('./analysis').ComponentAnalysisManager
 }
 
-/**
- * All domain types grouped by requirement
- */
-export namespace Requirements {
-  // Requirement 1: Redis
-  export namespace Redis {
-    export * from './redis'
+export type Requirements = {
+  Redis: {
+    Config: import('./redis').RedisConfig
+    Manager: import('./redis').RedisManager
+    ClusterStatus: import('./redis').ClusterStatus
   }
-  
-  // Requirement 2: Watch
-  export namespace Watch {
-    export * from './watch'
+  Watch: {
+    Config: import('./watch').WatchConfig
+    Manager: import('./watch').WatchManager
+    Event: import('./watch').WatchEvent
   }
-  
-  // Requirement 3: ID Registry
-  export namespace IDRegistry {
-    export * from './id-registry'
+  IDRegistry: {
+    Manager: import('./id-registry').IDRegistryManager
+    RegistryHandle: import('./id-registry').RegistryHandle
   }
-  
-  // Requirement 4: Incremental Compilation
-  export namespace Incremental {
-    export * from './incremental'
+  Incremental: {
+    Manager: import('./incremental').IncrementalManager
+    BuildResult: import('./incremental').IncrementalBuildResult
   }
-  
-  // Requirement 5: Theme Resolution
-  export namespace Theme {
-    export * from './theme'
+  Theme: {
+    Config: import('./theme').ThemeConfig
+    Manager: import('./theme').ThemeManager
   }
-  
-  // Requirement 6-7: Optimization
-  export namespace Optimization {
-    export * from './optimization'
+  Optimization: {
+    Manager: import('./optimization').OptimizationManager
+    Result: import('./optimization').OptimizationResult
   }
-  
-  // Requirement 8: Analysis
-  export namespace Analysis {
-    export * from './analysis'
+  Analysis: {
+    Manager: import('./analysis').ComponentAnalysisManager
+    Usage: import('./analysis').ComponentUsage
   }
 }

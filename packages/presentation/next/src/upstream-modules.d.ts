@@ -144,6 +144,7 @@ declare module "@tailwind-styled/compiler" {
     toAtomicClasses?: (twClasses: string) => string
     clearAtomicRegistry?: () => void
     atomicRegistrySize?: () => number
+    create_fingerprint?: (filePath: string, fileContent: string) => string
     analyzeClasses?: (filesJson: string, cwd: string, flags: number) => unknown
     [key: string]: unknown
   }

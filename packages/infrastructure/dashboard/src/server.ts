@@ -17,11 +17,39 @@ import http from "node:http"
 import fs from "node:fs"
 import path from "node:path"
 
+import { getNativeBridge } from "@tailwind-styled/compiler"
 import { currentMetrics, getMetricsSummary, history, resetHistory, updateMetrics } from "./state.js" // converted
-import { getNativeBinding } from "@tailwind-styled/compiler"
 
 const port = Number(process.env.PORT ?? 3000)
 const METRICS_FILE = path.join(process.cwd(), ".tw-cache", "metrics.json")
+
+function getNativeStatus() {
+  try {
+    const native = getNativeBridge()
+    return {
+      available: true,
+      functions: {
+        transformSource: typeof native.transformSource === "function",
+        parseClass: typeof native.parseClass === "function",
+        compileCss: typeof native.compileCss === "function",
+        scanFileNative: typeof native.scan_file_native === "function",
+        runHealthCheck: typeof native.runHealthCheck === "function",
+      },
+    }
+  } catch (error) {
+    return {
+      available: false,
+      functions: {
+        transformSource: false,
+        parseClass: false,
+        compileCss: false,
+        scanFileNative: false,
+        runHealthCheck: false,
+      },
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
 
 function watchMetricsFile() {
   const dir = path.dirname(METRICS_FILE)
@@ -119,6 +147,7 @@ const dashboardHtml = `<!doctype html>
     <div class="card"><div class="label">Files</div><div class="value" id="fileCount">-</div></div>
     <div class="card"><div class="label">CSS output</div><div class="value" id="cssBytes">-</div></div>
     <div class="card"><div class="label">Memory (heap)</div><div class="value" id="memoryMb">-</div></div>
+    <div class="card"><div class="label">Native bridge</div><div class="value" id="nativeStatus">-</div></div>
   </div>
 
   <div class="section-title">Build time history</div>
@@ -165,9 +194,10 @@ const dashboardHtml = `<!doctype html>
 
     async function fetchAndRender() {
       try {
-        const [mRes, hRes] = await Promise.all([fetch("/metrics"), fetch("/history")])
+        const [mRes, hRes, healthRes] = await Promise.all([fetch("/metrics"), fetch("/history"), fetch("/health")])
         const m = await mRes.json()
         const h = await hRes.json()
+        const health = await healthRes.json()
 
         if (m.generatedAt === _state.prevGenAt) return
         _state.prevGenAt = m.generatedAt
@@ -178,6 +208,7 @@ const dashboardHtml = `<!doctype html>
         document.getElementById("fileCount").innerHTML = fmt(m.fileCount, null, null, null)
         document.getElementById("cssBytes").innerHTML = fmtBytes(m.cssBytes)
         document.getElementById("memoryMb").innerHTML = fmt(m.memoryMb?.heapUsed, "MB", 100, 500)
+        document.getElementById("nativeStatus").innerHTML = health.native?.available ? "<span class=\\"good\\">on</span>" : "<span class=\\"bad\\">off</span>"
         document.getElementById("raw-json").textContent = JSON.stringify(m, null, 2)
         document.getElementById("last-update").textContent = "Last update: " + new Date(m.generatedAt).toLocaleTimeString()
         document.getElementById("status").textContent = "Mode: " + (m.mode ?? "idle")
@@ -201,11 +232,13 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${port}`)
 
   if (url.pathname === "/health") {
+    const native = getNativeStatus()
     res.setHeader("content-type", "application/json")
     res.end(
       JSON.stringify({
         ok: true,
         status: getMetricsSummary().health.status,
+        native,
       })
     )
     return
@@ -226,7 +259,7 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/summary") {
     res.setHeader("content-type", "application/json")
-    res.end(JSON.stringify(getMetricsSummary(), null, 2))
+    res.end(JSON.stringify({ ...getMetricsSummary(), native: getNativeStatus() }, null, 2))
     return
   }
 

@@ -40,9 +40,14 @@ const npmModuleBase = resolveNpmModuleBase()
 const packlist = requireFromHere(path.join(npmModuleBase, "npm-packlist"))
 const Arborist = requireFromHere(path.join(npmModuleBase, "@npmcli", "arborist"))
 
-const findForbiddenPackedFile = (files) =>
+const isAllowedRootNativeBinary = (targetPath, normalizedPath) =>
+  targetPath === "." &&
+  /^native\/tailwind-styled-native(?:\.[a-z0-9-]+)?\.node$/i.test(normalizedPath)
+
+const findForbiddenPackedFile = (targetPath, files) =>
   files.find((filePath) => {
     const normalized = filePath.replaceAll("\\", "/")
+    if (isAllowedRootNativeBinary(targetPath, normalized)) return false
     return (
       normalized.endsWith(".node") ||
       normalized.includes("/src/") ||
@@ -106,24 +111,31 @@ const checkAdapterBundleSafety = (targetPath) => {
   }
 }
 
-for (const target of targets) {
-  const absoluteTarget = path.resolve(rootDir, target)
-  const arborist = new Arborist({ path: absoluteTarget })
-  const tree = await arborist.loadActual()
-  const packedFiles = await packlist(tree)
-  const forbiddenFile = findForbiddenPackedFile(packedFiles)
-  if (forbiddenFile) {
-    throw new Error(`${target} package contains forbidden packed file: ${forbiddenFile}`)
+async function main() {
+  for (const target of targets) {
+    const absoluteTarget = path.resolve(rootDir, target)
+    const arborist = new Arborist({ path: absoluteTarget })
+    const tree = await arborist.loadActual()
+    const packedFiles = await packlist(tree)
+    const forbiddenFile = findForbiddenPackedFile(target, packedFiles)
+    if (forbiddenFile) {
+      throw new Error(`${target} package contains forbidden packed file: ${forbiddenFile}`)
+    }
+    if (target.includes("scanner")) {
+      checkScannerBundle(target)
+    }
+    if (["packages/presentation/vite", "packages/presentation/next", "packages/presentation/rspack"].some((prefix) => target.includes(prefix))) {
+      checkAdapterBundleSafety(target)
+    }
   }
-  if (target.includes("scanner")) {
-    checkScannerBundle(target)
-  }
-  if (["packages/presentation/vite", "packages/presentation/next", "packages/presentation/rspack"].some((prefix) => target.includes(prefix))) {
-    checkAdapterBundleSafety(target)
-  }
+
+  console.log(`pack artifacts OK for ${targets.join(", ")}`)
 }
 
-console.log(`pack artifacts OK for ${targets.join(", ")}`)
+main().catch((error) => {
+  console.error(error instanceof Error ? error.message : error)
+  process.exit(1)
+})
 
 // ── Additional assertions dari monorepo checklist ────────────────────────────
 

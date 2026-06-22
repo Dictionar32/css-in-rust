@@ -2,13 +2,15 @@ import fs from "node:fs"
 import path from "node:path"
 import { createRequire } from "node:module"
 import { fileURLToPath } from "node:url"
-import { cruise } from "dependency-cruiser"
-import extractTSConfig from "dependency-cruiser/config-utl/extract-ts-config"
 import ts from "typescript"
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(scriptDir, "..", "..")
-const manifestPath = path.join(rootDir, "monorepo-file-dependency-graph.json")
+const configManifestPath = path.join(rootDir, "config", "monorepo-file-dependency-graph.json")
+const rootManifestPath = path.join(rootDir, "monorepo-file-dependency-graph.json")
+const manifestPath = fs.existsSync(configManifestPath) || !fs.existsSync(rootManifestPath)
+  ? configManifestPath
+  : rootManifestPath
 const scopeDirectories = ["src", "packages", "scripts", "examples", "test"]
 const definitionFilePattern = /\.d\.[cm]?tsx?$/i
 const sourceFilePattern = /\.(?:[cm]?[jt]sx?)$/i
@@ -17,9 +19,28 @@ const requireFromHere = createRequire(import.meta.url)
 
 process.chdir(rootDir)
 
-const graphConfig = requireFromHere(path.join(rootDir, "dependency-cruiser.graph.cjs"))
-const tsConfig = extractTSConfig(path.join(rootDir, graphConfig.options.tsConfig.fileName))
+const graphConfigPath = [
+  path.join(rootDir, "dependency-cruiser.graph.cjs"),
+  path.join(rootDir, "config", "dependency-cruiser.graph.cjs"),
+].find((candidate) => fs.existsSync(candidate))
+
+if (!graphConfigPath) {
+  throw new Error("dependency-cruiser graph config not found.")
+}
+
+const graphConfig = requireFromHere(graphConfigPath)
 const sourceExtensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"]
+let tsConfig = null
+
+const loadGraphTools = async () => {
+  const [{ cruise }, { default: extractTSConfig }] = await Promise.all([
+    import("dependency-cruiser"),
+    import("dependency-cruiser/config-utl/extract-ts-config"),
+  ])
+
+  tsConfig = extractTSConfig(path.join(rootDir, graphConfig.options.tsConfig.fileName))
+  return { cruise, tsConfig }
+}
 
 const toPosixPath = (value) => value.replaceAll("\\", "/")
 
@@ -243,6 +264,10 @@ const extractModuleSpecifiers = (filePath) => {
 }
 
 const resolveModuleSpecifier = (specifier, containingFile) => {
+  if (!tsConfig) {
+    throw new Error("TypeScript config has not been loaded.")
+  }
+
   const absoluteContainingFile = path.join(rootDir, containingFile)
   const resolvedByTypescript = ts.resolveModuleName(
     specifier,
@@ -338,6 +363,7 @@ const countCycles = (nodes, adjacencyMap) => {
 }
 
 const buildManifest = async () => {
+  const { cruise, tsConfig } = await loadGraphTools()
   const result = await cruise(
     scopeDirectories,
     {
@@ -466,4 +492,7 @@ const main = async () => {
   )
 }
 
-await main()
+main().catch((error) => {
+  console.error(error)
+  process.exitCode = 1
+})

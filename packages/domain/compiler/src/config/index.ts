@@ -5,8 +5,7 @@
  * for managing feature configurations across all 8 domains.
  */
 
-export {
-  // Configuration schemas
+export type {
   FeaturesConfigSchema,
   RedisConfig,
   WatchConfig,
@@ -16,8 +15,10 @@ export {
   OptimizationConfig,
   AtomicCssConfig,
   AnalysisConfig,
-  // Validation
   ValidationResult,
+} from './FeaturesConfig'
+
+export {
   // Default configuration
   DEFAULT_FEATURES_CONFIG,
   // Validation functions

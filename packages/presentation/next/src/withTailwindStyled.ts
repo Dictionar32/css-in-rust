@@ -559,8 +559,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
               const incremental = isIncrementalEnabled(process.cwd())
               if (incremental && fs.existsSync(initialScanPath) && !hasSourceChanged(sourceFiles)) {
                 if (options.verbose) console.log("[tailwind-styled] Incremental: tidak ada perubahan, skip regenerate CSS")
-                return
-              }
+              } else {
 
               // Generate real CSS via Tailwind JS API + LightningCSS
               // Fire-and-forget — wrap() tidak bisa async (return NextConfig bukan Promise)
@@ -609,6 +608,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                   )
                 }
               })()
+              } // end else (incremental skip)
             }
           } catch (e) {
             throw new Error(

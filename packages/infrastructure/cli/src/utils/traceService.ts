@@ -8,7 +8,6 @@
  */
 
 import { compileCssFromClasses } from "@tailwind-styled/compiler/internal"
-import type { CssCompileResult } from "@tailwind-styled/compiler/internal"
 import {
   CascadeResolver,
   parseCssToIr,
@@ -21,6 +20,8 @@ import {
 import { scanWorkspace } from "@tailwind-styled/scanner"
 import { TwError, wrapUnknownError } from "@tailwind-styled/shared"
 import type { TraceResult as EngineTraceResult } from "@tailwind-styled/engine/internal"
+
+type CssCompileResult = ReturnType<typeof compileCssFromClasses>
 
 export interface TraceResult {
   class: string

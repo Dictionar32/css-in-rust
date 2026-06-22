@@ -98,6 +98,8 @@ export interface ClusterStatus {
   slots_covered: number
 }
 
+type ClusterNode = ClusterStatus['nodes'][number]
+
 export interface ReplicationStatus {
   enabled: boolean
   master: string
@@ -131,6 +133,43 @@ export interface CacheEntry {
   ttlSeconds?: number
 }
 
+const DEFAULT_MANAGER_CONFIG: RedisManagerConfig = {
+  enabled: false,
+  host: 'localhost',
+  port: 6379,
+  poolSize: 10,
+  ttlSeconds: 604800, // 7 days
+  clusterMode: false,
+  replicationEnabled: false,
+  persistenceMode: 'none',
+  evictionPolicy: 'LRU',
+  connectionTimeoutMs: 5000,
+  retryAttemptsOnFailure: 3,
+}
+
+const normalizeClusterNodeStatus = (status: unknown): ClusterNode['status'] =>
+  status === 'healthy' ? 'healthy' : 'down'
+
+const clusterNodeFromAddress = (node: string): ClusterNode => {
+  const [host = 'localhost', port = '6379'] = node.split(':')
+  return { host, port: Number.parseInt(port, 10), status: 'healthy' }
+}
+
+const normalizeClusterNodes = (
+  nodes: Array<{ host: string; port: number; status: unknown }> | undefined,
+  fallbackNodes: string[] = []
+): ClusterNode[] => {
+  if (!nodes || nodes.length === 0) {
+    return fallbackNodes.map(clusterNodeFromAddress)
+  }
+
+  return nodes.map((node) => ({
+    host: node.host,
+    port: node.port,
+    status: normalizeClusterNodeStatus(node.status),
+  }))
+}
+
 export class RedisManager extends BaseManager {
   private poolStats: PoolStats | null = null
   private clusterStatus: ClusterStatus | null = null
@@ -149,7 +188,7 @@ export class RedisManager extends BaseManager {
       : null
 
     // Use resolved config if available, otherwise fall back to direct config
-    const finalConfig = resolvedConfig && resolvedConfig.validation.valid
+    const finalConfig: RedisManagerConfig = resolvedConfig && resolvedConfig.validation.valid
       ? {
           enabled: resolvedConfig.config.enabled,
           host: resolvedConfig.config.connection.host,
@@ -163,35 +202,9 @@ export class RedisManager extends BaseManager {
             ? 'AOF' 
             : 'RDB',
         }
-      : {
-          enabled: false,
-          host: 'localhost',
-          port: 6379,
-          poolSize: 10,
-          ttlSeconds: 604800, // 7 days
-          clusterMode: false,
-          replicationEnabled: false,
-          persistenceMode: 'none' as const,
-          evictionPolicy: 'LRU' as const,
-          connectionTimeoutMs: 5000,
-          retryAttemptsOnFailure: 3,
-        }
+      : {}
 
-    super({
-      enabled: false,
-      host: 'localhost',
-      port: 6379,
-      poolSize: 10,
-      ttlSeconds: 604800, // 7 days
-      clusterMode: false,
-      replicationEnabled: false,
-      persistenceMode: 'none',
-      evictionPolicy: 'LRU',
-      connectionTimeoutMs: 5000,
-      retryAttemptsOnFailure: 3,
-      ...finalConfig,
-      ...config,
-    })
+    super({ ...DEFAULT_MANAGER_CONFIG, ...finalConfig, ...config })
   }
 
   /**
@@ -785,23 +798,21 @@ export class RedisManager extends BaseManager {
         // Call Rust function via wrapper: redis_enable_cluster
         const clusterResult = redis_enable_cluster(initialNodes)
         
-        this.clusterStatus = {
+        const nextStatus: ClusterStatus = {
           enabled: true,
           node_count: clusterResult.node_count || initialNodes.length,
-          nodes: clusterResult.nodes || initialNodes.map(node => {
-            const [host, port] = node.split(':')
-            return { host, port: parseInt(port, 10), status: 'healthy' as const }
-          }),
+          nodes: normalizeClusterNodes(clusterResult.nodes, initialNodes),
           slots_covered: clusterResult.slots_covered || 16384,
         }
+        this.clusterStatus = nextStatus
 
         this.logger.logInfo(
           this.constructor.name,
-          `Redis cluster enabled with ${this.clusterStatus.node_count} nodes`,
-          { nodes: initialNodes, slotsCovered: this.clusterStatus.slots_covered }
+          `Redis cluster enabled with ${nextStatus.node_count} nodes`,
+          { nodes: initialNodes, slotsCovered: nextStatus.slots_covered }
         )
 
-        return this.clusterStatus
+        return nextStatus
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,
@@ -810,17 +821,15 @@ export class RedisManager extends BaseManager {
         )
         
         // Fallback implementation
-        this.clusterStatus = {
+        const fallbackStatus: ClusterStatus = {
           enabled: true,
           node_count: initialNodes.length,
-          nodes: initialNodes.map(node => {
-            const [host, port] = node.split(':')
-            return { host, port: parseInt(port, 10), status: 'healthy' as const }
-          }),
+          nodes: initialNodes.map(clusterNodeFromAddress),
           slots_covered: 16384,
         }
+        this.clusterStatus = fallbackStatus
         
-        return this.clusterStatus
+        return fallbackStatus
       }
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
@@ -877,15 +886,16 @@ export class RedisManager extends BaseManager {
         // Call Rust function via wrapper: redis_cluster_status
         const statusResult = redis_cluster_status()
         
-        this.clusterStatus = {
+        const nextStatus: ClusterStatus = {
           enabled: statusResult.enabled || false,
           node_count: statusResult.node_count || 0,
-          nodes: statusResult.nodes || [],
+          nodes: normalizeClusterNodes(statusResult.nodes),
           slots_covered: statusResult.slots_covered || 0,
         }
+        this.clusterStatus = nextStatus
 
         // Log any unhealthy nodes
-        const unhealthyNodes = (this.clusterStatus.nodes || []).filter(n => n.status !== 'healthy')
+        const unhealthyNodes = nextStatus.nodes.filter(n => n.status !== 'healthy')
         if (unhealthyNodes.length > 0) {
           this.logger.logWarn(
             this.constructor.name,
@@ -894,7 +904,7 @@ export class RedisManager extends BaseManager {
           )
         }
 
-        return this.clusterStatus
+        return nextStatus
       } catch (rustErr) {
         this.logger.logWarn(
           this.constructor.name,

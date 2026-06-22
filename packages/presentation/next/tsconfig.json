@@ -3,12 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "declarationDir": "dist",
-    "types": ["node"],
-    "paths": {
-      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
-      "@tailwind-styled/scanner": ["../../domain/scanner/dist/index.d.ts"],
-      "@tailwind-styled/cli/utils/staticStateExtractor": ["../../infrastructure/cli/src/utils/staticStateExtractor.ts"]
-    }
+    "types": ["node"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

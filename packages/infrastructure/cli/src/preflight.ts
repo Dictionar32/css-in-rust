@@ -24,6 +24,12 @@ import { ensureFileSafe, pathExists, readFileSafe, readJsonSafe } from "./utils/
 import { writeJsonSuccess } from "./utils/json"
 import { getNativeBridge } from "@tailwind-styled/compiler"
 
+type NativeThemeValidationBridge = {
+  validateColorsNapi?: (colorsJson: string) => boolean
+  validateBreakpointsNapi?: (breakpointsJson: string) => boolean
+  runHealthCheck?: () => void
+}
+
 interface PackageJsonLike {
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
@@ -73,7 +79,7 @@ async function validateThemeConfig(cwd: string): Promise<Array<{ type: string; v
   const results: Array<{ type: string; valid: boolean; message: string }> = []
 
   try {
-    const native = getNativeBridge()
+    const native = getNativeBridge() as NativeThemeValidationBridge | null
     if (!native) {
       results.push({ type: "theme", valid: false, message: "Native binding not available" })
       return results
@@ -102,10 +108,11 @@ async function validateThemeConfig(cwd: string): Promise<Array<{ type: string; v
       const theme = config.theme || {}
 
       // Validate colors using native function
-      if (theme.colors && native.validateColorsNapi) {
+      const validateColors = native.validateColorsNapi
+      if (theme.colors && typeof validateColors === "function") {
         try {
           const colorsJson = JSON.stringify(theme.colors)
-          const isValid = native.validateColorsNapi(colorsJson)
+          const isValid = validateColors(colorsJson)
           results.push({
             type: "theme-colors",
             valid: isValid,
@@ -121,10 +128,11 @@ async function validateThemeConfig(cwd: string): Promise<Array<{ type: string; v
       }
 
       // Validate breakpoints using native function
-      if (theme.screens && native.validateBreakpointsNapi) {
+      const validateBreakpoints = native.validateBreakpointsNapi
+      if (theme.screens && typeof validateBreakpoints === "function") {
         try {
           const screensJson = JSON.stringify(theme.screens)
-          const isValid = native.validateBreakpointsNapi(screensJson)
+          const isValid = validateBreakpoints(screensJson)
           results.push({
             type: "theme-breakpoints",
             valid: isValid,
@@ -140,9 +148,10 @@ async function validateThemeConfig(cwd: string): Promise<Array<{ type: string; v
       }
 
       // Check theme integrity using Rust
-      if (native.runHealthCheck) {
+      const runHealthCheck = native.runHealthCheck
+      if (typeof runHealthCheck === "function") {
         try {
-          native.runHealthCheck()
+          runHealthCheck()
           results.push({ type: "theme-integrity", valid: true, message: "Theme integrity check passed" })
         } catch {
           results.push({ type: "theme-integrity", valid: false, message: "Theme integrity check failed" })

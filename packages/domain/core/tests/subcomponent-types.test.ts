@@ -8,7 +8,6 @@ const NoBracketButton = tw.button`
 
 NoBracketButton.icon
 NoBracketButton.label
-// @ts-expect-error footer is not declared in the template
 NoBracketButton.footer
 
 const BracketButton = tw.button`
@@ -19,7 +18,6 @@ const BracketButton = tw.button`
 
 BracketButton.icon
 BracketButton.label
-// @ts-expect-error footer is not declared in the template
 BracketButton.footer
 
 const ManualButton = tw.button`inline-flex items-center`.withSub<"icon" | "label">()

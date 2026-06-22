@@ -122,7 +122,7 @@ export function parseRedisUrl(url: string): Partial<RedisConfig> {
  * @returns Partial<RedisConfig> dari environment variables
  */
 export function parseRedisEnvVars(
-  envVars: RedisEnvVars = process.env as any
+  envVars: RedisEnvVars = process.env as RedisEnvVars
 ): Partial<RedisConfig> {
   // Jika REDIS_URL ada, parse dari URL dulu
   if (envVars.REDIS_URL) {
@@ -185,7 +185,7 @@ export function parseRedisEnvVars(
       console.warn(`Invalid REDIS_POOL_SIZE: ${envVars.REDIS_POOL_SIZE}`)
     } else {
       if (!config.pool) {
-        config.pool = {}
+        config.pool = { size: DEFAULT_REDIS_CONFIG.pool?.size ?? 10 }
       }
       config.pool.size = poolSize
     }

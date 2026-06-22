@@ -8,6 +8,7 @@ const readJson = (relativePath) =>
 
 const exportKeyToFile = (exportKey) => {
   if (exportKey === ".") return "index.ts"
+  if (exportKey === "./browser") return "index.browser.ts"
   return `${exportKey.slice(2)}.ts`
 }
 

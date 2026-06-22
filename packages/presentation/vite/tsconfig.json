@@ -3,12 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "dist",
-    "declarationDir": "dist",
-    "paths": {
-      "@tailwind-styled/compiler": ["../compiler/dist/index.d.ts"],
-      "@tailwind-styled/engine": ["../engine/dist/index.d.ts"],
-      "@tailwind-styled/scanner": ["../scanner/dist/index.d.ts"]
-    }
+    "declarationDir": "dist"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist"]

@@ -25,16 +25,16 @@ function getNative() {
 }
 
 /**
- * Buat fingerprint file menggunakan Rust `createFingerprint`.
+ * Buat fingerprint file menggunakan Rust `create_fingerprint`.
  * Fallback ke mtime jika native tidak tersedia.
  */
 function fingerprintFile(filePath: string): FileFingerprint | null {
   try {
     const stat = fs.statSync(filePath)
     const native = getNative()
-    if (native?.createFingerprint) {
+    if (native?.create_fingerprint) {
       const content = fs.readFileSync(filePath, "utf-8")
-      const hash = (native.createFingerprint as (s: string) => string)(content)
+      const hash = native.create_fingerprint(filePath, content)
       return { hash, mtime: stat.mtimeMs }
     }
     // Fallback: pakai mtime + size sebagai fingerprint
