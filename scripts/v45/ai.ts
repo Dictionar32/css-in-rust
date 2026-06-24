@@ -27,6 +27,15 @@ const SYSTEM_PROMPT = `You are an expert at tailwind-styled-v4. Generate a singl
 Rules: use tw.tagname({ base, variants, defaultVariants }) syntax. Real Tailwind v4 classes. 2-3 variants. Export default.
 Output ONLY TypeScript code starting with: import { tw } from "tailwind-styled-v4"`
 
+// ─── Default models per provider ──────────────────────────────────────────────
+// Anthropic model ids are already rolling aliases (no date suffix = latest release).
+// Update here when the recommended default changes.
+const DEFAULT_MODELS = {
+  anthropic: 'claude-sonnet-4-6',
+  openai:    'gpt-4o-mini',
+  ollama:    'llama3',
+}
+
 // ─── Provider: Anthropic ──────────────────────────────────────────────────────
 async function generateWithAnthropic(prompt) {
   const apiKey = process.env.ANTHROPIC_API_KEY
@@ -35,7 +44,7 @@ async function generateWithAnthropic(prompt) {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: model ?? 'claude-sonnet-4-20250514', max_tokens: 1000,
+      model: model ?? DEFAULT_MODELS.anthropic, max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: `Generate a tailwind-styled-v4 component for: ${prompt}` }],
     }),
@@ -69,7 +78,7 @@ async function generateWithOpenAI(prompt) {
 // ─── Provider: Ollama (local) ────────────────────────────────────────────────
 async function generateWithOllama(prompt) {
   const ollamaHost = process.env.OLLAMA_HOST ?? 'http://localhost:11434'
-  const ollamaModel = model ?? 'llama3'
+  const ollamaModel = model ?? DEFAULT_MODELS.ollama
   const res = await fetch(`${ollamaHost}/api/generate`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
