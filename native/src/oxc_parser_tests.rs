@@ -185,7 +185,7 @@ fn debug_structural_pass() {
         .unwrap_or_default()
         .with_module(true);
     let ret = Parser::new(&allocator, &src, st).parse();
-    println!("parse errors: {}", ret.errors.len());
+    println!("parse errors: {}", ret.diagnostics.len());
     println!("stmts: {}", ret.program.body.len());
     println!("directives: {}", ret.program.directives.len());
 
@@ -219,7 +219,7 @@ fn debug_parse_error_detail() {
     let ret1 = Parser::new(&alloc1, &src, st_tsx).parse();
     println!(
         "TSX: errors={} stmts={}",
-        ret1.errors.len(),
+        ret1.diagnostics.len(),
         ret1.program.body.len()
     );
 
@@ -235,7 +235,7 @@ fn debug_parse_error_detail() {
     let ret2 = Parser::new(&alloc2, &src_no_jsx, st_tsx).parse();
     println!(
         "TSX no JSX: errors={} stmts={} directives={}",
-        ret2.errors.len(),
+        ret2.diagnostics.len(),
         ret2.program.body.len(),
         ret2.program.directives.len()
     );
@@ -254,7 +254,7 @@ fn debug_parse_error_detail() {
     let ret3 = Parser::new(&alloc3, &src_with_react, st_tsx).parse();
     println!(
         "TSX with func: errors={} stmts={}",
-        ret3.errors.len(),
+        ret3.diagnostics.len(),
         ret3.program.body.len()
     );
 }

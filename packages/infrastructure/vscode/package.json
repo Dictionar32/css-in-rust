@@ -66,17 +66,17 @@
     "check": "tsc --noEmit",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
     "pack:check": "node ../../scripts/check-pack-artifacts.mjs packages/infrastructure/vscode",
-    "test": "echo \"No tests yet \u2014 add test files to enable\""
+    "test": "echo \"No tests yet — add test files to enable\""
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "@types/vscode": "^1.75.0",
+    "@types/node": "^26.0.0",
+    "@types/vscode": "^1.125.0",
     "tsup": "^8",
     "typescript": "^6"
   },
   "dependencies": {
     "@tailwind-styled/engine": "^5.0.4",
-    "inversify": "^8.1.0",
+    "inversify": "^8.1.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.3.6"
   }

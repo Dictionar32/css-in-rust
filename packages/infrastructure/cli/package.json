@@ -1,7 +1,7 @@
 {
   "name": "create-tailwind-styled",
   "version": "5.0.4",
-  "description": "CLI scaffolding tool \u2014 npx create-tailwind-styled",
+  "description": "CLI scaffolding tool — npx create-tailwind-styled",
   "license": "MIT",
   "type": "module",
   "module": "./dist/api.js",
@@ -40,12 +40,12 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^26.0.0",
     "tsup": "^8",
     "typescript": "^6"
   },
   "dependencies": {
-    "@clack/prompts": "^1.1.0",
+    "@clack/prompts": "^1.6.0",
     "@tailwind-styled/analyzer": "^5.0.4",
     "@tailwind-styled/compiler": "^5.0.4",
     "@tailwind-styled/engine": "^5.0.4",
@@ -57,7 +57,7 @@
     "@tailwind-styled/vite": "^5.0.4",
     "@tailwind-styled/vue": "^5.0.4",
     "commander": "^12.1.0",
-    "inversify": "^8.1.0",
+    "inversify": "^8.1.1",
     "picocolors": "^1.1.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.3.6"

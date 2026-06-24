@@ -80,7 +80,7 @@ impl<'a> Visit<'a> for StructuralVisitor {
     }
 
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        if let BindingPatternKind::BindingIdentifier(id) = &decl.id.kind {
+        if let BindingPattern::BindingIdentifier(id) = &decl.id {
             if let Some(init) = &decl.init {
                 let is_tw = matches!(init,
                     Expression::TaggedTemplateExpression(t) if Self::is_tw(&t.tag)

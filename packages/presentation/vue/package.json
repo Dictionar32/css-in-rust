@@ -1,7 +1,7 @@
 {
   "name": "@tailwind-styled/vue",
   "version": "5.0.4",
-  "description": "Vue 3 adapter for tailwind-styled-v4 \u2014 tw() components with variants",
+  "description": "Vue 3 adapter for tailwind-styled-v4 — tw() components with variants",
   "type": "module",
   "sideEffects": false,
   "engines": {
@@ -52,7 +52,7 @@
   "dependencies": {
     "@tailwind-styled/core": "^5.0.4",
     "@tailwind-styled/shared": "^5.0.4",
-    "inversify": "^8.1.0",
+    "inversify": "^8.1.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.3.6"
   }

@@ -1,7 +1,7 @@
 {
   "name": "@tailwind-styled/rspack",
   "version": "5.0.4",
-  "description": "Rspack adapter for tailwind-styled-v4 \u2014 loader + plugin",
+  "description": "Rspack adapter for tailwind-styled-v4 — loader + plugin",
   "author": "Dictionar32",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,7 @@
   "dependencies": {
     "@tailwind-styled/compiler": "^5.0.4",
     "@tailwind-styled/engine": "^5.0.4",
-    "inversify": "^8.1.0",
+    "inversify": "^8.1.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.3.6"
   },

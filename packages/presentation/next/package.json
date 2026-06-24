@@ -36,16 +36,16 @@
     "@tailwind-styled/engine": "^5.0.4",
     "@tailwind-styled/plugin": "^5.0.4",
     "@tailwind-styled/shared": "^5.0.4",
-    "inversify": "^8.1.0",
+    "inversify": "^8.1.1",
     "reflect-metadata": "^0.2.2",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
-    "next": ">=14"
+    "next": ">=16"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "next": ">=14",
+    "@types/node": "^26.0.0",
+    "next": "^16.2.9",
     "tsup": "^8",
     "typescript": "^6"
   }

@@ -53,7 +53,7 @@ pub fn extract_templates_from_ast(source: &str) -> (Vec<AstTemplateMatch>, bool,
         .with_module(true);
 
     let parser = Parser::new(&allocator, source, source_type);
-    let parse_errors = parser.parse().errors;
+    let parse_errors = parser.parse().diagnostics;
 
     // ─ Early return: If parsing completely fails, fall back to regex
     if !parse_errors.is_empty() && parse_errors.len() > 5 {
