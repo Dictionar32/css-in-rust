@@ -45,9 +45,9 @@
     ]
   },
   "summary": {
-    "fileCount": 506,
-    "directEdgeCount": 684,
-    "transitiveEdgeCount": 9933,
+    "fileCount": 507,
+    "directEdgeCount": 685,
+    "transitiveEdgeCount": 9936,
     "orphanCount": 284,
     "cycleCount": 4
   },
@@ -11741,6 +11741,7 @@
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
           "packages/domain/plugin-api/src/index.ts",
           "packages/domain/plugin-api/src/schemas.ts",
+          "packages/domain/plugin/src/hooks.ts",
           "packages/domain/shared/src/codegen.ts",
           "packages/domain/shared/src/compatibility.ts",
           "packages/domain/shared/src/configSchemas.ts",
@@ -14390,12 +14391,31 @@
         "transitive": []
       }
     },
+    "packages/domain/plugin/src/hooks.ts": {
+      "kind": "package-source",
+      "workspace": "packages/domain",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [
+          "packages/domain/plugin/src/index.ts"
+        ],
+        "transitive": [
+          "packages/domain/core/src/plugins.ts",
+          "packages/domain/plugin/src/internal.ts",
+          "src/umbrella/plugin.ts"
+        ]
+      }
+    },
     "packages/domain/plugin/src/index.ts": {
       "kind": "package-source",
       "workspace": "packages/domain",
       "imports": {
         "direct": [
-          "packages/domain/plugin-api/src/index.ts"
+          "packages/domain/plugin-api/src/index.ts",
+          "packages/domain/plugin/src/hooks.ts"
         ],
         "transitive": [
           "packages/domain/compiler/src/analyzer/analyzerNative.ts",
@@ -14482,6 +14502,7 @@
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
           "packages/domain/plugin-api/src/index.ts",
           "packages/domain/plugin-api/src/schemas.ts",
+          "packages/domain/plugin/src/hooks.ts",
           "packages/domain/shared/src/codegen.ts",
           "packages/domain/shared/src/compatibility.ts",
           "packages/domain/shared/src/configSchemas.ts",
@@ -27437,6 +27458,7 @@
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
           "packages/domain/plugin-api/src/index.ts",
           "packages/domain/plugin-api/src/schemas.ts",
+          "packages/domain/plugin/src/hooks.ts",
           "packages/domain/shared/src/codegen.ts",
           "packages/domain/shared/src/compatibility.ts",
           "packages/domain/shared/src/configSchemas.ts",

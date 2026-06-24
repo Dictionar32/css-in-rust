@@ -1,0 +1,6 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "model": "kilo/kilo-auto/free",
+  "default_agent": "code",
+  "instructions": ["AGENTS.md"]
+}

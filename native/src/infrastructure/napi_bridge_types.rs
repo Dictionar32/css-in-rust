@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Represents a CSS rule for generation
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct CssRule {
     /// The CSS selector
     pub selector: String,
@@ -18,6 +18,9 @@ pub struct CssRule {
     pub media: Option<String>,
     /// Optional pseudo-class (e.g., :hover, :focus)
     pub pseudo: Option<String>,
+    /// Source location for debugging (file:line:column)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<SourceLocation>,
 }
 
 /// Result of class parsing operation
@@ -31,6 +34,27 @@ pub struct ParseResult {
     pub found: bool,
     /// Optional error message if parsing failed
     pub error: Option<String>,
+}
+
+/// Source location for debugging
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SourceLocation {
+    /// Source file path
+    pub file: String,
+    /// Line number (1-indexed)
+    pub line: u32,
+    /// Column number (1-indexed)
+    pub column: u32,
+}
+
+impl Default for SourceLocation {
+    fn default() -> Self {
+        SourceLocation {
+            file: String::new(),
+            line: 0,
+            column: 0,
+        }
+    }
 }
 
 /// Theme configuration for resolution

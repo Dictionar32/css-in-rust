@@ -179,6 +179,7 @@ pub fn compile_to_css(input: String, minify: Option<bool>) -> napi::Result<Strin
         value: resolved_value,
         media: None,
         pseudo: None,
+        source: None,
     };
 
     let css = build_css_string(&rule, minify_css);
@@ -248,7 +249,18 @@ fn build_css_string(rule: &CssRule, minify: bool) -> String {
     let property = &rule.property;
     let value = &rule.value;
 
-    let mut css = format!("{} {{ {}: {}; }}", selector, property, value);
+    // Build source comment jika ada source location
+    let source_comment = if let Some(ref src) = rule.source {
+        if !src.file.is_empty() && src.line > 0 {
+            format!(" /* {}:{}:{} */", src.file, src.line, src.column)
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    };
+
+    let mut css = format!("{} {{ {}: {}; }}{}", selector, property, value, source_comment);
 
     if let Some(ref media) = rule.media {
         css = format!("{} {{ {} }}", media, css);
