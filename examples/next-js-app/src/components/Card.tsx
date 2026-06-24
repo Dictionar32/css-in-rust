@@ -18,7 +18,7 @@ import { tw, cn } from "tailwind-styled-v4"
  *   </Card>
  */
 
-// ── Base Card + hoverable variant ─────────────────────────────────────────────
+// -- Base Card + hoverable variant ---------------------------------------------
 export const Card = tw.article({
   base: "rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden",
   variants: {
@@ -49,7 +49,7 @@ export const Card = tw.article({
   },
 })
 
-// ── HoverableCard — extend dengan object config ───────────────────────────────
+// -- HoverableCard — extend dengan object config -------------------------------
 export const HoverableCard = tw.article({
   base: `
     rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden
@@ -65,7 +65,7 @@ export const HoverableCard = tw.article({
   },
 })
 
-// ── PrimaryCard ────────────────────────────────────────────────────────────────
+// -- PrimaryCard ----------------------------------------------------------------
 export const PrimaryCard = tw.article({
   base: "rounded-2xl border border-blue-200 bg-white shadow-sm overflow-hidden",
   sub: {
@@ -76,7 +76,7 @@ export const PrimaryCard = tw.article({
   },
 })
 
-// ── CardWrapper — switch hoverable/primary via prop ──────────────────────────
+// -- CardWrapper — switch hoverable/primary via prop --------------------------
 interface CardWrapperProps extends React.HTMLAttributes<HTMLElement> {
   hoverable?: boolean
   children: React.ReactNode

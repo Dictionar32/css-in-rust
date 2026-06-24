@@ -317,7 +317,17 @@ pub fn extract_tw_state_configs(source: String, filename: String) -> Vec<TwState
 
         // Ambil substring setelah declaration sampai ~2000 chars ke depan
         // untuk cari states block (hindari scan seluruh file)
-        let search_window = &source[comp_start..std::cmp::min(comp_start + 2000, source.len())];
+        // Gunakan floor_char_boundary supaya tidak panic di tengah UTF-8 multi-byte char
+        let end = std::cmp::min(comp_start + 2000, source.len());
+        // Pastikan end ada di char boundary — scan mundur sampai boundary valid
+        let end = {
+            let mut e = end;
+            while e > comp_start && !source.is_char_boundary(e) {
+                e -= 1;
+            }
+            e
+        };
+        let search_window = &source[comp_start..end];
 
         // Cari states block di dalam window ini
         if let Some(states_cap) = RE_STATES_BLOCK.captures(search_window) {
@@ -427,7 +437,13 @@ pub fn inject_state_hash(source: String, _filename: String) -> InjectHashResult 
         let search_start = open_brace_match.end();
 
         // Cari states block mulai dari `{` opening
-        let search_window = &source[search_start..std::cmp::min(search_start + 2000, source.len())];
+        let end_440 = std::cmp::min(search_start + 2000, source.len());
+        let end_440 = {
+            let mut e = end_440;
+            while e > search_start && !source.is_char_boundary(e) { e -= 1; }
+            e
+        };
+        let search_window = &source[search_start..end_440];
 
         if let Some(states_cap) = RE_STATES_BLOCK.captures(search_window) {
             let states_body = &states_cap[1];
@@ -557,7 +573,13 @@ pub fn extract_tw_container_configs(source: String) -> Vec<TwContainerConfigEntr
         let comp_start = comp_cap.get(0).unwrap().end();
 
         // Window 2000 chars — cukup untuk satu component definition
-        let search_window = &source[comp_start..std::cmp::min(comp_start + 2000, source.len())];
+        let end_570 = std::cmp::min(comp_start + 2000, source.len());
+        let end_570 = {
+            let mut e = end_570;
+            while e > comp_start && !source.is_char_boundary(e) { e -= 1; }
+            e
+        };
+        let search_window = &source[comp_start..end_570];
 
         let container_cap = match RE_CONTAINER_BLOCK.captures(search_window) {
             Some(c) => c,

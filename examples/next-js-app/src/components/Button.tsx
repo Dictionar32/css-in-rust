@@ -15,7 +15,7 @@ import { tw } from "tailwind-styled-v4"
  *   </PrimaryButton>
  */
 
-// ── Button dengan variants + sub-components ───────────────────────────────────
+// -- Button dengan variants + sub-components -----------------------------------
 export const Button = tw.button({
   base: `
     relative inline-flex items-center gap-2 rounded-lg font-medium
@@ -56,7 +56,7 @@ export const Button = tw.button({
   },
 })
 
-// ── Alias dengan sub-components (DX shorthand) ────────────────────────────────
+// -- Alias dengan sub-components (DX shorthand) --------------------------------
 
 export const PrimaryButton = tw.button({
   base: `

@@ -7,7 +7,7 @@ import { tw } from "tailwind-styled-v4"
  * Sub-components: icon, content, title, message, close
  */
 
-// ── Base Alert + variants ─────────────────────────────────────────────────────
+// -- Base Alert + variants -----------------------------------------------------
 export const Alert = tw.div({
   base: "relative flex items-start gap-3 rounded-lg p-4 border-l-4",
   variants: {
@@ -30,7 +30,7 @@ export const Alert = tw.div({
   },
 })
 
-// ── Per-intent aliases dengan warna sub-components via states ─────────────────
+// -- Per-intent aliases dengan warna sub-components via states -----------------
 // (pakai states karena sub-component classes tidak bisa di-variant langsung)
 
 export const InfoAlert = tw.div({

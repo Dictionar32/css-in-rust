@@ -8,7 +8,7 @@ import { tw } from "tailwind-styled-v4"
  * tw.textarea({ base })
  */
 
-// ── Field wrapper ─────────────────────────────────────────────────────────────
+// -- Field wrapper -------------------------------------------------------------
 const FieldRoot = tw.div({ base: "flex flex-col gap-1.5" })
 
 const Label = tw.label({ base: "text-sm font-medium text-gray-700" })
@@ -17,7 +17,7 @@ const HintText = tw.p({ base: "text-xs text-gray-400" })
 
 const ErrorText = tw.p({ base: "text-xs text-red-600" })
 
-// ── Input — variants untuk state ──────────────────────────────────────────────
+// -- Input — variants untuk state ----------------------------------------------
 const InputBase = tw.input({
   base: `
     w-full rounded-lg border bg-white px-3 py-2 text-sm
@@ -36,7 +36,7 @@ const InputBase = tw.input({
   },
 })
 
-// ── Textarea ──────────────────────────────────────────────────────────────────
+// -- Textarea ------------------------------------------------------------------
 const TextareaBase = tw.textarea({
   base: `
     w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm
@@ -46,14 +46,14 @@ const TextareaBase = tw.textarea({
   `,
 })
 
-// ── Prefix / Suffix wrappers ──────────────────────────────────────────────────
+// -- Prefix / Suffix wrappers --------------------------------------------------
 const InputWrapper = tw.div({ base: "relative flex items-center" })
 
 const PrefixSlot = tw.span({ base: "absolute left-3 text-gray-400 pointer-events-none" })
 
 const SuffixSlot = tw.span({ base: "absolute right-3 text-gray-400 pointer-events-none" })
 
-// ── Input Props ───────────────────────────────────────────────────────────────
+// -- Input Props ---------------------------------------------------------------
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix"> {
   label?: string
   hint?: string
@@ -84,7 +84,7 @@ export function Input({ label, hint, error, prefix, suffix, className, id, ...pr
   )
 }
 
-// ── Textarea Props ─────────────────────────────────────────────────────────────
+// -- Textarea Props -------------------------------------------------------------
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string
   hint?: string

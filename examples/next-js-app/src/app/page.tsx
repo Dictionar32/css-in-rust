@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { tw } from "tailwind-styled-v4";
 
-// ── Component imports ─────────────────────────────────────────────────────────
+// -- Component imports ---------------------------------------------------------
 import {
   PrimaryButton,
   SecondaryButton,
@@ -22,6 +22,28 @@ import { Card, HoverableCard } from "@/components/Card";
 import { Input, Textarea } from "@/components/Input";
 import { Avatar, AvatarGroup } from "@/components/Avatar";
 import { ThemeAndCartControls } from "@/components/theme-and-cart-controls";
+
+// -- New feature demos ---------------------------------------------------------
+import { StateButton } from "@/components/StateButton";
+import { AccordionItem } from "@/components/DataStateDemo";
+import {
+  ContainerWrapper,
+  ContainerCard,
+  ContainerImage,
+  ContainerText,
+  ContainerTitle,
+  ContainerDesc,
+} from "@/components/ContainerDemo";
+import { SysButton, SysBadge, SysCard } from "@/components/DesignSystem";
+import { LiveTokenDemo } from "@/components/LiveTokenDemo";
+import {
+  StyledLink,
+  ElevatedCard,
+  WarningCard,
+  GradientButton,
+} from "@/components/ExtendDemo";
+import { ThemeAwareCard, AccentBox } from "@/components/ThemeUtils";
+import { twMerge } from "tailwind-styled-v4";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // Layout primitives — tw object config API, semantic HTML tags
@@ -59,7 +81,7 @@ const Main = tw.main({
   base: "max-w-6xl mx-auto px-4 py-12 space-y-20",
 })
 
-// ── Section ────────────────────────────────────────────────────────────────────
+// -- Section --------------------------------------------------------------------
 // <section> — tiap blok punya heading (SectionTitle = h2), valid secara outline
 const Section = tw.section({ base: "space-y-6" })
 
@@ -81,7 +103,7 @@ const CodeChip = tw.code({
   base: "px-1.5 py-0.5 rounded text-xs font-mono bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]",
 })
 
-// ── Hero ───────────────────────────────────────────────────────────────────────
+// -- Hero -----------------------------------------------------------------------
 // <section> dengan aria-label untuk screen reader landmark
 const Hero = tw.section({ base: "py-10 flex flex-col gap-5" })
 
@@ -112,14 +134,14 @@ const FeaturePill = tw.li({
   `,
 })
 
-// ── Grid helpers ───────────────────────────────────────────────────────────────
+// -- Grid helpers ---------------------------------------------------------------
 const Grid2 = tw.div({ base: "grid sm:grid-cols-2 gap-4" })
 
 const Grid3 = tw.div({ base: "grid sm:grid-cols-2 lg:grid-cols-3 gap-4" })
 
 const FlexWrap = tw.div({ base: "flex flex-wrap items-center gap-3" })
 
-// ── Stat card ──────────────────────────────────────────────────────────────────
+// -- Stat card ------------------------------------------------------------------
 // <figure> — self-contained content (angka + label), semantik tepat
 const StatCard = tw.figure({
   base: `
@@ -137,7 +159,7 @@ const StatLabel = tw.figcaption({
   base: "text-sm text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
 })
 
-// ── Counter ────────────────────────────────────────────────────────────────────
+// -- Counter --------------------------------------------------------------------
 const CounterBox = tw.div({
   base: `
     flex items-center gap-4 p-5 rounded-xl
@@ -150,7 +172,7 @@ const CounterValue = tw.output({
   base: "text-5xl font-black tabular-nums w-20 text-center",
 })
 
-// ── Form ───────────────────────────────────────────────────────────────────────
+// -- Form -----------------------------------------------------------------------
 // <form> — semantik yang tepat untuk input group, bukan div
 const FormBox = tw.form({
   base: `
@@ -162,13 +184,13 @@ const FormBox = tw.form({
 
 const FormRow = tw.div({ base: "grid sm:grid-cols-2 gap-4" })
 
-// ── Code block ─────────────────────────────────────────────────────────────────
+// -- Code block -----------------------------------------------------------------
 // <pre> + embedded <code> — standar HTML untuk code block
 const CodeBlock = tw.pre({
   base: "rounded-xl bg-[#0f1117] text-[#c9d1d9] text-xs font-mono p-5 overflow-x-auto leading-relaxed",
 })
 
-// ── Footer ─────────────────────────────────────────────────────────────────────
+// -- Footer ---------------------------------------------------------------------
 // <footer> — landmark, secara implisit role="contentinfo"
 const Footer = tw.footer({
   base: "border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] py-8 mt-10",
@@ -335,7 +357,7 @@ function AlertsDemo() {
 export default function Page() {
   return (
     <PageRoot>
-      {/* ── Navbar ── */}
+      {/* -- Navbar -- */}
       <NavBar>
         <NavInner>
           <div className="flex items-center gap-3">
@@ -347,7 +369,7 @@ export default function Page() {
       </NavBar>
 
       <Main>
-        {/* ── Hero ── */}
+        {/* -- Hero -- */}
         <Hero>
           <HeroEyebrow>
             <Badge color="blue" size="md" dot>
@@ -393,7 +415,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Stats ── */}
+        {/* -- Stats -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>By the numbers</SectionTitle>
@@ -418,7 +440,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Buttons ── */}
+        {/* -- Buttons -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Buttons</SectionTitle>
@@ -449,7 +471,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Badges ── */}
+        {/* -- Badges -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Badges</SectionTitle>
@@ -489,7 +511,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Alerts ── */}
+        {/* -- Alerts -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Alerts</SectionTitle>
@@ -503,7 +525,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Cards ── */}
+        {/* -- Cards -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Cards</SectionTitle>
@@ -581,7 +603,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Avatars ── */}
+        {/* -- Avatars -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Avatars</SectionTitle>
@@ -633,7 +655,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Form ── */}
+        {/* -- Form -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Form Inputs</SectionTitle>
@@ -687,7 +709,7 @@ export default function Page() {
 
         <Divider />
 
-        {/* ── Code ── */}
+        {/* -- Code -- */}
         <Section>
           <SectionHeader>
             <SectionTitle>Object config API</SectionTitle>
@@ -698,9 +720,258 @@ export default function Page() {
           </SectionHeader>
           <CodeBlock>{codeSnippet}</CodeBlock>
         </Section>
+
+        <Divider />
+
+        {/* -- States API -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>States — Boolean Props</SectionTitle>
+            <SectionDesc>
+              <CodeChip>states: {"{ loading, disabled, fullWidth, ... }"}</CodeChip>
+              — di-resolve Rust bitmask lookup O(1), maksimal 16 kombinasi
+            </SectionDesc>
+          </SectionHeader>
+          <FlexWrap>
+            <StateButton>Normal</StateButton>
+            <StateButton loading>
+              <span className="animate-spin inline-block">⟳</span> Loading...
+            </StateButton>
+            <StateButton disabled>Disabled</StateButton>
+            <StateButton danger>Danger state</StateButton>
+            <StateButton success>Success state</StateButton>
+          </FlexWrap>
+          <StateButton fullWidth>Full Width Button</StateButton>
+        </Section>
+
+        <Divider />
+
+        {/* -- State API (data-attribute) -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>State Engine — Zero JS Re-render</SectionTitle>
+            <SectionDesc>
+              <CodeChip>state: {"{ open: { true: '...', false: '...' } }"}</CodeChip>
+              — CSS via data-attribute, toggle tanpa useState
+            </SectionDesc>
+          </SectionHeader>
+          <div className="space-y-3">
+            <AccordionItem title="Apa itu tailwind-styled-v4?">
+              Library CSS-in-JS untuk React yang dikompilasi oleh engine Rust.
+              Zero runtime overhead — CSS di-generate saat build time.
+            </AccordionItem>
+            <AccordionItem title="Bagaimana State Engine bekerja?">
+              State engine generate CSS rules berbasis data-attribute di build time.
+              Toggle style hanya butuh <code className="text-xs font-mono">setAttribute("data-open", "true")</code> —
+              tidak butuh React state atau re-render.
+            </AccordionItem>
+            <AccordionItem title="Kenapa lebih cepat dari styled-components?">
+              Rust parser ~425× lebih cepat dari JS. CSS sudah di-bundle sebelum
+              browser buka halaman — tidak ada runtime injection atau hydration mismatch.
+            </AccordionItem>
+          </div>
+        </Section>
+
+        <Divider />
+
+        {/* -- Container Queries -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>Container Queries</SectionTitle>
+            <SectionDesc>
+              <CodeChip>container: {"{ sm: '...', md: '...', lg: '...' }"}</CodeChip>
+              — layout berubah berdasarkan lebar container, bukan viewport
+            </SectionDesc>
+          </SectionHeader>
+          <SectionDesc className="text-xs italic">
+            Resize browser untuk lihat efeknya pada card di bawah
+          </SectionDesc>
+          <Grid2>
+            <ContainerWrapper>
+              <ContainerCard>
+                <ContainerImage className="flex items-center justify-center text-2xl">
+                  🦀
+                </ContainerImage>
+                <ContainerText>
+                  <ContainerTitle>Rust Engine</ContainerTitle>
+                  <ContainerDesc>
+                    Layout card ini berubah otomatis berdasarkan lebar container-nya,
+                    bukan lebar viewport. Coba resize jendela browser.
+                  </ContainerDesc>
+                </ContainerText>
+              </ContainerCard>
+            </ContainerWrapper>
+            <ContainerWrapper>
+              <ContainerCard>
+                <ContainerImage className="flex items-center justify-center text-2xl">
+                  ⚡
+                </ContainerImage>
+                <ContainerText>
+                  <ContainerTitle>Zero Runtime</ContainerTitle>
+                  <ContainerDesc>
+                    @container rules di-generate Rust di build time.
+                    Breakpoint default: sm=320px, md=640px, lg=1024px.
+                  </ContainerDesc>
+                </ContainerText>
+              </ContainerCard>
+            </ContainerWrapper>
+          </Grid2>
+        </Section>
+
+        <Divider />
+
+        {/* -- Design System -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>createStyledSystem()</SectionTitle>
+            <SectionDesc>
+              Design system factory dengan token terpusat.
+              Token di-inject sebagai CSS custom properties{" "}
+              <CodeChip>--sys-{"{"}"group"-"name"{"}"}</CodeChip>
+            </SectionDesc>
+          </SectionHeader>
+          <div className="space-y-4">
+            <SysCard>
+              <p className="text-sm font-semibold mb-3">System buttons dari token terpusat:</p>
+              <FlexWrap>
+                <SysButton intent="primary">Primary</SysButton>
+                <SysButton intent="danger">Danger</SysButton>
+                <SysButton intent="success">Success</SysButton>
+                <SysButton intent="outline">Outline</SysButton>
+                <SysButton intent="primary" size="sm">Small</SysButton>
+                <SysButton intent="primary" size="lg">Large</SysButton>
+              </FlexWrap>
+            </SysCard>
+            <SysCard>
+              <p className="text-sm font-semibold mb-3">System badges dari token:</p>
+              <FlexWrap>
+                <SysBadge intent="primary">Primary</SysBadge>
+                <SysBadge intent="danger">Danger</SysBadge>
+                <SysBadge intent="success">Success</SysBadge>
+                <SysBadge intent="muted">Muted</SysBadge>
+              </FlexWrap>
+            </SysCard>
+          </div>
+        </Section>
+
+        <Divider />
+
+        {/* -- Live Tokens -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>liveToken() — Reactive Tokens</SectionTitle>
+            <SectionDesc>
+              Token yang bisa diupdate runtime dan subscribe ke perubahannya.
+              Klik warna untuk update token primary secara live.
+            </SectionDesc>
+          </SectionHeader>
+          <LiveTokenDemo />
+        </Section>
+
+        <Divider />
+
+        {/* -- Extend + tw(Component) -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>.extend() dan tw(Component)</SectionTitle>
+            <SectionDesc>
+              Inheritance via <CodeChip>.extend()</CodeChip>, wrap komponen
+              existing via <CodeChip>tw(Component)</CodeChip>, strict TypeScript
+              via <CodeChip>.withSub&lt;&gt;()</CodeChip>
+            </SectionDesc>
+          </SectionHeader>
+          <div className="space-y-4">
+            <Grid3>
+              <ElevatedCard>
+                <p className="text-sm font-semibold text-gray-900">ElevatedCard</p>
+                <p className="text-xs text-gray-500 mt-1">BaseCard.extend() dengan shadow-lg</p>
+              </ElevatedCard>
+              <WarningCard>
+                <p className="text-sm font-semibold text-yellow-800">WarningCard</p>
+                <p className="text-xs text-yellow-600 mt-1">BaseCard.extend() dengan border kuning</p>
+              </WarningCard>
+              <div className="p-5 rounded-xl border border-gray-200 bg-white">
+                <p className="text-sm font-semibold text-gray-900">StyledLink</p>
+                <p className="text-xs text-gray-500 mt-1 mb-2">tw.a() — wrap existing element</p>
+                <StyledLink href="#">Lihat dokumentasi →</StyledLink>
+              </div>
+            </Grid3>
+            <FlexWrap>
+              <GradientButton>Gradient Button (.extend)</GradientButton>
+            </FlexWrap>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]">
+                twMerge — conflict-aware class merge
+              </p>
+              <div className="p-4 rounded-xl bg-[var(--surface)] border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] space-y-2 text-sm font-mono">
+                <p>
+                  <span className="text-gray-400">twMerge(</span>
+                  <span className="text-green-600">"px-4 py-2"</span>
+                  <span className="text-gray-400">, </span>
+                  <span className="text-blue-600">"px-8"</span>
+                  <span className="text-gray-400">)</span>
+                  {" → "}
+                  <span className={twMerge("px-4 py-2", "px-8") === "py-2 px-8" ? "text-emerald-600" : "text-emerald-600"}>
+                    "{twMerge("px-4 py-2", "px-8")}"
+                  </span>
+                </p>
+                <p>
+                  <span className="text-gray-400">twMerge(</span>
+                  <span className="text-green-600">"bg-red-500"</span>
+                  <span className="text-gray-400">, </span>
+                  <span className="text-blue-600">"bg-blue-500"</span>
+                  <span className="text-gray-400">)</span>
+                  {" → "}
+                  <span className="text-emerald-600">"{twMerge("bg-red-500", "bg-blue-500")}"</span>
+                </p>
+                <p>
+                  <span className="text-gray-400">twMerge(</span>
+                  <span className="text-green-600">"text-sm font-bold"</span>
+                  <span className="text-gray-400">, </span>
+                  <span className="text-blue-600">"text-lg"</span>
+                  <span className="text-gray-400">)</span>
+                  {" → "}
+                  <span className="text-emerald-600">"{twMerge("text-sm font-bold", "text-lg")}"</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Divider />
+
+        {/* -- Theme Utils -- */}
+        <Section>
+          <SectionHeader>
+            <SectionTitle>t.bg(), cssVar(), v4Tokens</SectionTitle>
+            <SectionDesc>
+              Helper untuk reference CSS variables sebagai Tailwind arbitrary values.
+              <CodeChip>t.bg("color-background")</CodeChip> →{" "}
+              <CodeChip>bg-[var(--color-background)]</CodeChip>
+            </SectionDesc>
+          </SectionHeader>
+          <Grid2>
+            <ThemeAwareCard>
+              <p className="font-semibold mb-1">ThemeAwareCard</p>
+              <p className="text-sm opacity-70">
+                Pakai CSS variables dari globals.css via{" "}
+                <code className="text-xs font-mono">var(--surface)</code> dan{" "}
+                <code className="text-xs font-mono">var(--foreground)</code>
+              </p>
+            </ThemeAwareCard>
+            <AccentBox>
+              <p className="font-semibold mb-1">AccentBox</p>
+              <p className="text-sm opacity-70">
+                Border dan background dari{" "}
+                <code className="text-xs font-mono">var(--accent)</code> — otomatis
+                ikut theme switch
+              </p>
+            </AccentBox>
+          </Grid2>
+        </Section>
       </Main>
 
-      {/* ── Footer ── */}
+      {/* -- Footer -- */}
       <Footer>
         <FooterInner>
           <span>tailwind-styled-v4 v5.0.12 — MIT License</span>

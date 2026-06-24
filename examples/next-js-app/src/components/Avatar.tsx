@@ -8,7 +8,7 @@ import { tw, server, cn } from "tailwind-styled-v4"
  * Deterministic color dari name hash — zero runtime randomness.
  */
 
-// ── Avatar root — server component, size via variants ─────────────────────────
+// -- Avatar root — server component, size via variants -------------------------
 const AvatarRoot = server.div({
   base: `
     relative inline-flex shrink-0 items-center justify-center
@@ -32,7 +32,7 @@ const AvatarImage = tw.img({ base: "h-full w-full object-cover" })
 
 const AvatarFallback = tw.span({ base: "absolute inset-0 flex items-center justify-center" })
 
-// ── Color palette (deterministic dari name hash) ──────────────────────────────
+// -- Color palette (deterministic dari name hash) ------------------------------
 const colorPalette = [
   "bg-red-100 text-red-700",
   "bg-orange-100 text-orange-700",
@@ -59,7 +59,7 @@ function getColor(name: string): string {
   return colorPalette[hash % colorPalette.length]
 }
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
+// -- Avatar --------------------------------------------------------------------
 interface AvatarProps {
   name: string
   src?: string
@@ -86,7 +86,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   )
 }
 
-// ── AvatarGroup ───────────────────────────────────────────────────────────────
+// -- AvatarGroup ---------------------------------------------------------------
 const GroupRoot = tw.div({ base: "flex -space-x-2" })
 
 const Overflow = server.div({
