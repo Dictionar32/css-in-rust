@@ -67,31 +67,20 @@ function hashState(tag: string, state: StateConfig): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CSS generator — Tailwind class → plain CSS via Rust (required)
+// CSS generator — state config → CSS rules via Rust, satu call (required)
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// generateRuntimeStateCss() menggantikan twClassesToCss() yang dulu dipanggil
+// per state entry (N × NAPI calls per injectStateStyles/generateStateCss).
+// Sekarang seluruh state map di-resolve dalam satu Rust call. Lihat doc comment
+// generate_runtime_state_css() di state_css.rs untuk detail kontrak.
 
-/**
- * Convert Tailwind utility classes → semicolon-separated inline CSS declarations.
- * Native-only: delegates ke Rust `tw_classes_to_css` (state_css.rs).
- *
- * @internal — called by injectStateStyles()
- */
-// Cache untuk twClassesToCss — classes string dari state config tidak berubah.
-// Ini hot path: dipanggil untuk setiap state entry setiap kali injectStateStyles
-// dipanggil. Dengan cache, Rust hanya dipanggil sekali per unique class string.
-const _twClassesToCssCache = new Map<string, string>()
-
-function twClassesToCss(classes: string): string {
-  const cached = _twClassesToCssCache.get(classes)
-  if (cached !== undefined) return cached
-
+function generateStateRules(id: string, state: StateConfig): string[] {
   const native = getNativeBinding()
-  if (!native?.twClassesToCss) {
-    throw new Error("FATAL: Native binding 'twClassesToCss' is required but not available.")
+  if (!native?.generateRuntimeStateCss) {
+    throw new Error("FATAL: Native binding 'generateRuntimeStateCss' is required but not available.")
   }
-  const result = native.twClassesToCss(classes)
-  _twClassesToCssCache.set(classes, result)
-  return result
+  return native.generateRuntimeStateCss(id, JSON.stringify(state), null).map((rule) => rule.cssRule)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -155,12 +144,7 @@ function injectStateStyles(id: string, state: StateConfig): void {
     }
   }
 
-  const rules = Object.entries(state)
-    .map(([stateName, classes]) => {
-      const css = twClassesToCss(classes)
-      return css ? `.${id}[data-${stateName}="true"]{${css}}` : null
-    })
-    .filter(Boolean) as string[]
+  const rules = generateStateRules(id, state)
 
   if (rules.length === 0) return
 
@@ -239,15 +223,7 @@ export function processState(
  */
 export function generateStateCss(tag: string, state: StateConfig): string {
   const id = hashState(tag, state)
-
-  const rules = Object.entries(state)
-    .map(([stateName, classes]) => {
-      const css = twClassesToCss(classes)
-      return css ? `.${id}[data-${stateName}="true"]{${css}}` : null
-    })
-    .filter(Boolean) as string[]
-
-  return rules.join("\n")
+  return generateStateRules(id, state).join("\n")
 }
 
 /**
