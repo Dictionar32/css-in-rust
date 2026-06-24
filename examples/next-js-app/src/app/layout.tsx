@@ -26,7 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Inject route-specific CSS — zero client JS, streaming friendly */}
+        {/*
+         * TwCssInjector — inject route-specific CSS inline ke <head>.
+         * Baca dari manifest yang di-emit withTailwindStyled() saat build.
+         * Hasilnya: critical CSS langsung di HTML, tidak ada extra <link> request.
+         * Opsional — app tetap jalan tanpa ini via globals.css.
+         */}
         <TwCssInjector />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>

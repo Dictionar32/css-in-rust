@@ -5,7 +5,7 @@
     "author": "Dictionar32",
     "license": "MIT",
     "type": "module",
-    "sideEffects": false,
+    "sideEffects": ["./src/cv.ts", "./dist/index.browser.js", "./dist/index.js"],
     "engines": {
         "node": ">=20"
     },

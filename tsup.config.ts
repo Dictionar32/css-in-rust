@@ -111,14 +111,12 @@ const nativeBrowserPlugin = {
 
     // Fix #3: ./native dan ./compatibility -> native.browser.ts.
     build.onResolve(
-      { filter: /\/(native|compatibility)(\.ts)?$/ },
+      { filter: /(?:^|\/)(?:native|compatibility)(?:\.ts)?$/ },
       (args: { path: string; resolveDir: string }) => {
         const abs = path.resolve(args.resolveDir, args.path).replace(/\\/g, "/")
         if (
-          abs.endsWith("packages/domain/core/src/native") ||
-          abs.endsWith("packages/domain/core/src/compatibility") ||
-          abs.endsWith("packages/domain/core/src/native.ts") ||
-          abs.endsWith("packages/domain/core/src/compatibility.ts")
+          abs.includes("packages/domain/core/src/native") ||
+          abs.includes("packages/domain/core/src/compatibility")
         ) {
           return { path: nativeBrowserPath }
         }
@@ -151,6 +149,15 @@ export default defineConfig([
         format: ["esm" as const],
         external: [...sharedExternal, ...nodeBuiltins],
         esbuildPlugins: [nativeBrowserPlugin],
+        // treeshake false untuk browser — pastikan semua exports (cv, cn, dll)
+        // tidak di-drop oleh esbuild tree-shaking agresif yang melihat
+        // native binding calls sebagai dead code karena return null.
+        treeshake: false,
+        esbuildOptions(options) {
+          // ignoreAnnotations: abaikan /*#__PURE__*/ dan sideEffects:false
+          // supaya cv dan fungsi lain tidak di-drop di browser bundle
+          options.ignoreAnnotations = true
+        },
       }]
     : []),
 ])

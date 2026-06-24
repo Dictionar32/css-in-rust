@@ -1,11 +1,14 @@
 import React from "react"
+import { tw } from "tailwind-styled-v4"
+
 /**
- * Badge — cv() class variant function
+ * Badge — tw object config dengan variants
+ *
+ * Pakai tw.span({ variants }) alih-alih cv() supaya tidak ada
+ * module-level native binding call — aman di Turbopack SSR.
  */
 
-import { cv, tw } from "tailwind-styled-v4"
-
-const badgeVariants = cv({
+const BadgeRoot = tw.span({
   base: "inline-flex items-center gap-1.5 rounded-full font-medium",
   variants: {
     color: {
@@ -28,7 +31,7 @@ const badgeVariants = cv({
   },
 })
 
-const Dot = tw.span`h-1.5 w-1.5 rounded-full bg-current`
+const Dot = tw.span({ base: "h-1.5 w-1.5 rounded-full bg-current" })
 
 interface BadgeProps {
   color?: "gray" | "blue" | "green" | "yellow" | "red" | "purple"
@@ -40,9 +43,9 @@ interface BadgeProps {
 
 export function Badge({ color, size, dot, className, children }: BadgeProps) {
   return (
-    <span className={badgeVariants({ color, size, className })}>
+    <BadgeRoot color={color} size={size} className={className}>
       {dot && <Dot aria-hidden />}
       {children}
-    </span>
+    </BadgeRoot>
   )
 }

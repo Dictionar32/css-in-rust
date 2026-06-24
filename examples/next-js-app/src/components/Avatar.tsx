@@ -1,38 +1,38 @@
 import React from "react"
-/**
- * Avatar — tw.server (RSC-only) + tw template literal + size props
- *
- * tw.server → compiler enforced server-only, dev warning jika render di browser
- *
- * Contoh penggunaan:
- *   <Avatar name="John Doe" size="md" />
- *   <Avatar name="Jane" src="/photo.jpg" size="lg" />
- *   <AvatarGroup users={[...]} max={4} />
- */
-
 import { tw, server, cn } from "tailwind-styled-v4"
 
-// ── tw.server — server-only component ─────────────────────────────────────────
-const AvatarRoot = server.div`
-  relative inline-flex shrink-0 items-center justify-center
-  rounded-full font-semibold select-none overflow-hidden
-`
+/**
+ * Avatar — object config API
+ *
+ * server.div({ base, variants, ... }) — RSC-only, compiler enforced.
+ * Deterministic color dari name hash — zero runtime randomness.
+ */
 
-// ── tw untuk fallback initials + image ────────────────────────────────────────
-const AvatarImage = tw.img`h-full w-full object-cover`
+// ── Avatar root — server component, size via variants ─────────────────────────
+const AvatarRoot = server.div({
+  base: `
+    relative inline-flex shrink-0 items-center justify-center
+    rounded-full font-semibold select-none overflow-hidden
+  `,
+  variants: {
+    size: {
+      xs: "h-6 w-6 text-[10px]",
+      sm: "h-8 w-8 text-xs",
+      md: "h-10 w-10 text-sm",
+      lg: "h-12 w-12 text-base",
+      xl: "h-16 w-16 text-lg",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+})
 
-const AvatarFallback = tw.span`absolute inset-0 flex items-center justify-center`
+const AvatarImage = tw.img({ base: "h-full w-full object-cover" })
 
-// ── Size map ──────────────────────────────────────────────────────────────────
-const sizeMap = {
-  xs: "h-6 w-6 text-[10px]",
-  sm: "h-8 w-8 text-xs",
-  md: "h-10 w-10 text-sm",
-  lg: "h-12 w-12 text-base",
-  xl: "h-16 w-16 text-lg",
-}
+const AvatarFallback = tw.span({ base: "absolute inset-0 flex items-center justify-center" })
 
-// ── Color from name (deterministic) ──────────────────────────────────────────
+// ── Color palette (deterministic dari name hash) ──────────────────────────────
 const colorPalette = [
   "bg-red-100 text-red-700",
   "bg-orange-100 text-orange-700",
@@ -63,7 +63,7 @@ function getColor(name: string): string {
 interface AvatarProps {
   name: string
   src?: string
-  size?: keyof typeof sizeMap
+  size?: "xs" | "sm" | "md" | "lg" | "xl"
   className?: string
 }
 
@@ -72,7 +72,11 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
   const color = getColor(name)
 
   return (
-    <AvatarRoot className={cn(sizeMap[size], !src && color, className)} title={name}>
+    <AvatarRoot
+      size={size}
+      className={cn(!src && color, className)}
+      title={name}
+    >
       {src ? (
         <AvatarImage src={src} alt={name} />
       ) : (
@@ -83,16 +87,31 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
 }
 
 // ── AvatarGroup ───────────────────────────────────────────────────────────────
-const GroupRoot = tw.div`flex -space-x-2`
-const Overflow = server.div`
-  relative inline-flex shrink-0 items-center justify-center
-  rounded-full bg-gray-200 text-gray-600 font-semibold ring-2 ring-white
-`
+const GroupRoot = tw.div({ base: "flex -space-x-2" })
+
+const Overflow = server.div({
+  base: `
+    relative inline-flex shrink-0 items-center justify-center
+    rounded-full bg-gray-200 text-gray-600 font-semibold ring-2 ring-white text-xs
+  `,
+  variants: {
+    size: {
+      xs: "h-6 w-6 text-[9px]",
+      sm: "h-8 w-8 text-[10px]",
+      md: "h-10 w-10 text-xs",
+      lg: "h-12 w-12 text-sm",
+      xl: "h-16 w-16 text-base",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+})
 
 interface AvatarGroupProps {
   users: { name: string; src?: string }[]
   max?: number
-  size?: keyof typeof sizeMap
+  size?: "xs" | "sm" | "md" | "lg" | "xl"
 }
 
 export function AvatarGroup({ users, max = 5, size = "md" }: AvatarGroupProps) {
@@ -107,7 +126,7 @@ export function AvatarGroup({ users, max = 5, size = "md" }: AvatarGroupProps) {
         </div>
       ))}
       {overflow > 0 && (
-        <Overflow className={cn(sizeMap[size], "text-xs ring-2 ring-white")}>
+        <Overflow size={size}>
           +{overflow}
         </Overflow>
       )}

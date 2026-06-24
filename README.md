@@ -2,37 +2,34 @@
 
 # tailwind-styled-v4
 
-### ⚡ Rust-powered Tailwind CSS v4 untuk React
-**Build-time compiler · Zero runtime overhead · RSC-aware · Next.js / Vite / Rspack**
+### ⚡ Rust-powered CSS-in-JS untuk React
+**Build-time compiler · Zero runtime overhead · Type-safe variants · RSC-ready**
 
 [![npm](https://img.shields.io/npm/v/tailwind-styled-v4?color=blue)](https://npmjs.com/package/tailwind-styled-v4)
 [![license](https://img.shields.io/npm/l/tailwind-styled-v4)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.75+-orange?logo=rust)](https://rust-lang.org)
 [![Node](https://img.shields.io/badge/Node.js-20+-green?logo=node.js)](https://nodejs.org)
-[![test](https://img.shields.io/badge/tests-84%2F86%20passing-brightgreen)](#)
+[![tests](https://img.shields.io/badge/tests-545%2B%20passing-brightgreen)](#)
 [![bundle](https://img.shields.io/badge/runtime-~4.5kb-green)](https://bundlephobia.com/package/tailwind-styled-v4)
 
 </div>
 
 ---
 
-## Apa ini?
+`tailwind-styled-v4` adalah library styling React yang menggabungkan **DX styled-components** dengan **performa Tailwind CSS v4** — dikompilasi oleh engine Rust. Tulis komponen sekali dengan `tw.button({ variants })`, Rust extract dan optimasi seluruh CSS di build time.
 
-`tailwind-styled-v4` adalah library styling untuk React yang menggabungkan **DX styled-components** dengan **performa Tailwind CSS v4** dan **engine berbasis Rust**. Tulis komponen dengan `tw.button` atau `tw.div({ variants })` — compiler extract dan optimasi CSS di build time, bukan runtime.
+**Perbandingan:**
 
-**Perbandingan singkat:**
-
-| | tailwind-styled-v4 | styled-components | Tailwind CSS biasa |
-|---|---|---|---|
-| Build-time CSS | ✅ | ❌ (runtime inject) | ✅ |
-| Runtime overhead | ~0 | ~15KB | ~0 |
-| Variants API | ✅ type-safe | terbatas | ❌ |
-| SSR/RSC support | ✅ zero config | ⚠️ butuh ServerStyleSheet | ✅ manual |
-| Hydration mismatch | ✅ tidak ada | ⚠️ hash bisa beda | ✅ tidak ada |
-| DevTools readable | ✅ class name jelas | ❌ hash (`sc-abc123`) | ✅ |
-| Engine | 🦀 Rust | JS | JS |
-| Dark mode | ✅ `dark:` prefix | manual | ✅ |
-| TypeScript | ✅ full inference | partial | ✅ |
+| | tailwind-styled-v4 | styled-components | Tailwind biasa | Panda CSS |
+|---|---|---|---|---|
+| Build-time CSS | ✅ | ❌ runtime inject | ✅ | ✅ |
+| Runtime JS | ~0 | ~15KB | ~0 | ~0 |
+| Variants API | ✅ type-safe | terbatas | ❌ | ✅ |
+| SSR / RSC | ✅ zero config | ⚠️ ServerStyleSheet | ✅ manual | ✅ |
+| Hydration mismatch | ✅ tidak ada | ⚠️ hash drift | ✅ | ✅ |
+| DevTools readable | ✅ | ❌ `sc-abc123` | ✅ | ✅ |
+| Engine | 🦀 Rust | JS | JS | JS |
+| TypeScript | ✅ full inference | partial | ✅ | ✅ |
 
 ---
 
@@ -40,23 +37,18 @@
 
 ```bash
 npm install tailwind-styled-v4
-
-# Setup otomatis
 npx tw setup
 ```
 
-`npx tw setup` akan otomatis:
-- Mendeteksi bundler (Next.js / Vite / Rspack)
-- Meng-inject plugin ke `next.config.ts` / `vite.config.ts`
-- Membuat `tailwind-styled.config.json` dengan CSS entry yang terdeteksi otomatis
-- Menambahkan `@import "tailwindcss"` ke CSS entry
-- Pre-warming scanner cache supaya dev pertama tidak cache miss
+`npx tw setup` mendeteksi bundler (Next.js / Vite / Rspack), meng-inject plugin ke config, dan membuat `tailwind-styled.config.json` secara otomatis.
 
 ---
 
-## Quick Start
+## API
 
 ### 1. Template Literal
+
+API paling sederhana — satu tag, satu string kelas.
 
 ```tsx
 import { tw } from "tailwind-styled-v4"
@@ -70,234 +62,427 @@ const Button = tw.button`
 <Button onClick={handleClick}>Klik saya</Button>
 ```
 
-### 2. Object Config + Variants
+---
+
+### 2. Object Config *(direkomendasikan)*
+
+API utama — mendukung `variants`, `states`, `sub`, `compoundVariants`, `container`, dan lebih. Semua di-resolve Rust di build time.
 
 ```tsx
 const Button = tw.button({
-  base: "inline-flex items-center rounded-full px-5 py-2 font-medium transition-all",
+  base: "inline-flex items-center rounded-lg font-medium transition-all",
   variants: {
     intent: {
-      primary:   "bg-foreground text-background hover:bg-[#383838]",
-      secondary: "bg-white text-gray-900 border border-gray-300 hover:bg-gray-50",
-      outline:   "bg-transparent border-2 border-foreground text-foreground hover:bg-foreground hover:text-background",
-      ghost:     "bg-transparent text-foreground hover:bg-gray-100",
+      primary:   "bg-indigo-600 text-white hover:bg-indigo-700",
+      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
+      danger:    "bg-red-600 text-white hover:bg-red-700",
+      ghost:     "text-gray-600 hover:bg-gray-100",
     },
     size: {
-      sm: "h-10 px-4 text-sm rounded-lg",
-      md: "h-12 px-5 text-base rounded-full",
-      lg: "h-14 px-6 text-lg rounded-full",
+      sm: "px-3 py-1.5 text-xs",
+      md: "px-4 py-2 text-sm",
+      lg: "px-5 py-2.5 text-base",
     },
   },
   defaultVariants: { intent: "primary", size: "md" },
-  states: {
-    loading:   "opacity-60 cursor-wait pointer-events-none",
-    disabled:  "opacity-50 cursor-not-allowed",
-    fullWidth: "w-full",
-  },
+  compoundVariants: [
+    // intent=primary + size=lg → tambah shadow
+    { intent: "primary", size: "lg", class: "shadow-md shadow-indigo-200" },
+  ],
 })
 
-// TypeScript tahu variant apa yang valid — autocomplete ✅
+// TypeScript tahu props yang valid — autocomplete penuh
 <Button intent="primary" size="lg">Submit</Button>
-<Button intent="ghost">Batal</Button>
-<Button intent="outline" size="sm">Edit</Button>
-<Button loading>Memproses...</Button>
+<Button intent="danger">Hapus</Button>
+<Button intent="invalid" />  // ❌ Type error
 ```
 
-### 3. Sub-components
+---
+
+### 3. Sub-Components
+
+Definisi slot anak langsung di config. Format `"tag:name"` untuk kontrol tag HTML — penting untuk SEO dan aksesibilitas.
 
 ```tsx
-const Card = tw.div({
-  base: "rounded-xl bg-white shadow-md overflow-hidden",
+const Card = tw.article({
+  base: "rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden",
   sub: {
-    header:        "px-6 py-4 border-b font-semibold",
-    main:          "px-6 py-4",
-    footer:        "px-6 py-4 border-t text-sm text-gray-400",
-    "div:action":  "px-6 py-4 flex gap-3",  // render <div>, akses Card.action
-  },
-  states: {
-    selected: "ring-2 ring-blue-500",
-    disabled: "opacity-50 pointer-events-none",
+    // "tag:name" → render tag HTML, akses via Card.name
+    "header:header": "px-6 pt-5 pb-0 flex items-start justify-between",
+    "h2:title":      "text-base font-semibold text-gray-900",
+    "section:body":  "px-6 py-4 text-sm text-gray-500 leading-relaxed",
+    "footer:footer": "px-6 pb-5 pt-0 flex items-center gap-2",
+    "img:image":     "w-full aspect-video object-cover",
+    // tanpa tag → render <span> (default)
+    badge:           "rounded-full px-2.5 py-0.5 text-xs font-semibold bg-indigo-100 text-indigo-700",
   },
 })
 
 // Penggunaan
-<Card selected>
-  <Card.header>Judul Card</Card.header>
-  <Card.main>Konten card di sini.</Card.main>
-  <Card.action>
-    <Button>Lihat Detail</Button>
-    <Button intent="ghost">Batal</Button>
-  </Card.action>
-  <Card.footer>Updated 2 hours ago</Card.footer>
+<Card>
+  <Card.header>
+    <Card.title>Judul Card</Card.title>
+    <Card.badge>New</Card.badge>
+  </Card.header>
+  <Card.body>Konten card di sini.</Card.body>
+  <Card.footer>
+    <Button size="sm">Detail</Button>
+  </Card.footer>
 </Card>
 ```
 
-Format `"tag:name"` untuk sub-components — misalnya `"div:action"` render sebagai `<div>` dengan akses via `Card.action`. TypeScript otomatis strip prefix tag dari type inference.
+Tag prefix di-strip otomatis dari TypeScript inference — `Card.title` bukan `Card["h2:title"]`.
 
-### 4. `.extend()` — Inheritance
+---
 
-```tsx
-const PrimaryButton = Button.extend`text-lg px-8`
-const DangerButton = Button.extend({
-  classes: "bg-red-600 hover:bg-red-700",
-  defaultVariants: { intent: "primary" }
-})
-```
+### 4. `cv()` — Class Variant Function
 
-### 5. States — Boolean Props
+Untuk styling non-komponen (className string) — berguna di utility functions, dynamic class lists, dll.
 
 ```tsx
-// states di-resolve via Rust bitmask lookup — O(1), tidak ada runtime overhead
-const Badge = tw.span({
-  base: "inline-flex px-2 py-1 rounded text-sm font-medium",
-  states: {
-    active:   "bg-green-100 text-green-800",
-    warning:  "bg-yellow-100 text-yellow-800",
-    error:    "bg-red-100 text-red-800",
+import { cv } from "tailwind-styled-v4"
+
+const badge = cv({
+  base: "inline-flex items-center gap-1.5 rounded-full font-medium",
+  variants: {
+    color: {
+      gray:   "bg-gray-100 text-gray-700",
+      blue:   "bg-blue-100 text-blue-700",
+      green:  "bg-green-100 text-green-700",
+      red:    "bg-red-100 text-red-700",
+    },
+    size: {
+      sm: "px-2 py-0.5 text-[10px]",
+      md: "px-2.5 py-0.5 text-xs",
+      lg: "px-3 py-1 text-sm",
+    },
   },
+  defaultVariants: { color: "gray", size: "md" },
 })
 
-<Badge active>Online</Badge>
-<Badge error>Error</Badge>
+// Returns string className, bukan komponen
+<span className={badge({ color: "blue", size: "lg" })}>Active</span>
+
+// Merge className tambahan
+<span className={badge({ color: "red", className: "opacity-75" })}>Error</span>
 ```
 
-### 6. Dark Mode
+---
 
-Dark mode bekerja otomatis via `prefers-color-scheme` — tidak perlu konfigurasi tambahan:
+### 5. `states` — Boolean Props
 
-```tsx
-const Card = tw.div({
-  base: "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100",
-  sub: {
-    header: "border-b border-gray-200 dark:border-gray-700",
-  },
-})
-```
-
-### 7. Compound Variants
+Boolean props yang di-resolve via Rust bitmask lookup table. Tidak ada string comparison, tidak ada kondisional di render path.
 
 ```tsx
 const Button = tw.button({
-  base: "...",
+  base: "inline-flex items-center px-4 py-2 rounded-lg font-medium",
   variants: {
-    intent: { primary: "...", outline: "..." },
-    size: { sm: "...", lg: "..." },
+    intent: { primary: "bg-indigo-600 text-white", ghost: "text-gray-600" },
   },
-  compoundVariants: [
-    // Kalau intent=primary AND size=lg → tambah class ini
-    { intent: "primary", size: "lg", class: "shadow-lg" },
-  ],
+  defaultVariants: { intent: "primary" },
+  states: {
+    loading:   "opacity-60 cursor-wait pointer-events-none",
+    fullWidth: "w-full",
+    disabled:  "opacity-50 cursor-not-allowed",
+  },
+})
+
+// Boolean props langsung — tidak perlu className kondisional
+<Button loading>Memproses...</Button>
+<Button fullWidth>Submit</Button>
+<Button loading fullWidth>Loading full width</Button>
+```
+
+Maksimal 16 states per komponen (2¹⁶ kombinasi pre-generated di build time).
+
+---
+
+### 6. `state` — CSS Data-Attribute (Zero JS State)
+
+Untuk toggle style tanpa React re-render — cocok untuk animasi dan transisi.
+
+```tsx
+const Dropdown = tw.div({
+  base: "overflow-hidden transition-all duration-200",
+  state: {
+    open: {
+      true:  "max-h-96 opacity-100",
+      false: "max-h-0 opacity-0",
+    },
+  },
+})
+
+// Set data attribute langsung — tidak butuh setState
+dropdownRef.current?.setAttribute("data-open", "true")
+
+// Atau via React state
+<Dropdown data-open={isOpen.toString()}>
+  {children}
+</Dropdown>
+```
+
+---
+
+### 7. `.extend()` — Inheritance
+
+Extend komponen yang sudah ada tanpa duplikasi class.
+
+```tsx
+// Template literal extend
+const PrimaryButton = Button.extend`
+  bg-indigo-600 text-white hover:bg-indigo-700
+`
+
+// Object config extend — tambah variant sekaligus
+const BigDangerButton = Button.extend({
+  classes:  "text-lg px-8 shadow-lg",
+  variants: { loading: { true: "animate-pulse" } },
+  defaultVariants: { intent: "danger" },
 })
 ```
 
-### 8. .withSub — Strict TypeScript untuk Template Literals
+---
+
+### 8. `container` — Container Queries
+
+Responsive berdasarkan ukuran container parent, bukan viewport.
 
 ```tsx
-const Button = tw.button`
-  flex h-12 px-5 rounded-full
-  icon { flex h-4 w-4 }
-  badge { absolute -top-1 -right-1 }
-`.withSub<"icon" | "badge">()
+const Card = tw.div({
+  base: "p-4 flex flex-col",
+  container: {
+    sm: "flex-col",   // @container (min-width: 320px)
+    md: "flex-row",   // @container (min-width: 640px)
+    lg: "grid-cols-3",// @container (min-width: 1024px)
+  },
+  containerName: "card", // opsional — named container
+})
 
-Button.icon   // ✅ autocomplete
-Button.badge  // ✅ autocomplete
-Button.xyz    // ❌ TypeScript error
+// Wrapper wajib punya @container
+const CardWrapper = tw.div`@container`
+
+<CardWrapper>
+  <Card>{/* responsive berdasarkan lebar CardWrapper */}</Card>
+</CardWrapper>
+```
+
+Breakpoint default: `xs=240px`, `sm=320px`, `md=640px`, `lg=1024px`, `xl=1280px`, `2xl=1536px`.
+
+---
+
+### 9. `server.` — Server Components Only
+
+Komponen yang di-enforce hanya boleh render di server. Dev warning otomatis jika render di browser.
+
+```tsx
+import { server } from "tailwind-styled-v4"
+
+// Sama persis API-nya dengan tw — tapi compiler enforce server-only
+const PageHeader = server.header({
+  base: "w-full border-b px-6 py-4 bg-white",
+  sub: {
+    "h1:title": "text-2xl font-bold",
+    "p:subtitle": "text-sm text-gray-500",
+  },
+})
+
+const AvatarRoot = server.div({
+  base: "relative inline-flex rounded-full overflow-hidden",
+  variants: {
+    size: {
+      sm: "h-8 w-8",
+      md: "h-10 w-10",
+      lg: "h-14 w-14",
+    },
+  },
+  defaultVariants: { size: "md" },
+})
 ```
 
 ---
 
-## Bagaimana CSS Di-generate?
+### 10. `createStyledSystem()` — Design System Factory
 
-Pipeline baru di v5 — tidak lagi pakai empty rules:
+Untuk design system dengan token terpusat. Token di-inject sebagai CSS custom properties `--sys-{group}-{name}`.
 
+```tsx
+import { createStyledSystem } from "tailwind-styled-v4"
+
+const ui = createStyledSystem({
+  tokens: {
+    colors: {
+      primary: "#6366f1",
+      danger:  "#ef4444",
+      muted:   "#6b7280",
+    },
+    radius: {
+      base: "0.5rem",
+      full: "9999px",
+    },
+  },
+  components: {
+    button: {
+      tag: "button",
+      base: "inline-flex items-center font-medium transition-colors",
+      variants: {
+        intent: {
+          primary: "bg-[var(--sys-colors-primary)] text-white",
+          danger:  "bg-[var(--sys-colors-danger)] text-white",
+          ghost:   "bg-transparent text-current hover:bg-black/5",
+        },
+        size: {
+          sm: "h-8 px-3 text-sm",
+          md: "h-10 px-4 text-base",
+          lg: "h-12 px-6 text-lg",
+        },
+      },
+      defaultVariants: { intent: "primary", size: "md" },
+    },
+  },
+})
+
+// Komponen dari sistem
+const Button = ui.button()
+
+// Token reference — "var(--sys-colors-primary)"
+const primaryVar = ui.token("colors.primary")
+
+// Update token runtime
+ui.setTokens({ colors: { primary: "#8b5cf6" } })
 ```
-1. withTailwindStyled (Next.js startup)
-   └─> scanWorkspace() via Rust scanner
-         └─> ast_extract_classes() per file
-               └─> extract semua classes dari variants, states, sub, base
 
-2. generateCssForClasses(classes, globals.css)
-   └─> Tailwind JS compile(globals.css, { loadStylesheet })
-         └─> Tailwind baca @theme inline user (custom colors, fonts, dll)
-               └─> Generate real CSS untuk semua classes
-                     └─> LightningCSS post-process (production only)
-                           └─> tulis .next/tw-classes/_initial-scan.css
+---
 
-3. globals.css: @source "../.next/tw-classes/**"
-   └─> Tailwind scan class names dari _initial-scan.css
-         └─> Generate CSS di bundle akhir
-```
+### 11. `liveToken()` — Live Design Tokens
 
-Hasilnya `_initial-scan.css` berisi real CSS (bukan empty rules):
+Token yang bisa diupdate runtime dan subscribe ke perubahannya.
 
-```css
-/* tw-classes: initial scan — auto-generated by withTailwindStyled */
-@layer utilities {
-  .bg-foreground {
-    background-color: var(--foreground);
-  }
-  .text-foreground {
-    color: var(--foreground);
-  }
-  .hover\:bg-foreground {
-    &:hover {
-      background-color: var(--foreground);
-    }
-  }
-  /* ... */
+```tsx
+import { liveToken, tokenVar, createUseTokens } from "tailwind-styled-v4"
+
+// Deklarasi token
+const tokens = liveToken({
+  primary: "#6366f1",
+  surface: "#ffffff",
+  text:    "#111827",
+})
+
+// CSS variable reference — dipakai di className
+const Card = tw.div({
+  base: `
+    bg-[${tokenVar(tokens.surface)}]
+    text-[${tokenVar(tokens.text)}]
+    border-[${tokenVar(tokens.primary)}]
+  `,
+})
+
+// Hook untuk subscribe token di React
+const useTokens = createUseTokens(tokens)
+
+function ThemePanel() {
+  const { primary } = useTokens()
+  return <div style={{ color: primary }}>Current primary: {primary}</div>
 }
-```
 
-Custom colors dari `@theme inline` di `globals.css` otomatis ter-generate — tidak perlu konfigurasi tambahan.
+// Update token langsung — semua subscriber re-render
+tokens.primary.set("#8b5cf6")
+```
 
 ---
 
-## Setup Next.js
+### 12. `cn()`, `cx()`, `twMerge`
 
-### next.config.ts
+Utility untuk merge dan deduplicate Tailwind classes.
 
+```tsx
+import { cn, cx, twMerge } from "tailwind-styled-v4"
+
+// cn — merge dengan dedup (alias twMerge)
+cn("px-4 py-2", isActive && "bg-blue-500", className)
+
+// cx — conditional class join (tanpa dedup)
+cx("base-class", { "active-class": isActive, "disabled-class": !enabled })
+
+// twMerge — eksplisit Tailwind conflict resolution
+twMerge("px-4 px-8")  // → "px-8" (konflik di-resolve, yang terakhir menang)
+```
+
+---
+
+## Setup
+
+### Next.js
+
+**`next.config.ts`:**
 ```ts
 import { withTailwindStyled } from "tailwind-styled-v4/next"
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {}
 
-export default withTailwindStyled({ verbose: true })(nextConfig)
+export default withTailwindStyled({
+  // routeCss: true — generate css-manifest.json yang dibutuhkan TwCssInjector.
+  // Tanpa ini, TwCssInjector diam-diam return kosong (manifest tidak ada).
+  routeCss: true,
+})(nextConfig)
 ```
 
-### globals.css
+**`layout.tsx`:**
+```tsx
+import { TwCssInjector } from "tailwind-styled-v4/runtime-css"
 
+export default function RootLayout({ children }) {
+  return (
+    <html lang="id">
+      <head>
+        {/*
+         * TwCssInjector — opsional tapi direkomendasikan untuk production.
+         *
+         * Cara kerja:
+         *   1. withTailwindStyled({ routeCss: true }) emit css-manifest.json
+         *      ke .next/static/css/tw/ saat build
+         *   2. Per request, TwCssInjector baca manifest di server dan inject CSS
+         *      route-specific langsung sebagai <style> inline di HTML
+         *
+         * Tanpa TwCssInjector:
+         *   CSS tetap jalan via globals.css — semua route dapat satu bundle
+         *   CSS gabungan yang di-load browser via <link>.
+         *
+         * Dengan TwCssInjector:
+         *   Hanya CSS yang dipakai route itu yang di-inline di HTML →
+         *   tidak ada extra HTTP request, tidak ada FOUC, streaming-friendly.
+         *
+         * Kalau manifest belum ada (dev cold start), komponen ini
+         * diam-diam return kosong — tidak breaking.
+         */}
+        <TwCssInjector />
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+**`globals.css`:**
 ```css
 @import "tailwindcss";
-@source "../.next/tw-classes/**";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7fb;
+  --foreground: #111827;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 ```
-
----
-
-## Bundler Integration
 
 ### Vite
 
 ```ts
+// vite.config.ts
 import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import { tailwindStyled } from "tailwind-styled-v4/vite"
@@ -310,13 +495,12 @@ export default defineConfig({
 ### Rspack
 
 ```js
-import { defineConfig } from "@rspack/cli"
+// rspack.config.js
 import { tailwindStyled } from "tailwind-styled-v4/rspack"
 
-export default defineConfig({
-  entry: "./src/index.ts",
+export default {
   plugins: [tailwindStyled()],
-})
+}
 ```
 
 ---
@@ -324,37 +508,77 @@ export default defineConfig({
 ## CLI
 
 ```bash
-# Setup otomatis (detect bundler, patch config, pre-warm cache)
-npx tw setup
-
-# Verifikasi setup
-npx tw preflight
-
-# Analisis workspace
-npx tw audit
-
-# Benchmark performa
-npx tw benchmark
+npx tw setup       # Setup otomatis: detect bundler, patch config, pre-warm cache
+npx tw preflight   # Verifikasi setup
+npx tw audit       # Analisis workspace — unused classes, missing variants
+npx tw benchmark   # Benchmark performa scanner + compiler
 ```
 
 ---
 
-## Kenapa Bukan styled-components?
+## DevTools
 
-styled-components inject `<style>` tag ke DOM saat runtime — setiap component punya hash class (`sc-abc123 dEfGhI`) yang di-generate di browser. Masalahnya:
+```tsx
+// Tambahkan ke layout untuk inspeksi komponen di browser
+import { TwDevTools } from "tailwind-styled-v4/devtools"
 
-- **Runtime overhead** — ~15KB JS untuk generate + inject CSS
-- **SSR mismatch** — hash bisa berbeda antara server dan client → hydration warning
-- **DevTools susah dibaca** — `sc-abc123` tidak informatif
-- **Butuh setup khusus** — `ServerStyleSheet`, `StyledEngineProvider`, dll untuk Next.js App Router
+// Atau pakai dynamic import untuk Next.js (ssr: false wajib)
+import dynamic from "next/dynamic"
+const DevTools = dynamic(
+  () => import("tailwind-styled-v4/devtools").then(m => ({ default: m.TwDevTools })),
+  { ssr: false }
+)
+```
 
-`tailwind-styled-v4` tidak punya masalah ini karena CSS sudah di-bundle sebelum browser buka halaman. Class name readable, SSR dan CSR identik, tidak ada runtime overhead.
+DevTools menampilkan: daftar komponen terdaftar, resolved classes per variant, state registry, container registry, dan live token values.
+
+---
+
+## TypeScript
+
+Semua API fully typed — tidak ada `any` di public API.
+
+```tsx
+// Variant type inference otomatis dari config
+const Button = tw.button({
+  variants: {
+    intent: { primary: "...", ghost: "...", danger: "..." },
+    size:   { sm: "...", md: "...", lg: "..." },
+  },
+  defaultVariants: { intent: "primary", size: "md" },
+})
+
+type ButtonProps = React.ComponentProps<typeof Button>
+// → { intent?: "primary" | "ghost" | "danger", size?: "sm" | "md" | "lg", ... }
+
+// Sub-component inference — tag prefix otomatis di-strip
+const Card = tw.article({
+  sub: {
+    "header:header":  "...",  // → Card.header (renders <header>)
+    "h2:title":       "...",  // → Card.title  (renders <h2>)
+    "section:body":   "...",  // → Card.body   (renders <section>)
+    badge:            "...",  // → Card.badge  (renders <span>)
+  },
+})
+
+Card.header  // ✅ autocomplete
+Card.title   // ✅
+Card.xyz     // ❌ TypeScript error
+
+// .withSub<>() untuk template literal — strict mode manual
+const Nav = tw.nav`
+  flex items-center gap-4
+`.withSub<"logo" | "links" | "actions">()
+
+Nav.logo     // ✅
+Nav.unknown  // ❌ TypeScript error
+```
 
 ---
 
 ## Benchmark
 
-Diukur di Node.js 22, Rust 1.75.
+Diukur di Node.js 22, Rust 1.75, M1 MacBook Pro.
 
 | Operasi | tailwind-styled-v4 | Tailwind CSS (JS) | Speedup |
 |---|---|---|---|
@@ -366,171 +590,67 @@ Diukur di Node.js 22, Rust 1.75.
 
 ---
 
-## Arsitektur
-
-```
-tailwind-styled-v4/
-├── native/                    # Rust engine (NAPI-RS)
-│   ├── src/application/
-│   │   ├── ast_extract.rs     # Extract Tailwind classes dari source files
-│   │   ├── variant_resolver.rs # Variant resolution with precedence
-│   │   ├── variant_system.rs   # Variant composition system
-│   │   └── theme_resolver_pool.rs # Multi-tier caching
-│   ├── src/domain/
-│   │   ├── variants.rs        # Variant resolution (props override defaults)
-│   │   ├── variant_precedence.rs # Precedence calculation
-│   │   └── transform.rs       # Transform object config → JS component
-│   └── src/infrastructure/
-│       ├── napi_bridge_*.rs   # Modularized NAPI bridges
-│       └── cache_*.rs         # Multi-tier cache backends
-│
-├── packages/
-│   ├── domain/
-│   │   ├── core/              # tw, cx, cv, cn — core API + createComponent
-│   │   ├── compiler/          # Tailwind JS + LightningCSS pipeline
-│   │   └── scanner/           # File scanner (Rust-backed)
-│   ├── presentation/
-│   │   ├── next/              # Next.js plugin (withTailwindStyled)
-│   │   ├── vite/              # Vite plugin
-│   │   └── rspack/            # Rspack plugin
-│   └── infrastructure/
-│       └── cli/               # CLI (tw setup, tw audit, dll)
-│
-├── config/                    # Configuration files (centralized)
-│   ├── biome.json
-│   ├── tsconfig.base.json
-│   ├── turbo.json
-│   └── ...
-│
-├── docs/
-│   ├── archive/               # Phase docs, session summaries, reference
-│   ├── phase-4/, phase-5/, phase-6/ # Phase-specific documentation
-│   └── api/                   # API reference
-```
-
-**New Structure (Phase 7):**
-- Configuration files centralized in `config/` directory
-- Documentation archived in `docs/archive/` for cleaner root
-- Modularized NAPI bridges (`napi_bridge_*.rs`) for better maintainability
-- Phase-specific docs in dedicated directories
-
----
-
-## TypeScript
-
-Library ini fully typed — tidak ada `any` di public API:
-
-```tsx
-// Type inference otomatis dari config
-const Button = tw.button({
-  variants: {
-    intent: { primary: "...", ghost: "...", outline: "..." },
-    size: { sm: "...", md: "...", lg: "..." },
-  },
-  defaultVariants: { intent: "primary", size: "md" },
-})
-
-// TypeScript tahu props yang valid
-<Button intent="invalid" />  // ❌ Type error
-<Button intent="primary" />  // ✅
-
-// Sub-components — ExtractSubName type inference
-const Card = tw.div({
-  sub: {
-    header: "font-bold",
-    "div:action": "flex gap-3",  // → Card.action (tag prefix di-strip otomatis)
-  },
-})
-
-Card.action  // ✅ autocomplete
-Card.xyz     // ❌ TypeScript error
-```
-
----
-
 ## Environment Variables
 
 | Variable | Default | Deskripsi |
 |---|---|---|
 | `TWS_LOG_LEVEL` | `info` | `debug\|info\|warn\|error\|silent` |
 | `TWS_DEBUG_SCANNER` | `0` | `1` = aktifkan scanner debug logs |
-| `STUDIO_PORT` | `3030` | Port studio server |
+| `TWS_NO_NATIVE` | — | `1` = disable native module (fallback JS) |
+| `TWS_NO_RUST` | — | `1` = disable Rust, gunakan JS fallback |
 
 ---
 
-## Architecture Updates (Phase 7)
+## Arsitektur
 
-### R1-R6: Parser Consolidation through Resolver Caching ✅ Completed 2026-06-12
+```
+tailwind-styled-v4/
+│
+├── native/                     # 🦀 Rust engine (NAPI-RS)
+│   ├── src/domain/             # Core logic: variants, CSS generation, theme
+│   ├── src/application/        # Parser, scanner, resolver, variant system
+│   └── src/infrastructure/     # 11 NAPI bridge modules, cache backends
+│
+├── packages/
+│   ├── domain/
+│   │   ├── core/               # tw, cv, cn, cx — core API
+│   │   ├── compiler/           # Tailwind v4 + LightningCSS pipeline
+│   │   ├── scanner/            # File scanner (Rust-backed, ~425× faster)
+│   │   ├── theme/              # Theme token resolution
+│   │   ├── shared/             # Types, utilities, generated schemas
+│   │   └── runtime-css/        # Browser-safe CSS runtime (batched inject)
+│   │
+│   ├── presentation/
+│   │   ├── next/               # Next.js plugin (withTailwindStyled)
+│   │   ├── vite/               # Vite plugin
+│   │   └── rspack/             # Rspack plugin
+│   │
+│   └── infrastructure/
+│       └── cli/                # CLI (tw setup, audit, benchmark)
+│
+└── examples/
+    └── next-js-app/            # Demo app: Next.js 16 + React 19
+```
 
-Recent Phase 7 updates span multiple refactoring rounds:
+**NAPI Bridge Modules (11 modul terpisah):**
 
-**R1: Parser Consolidation** ✅
-- Single unified production parser (v2-based)
-- ~5% binary size reduction
-- 100% backward compatible, all 545+ tests passing
-
-**R2-R3: Infrastructure Modularization** ✅
-- NAPI bridge modularized into specialized modules
-- Comprehensive integration tests covering all layers
-- Cache backend infrastructure refactored
-
-**R4: Property Testing Framework** ✅
-- 6 core properties verified across 53 test cases
-- Parser determinism property testing
-- Round-trip parsing validation
-- Cache consistency & eviction properties
-
-**R5: Variant Precedence System** ✅
-- Native variant resolution with precedence handling
-- Compound variant support
-- Theme-aware variant composition
-
-**R6: Resolver Caching** ✅ 
-- Multi-tier caching for theme resolver
-- Performance optimization verified
-
-For architecture details and improvements roadmap, see:
-- [Phase 7 Architecture Design](.kiro/specs/phase-7-architecture/design.md)
-- [R4 Property Tests Design](.kiro/specs/phase-7-architecture/R4_PROPERTY_TESTS_DESIGN.md)
-- [R5 Variant Precedence Design](.kiro/specs/phase-7-architecture/R5_VARIANT_PRECEDENCE_DESIGN.md)
-- [Full spec directory](.kiro/specs/phase-7-architecture/)
-
----
-
-## Recent Changes (82 commits, not yet pushed)
-
-### Infrastructure & Organization 🏗️
-- **Config centralization** — moved 6 root config files to `config/` directory
-- **Docs reorganization** — 42 summary/reference files moved to `docs/archive/`
-- **Benchmarking suite** — added comprehensive performance benchmarking (`native/benches/`)
-
-### Rust Engine Enhancements 🦀
-- **Modularized NAPI bridges** — split monolithic bridge into specialized modules:
-  - `napi_bridge_cache.rs` — caching layer
-  - `napi_bridge_redis.rs` — distributed cache
-  - `napi_bridge_theme.rs` — theme resolution
-  - `napi_bridge_variants.rs` — variant composition
-  - And 5 more specialized modules
-- **Theme resolver pool** — multi-tier caching with adaptive strategies
-- **Variant system improvements** — precedence calculation, compound variant support
-
-### Testing & Validation ✅
-- **Property testing** — 6 core properties across 53 test cases
-- **Integration tests** — comprehensive NAPI module tests (1000+ tests added)
-- **Variant precedence tests** — 493+ test cases for variant resolution
-- **Performance benchmarks** — week8, week9 scale testing suites
-
-### TypeScript/JS Improvements
-- **Native bridge refactor** — simplified async/sync patterns, improved error handling
-- **Cache integration** — unified cache interface across Redis, LRU, and file-based backends
-- **Stream support** — added streaming CSS compilation
-
-### Documentation 📚
-- **Phase 7 specs** — comprehensive design docs in `.kiro/specs/phase-7-architecture/`
-- **NAPI module guide** — `MIGRATION_GUIDE_PHASE_7_3.md`
-- **Architecture docs** — modular bridge patterns and integration guide
+| Module | Fungsi |
+|---|---|
+| `napi_bridge_parsing.rs` | Class parsing (6 fungsi) |
+| `napi_bridge_css.rs` | CSS generation (7 fungsi) |
+| `napi_bridge_theme.rs` | Theme resolution (7 fungsi) |
+| `napi_bridge_cache.rs` | Cache management (6 fungsi) |
+| `napi_bridge_redis.rs` | Redis distributed cache (17 fungsi) |
+| `napi_bridge_analysis.rs` | Performance metrics (5 fungsi) |
+| `napi_bridge_watch.rs` | File watching (9 fungsi) |
+| `napi_bridge_types.rs` | Type definitions |
+| `napi_bridge_marshalling.rs` | JSON I/O |
+| `napi_bridge_errors.rs` | Error handling |
+| `napi_bridge.rs` | Facade (re-export semua) |
 
 ---
+
+## Development
 
 ```bash
 git clone https://github.com/Dictionar32/tailwind-styled-v4.git
@@ -538,36 +658,35 @@ cd tailwind-styled-v4
 
 npm install
 
-# Build Rust binary + semua packages
+# Build Rust binary dulu, baru packages
+npm run build:rust
+npm run build:packages
+
+# Full build
 npm run build
 
-# Build Rust only
-npm run build:rust
-
 # Test
-npm run test
+npm run test:all
 
-# Dev mode
+# Dev mode (watch)
 npm run dev
 
 # Benchmark
 npm run bench
 ```
 
-**Requirements:**
-- Node.js 20+
-- Rust 1.75+ (untuk build dari source)
+**Requirements:** Node.js 20+, Rust 1.75+ (untuk build dari source)
 
 ---
 
 ## Contributing
 
-PR dan issue sangat welcome!
+PR dan issue sangat welcome. Prioritas saat ini:
 
-Prioritas saat ini:
-- [ ] macOS & Windows pre-built binary
+- [ ] Pre-built binary untuk macOS arm64, x64, Linux, Windows
 - [ ] Docs website (VitePress)
-- [ ] More bundler adapters
+- [ ] Vue & Svelte adapter yang lebih matang
+- [ ] Plugin API public docs
 
 ---
 

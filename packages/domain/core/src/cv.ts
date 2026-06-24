@@ -57,7 +57,16 @@ function lookupGenerated(
   // buildVariantLookupKey di Rust — satu NAPI call, eliminasi JS string concat loop
   const binding = getNativeBinding()
   if (!binding?.buildVariantLookupKey) {
-    throw new Error("FATAL: Native binding 'buildVariantLookupKey' is required but not available.")
+    // JS fallback: build lookup key secara manual (format identik dengan Rust output)
+    const parts: string[] = []
+    for (const k of sortedKeys) {
+      const v =
+        (props as Record<string, unknown>)[k] ??
+        defaultVariants?.[k]
+      if (v != null) parts.push(`${k}:${String(v)}`)
+    }
+    const key = parts.join("|")
+    return table[key]
   }
   const relevantDefaults: Record<string, string> = {}
   const relevantProps: Record<string, string> = {}
@@ -113,7 +122,7 @@ function _getConfigJson(config: object): string {
   return json
 }
 
-// Native Rust variant resolution
+// Native Rust variant resolution — dengan JS fallback untuk browser
 function resolveVariantsNative<C extends ComponentConfig>(
   config: C,
   props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>>
@@ -121,8 +130,46 @@ function resolveVariantsNative<C extends ComponentConfig>(
   const { variants = {}, defaultVariants = {} } = config
 
   const binding = getNativeBinding()
+
+  // Browser / no-native fallback: resolve variants secara JS murni
+  // Ini dipakai saat native binding tidak tersedia (browser bundle, test env, dll).
+  // Output identik dengan Rust resolver — defaults di-override oleh props.
   if (!binding?.resolveVariants) {
-    throw new Error("FATAL: Native binding 'resolveVariants' is required but not available. Build cannot continue.")
+    const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
+    const classes: string[] = []
+
+    // Base classes sudah di-handle di createComponent — tidak diulang di sini
+
+    // Resolve setiap variant: pakai props kalau ada, fallback ke defaultVariants
+    for (const key of variantKeys) {
+      const value =
+        (props as Record<string, unknown>)[key] ??
+        (defaultVariants as Record<string, string>)[key]
+      if (value != null) {
+        const variantClass = (variants as Record<string, Record<string, string>>)[key]?.[String(value)]
+        if (variantClass) classes.push(variantClass)
+      }
+    }
+
+    // Compound variants
+    if (config.compoundVariants) {
+      for (const compound of config.compoundVariants) {
+        const { class: compoundClass, ...conditions } = compound as { class: string; [key: string]: string }
+        const resolved: Record<string, string> = {}
+        for (const key of variantKeys) {
+          resolved[key] = String(
+            (props as Record<string, unknown>)[key] ??
+            (defaultVariants as Record<string, string>)[key] ?? ""
+          )
+        }
+        const matches = Object.entries(conditions).every(
+          ([k, v]) => resolved[k] === v
+        )
+        if (matches) classes.push(compoundClass)
+      }
+    }
+
+    return classes.join(" ")
   }
 
   const variantKeys = Object.keys(variants as Record<string, Record<string, string>>)
@@ -190,30 +237,24 @@ export interface VariantValidationResult {
 }
 
 export function validateVariantConfig(config: ComponentConfig): VariantValidationResult {
-  const errors: VariantValidationError[] = []
-  const warnings: string[] = []
-  const { variants = {}, defaultVariants = {}, compoundVariants = [] } = config
-
-  for (const [key, val] of Object.entries(defaultVariants)) {
-    if (!(key in variants)) {
-      errors.push({ type: "unknown_key", key, message: `defaultVariants["${key}"] not in variants` })
-    } else if (val && !((variants[key] ?? {})[val])) {
-      errors.push({ type: "unknown_value", key, value: val, message: `invalid value "${val}"` })
-    }
+  const native = getNativeBinding()
+  if (!native?.validateVariantConfig) {
+    throw new Error("FATAL: Native binding 'validateVariantConfig' is required but not available.")
   }
 
-  for (const [i, compound] of compoundVariants.entries()) {
-    const { class: _cls, ...conditions } = compound
-    for (const [key] of Object.entries(conditions)) {
-      if (!(key in variants)) {
-        errors.push({
-          type: "unknown_key",
-          key,
-          message: `compoundVariants[${i}]: "${key}" not in variants`,
-        })
-      }
-    }
-  }
+  const result = native.validateVariantConfig(JSON.stringify(config))
 
-  return { valid: errors.length === 0, errors, warnings }
+  // Native mengembalikan `errorType` (snake_case asal Rust di-camelCase oleh napi-rs).
+  // Public API cv.ts pakai `type` — di-map di sini agar contract lama tidak berubah
+  // untuk consumer yang sudah destructure `.errors[i].type`.
+  return {
+    valid: result.valid,
+    errors: result.errors.map((e) => ({
+      type: e.errorType as VariantValidationError["type"],
+      key: e.key,
+      value: e.value,
+      message: e.message,
+    })),
+    warnings: result.warnings,
+  }
 }
