@@ -15,6 +15,7 @@ export interface CompiledCssRule {
   declarations: string
   properties: Array<{ key: string; value: string }>
   specificity: number
+  source?: { file: string; line: number; column: number }
 }
 
 /**

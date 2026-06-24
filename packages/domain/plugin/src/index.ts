@@ -53,6 +53,15 @@ export {
   TwPluginOptionsSchema,
 } from "@tailwind-styled/plugin-api"
 
+export {
+  applyHooks,
+  getPluginHooks,
+  registerPluginHooks,
+  type PluginHookContext,
+  type PluginHook,
+  type PluginHooks,
+} from "./hooks"
+
 export interface TwVitePlugin extends TwContext {
   resolveId(
     this: PluginContext,
