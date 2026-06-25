@@ -1,5 +1,4 @@
 import { spawnSync } from "node:child_process"
-import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 import { createRequire } from "node:module"
 import { join, resolve } from "node:path"
@@ -51,6 +50,20 @@ function getNative(): NativePluginRegistry | null {
     }
   } catch { /* ignore */ }
   return (_native = null)
+}
+
+const NATIVE_UNAVAILABLE_MESSAGE =
+  "[tailwind-styled/plugin-registry] Native binding is required but not available.\n" +
+  "Please ensure you have run: npm run build:rust"
+
+/**
+ * Native-only accessor. Throws if the Rust binding is missing.
+ * The TS layer is a thin wrapper — no JS fallbacks (native-first philosophy).
+ */
+function requireNative(): NativePluginRegistry {
+  const native = getNative()
+  if (!native) throw new Error(NATIVE_UNAVAILABLE_MESSAGE)
+  return native
 }
 
 const PLUGIN_NAME_REGEX = /^(@[a-z0-9-]+\/)?[a-z0-9-]+(@[0-9]+\.[0-9]+\.[0-9]+)?$/
@@ -185,17 +198,8 @@ export class PluginRegistry {
   }
 
   search(query: string): PluginInfo[] {
-    const native = getNative()
-    if (native) {
-      return JSON.parse(native.pluginSearch(JSON.stringify(this.plugins), query)) as PluginInfo[]
-    }
-    const q = query.trim().toLowerCase()
-    if (!q) return [...this.plugins]
-    return this.plugins.filter((plugin) =>
-      plugin.name.toLowerCase().includes(q) ||
-      plugin.description.toLowerCase().includes(q) ||
-      plugin.tags.some((tag) => tag.toLowerCase().includes(q))
-    )
+    const native = requireNative()
+    return JSON.parse(native.pluginSearch(JSON.stringify(this.plugins), query)) as PluginInfo[]
   }
 
   getAll(): PluginInfo[] {
@@ -210,10 +214,8 @@ export class PluginRegistry {
   install(pluginName: string, options: InstallOptions = {}): InstallResult {
     const npmBin = options.npmBin ?? process.env.TW_PLUGIN_NPM_BIN ?? "npm"
 
-    const native = getNative()
-    const isValidName = native
-      ? native.pluginValidateName(pluginName)
-      : PLUGIN_NAME_REGEX.test(pluginName)
+    const native = requireNative()
+    const isValidName = native.pluginValidateName(pluginName)
 
     if (!isValidName) {
       throw new PluginRegistryError({
@@ -332,13 +334,8 @@ export class PluginRegistry {
       const pkgPath = join(process.cwd(), "node_modules", pluginName, "package.json")
       if (!existsSync(pkgPath)) return { ok: false, reason: "plugin not installed" }
       const content = readFileSync(pkgPath, "utf8")
-      const native = getNative()
-      const ok = native
-        ? native.pluginVerifyIntegrity(content, plugin.integrity!)
-        : (() => {
-            const hash = `sha256-${createHash("sha256").update(content).digest("base64")}`
-            return hash === plugin.integrity
-          })()
+      const native = requireNative()
+      const ok = native.pluginVerifyIntegrity(content, plugin.integrity!)
       return ok ? { ok: true } : { ok: false, reason: `Integrity mismatch: expected ${plugin.integrity}` }
     } catch (e: unknown) {
       return {
@@ -361,15 +358,8 @@ export class PluginRegistry {
       if (!existsSync(pkgPath)) return { hasUpdate: false, error: "plugin not installed" }
       const current = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "0.0.0"
       const latest = plugin.version
-      const native = getNative()
-      const hasUpdate = native
-        ? native.pluginSemverHasUpdate(current as string, latest)
-        : (() => {
-            const parseV = (v: string) => v.replace(/[^0-9.]/g, "").split(".").map(Number)
-            const [ca, cb, cc] = parseV(current as string)
-            const [la, lb, lc] = parseV(latest)
-            return la > ca || (la === ca && lb > cb) || (la === ca && lb === cb && lc > cc)
-          })()
+      const native = requireNative()
+      const hasUpdate = native.pluginSemverHasUpdate(current as string, latest)
       return { hasUpdate, current: current as string, latest }
     } catch (e: unknown) {
       return {
@@ -386,7 +376,44 @@ export class PluginRegistry {
     latest?: string
     error?: string
   }> {
-    return this.plugins.map((p) => ({ name: p.name, ...this.checkForUpdate(p.name) }))
+    type UpdateResult = {
+      name: string
+      hasUpdate: boolean
+      current?: string
+      latest?: string
+      error?: string
+    }
+    const native = requireNative()
+
+    // FS I/O stays in JS — gather installed versions for every registry plugin.
+    const installed: Array<{ name: string; version: string }> = []
+    const byName = new Map<string, UpdateResult>()
+    for (const p of this.plugins) {
+      try {
+        const pkgPath = join(process.cwd(), "node_modules", p.name, "package.json")
+        if (!existsSync(pkgPath)) {
+          byName.set(p.name, { name: p.name, hasUpdate: false, error: "plugin not installed" })
+          continue
+        }
+        const version = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "0.0.0"
+        installed.push({ name: p.name, version: version as string })
+      } catch (e: unknown) {
+        byName.set(p.name, {
+          name: p.name,
+          hasUpdate: false,
+          error: `Update check failed: ${e instanceof Error ? e.message : String(e)}`,
+        })
+      }
+    }
+
+    // Single native batch call does all semver comparisons (1 FFI crossing, not N).
+    const results = JSON.parse(
+      native.pluginCheckAllUpdates(JSON.stringify(installed), JSON.stringify(this.plugins))
+    ) as UpdateResult[]
+    for (const r of results) byName.set(r.name, r)
+
+    // Preserve registry order.
+    return this.plugins.map((p) => byName.get(p.name)).filter((r): r is UpdateResult => r !== undefined)
   }
 }
 

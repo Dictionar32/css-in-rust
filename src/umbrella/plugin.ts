@@ -1,1 +1,59 @@
-export * from "@tailwind-styled/plugin"
+// Type-only exports — Turbopack ESM tracing tidak akan resolve ini sebagai runtime
+export type {
+  TwVitePlugin,
+  TwClassResult,
+  DesignTokens,
+  TwPluginOptions,
+  VariantResolver,
+  UtilityDefinition,
+  ComponentConfig,
+  TransformMeta,
+  TransformFn,
+  CssHook,
+  TwContext,
+  TwPlugin,
+  PluginRegistry,
+  TokenEngineAPI,
+  TransformContext,
+  TwGlobalRegistry,
+  PluginManifestInput,
+  TokenRegistrationInput,
+  TwPluginOptionsInput,
+  PluginHookContext,
+  PluginHook,
+  PluginHooks,
+} from "@tailwind-styled/plugin"
+
+export type {
+  CompoundCondition,
+  TokenMap,
+} from "@tailwind-styled/plugin-api"
+
+// Runtime value exports
+export {
+  createTwPlugin,
+  resolveTokenEngine,
+  readToken,
+  getGlobalRegistry,
+  registerTransform,
+  registerToken,
+  createPluginRegistry,
+  resetGlobalRegistry,
+  createPluginContext,
+  createTw,
+  createGlobalPluginContext,
+  use,
+  presetTokens,
+  presetVariants,
+  presetScrollbar,
+  PluginManifestSchema,
+  parsePluginManifest,
+  parseTokenRegistration,
+  parseTwPluginOptions,
+  TokenRegistrationSchema,
+  TransformRegistrationSchema,
+  TwPluginOptionsSchema,
+  applyHooks,
+  getPluginHooks,
+  registerPluginHooks,
+} from "@tailwind-styled/plugin"
