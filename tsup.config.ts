@@ -76,7 +76,6 @@ const sharedConfig = {
       options.define = {
         ...options.define,
         "import.meta.url": "__importMetaUrl",
-        "import.meta": '{"url":__importMetaUrl}',
       }
       const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
       options.banner = {
