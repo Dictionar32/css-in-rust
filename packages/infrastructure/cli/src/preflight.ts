@@ -438,7 +438,10 @@ export async function runPreflightCli(rawArgs: string[]): Promise<PreflightRepor
 function isDirectExecution(): boolean {
   const scriptPath = process.argv[1]
   if (!scriptPath) return false
-  return import.meta.url === pathToFileURL(scriptPath).href
+  const currentUrl = typeof import.meta !== "undefined" && import.meta.url
+    ? import.meta.url
+    : `file://${scriptPath}`
+  return currentUrl === pathToFileURL(scriptPath).href
 }
 
 if (isDirectExecution()) {

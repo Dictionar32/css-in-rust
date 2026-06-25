@@ -3,6 +3,15 @@
 use crate::domain::theme_config::{ThemeConfig, ThemeValue};
 use std::collections::HashMap;
 
+/// Build a minimal theme override map from a list of CSS variable key-value pairs.
+/// Returns a HashMap suitable for merging into ThemeConfig.
+pub fn build_theme_overrides(pairs: &[(&str, &str)]) -> HashMap<String, ThemeValue> {
+    pairs
+        .iter()
+        .map(|(k, v)| (k.to_string(), ThemeValue::Simple(v.to_string())))
+        .collect()
+}
+
 /// Embed Tailwind v4 default theme stylesheet at compile-time
 const DEFAULT_TAILWIND_THEME_CSS: &str = include_str!("../../../node_modules/tailwindcss/theme.css");
 

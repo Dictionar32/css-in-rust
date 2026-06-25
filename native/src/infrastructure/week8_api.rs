@@ -2,7 +2,6 @@
 /// NAPI functions for memory profiling and optimization recommendations
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Memory statistics exposed to TypeScript
 #[derive(Debug, Clone, Serialize, Deserialize)]

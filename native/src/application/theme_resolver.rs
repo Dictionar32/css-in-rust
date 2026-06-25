@@ -1,7 +1,7 @@
 //! ThemeResolver - resolves theme values from Tailwind configuration with caching
 
 use crate::domain::error::ResolveError;
-use crate::domain::theme_config::{ThemeConfig, ThemeValue};
+use crate::domain::theme_config::ThemeConfig;
 use crate::infrastructure::cache::LruCache;
 use std::sync::Mutex;
 

@@ -157,6 +157,11 @@ impl VariantResolver {
             }
         }
 
+        // has_state is valid to track — multiple states allowed (hover, focus, etc.)
+        // Only responsive and dark_mode are restricted to single occurrences.
+        // This ensures the variable is read (not just written).
+        let _has_state = has_state;
+
         Ok(())
     }
 }

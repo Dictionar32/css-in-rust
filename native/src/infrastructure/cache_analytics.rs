@@ -120,6 +120,12 @@ impl CacheAnalytics {
             self.snapshots.pop_front();
         }
 
+        // Evict snapshots older than the window
+        let window_cutoff = now.saturating_sub(self.window_size_seconds);
+        while self.snapshots.front().map_or(false, |s| s.timestamp < window_cutoff) {
+            self.snapshots.pop_front();
+        }
+
         self.current_stats.last_snapshot_time = now;
         snapshot
     }

@@ -15,7 +15,11 @@ import * as path from "node:path"
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
 // ESM-safe require — works in both ESM and CJS contexts
-const _require = typeof require !== "undefined" ? require : createRequire(import.meta.url)
+const _require = createRequire(
+  typeof require !== "undefined"
+    ? (typeof __filename !== "undefined" ? `file://${__filename}` : "file://unknown")
+    : import.meta.url
+)
 
 export interface NativeResolutionResult {
   path: string | null

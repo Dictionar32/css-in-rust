@@ -4,7 +4,6 @@
 /// Performance improvement: 0.0070ms → 0.0025ms (2.8x faster)
 
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::OnceLock;
 
 /// Global atomic watch state - lock-free operations
 /// No mutex contention, guaranteed fast access

@@ -15,7 +15,11 @@ const NATIVE_UNAVAILABLE_MESSAGE =
   "[tailwind-styled/core] Native binding is required but not available.\n" +
   "Please ensure you have run: npm run build:rust"
 
-const _nodeRequire = createRequire(import.meta.url)
+const _nodeRequire = createRequire(
+  typeof __filename !== "undefined"
+    ? `file://${__filename}`
+    : (typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "file://unknown")
+)
 const _loadNative = (path: string): unknown => _nodeRequire(path)
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +204,11 @@ const getBinding = (): NativeBinding => {
   bindingLoadAttempted = true
 
   try {
-    const runtimeDir = isBrowser ? "" : dirname(fileURLToPath(import.meta.url))
+    const runtimeDir = isBrowser ? "" : dirname(
+      typeof __filename !== "undefined"
+        ? __filename
+        : (typeof import.meta !== "undefined" && import.meta.url ? fileURLToPath(import.meta.url) : process.cwd())
+    )
     const result = isBrowser
       ? { path: null, source: "not-found", platform: "browser", tried: [] }
       : resolveNativeBinary(runtimeDir)

@@ -6,5 +6,5 @@ pub mod string_utils;
 
 // Re-export commonly used items
 pub use constants::default_theme;
-pub use regex_patterns::*;
+pub use constants::build_theme_overrides;
 pub use string_utils::*;

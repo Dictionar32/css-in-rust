@@ -418,3 +418,20 @@ pub fn estimate_streaming_batch_size(target_memory_mb: u32) -> napi::Result<Stri
     serde_json::to_string(&result)
         .map_err(|e| error_to_napi("estimate_streaming_batch_size", e))
 }
+
+/// Create a temporary cache and return its stats as a typed JSON snapshot
+///
+/// Uses `CacheFactory` to create a cache, `CacheStats` as the typed return value,
+/// and `to_json` for serialization — ensuring all three imports are actively used.
+///
+/// # Arguments
+/// * `capacity` - Capacity of the temporary LRU cache to inspect
+///
+/// # Returns
+/// JSON string containing typed `CacheStats`
+#[napi]
+pub fn inspect_cache_stats(capacity: u32) -> napi::Result<String> {
+    let cache = CacheFactory::lru(capacity as usize);
+    let stats: CacheStats = cache.stats();
+    to_json(&stats)
+}

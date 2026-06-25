@@ -190,7 +190,11 @@ export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): Load
   return { binding: null, loadErrors }
 }
 
-const _require = createRequire(import.meta.url)
+const _require = createRequire(
+  typeof __filename !== "undefined"
+    ? `file://${__filename}`
+    : (typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "file://unknown")
+)
 
 function requireNativeModule(p: string): unknown {
   return _require(p)

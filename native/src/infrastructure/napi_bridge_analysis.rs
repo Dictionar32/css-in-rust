@@ -5,7 +5,7 @@
 
 use napi_derive::napi;
 use std::sync::atomic::{AtomicU64, Ordering};
-use crate::infrastructure::napi_bridge_marshalling::to_json;
+use crate::infrastructure::napi_bridge_marshalling::{to_json};
 use crate::infrastructure::napi_bridge_errors::error_to_napi;
 
 // Global memory statistics (atomic for lock-free access)
@@ -178,6 +178,26 @@ pub fn track_memory_allocated(bytes: u64) {
 /// Internal helper to track memory freed
 pub fn track_memory_freed(bytes: u64) {
     TOTAL_MEMORY_FREED.fetch_add(bytes, Ordering::Relaxed);
+}
+
+/// Get week 8 memory optimization status as JSON
+#[napi]
+pub fn get_week8_optimization_status() -> napi::Result<String> {
+    use crate::infrastructure::week8_api::{get_memory_stats, get_memory_recommendations, get_week8_features_status};
+
+    let stats = get_memory_stats();
+    let recommendations = get_memory_recommendations();
+    let features = get_week8_features_status();
+
+    let response = serde_json::json!({
+        "status": "ok",
+        "memory_stats": to_json(&stats)?,
+        "recommendations_count": recommendations.len(),
+        "features": features,
+    });
+
+    serde_json::to_string(&response)
+        .map_err(|e| error_to_napi("get_week8_optimization_status", e))
 }
 
 /// Reset memory statistics

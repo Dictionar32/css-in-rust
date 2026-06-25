@@ -1,7 +1,7 @@
 /// Streaming compilation - compile classes incrementally without buffering all
 /// Reduces memory usage for large class batches
 
-use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
 pub struct StreamingCompiler {

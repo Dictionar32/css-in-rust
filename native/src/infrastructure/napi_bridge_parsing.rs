@@ -8,7 +8,7 @@ use std::sync::{Arc, OnceLock};
 use std::sync::atomic::{AtomicU32, Ordering};
 use crate::application::class_parser::ClassParser;
 use crate::infrastructure::cache_backend::CacheFactory;
-use crate::infrastructure::napi_bridge_marshalling::{parse_json, to_json};
+use crate::infrastructure::napi_bridge_marshalling::parse_json;
 use crate::infrastructure::napi_bridge_errors::{error_to_napi, validate_string_input, validate_array_input};
 
 // Parse cache

@@ -325,6 +325,14 @@ impl ClassParser {
         })
     }
 
+    /// Look up the CSS property name for a known prefix.
+    ///
+    /// Returns `Some("padding-x")` for prefix `"px"`, etc.
+    /// Returns `None` for unknown prefixes not in the whitelist.
+    pub fn css_property_for_prefix(&self, prefix: &str) -> Option<&'static str> {
+        self.known_prefixes.get(prefix).copied()
+    }
+
     /// Suggest similar variants using simple string matching
     fn suggest_variants(&self, input: &str) -> Vec<String> {
         let known = vec![

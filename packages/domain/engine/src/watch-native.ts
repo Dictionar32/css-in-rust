@@ -37,7 +37,11 @@ const getBinding = (): NativeWatchBinding => {
   }
 
   const runtimeDir = typeof __dirname === "string" ? __dirname : process.cwd()
-  const req = createRequire(import.meta.url)
+  const req = createRequire(
+    typeof __filename !== "undefined"
+      ? `file://${__filename}`
+      : (typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "file://unknown")
+  )
 
   const _pa = `${process.platform}-${process.arch}`
   const _paGnu = _pa === "linux-x64" ? "linux-x64-gnu" : _pa === "linux-arm64" ? "linux-arm64-gnu" : _pa

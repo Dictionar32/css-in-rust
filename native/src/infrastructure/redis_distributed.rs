@@ -8,7 +8,7 @@
 /// - Cache coherency
 /// - Conflict resolution
 
-use super::redis_cache::{RedisPool, RedisCacheConfig, RedisResult};
+use super::redis_cache::{RedisPool, RedisCacheConfig};
 use std::collections::HashMap;
 
 /// Redis cluster node
@@ -289,6 +289,15 @@ impl RedisDistributedCache {
             successful,
             failed,
         }
+    }
+
+    /// Get version metadata for a cached key
+    ///
+    /// Returns `(version, timestamp, region)` if the key has been written via `put()`.
+    pub fn get_key_version(&self, key: &str) -> Option<(u64, u64, &str)> {
+        self.key_version_cache
+            .get(key)
+            .map(|kv| (kv.version, kv.timestamp, kv.region.as_str()))
     }
 }
 

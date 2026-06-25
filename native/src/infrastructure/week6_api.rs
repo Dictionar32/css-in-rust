@@ -2,9 +2,6 @@
 /// Lazy evaluation, streaming, and adaptive sizing exposed to Node.js
 
 use napi_derive::napi;
-use std::sync::Arc;
-use crate::infrastructure::lazy_cache::LazyCache;
-use crate::infrastructure::adaptive_cache::AdaptiveCache;
 
 /// Get optimization recommendations based on current cache metrics
 #[napi]
@@ -64,8 +61,8 @@ pub fn estimate_optimal_batch_size(
     let available_bytes = (memory_available_mb as u32) * 1_024 * 1_024;
     let optimal_batch = (available_bytes / 2) / bytes_per_class;
 
-    // Clamp between 10 and 1000
-    let batch_size = optimal_batch.max(10).min(1000);
+    // Clamp between 10 and 1000, but never exceed total_classes
+    let batch_size = optimal_batch.max(10).min(1000).min(total_classes.max(10));
 
     Ok(batch_size)
 }

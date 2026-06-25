@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Fix: jangan bundle tailwind-styled-v4 saat SSR — biarkan Node.js load
+  // langsung dari disk supaya Node built-ins (fs, path, crypto) tidak error.
+  serverExternalPackages: ["tailwind-styled-v4"],
 };
 
 export default withTailwindStyled({

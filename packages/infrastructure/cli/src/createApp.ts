@@ -508,7 +508,9 @@ export function buildCreateProgram(context: CommandContext): Command {
 export async function main(rawArgs: string[] = process.argv.slice(2)): Promise<void> {
   await runCliMain({
     argv: [process.execPath, "create-tailwind-styled", ...rawArgs],
-    importMetaUrl: import.meta.url,
+    importMetaUrl: typeof import.meta !== "undefined" && import.meta.url
+      ? import.meta.url
+      : `file://${process.argv[1] ?? "unknown"}`,
     commandHint: "create",
     buildProgram: buildCreateProgram,
   })

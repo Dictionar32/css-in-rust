@@ -22,10 +22,13 @@ export default defineConfig({
     if (context.format === "cjs") {
       options.define = {
         ...options.define,
+        // Polyfill import.meta.url so CJS consumers get correct __filename-based URL
         "import.meta.url": "__importMetaUrl",
+        // Define import.meta as an object so typeof/property checks don't warn
+        "import.meta": '{"url":__importMetaUrl}',
       }
       options.banner = {
-        js: `const __importMetaUrl = require("node:url").pathToFileURL(__filename).href;`,
+        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";`,
       }
     }
   },

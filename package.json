@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.0.36",
+  "version": "5.0.38",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -57,6 +57,8 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "react-server": "./dist/index.mjs",
+      "node": "./dist/index.mjs",
       "browser": "./dist/index.browser.mjs",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"

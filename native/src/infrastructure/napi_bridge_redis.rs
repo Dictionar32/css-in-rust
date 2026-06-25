@@ -33,12 +33,15 @@ pub fn redis_pool_connect(config_json: Option<String>) -> napi::Result<String> {
     }
 
     let pool = init_redis_pool()?;
+    let pool_guard = pool.lock()
+        .map_err(|e| error_to_napi("redis_pool_connect", e.to_string()))?;
+    let info = pool_guard.get_info();
 
     let result = serde_json::json!({
         "status": "connected",
         "message": "Redis pool connected",
-        "pool_size": 10,
-        "connections": 10
+        "pool_size": info.pool_size,
+        "connections": info.connected
     });
 
     serde_json::to_string(&result)
@@ -446,4 +449,43 @@ pub fn redis_shutdown() -> napi::Result<String> {
 
     serde_json::to_string(&response)
         .map_err(|e| error_to_napi("redis_shutdown", e))
+}
+
+/// Get a typed Redis stats snapshot serialized via `to_json`
+///
+/// Uses the `to_json` marshalling helper for typed serialization
+/// rather than building raw `serde_json::json!` objects.
+#[napi]
+pub fn redis_typed_stats() -> napi::Result<String> {
+    #[derive(serde::Serialize)]
+    struct RedisStats {
+        connected: bool,
+        pool_size: usize,
+        total_requests: u64,
+        successful_requests: u64,
+        failed_requests: u64,
+        hit_rate: f64,
+    }
+
+    let pool = init_redis_pool()?;
+    let pool_guard = pool.lock()
+        .map_err(|e| error_to_napi("redis_typed_stats", e.to_string()))?;
+
+    let raw = pool_guard.get_stats();
+    let hit_rate = if raw.total_requests > 0 {
+        raw.successful_requests as f64 / raw.total_requests as f64
+    } else {
+        0.0
+    };
+
+    let stats = RedisStats {
+        connected: raw.connected_count > 0,
+        pool_size: raw.pool_size,
+        total_requests: raw.total_requests,
+        successful_requests: raw.successful_requests,
+        failed_requests: raw.failed_requests,
+        hit_rate,
+    };
+
+    to_json(&stats)
 }

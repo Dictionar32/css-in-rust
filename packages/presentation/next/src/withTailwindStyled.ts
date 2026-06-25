@@ -27,7 +27,11 @@ import { hasSourceChanged, isIncrementalEnabled } from "./incrementalOrchestrato
 import { parseNextAdapterOptions } from "./schemas"
 import { StaticCssWebpackPlugin } from "./staticCssWebpackPlugin"
 
-const require = createRequire(import.meta.url)
+const require = createRequire(
+  typeof import.meta !== "undefined" && import.meta.url
+    ? import.meta.url
+    : (typeof __filename !== "undefined" ? `file://${__filename}` : "file://unknown")
+)
 
 interface TailwindStyledLoaderOptions {
   /** @deprecated — handled by engine internally */
@@ -96,11 +100,15 @@ interface NextWebpackRule {
 }
 
 
-const resolveRuntimeDir = (): string => getDirnameFromUrl(import.meta.url)
+const _importMetaUrl = typeof import.meta !== "undefined" && import.meta.url
+  ? import.meta.url
+  : (typeof __filename !== "undefined" ? `file://${__filename}` : undefined)
+
+const resolveRuntimeDir = (): string => _importMetaUrl ? getDirnameFromUrl(_importMetaUrl) : __dirname
 
 const resolveLoaderPath = (basename: string): string => {
   try {
-    return sharedResolveLoaderPath(basename, import.meta.url)
+    return sharedResolveLoaderPath(basename, _importMetaUrl ?? `file://${__filename}`)
   } catch {
     const runtimeDir = resolveRuntimeDir()
     const candidates = [

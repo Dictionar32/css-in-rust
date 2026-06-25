@@ -1701,6 +1701,20 @@ export declare function getWatchPerformance(): string
 export declare function getWatchStats(): string
 
 /**
+ * Get typed watch system status using to_json serialization
+ *
+ * Returns a JSON string of the full watch system state using the `to_json` helper.
+ * Use this when you need a single structured snapshot of the entire watch state.
+ *
+ * # Example
+ * ```js
+ * const status = getWatchSystemStatus();
+ * // Returns: '{"is_running":true,"active_handles":2,...}'
+ * ```
+ */
+export declare function getWatchSystemStatus(): string
+
+/**
  * Get Week 6 features status
  *
  * Returns information about implemented features from Week 6 phase
@@ -1709,6 +1723,9 @@ export declare function getWeek6FeaturesStatus(): string
 
 /** Get Week 6 optimization status */
 export declare function getWeek6OptimizationStatus(): string
+
+/** Get week 8 memory optimization status as JSON */
+export declare function getWeek8OptimizationStatus(): string
 
 /**
  * Hash a content string dengan algoritma pilihan.
@@ -1871,6 +1888,20 @@ export interface InjectHashResult {
  * ```
  */
 export declare function injectStateHash(source: string, filename: string): InjectHashResult
+
+/**
+ * Create a temporary cache and return its stats as a typed JSON snapshot
+ *
+ * Uses `CacheFactory` to create a cache, `CacheStats` as the typed return value,
+ * and `to_json` for serialization — ensuring all three imports are actively used.
+ *
+ * # Arguments
+ * * `capacity` - Capacity of the temporary LRU cache to inspect
+ *
+ * # Returns
+ * JSON string containing typed `CacheStats`
+ */
+export declare function inspectCacheStats(capacity: number): string
 
 export declare function isAlreadyTransformed(source: string): boolean | null
 
@@ -2421,6 +2452,14 @@ export declare function redisSyncNodes(): string
 export declare function redisTtl(key: string): string
 
 /**
+ * Get a typed Redis stats snapshot serialized via `to_json`
+ *
+ * Uses the `to_json` marshalling helper for typed serialization
+ * rather than building raw `serde_json::json!` objects.
+ */
+export declare function redisTypedStats(): string
+
+/**
  * Daftarkan nama untuk sebuah PropertyId.
  *
  * **Menggantikan** `registerPropertyName(id, name)` di `engine/src/ir.ts`.
@@ -2872,6 +2911,20 @@ export interface ScanResult {
  * ─ OPTIMIZATION (Phase 2): Parallel file processing with rayon
  */
 export declare function scanWorkspace(root: string, extensions?: Array<string> | undefined | null): ScanResult
+
+/**
+ * Serialize a single CSS rule to a typed JSON response
+ *
+ * Uses `to_json` for typed serialization and `response_ok` for wrapping in a
+ * standard `{status:"ok", data:...}` envelope.
+ *
+ * # Arguments
+ * * `rule_json` - JSON string of a CssRule object
+ *
+ * # Returns
+ * Standard JSON response envelope containing the CSS rule
+ */
+export declare function serializeCssRule(ruleJson: string): string
 
 /**
  * Set watch event aggregation

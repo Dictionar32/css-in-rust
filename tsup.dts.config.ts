@@ -71,16 +71,23 @@ const workspacePackages = [
   "create-tailwind-styled/bin",
 ]
 
-export default defineConfig({
-  entry: entries,
-  format: ["esm", "cjs"],
-  dts: {
-    // resolve sebagai array = hanya inline workspace packages
-    // node:*, zod, react, dll otomatis external — tidak perlu listing manual
-    resolve: workspacePackages,
-    only: true,
-    tsconfig: "./tsconfig.dts.json",
-  },
-  clean: false,
-  outDir: "dist",
-})
+// Setiap entry di-build dalam config object TERPISAH (array), bukan satu
+// `entry: {...}` raksasa. Alasannya: rollup-plugin-dts (engine dts tsup)
+// men-dedup type re-export yang sama dari beberapa entry jadi satu shared
+// chunk — dan keyword `type` pada re-export lintas-chunk itu HILANG, walau
+// source-nya sudah `export type {...}`. Turbopack lalu nge-trace .d.mts itu
+// seolah ada runtime export yang nilainya nggak pernah ada di .mjs.
+// Build per-entry terpisah = nggak ada shared chunk = type tetap aman.
+export default defineConfig(
+  Object.entries(entries).map(([name, file]) => ({
+    entry: { [name]: file },
+    format: ["esm", "cjs"],
+    dts: {
+      resolve: workspacePackages,
+      only: true,
+      tsconfig: "./tsconfig.dts.json",
+    },
+    clean: false,
+    outDir: "dist",
+  }))
+)

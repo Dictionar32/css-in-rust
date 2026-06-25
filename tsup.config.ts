@@ -63,10 +63,27 @@ const sharedConfig = {
   splitting: false,
   noExternal: [/^@tailwind-styled\//] as RegExp[],
   sourcemap: true,
-  treeshake: true,
+  treeshake: false,
   minify: false,
   banner: {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
+  },
+  esbuildOptions(options: import("esbuild").BuildOptions, context: { format: string }) {
+    if (context.format === "cjs") {
+      // Polyfill import.meta for CJS bundles.
+      // This eliminates "import.meta not available in cjs" warnings from esbuild
+      // while keeping correct behaviour: import.meta.url resolves to __filename URL.
+      options.define = {
+        ...options.define,
+        "import.meta.url": "__importMetaUrl",
+        "import.meta": '{"url":__importMetaUrl}',
+      }
+      const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
+      options.banner = {
+        ...options.banner,
+        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";\n${existingBanner}`,
+      }
+    }
   },
 }
 
@@ -126,7 +143,7 @@ const nativeBrowserPlugin = {
 }
 
 export default defineConfig([
-  // Server / Node.js bundle
+  // Server / Node.js bundle — untuk tools, CLI, compiler (bukan SSR Next.js)
   {
     ...sharedConfig,
     entry: entries,
@@ -153,7 +170,7 @@ export default defineConfig([
         // tidak di-drop oleh esbuild tree-shaking agresif yang melihat
         // native binding calls sebagai dead code karena return null.
         treeshake: false,
-        esbuildOptions(options) {
+        esbuildOptions(options: import("esbuild").BuildOptions) {
           // ignoreAnnotations: abaikan /*#__PURE__*/ dan sideEffects:false
           // supaya cv dan fungsi lain tidak di-drop di browser bundle
           options.ignoreAnnotations = true

@@ -16,8 +16,6 @@ use crate::infrastructure::napi_bridge_errors::{error_to_napi, validate_string_i
 
 // Thread-safe compiler cache to avoid parsing theme JSON on every compile call
 static COMPILER_CACHE: OnceLock<DashMap<String, Arc<CssCompiler>>> = OnceLock::new();
-
-/// Generate MD5 hash of theme JSON
 fn get_theme_hash(theme_json: &str) -> String {
     let digest = md5::compute(theme_json.as_bytes());
     format!("{:x}", digest)
@@ -419,3 +417,22 @@ pub fn optimize_css(css: String) -> napi::Result<String> {
     Ok(optimized.join("\n"))
 }
 
+
+/// Serialize a single CSS rule to a typed JSON response
+///
+/// Uses `to_json` for typed serialization and `response_ok` for wrapping in a
+/// standard `{status:"ok", data:...}` envelope.
+///
+/// # Arguments
+/// * `rule_json` - JSON string of a CssRule object
+///
+/// # Returns
+/// Standard JSON response envelope containing the CSS rule
+#[napi]
+pub fn serialize_css_rule(rule_json: String) -> napi::Result<String> {
+    let rule: CssRule = parse_json(&rule_json, "CssRule")?;
+    // Use to_json to serialize the rule directly
+    let _serialized = to_json(&rule)?;
+    // Wrap in a standard response_ok envelope
+    response_ok(&rule)
+}

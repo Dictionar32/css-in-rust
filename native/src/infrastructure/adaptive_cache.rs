@@ -43,10 +43,21 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> AdaptiveCache<K, V> {
             // Evict oldest (simplified - remove random for now)
             if let Some(first_key) = cache.keys().next().cloned() {
                 cache.remove(&first_key);
+                // Approximate: deduct estimated per-entry overhead
+                self.memory_bytes.fetch_sub(256, Ordering::Relaxed);
             }
         }
 
+        // Approximate memory tracking: ~256 bytes per entry overhead
+        if !cache.contains_key(&key) {
+            self.memory_bytes.fetch_add(256, Ordering::Relaxed);
+        }
         cache.insert(key, value);
+    }
+
+    /// Get current estimated memory usage in bytes
+    pub fn memory_usage_bytes(&self) -> u64 {
+        self.memory_bytes.load(Ordering::Relaxed)
     }
 
     pub fn hit_rate(&self) -> f64 {

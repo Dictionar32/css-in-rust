@@ -75,7 +75,6 @@ impl PoolStats {
         }
     }
 
-    /// Calculate hit rate from current counters
     fn calculate_hit_rate(hits: u64, misses: u64) -> f64 {
         let total = hits + misses;
         if total == 0 {
@@ -83,6 +82,12 @@ impl PoolStats {
         } else {
             hits as f64 / total as f64
         }
+    }
+}
+
+impl Default for PoolStats {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

@@ -19,7 +19,6 @@ function getNodeModuleRef(): typeof import("node:module") | null {
   if (isBrowser) return null
   if (nodeModuleRef !== null) return nodeModuleRef
   try {
-    // Test if require actually works
     const test = typeof require === 'function' ? (require('node:module') as typeof import("node:module")) : null
     nodeModuleRef = test
     return test
@@ -35,39 +34,86 @@ let _nodeFs: typeof import("node:fs") | null = null
 let _nodeCrypto: typeof import("node:crypto") | null = null
 let _nodeOs: typeof import("node:os") | null = null
 
+/**
+ * Get current file URL in a way that works in both ESM and CJS.
+ * In ESM: uses import.meta.url
+ * In CJS: uses __filename converted to file URL
+ */
+function getCurrentFileUrl(): string {
+  // ESM path
+  if (typeof import.meta !== "undefined" && import.meta.url) {
+    return import.meta.url
+  }
+  // CJS path — __filename is available in CJS bundles
+  if (typeof __filename !== "undefined") {
+    return `file://${__filename.replace(/\\/g, "/")}`
+  }
+  return "file://unknown"
+}
+
 function getNodePath(): typeof import("node:path") {
   if (isBrowser) throw new Error("node:path not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodePath) _nodePath = nodeRequire.createRequire(import.meta.url)("node:path") as typeof import("node:path")
+  if (!_nodePath) {
+    if (typeof require === "function") {
+      _nodePath = require("node:path") as typeof import("node:path")
+    } else {
+      const nodeRequire = getNodeModuleRef()
+      if (!nodeRequire) throw new Error("require not available")
+      _nodePath = nodeRequire.createRequire(getCurrentFileUrl())("node:path") as typeof import("node:path")
+    }
+  }
   return _nodePath!
 }
 function getNodeUrl(): typeof import("node:url") {
   if (isBrowser) throw new Error("node:url not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeUrl) _nodeUrl = nodeRequire.createRequire(import.meta.url)("node:url") as typeof import("node:url")
+  if (!_nodeUrl) {
+    if (typeof require === "function") {
+      _nodeUrl = require("node:url") as typeof import("node:url")
+    } else {
+      const nodeRequire = getNodeModuleRef()
+      if (!nodeRequire) throw new Error("require not available")
+      _nodeUrl = nodeRequire.createRequire(getCurrentFileUrl())("node:url") as typeof import("node:url")
+    }
+  }
   return _nodeUrl!
 }
 function getNodeFs(): typeof import("node:fs") {
   if (isBrowser) throw new Error("node:fs not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeFs) _nodeFs = nodeRequire.createRequire(import.meta.url)("node:fs") as typeof import("node:fs")
+  if (!_nodeFs) {
+    if (typeof require === "function") {
+      _nodeFs = require("node:fs") as typeof import("node:fs")
+    } else {
+      const nodeRequire = getNodeModuleRef()
+      if (!nodeRequire) throw new Error("require not available")
+      _nodeFs = nodeRequire.createRequire(getCurrentFileUrl())("node:fs") as typeof import("node:fs")
+    }
+  }
   return _nodeFs!
 }
 function getNodeCrypto(): typeof import("node:crypto") {
   if (isBrowser) throw new Error("node:crypto not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeCrypto) _nodeCrypto = nodeRequire.createRequire(import.meta.url)("node:crypto") as typeof import("node:crypto")
+  if (!_nodeCrypto) {
+    if (typeof require === "function") {
+      _nodeCrypto = require("node:crypto") as typeof import("node:crypto")
+    } else {
+      const nodeRequire = getNodeModuleRef()
+      if (!nodeRequire) throw new Error("require not available")
+      _nodeCrypto = nodeRequire.createRequire(getCurrentFileUrl())("node:crypto") as typeof import("node:crypto")
+    }
+  }
   return _nodeCrypto!
 }
 function getNodeOs(): typeof import("node:os") {
   if (isBrowser) throw new Error("node:os not available in browser")
-  const nodeRequire = getNodeModuleRef()
-  if (!nodeRequire) throw new Error("require not available")
-  if (!_nodeOs) _nodeOs = nodeRequire.createRequire(import.meta.url)("node:os") as typeof import("node:os")
+  if (!_nodeOs) {
+    if (typeof require === "function") {
+      _nodeOs = require("node:os") as typeof import("node:os")
+    } else {
+      const nodeRequire = getNodeModuleRef()
+      if (!nodeRequire) throw new Error("require not available")
+      _nodeOs = nodeRequire.createRequire(getCurrentFileUrl())("node:os") as typeof import("node:os")
+    }
+  }
   return _nodeOs!
 }
 
@@ -75,12 +121,13 @@ function getNodeOs(): typeof import("node:os") {
  * Buat `require()` function yang relative terhadap sebuah ESM module.
  *
  * @example
- * // Ganti: createRequire(import.meta.url)("some-pkg")
  * const req = createEsmRequire(import.meta.url)
  * const mod = req("some-pkg")
  */
 export function createEsmRequire(importMetaUrl: string): NodeRequire {
   if (isBrowser) throw new Error("require not available in browser")
+  // CJS: require is already available globally
+  if (typeof require === "function") return require
   const nodeRequire = getNodeModuleRef()
   if (!nodeRequire) throw new Error("require not available")
   return nodeRequire.createRequire(importMetaUrl)
@@ -90,11 +137,12 @@ export function createEsmRequire(importMetaUrl: string): NodeRequire {
  * Dapat `__dirname` dari `import.meta.url`.
  *
  * @example
- * // Ganti: const __dirname = ...
  * const dir = getDirname(import.meta.url)
  */
 export function getDirname(importMetaUrl: string): string {
   if (isBrowser) return ""
+  // CJS: __dirname is directly available
+  if (typeof __dirname !== "undefined") return __dirname
   const nodePath = getNodePath()
   const nodeUrl = getNodeUrl()
   return nodePath.dirname(nodeUrl.fileURLToPath(importMetaUrl))
@@ -105,23 +153,25 @@ export function getDirname(importMetaUrl: string): string {
  */
 export function getFilename(importMetaUrl: string): string {
   if (isBrowser) return ""
+  // CJS: __filename is directly available
+  if (typeof __filename !== "undefined") return __filename
   return getNodeUrl().fileURLToPath(importMetaUrl)
 }
 
 /**
  * Resolve path dari root monorepo (bukan CWD).
- * Berguna untuk scripts dan tools yang dipanggil dari lokasi berbeda.
- *
- * @example
- * const root = resolveFromRoot("packages/domain/shared/src")
  */
 export function resolveFromRoot(...segments: string[]): string {
   if (isBrowser) return segments.join("/")
 
   const nodePath = getNodePath()
   const nodeFs = getNodeFs()
-  
-  let dir = getDirname(import.meta.url)
+
+  // Use __dirname in CJS, or getDirname with current file URL in ESM
+  let dir = typeof __dirname !== "undefined"
+    ? __dirname
+    : getDirname(getCurrentFileUrl())
+
   for (let i = 0; i < 10; i++) {
     const pkgPath = nodePath.join(dir, "package.json")
     try {
@@ -137,11 +187,6 @@ export function resolveFromRoot(...segments: string[]): string {
 
 /**
  * Require sebuah module dengan fallback ke null jika tidak tersedia.
- * Berguna untuk optional dependencies.
- *
- * @example
- * const oxc = tryRequire("oxc-parser", import.meta.url)
- * if (!oxc) console.warn("oxc-parser not installed")
  */
 export function tryRequire<T = unknown>(
   moduleName: string,
@@ -156,7 +201,6 @@ export function tryRequire<T = unknown>(
 
 /**
  * Resolve .node binary path yang cross-platform dan ESM-safe.
- * Menggantikan pola `path.resolve(__dirname, "../native.node")`.
  */
 export function resolveNativeNodePath(
   importMetaUrl: string,

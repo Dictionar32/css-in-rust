@@ -15,7 +15,11 @@ import fs from "node:fs"
 import path from "node:path"
 import { createRequire } from "node:module"
 
-const _require = createRequire(import.meta.url)
+const _require = createRequire(
+  typeof require !== "undefined"
+    ? (typeof __filename !== "undefined" ? `file://${__filename}` : "file://unknown")
+    : import.meta.url
+)
 
 import { getNativeBridge, resetNativeBridgeCache, adaptNativeResult, type NativeBridge, type NativeTransformResult, type ClassExtractResult, type ComponentMetadata, type NativeRscResult } from "./nativeBridge"
 

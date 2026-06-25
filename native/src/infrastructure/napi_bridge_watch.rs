@@ -21,6 +21,39 @@ use crate::infrastructure::atomic_watch_state::{
 use crate::infrastructure::napi_bridge_marshalling::to_json;
 use crate::infrastructure::napi_bridge_errors::{error_to_napi, validate_string_input};
 
+/// Watch system status as typed struct (serializable via to_json)
+#[derive(serde::Serialize)]
+pub struct WatchSystemStatus {
+    pub is_running: bool,
+    pub active_handles: usize,
+    pub events_processed: u64,
+    pub events_dropped: u64,
+    pub files_watched: u64,
+}
+
+/// Get typed watch system status using to_json serialization
+///
+/// Returns a JSON string of the full watch system state using the `to_json` helper.
+/// Use this when you need a single structured snapshot of the entire watch state.
+///
+/// # Example
+/// ```js
+/// const status = getWatchSystemStatus();
+/// // Returns: '{"is_running":true,"active_handles":2,...}'
+/// ```
+#[napi]
+pub fn get_watch_system_status() -> napi::Result<String> {
+    let snapshot = get_watch_stats_snapshot();
+    let status = WatchSystemStatus {
+        is_running: is_watch_running(),
+        active_handles: snapshot.active_handles,
+        events_processed: TOTAL_EVENTS_PROCESSED.load(Ordering::Relaxed),
+        events_dropped: TOTAL_EVENTS_DROPPED.load(Ordering::Relaxed),
+        files_watched: TOTAL_FILES_WATCHED.load(Ordering::Relaxed),
+    };
+    to_json(&status).map_err(|e| error_to_napi("get_watch_system_status", e))
+}
+
 // Global watch event tracking (atomic for lock-free access)
 static TOTAL_EVENTS_PROCESSED: AtomicU64 = AtomicU64::new(0);
 static TOTAL_EVENTS_DROPPED: AtomicU64 = AtomicU64::new(0);

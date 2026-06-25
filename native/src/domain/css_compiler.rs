@@ -111,15 +111,22 @@ impl CssCompiler {
         // Track parsed results and errors
         let mut css_rules = Vec::new();
         let mut errors = Vec::new();
-        let parser = ClassParser::new();
         
         for class in &classes {
-            match parser.parse(class.trim()) {
-                Ok(_parsed) => {
-                    // For now, just generate a simple CSS rule
-                    // TODO: Full integration with resolver and generator
+            match self.parser.parse(class.trim()) {
+                Ok(parsed) => {
+                    // Use resolver to look up CSS property name via known_prefixes
+                    let css_prop = self.parser
+                        .css_property_for_prefix(&parsed.prefix)
+                        .unwrap_or(&parsed.prefix);
+
+                    // Attempt to resolve value via theme resolver
+                    let resolved = self.resolver.resolve_color(&parsed.value)
+                        .or_else(|_| self.resolver.resolve_spacing(&parsed.value))
+                        .unwrap_or_else(|_| parsed.value.clone());
+
                     let selector = format!(".{}", escaped_class(class));
-                    css_rules.push(selector);
+                    css_rules.push(format!("{} {{ {}: {}; }}", selector, css_prop, resolved));
                 }
                 Err(e) => {
                     errors.push(format!("Failed to parse '{}': {}", class, e));
@@ -127,8 +134,17 @@ impl CssCompiler {
             }
         }
         
-        // Generate CSS output
-        let css = format!("{{\n{}\n}}", css_rules.join("\n"));
+        // Include config info in the output comment (uses self.config)
+        let dark_mode = match self.config.dark_mode {
+            crate::domain::theme_config::DarkModeStrategy::Media => "media",
+            crate::domain::theme_config::DarkModeStrategy::Class => "class",
+        };
+        
+        let css = format!(
+            "/* dark-mode: {} */\n{}\n",
+            dark_mode,
+            css_rules.join("\n")
+        );
 
         Ok(css)
     }

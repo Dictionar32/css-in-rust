@@ -13,11 +13,11 @@ import { generateCssNative as generateCssNativeImpl } from "./cssGeneratorNative
 import { minifyCss } from "./cssCompilationNative"
 import { generateRawCss } from "../tailwindEngine"
 
-const require = createRequire(import.meta.url)
-
-// ─────────────────────────────────────────────────────────────────────────────
-// LRU Cache for CSS Pipeline (PHASE 0: Quick Win - 30-40% faster)
-// ─────────────────────────────────────────────────────────────────────────────
+const require = createRequire(
+  typeof __filename !== "undefined"
+    ? `file://${__filename}`
+    : (typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "file://unknown")
+)
 
 interface CacheStats {
   hits: number
