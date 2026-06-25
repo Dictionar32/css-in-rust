@@ -11,17 +11,13 @@ export { createCliOutput } from "./utils/output"
 
 async function main() {
   await runCliMain({
-    importMetaUrl: typeof import.meta !== "undefined" && import.meta.url
-      ? import.meta.url
-      : `file://${process.argv[1] ?? "unknown"}`,
+    importMetaUrl: import.meta.url,
     buildProgram: buildMainProgram,
   })
 }
 
 // Only run main() when executed directly, not when imported/required
-const __filename = typeof import.meta !== "undefined" && import.meta.url
-  ? fileURLToPath(import.meta.url)
-  : (typeof __filename !== "undefined" ? __filename : process.argv[1] ?? "unknown")
-if (process.argv[1] === __filename) {
+const __currentFile = fileURLToPath(import.meta.url)
+if (process.argv[1] === __currentFile) {
   main()
 }

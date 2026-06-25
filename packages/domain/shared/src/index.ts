@@ -193,7 +193,7 @@ export function loadNativeBinding<T>(options: LoadNativeBindingOptions<T>): Load
 const _require = createRequire(
   typeof __filename !== "undefined"
     ? `file://${__filename}`
-    : (typeof import.meta !== "undefined" && import.meta.url ? import.meta.url : "file://unknown")
+    : (import.meta.url ?? "file://unknown")
 )
 
 function requireNativeModule(p: string): unknown {
@@ -239,7 +239,7 @@ export function resolveNativeBindingCandidates(options: ResolveCandidatesOptions
   const BINARY_NAMES = ["tailwind-styled-native", "tailwind_styled_parser"]
   const napiPlatform = process.platform === "linux" && process.arch === "x64" ? "linux-x64-gnu"
     : process.platform === "linux" && process.arch === "arm64" ? "linux-arm64-gnu"
-    : `${process.platform}-${process.arch}`
+      : `${process.platform}-${process.arch}`
 
   for (const bin of BINARY_NAMES) {
     candidates.push(path.resolve(runtimeDir, `${bin}.node`))

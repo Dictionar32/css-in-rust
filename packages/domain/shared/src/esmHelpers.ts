@@ -40,11 +40,12 @@ let _nodeOs: typeof import("node:os") | null = null
  * In CJS: uses __filename converted to file URL
  */
 function getCurrentFileUrl(): string {
-  // ESM path
-  if (typeof import.meta !== "undefined" && import.meta.url) {
+  // In CJS builds, import.meta.url is replaced by esbuild with __importMetaUrl
+  // which is set via the banner polyfill. In ESM it's the real URL.
+  if (import.meta.url) {
     return import.meta.url
   }
-  // CJS path — __filename is available in CJS bundles
+  // Fallback: __filename is available in bare CJS (not bundled)
   if (typeof __filename !== "undefined") {
     return `file://${__filename.replace(/\\/g, "/")}`
   }
