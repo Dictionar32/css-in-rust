@@ -18,7 +18,7 @@ const brandTokens = liveToken({
 })
 
 // -- Hook untuk subscribe ------------------------------------------------------
-const useBrandTokens = createUseTokens(brandTokens)
+const useBrandTokens = createUseTokens()
 
 // -- Token reference untuk className ------------------------------------------
 const TokenCard = tw.div({
@@ -57,7 +57,7 @@ export function LiveTokenDemo() {
   function changePrimary(color: string) {
     setActive(color)
     // Update token langsung — semua subscriber re-render otomatis
-    brandTokens.primary.set(color)
+    brandTokens.set("primary", color)
   }
 
   return (

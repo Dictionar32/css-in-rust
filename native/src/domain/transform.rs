@@ -1009,8 +1009,7 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
     }
     if needs_react
         && !source.contains("import React")
-        && !source.contains("from 'react'")
-        && !source.contains("from \"react\"")
+        && !source.contains("import * as React")
     {
         code = format!("import React from \"react\";\n{}", code);
     }

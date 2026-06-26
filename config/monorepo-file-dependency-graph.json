@@ -45,10 +45,10 @@
     ]
   },
   "summary": {
-    "fileCount": 507,
-    "directEdgeCount": 685,
-    "transitiveEdgeCount": 9936,
-    "orphanCount": 284,
+    "fileCount": 514,
+    "directEdgeCount": 711,
+    "transitiveEdgeCount": 9891,
+    "orphanCount": 292,
     "cycleCount": 4
   },
   "files": {
@@ -160,6 +160,18 @@
         "transitive": []
       }
     },
+    "examples/next-js-app/src/app/docs/page.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
     "examples/next-js-app/src/app/layout.tsx": {
       "kind": "example",
       "workspace": "examples/next-js-app",
@@ -244,7 +256,55 @@
         "transitive": []
       }
     },
+    "examples/next-js-app/src/components/ContainerDemo.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
+    "examples/next-js-app/src/components/DataStateDemo.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
+    "examples/next-js-app/src/components/DesignSystem.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
     "examples/next-js-app/src/components/DevToolsClient.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
+    "examples/next-js-app/src/components/ExtendDemo.tsx": {
       "kind": "example",
       "workspace": "examples/next-js-app",
       "imports": {
@@ -268,7 +328,19 @@
         "transitive": []
       }
     },
-    "examples/next-js-app/src/components/packages/PackageCard.tsx": {
+    "examples/next-js-app/src/components/LiveTokenDemo.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
+    "examples/next-js-app/src/components/StateButton.tsx": {
       "kind": "example",
       "workspace": "examples/next-js-app",
       "imports": {
@@ -281,6 +353,18 @@
       }
     },
     "examples/next-js-app/src/components/theme-and-cart-controls.tsx": {
+      "kind": "example",
+      "workspace": "examples/next-js-app",
+      "imports": {
+        "direct": [],
+        "transitive": []
+      },
+      "dependents": {
+        "direct": [],
+        "transitive": []
+      }
+    },
+    "examples/next-js-app/src/components/ThemeUtils.tsx": {
       "kind": "example",
       "workspace": "examples/next-js-app",
       "imports": {
@@ -10903,7 +10987,9 @@
         "direct": [
           "packages/domain/core/src/createComponent.ts",
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/src/styledSystem.ts",
@@ -10911,8 +10997,6 @@
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -10995,14 +11079,14 @@
           "packages/domain/core/src/index.browser.ts",
           "packages/domain/core/src/index.ts",
           "packages/domain/core/src/styledSystem.ts",
-          "packages/domain/core/src/twProxy.ts"
+          "packages/domain/core/src/twProxy.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11098,14 +11182,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11162,14 +11246,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11316,9 +11400,7 @@
         ]
       },
       "dependents": {
-        "direct": [
-          "src/umbrella/index.browser.ts"
-        ],
+        "direct": [],
         "transitive": []
       }
     },
@@ -11412,8 +11494,7 @@
         "direct": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
-          "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.ts"
+          "packages/presentation/vue/src/index.ts"
         ],
         "transitive": [
           "src/umbrella/svelte.ts",
@@ -11476,14 +11557,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11544,7 +11625,9 @@
           "packages/domain/core/src/cv.ts",
           "packages/domain/core/src/index.browser.ts",
           "packages/domain/core/src/index.ts",
-          "packages/domain/core/src/styled.ts"
+          "packages/domain/core/src/styled.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/src/styledSystem.ts",
@@ -11552,8 +11635,6 @@
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11630,15 +11711,15 @@
           "packages/domain/core/src/stateEngine.ts",
           "packages/domain/core/src/styledSystem.ts",
           "packages/domain/core/src/themeReader.ts",
-          "packages/domain/core/src/twProxy.ts"
+          "packages/domain/core/src/twProxy.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/src/styled.ts",
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11790,14 +11871,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11875,7 +11956,9 @@
         "direct": [
           "packages/domain/core/src/createComponent.ts",
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/src/styledSystem.ts",
@@ -11883,8 +11966,6 @@
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -11943,14 +12024,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -12032,14 +12113,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -12247,14 +12328,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -12270,14 +12351,14 @@
       "dependents": {
         "direct": [
           "packages/domain/core/src/index.browser.ts",
-          "packages/domain/core/src/index.ts"
+          "packages/domain/core/src/index.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -12358,14 +12439,14 @@
           "packages/domain/core/src/index.ts",
           "packages/domain/core/src/stateEngine.ts",
           "packages/domain/core/src/styledSystem.ts",
-          "packages/domain/core/src/twProxy.ts"
+          "packages/domain/core/src/twProxy.ts",
+          "src/umbrella/index.browser.ts",
+          "src/umbrella/index.ts"
         ],
         "transitive": [
           "packages/domain/core/tests/subcomponent-types.test.ts",
           "packages/presentation/svelte/src/index.ts",
           "packages/presentation/vue/src/index.ts",
-          "src/umbrella/index.browser.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/svelte.ts",
           "src/umbrella/vue.ts"
         ]
@@ -12678,7 +12759,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -12759,7 +12839,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -12847,7 +12926,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -12933,7 +13011,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13023,8 +13100,7 @@
           "packages/infrastructure/studio-desktop/src/main.js",
           "packages/presentation/vite/src/plugin.ts",
           "scripts/benchmark/watch-stability.ts",
-          "src/umbrella/engine.ts",
-          "src/umbrella/index.ts"
+          "src/umbrella/engine.ts"
         ],
         "transitive": [
           "examples/vite-react/vite.config.ts",
@@ -13149,7 +13225,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13235,7 +13310,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13274,7 +13348,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13353,7 +13426,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13440,7 +13512,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13548,7 +13619,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13630,7 +13700,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13711,7 +13780,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13831,7 +13899,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -13913,7 +13980,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -14050,7 +14116,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -14129,7 +14194,6 @@
           "scripts/benchmark/watch-stability.ts",
           "src/umbrella/cli.ts",
           "src/umbrella/engine.ts",
-          "src/umbrella/index.ts",
           "src/umbrella/tw.ts",
           "src/umbrella/vite.ts"
         ]
@@ -14213,12 +14277,12 @@
           "packages/domain/plugin/src/index.ts",
           "packages/domain/plugin/src/plugins.ts",
           "packages/domain/plugin/src/presets.ts",
-          "src/umbrella/plugin-api.ts"
+          "src/umbrella/plugin-api.ts",
+          "src/umbrella/plugin.ts"
         ],
         "transitive": [
           "packages/domain/core/src/plugins.ts",
-          "packages/domain/plugin/src/internal.ts",
-          "src/umbrella/plugin.ts"
+          "packages/domain/plugin/src/internal.ts"
         ]
       }
     },
@@ -27097,7 +27161,20 @@
       "workspace": "root",
       "imports": {
         "direct": [
-          "packages/domain/core/src/index.browser.ts"
+          "packages/domain/core/src/containerQuery.ts",
+          "packages/domain/core/src/createComponent.ts",
+          "packages/domain/core/src/cv.ts",
+          "packages/domain/core/src/cx.ts",
+          "packages/domain/core/src/liveTokenEngine.ts",
+          "packages/domain/core/src/merge.ts",
+          "packages/domain/core/src/native.ts",
+          "packages/domain/core/src/registry.ts",
+          "packages/domain/core/src/stateEngine.ts",
+          "packages/domain/core/src/styled.ts",
+          "packages/domain/core/src/styledSystem.ts",
+          "packages/domain/core/src/twProxy.ts",
+          "packages/domain/core/src/twTheme.ts",
+          "packages/domain/core/src/types.ts"
         ],
         "transitive": [
           "packages/domain/analyzer/src/analyzeWorkspace.ts",
@@ -27137,21 +27214,7 @@
           "packages/domain/compiler/src/tailwindEngine.ts",
           "packages/domain/compiler/src/watch/index.ts",
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
-          "packages/domain/core/src/containerQuery.ts",
-          "packages/domain/core/src/createComponent.ts",
-          "packages/domain/core/src/cv.ts",
-          "packages/domain/core/src/cx.ts",
-          "packages/domain/core/src/liveTokenEngine.ts",
-          "packages/domain/core/src/merge.ts",
-          "packages/domain/core/src/native.ts",
-          "packages/domain/core/src/registry.ts",
-          "packages/domain/core/src/stateEngine.ts",
-          "packages/domain/core/src/styled.ts",
-          "packages/domain/core/src/styledSystem.ts",
           "packages/domain/core/src/themeReader.ts",
-          "packages/domain/core/src/twProxy.ts",
-          "packages/domain/core/src/twTheme.ts",
-          "packages/domain/core/src/types.ts",
           "packages/domain/scanner/src/cache-native.ts",
           "packages/domain/scanner/src/index.ts",
           "packages/domain/scanner/src/native-bridge.ts",
@@ -27189,8 +27252,20 @@
       "workspace": "root",
       "imports": {
         "direct": [
-          "packages/domain/core/src/index.ts",
-          "packages/domain/engine/src/index.ts"
+          "packages/domain/core/src/containerQuery.ts",
+          "packages/domain/core/src/createComponent.ts",
+          "packages/domain/core/src/cv.ts",
+          "packages/domain/core/src/cx.ts",
+          "packages/domain/core/src/liveTokenEngine.ts",
+          "packages/domain/core/src/merge.ts",
+          "packages/domain/core/src/native.ts",
+          "packages/domain/core/src/registry.ts",
+          "packages/domain/core/src/stateEngine.ts",
+          "packages/domain/core/src/styled.ts",
+          "packages/domain/core/src/styledSystem.ts",
+          "packages/domain/core/src/twProxy.ts",
+          "packages/domain/core/src/twTheme.ts",
+          "packages/domain/core/src/types.ts"
         ],
         "transitive": [
           "packages/domain/analyzer/src/analyzeWorkspace.ts",
@@ -27230,37 +27305,7 @@
           "packages/domain/compiler/src/tailwindEngine.ts",
           "packages/domain/compiler/src/watch/index.ts",
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
-          "packages/domain/core/src/containerQuery.ts",
-          "packages/domain/core/src/createComponent.ts",
-          "packages/domain/core/src/cv.ts",
-          "packages/domain/core/src/cx.ts",
-          "packages/domain/core/src/liveTokenEngine.ts",
-          "packages/domain/core/src/merge.ts",
-          "packages/domain/core/src/native.ts",
-          "packages/domain/core/src/registry.ts",
-          "packages/domain/core/src/stateEngine.ts",
-          "packages/domain/core/src/styled.ts",
-          "packages/domain/core/src/styledSystem.ts",
           "packages/domain/core/src/themeReader.ts",
-          "packages/domain/core/src/twProxy.ts",
-          "packages/domain/core/src/twTheme.ts",
-          "packages/domain/core/src/types.ts",
-          "packages/domain/engine/src/bundleAnalyzer.ts",
-          "packages/domain/engine/src/cssToIr.ts",
-          "packages/domain/engine/src/impactTracker.ts",
-          "packages/domain/engine/src/incremental.ts",
-          "packages/domain/engine/src/internal.ts",
-          "packages/domain/engine/src/ir.ts",
-          "packages/domain/engine/src/metrics.ts",
-          "packages/domain/engine/src/metricsWriter.ts",
-          "packages/domain/engine/src/native-bridge.ts",
-          "packages/domain/engine/src/plugin-api.ts",
-          "packages/domain/engine/src/resolver.ts",
-          "packages/domain/engine/src/reverseLookup.ts",
-          "packages/domain/engine/src/schemas.ts",
-          "packages/domain/engine/src/trace.ts",
-          "packages/domain/engine/src/watch-native.ts",
-          "packages/domain/engine/src/watch.ts",
           "packages/domain/scanner/src/cache-native.ts",
           "packages/domain/scanner/src/index.ts",
           "packages/domain/scanner/src/native-bridge.ts",
@@ -27429,6 +27474,7 @@
       "workspace": "root",
       "imports": {
         "direct": [
+          "packages/domain/plugin-api/src/index.ts",
           "packages/domain/plugin/src/index.ts"
         ],
         "transitive": [
@@ -27456,7 +27502,6 @@
           "packages/domain/compiler/src/tailwindEngine.ts",
           "packages/domain/compiler/src/watch/index.ts",
           "packages/domain/compiler/src/watch/watchSystemNative.ts",
-          "packages/domain/plugin-api/src/index.ts",
           "packages/domain/plugin-api/src/schemas.ts",
           "packages/domain/plugin/src/hooks.ts",
           "packages/domain/shared/src/codegen.ts",
