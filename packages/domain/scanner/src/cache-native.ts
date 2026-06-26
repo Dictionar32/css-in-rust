@@ -17,6 +17,7 @@ import {
   scanCacheStats,
   pruneStaleEntriesNative,
   computeCacheStatsNative,
+  getLoadedScannerBindingPath,
 } from "./native-bridge"
 
 function defaultCachePath(rootDir: string, cacheDir?: string): string {
@@ -24,6 +25,46 @@ function defaultCachePath(rootDir: string, cacheDir?: string): string {
     ? path.resolve(rootDir, cacheDir)
     : path.join(process.cwd(), ".cache", "tailwind-styled")
   return path.join(dir, "scanner-cache.json")
+}
+
+function metaPathFor(cachePath: string): string {
+  return cachePath.replace(/\.json$/, ".meta.json")
+}
+
+/**
+ * Fingerprint binary native yang lagi dipakai (mtime + size dari file .node).
+ *
+ * Root cause fix: cache_read() Rust selama ini hardcode `version: 2` tanpa
+ * pernah benar-benar baca field version dari file (lihat cache_store.rs).
+ * Jadi cache lama (hasil compiler/transform versi sebelumnya, misal sebelum
+ * is_chained guard ditambahkan) gak pernah ke-invalidate otomatis walau
+ * binary native-nya udah di-rebuild — selama isi file SOURCE-nya gak berubah.
+ *
+ * Fix ini independen dari versioning di Rust (yang masih non-functional
+ * sampai di-rebuild) — fingerprint dihitung di sisi TS dari mtime+size file
+ * .node itu sendiri, jadi setiap kali binary native di-rebuild ulang,
+ * fingerprint otomatis berubah dan cache lama langsung dianggap stale,
+ * TANPA perlu compiler/binary mana pun "mengingat" versi berapa dia.
+ *
+ * Kalau path binary gak diketahui (binding belum/gagal load), return null —
+ * caller harus treat ini sebagai "gak bisa diverifikasi" dan skip optimisasi
+ * cache (aman, cuma ngurangin cache-hit rate, gak bikin behavior salah).
+ */
+let _cachedFingerprint: string | null | undefined
+function getBinaryFingerprint(): string | null {
+  if (_cachedFingerprint !== undefined) return _cachedFingerprint
+  try {
+    const loadedPath = getLoadedScannerBindingPath()
+    if (!loadedPath) {
+      _cachedFingerprint = null
+      return null
+    }
+    const stat = fs.statSync(loadedPath)
+    _cachedFingerprint = `${stat.mtimeMs}:${stat.size}`
+  } catch {
+    _cachedFingerprint = null
+  }
+  return _cachedFingerprint
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -79,6 +120,26 @@ export function readCache(rootDir: string, cacheDir?: string): NativeCacheEntry[
   // Buat folder cache jika belum ada — cegah "os error 3" pada first run
   fs.mkdirSync(path.dirname(cachePath), { recursive: true })
 
+  // Cek fingerprint binary native dulu. Kalau beda dari pas cache ini ditulis
+  // (atau meta belum ada sama sekali) → binary udah di-rebuild sejak itu,
+  // seluruh cache gak bisa dipercaya lagi. Lihat getBinaryFingerprint() di atas.
+  const currentFingerprint = getBinaryFingerprint()
+  if (currentFingerprint !== null) {
+    const metaPath = metaPathFor(cachePath)
+    let storedFingerprint: string | null = null
+    try {
+      storedFingerprint = JSON.parse(fs.readFileSync(metaPath, "utf8")).binaryFingerprint ?? null
+    } catch {
+      // Meta belum ada (first run) atau corrupt — treat sebagai mismatch
+    }
+    if (storedFingerprint !== currentFingerprint) {
+      console.warn(
+        "[scanner] cache invalidated: native binary berubah sejak cache terakhir ditulis"
+      )
+      return []
+    }
+  }
+
   const result = cacheReadNative(cachePath)
   if (!result) return []
 
@@ -110,6 +171,21 @@ export function writeCache(rootDir: string, entries: NativeCacheEntry[], cacheDi
     throw new Error(
       "Native cacheWrite failed. Run 'npm run build:rust' to rebuild native bindings."
     )
+  }
+
+  // Catat fingerprint binary native saat ini, biar readCache() berikutnya
+  // bisa deteksi kalau binary udah di-rebuild sejak cache ini ditulis.
+  const currentFingerprint = getBinaryFingerprint()
+  if (currentFingerprint !== null) {
+    try {
+      fs.writeFileSync(
+        metaPathFor(cachePath),
+        JSON.stringify({ binaryFingerprint: currentFingerprint }),
+        "utf8"
+      )
+    } catch {
+      // Gagal nulis meta gak fatal — efeknya cuma cache di-treat stale di run berikutnya
+    }
   }
 }
 

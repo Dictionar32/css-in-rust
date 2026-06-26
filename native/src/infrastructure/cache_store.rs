@@ -165,6 +165,7 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
     };
 
     let mut entries: Vec<CacheEntry> = Vec::new();
+    let mut file_version: u32 = 0;
 
     // Walk character-by-character extracting "filepath": { ... } entries
     let chars: Vec<char> = content.chars().collect();
@@ -202,13 +203,34 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
         while i < len && chars[i].is_ascii_whitespace() {
             i += 1;
         }
+
+        // "version" itu angka, bukan object — parse terpisah SEBELUM cek '{'.
+        // Sebelumnya field ini gak pernah benar-benar dibaca dari file (selalu
+        // ke-skip oleh cek "value harus object" di bawah), jadi cache_read()
+        // selalu balikin version hardcoded terlepas dari isi file sebenarnya.
+        if key == "version" {
+            let val_start = i;
+            let mut j2 = val_start;
+            while j2 < len && chars[j2].is_ascii_digit() {
+                j2 += 1;
+            }
+            if j2 > val_start {
+                let ver_str: String = chars[val_start..j2].iter().collect();
+                if let Ok(v) = ver_str.parse::<u32>() {
+                    file_version = v;
+                }
+                i = j2;
+            }
+            continue;
+        }
+
         // Value must be an object '{'
         if i >= len || chars[i] != '{' {
             continue;
         }
 
         // Skip structural wrapper keys
-        if key == "version" || key == "files" {
+        if key == "files" {
             i += 1;
             continue;
         }
@@ -264,7 +286,7 @@ pub fn cache_read(cache_path: String) -> napi::Result<CacheReadResult> {
 
     Ok(CacheReadResult {
         entries,
-        version: 2,
+        version: file_version,
     })
 }
 

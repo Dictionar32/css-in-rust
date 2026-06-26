@@ -120,10 +120,31 @@ function injectTokensToRoot(tokens: SystemTokenMap, prefix: string): void {
  */
 function _buildTokenCss(tokens: SystemTokenMap, prefix: string): string {
   const binding = getNativeBinding()
-  if (!binding?.generateSystemTokenCss) {
-    throw new Error("FATAL: Native binding 'generateSystemTokenCss' is required but not available.")
+  if (binding?.generateSystemTokenCss) {
+    return binding.generateSystemTokenCss(JSON.stringify(tokens), prefix)
   }
-  return binding.generateSystemTokenCss(JSON.stringify(tokens), prefix)
+  // Browser fallback — native binding tidak tersedia di client.
+  // Output identik dengan generate_system_token_css() di native/src/domain/theme.rs
+  // (sorted groups, sorted names per group, deterministic).
+  return _buildTokenCssJs(tokens, prefix)
+}
+
+function _buildTokenCssJs(tokens: SystemTokenMap, prefix: string): string {
+  const groupKeys = Object.keys(tokens)
+  if (groupKeys.length === 0) return ":root {}\n"
+
+  const lines: string[] = [":root {"]
+  for (const group of groupKeys.slice().sort()) {
+    const map = tokens[group]
+    if (!map || typeof map !== "object" || Object.keys(map).length === 0) continue
+    for (const name of Object.keys(map).sort()) {
+      const value = map[name]
+      if (typeof value !== "string") continue
+      lines.push(`  --${prefix}-${group}-${name}: ${value};`)
+    }
+  }
+  lines.push("}")
+  return lines.join("\n") + "\n"
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

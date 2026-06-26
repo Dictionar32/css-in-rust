@@ -155,6 +155,7 @@ const createScannerBridgeLoader = () => {
     binding: undefined as NativeScannerBinding | null | undefined,
     loadError: null as string | null,
     candidatePaths: [] as string[],
+    loadedPath: null as string | null,
   }
 
   const throwNativeBindingError = (): never => {
@@ -200,7 +201,7 @@ const createScannerBridgeLoader = () => {
 
     _state.candidatePaths = candidates
 
-    const { binding, loadErrors } = loadNativeBinding<NativeScannerBinding>({
+    const { binding, loadedPath, loadErrors } = loadNativeBinding<NativeScannerBinding>({
       runtimeDir,
       candidates,
       isValid: isValidScannerBinding,
@@ -210,6 +211,7 @@ const createScannerBridgeLoader = () => {
     if (binding) {
       log(`scanner native binding loaded successfully`)
       _state.binding = binding
+      _state.loadedPath = loadedPath ?? null
       return _state.binding
     }
 
@@ -224,10 +226,12 @@ const createScannerBridgeLoader = () => {
   return {
     get: scannerGetBinding,
     scannerGetBinding,
+    getLoadedPath: (): string | null => _state.loadedPath,
     reset: (): void => {
       _state.binding = undefined
       _state.loadError = null
       _state.candidatePaths = []
+      _state.loadedPath = null
     },
   }
 }
@@ -236,6 +240,21 @@ const scannerBridgeLoader = createScannerBridgeLoader()
 const scannerGetBinding = scannerBridgeLoader.get
 
 export const resetScannerBridgeCache = scannerBridgeLoader.reset
+
+/**
+ * Path .node binary native yang lagi dipakai sekarang (kalau ada).
+ * Dipakai buat fingerprint cache invalidation — lihat cache-native.ts.
+ * Memanggil scannerGetBinding() dulu supaya binding ke-load (loadedPath
+ * cuma keisi setelah binding berhasil di-resolve sekali).
+ */
+export function getLoadedScannerBindingPath(): string | null {
+  try {
+    scannerGetBinding()
+  } catch {
+    // Binding gagal load — loadedPath tetap null, biar caller decide fallback-nya
+  }
+  return scannerBridgeLoader.getLoadedPath()
+}
 
 export function scanWorkspaceNative(
   root: string,

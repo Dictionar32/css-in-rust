@@ -36,6 +36,25 @@ static RE_IMPORT_LINE: Lazy<Regex> = Lazy::new(|| {
 static RE_OBJ_CONFIG_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(\w+)\s*\(").unwrap());
 static RE_OBJ_COMP_NAME: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)(?:const|let|var)\s+(\w+)\s*=\s*tw\.\w+\s*\(").unwrap());
+// Chain yang nempel LANGSUNG di backtick penutup template literal, sebelum nama
+// variabel mana pun ada — pola: tw.nav`...`.withSub<"a"|"b">() atau
+// tw.div`...`.extend({...}). Beda dari is_chained di STEP 3 (yang nyari nama
+// variabel di tempat lain di file) karena di sini belum ada nama variabel
+// sama sekali — chain-nya terjadi sebelum hasil tagged-template diassign.
+static RE_IMMEDIATE_CHAIN: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^\s*\.\s*(?:extend|withVariants|animate|withSub)\s*[(<]").unwrap()
+});
+
+/// Cek apakah teks tepat setelah posisi `end_pos` adalah chain langsung ke
+/// API runtime. Kalau ya, template literal ini TIDAK BOLEH di-static-replace
+/// jadi forwardRef polos — forwardRef gak punya method .extend/.withSub dll,
+/// jadi chain-nya bakal jadi TypeError runtime padahal source-nya valid.
+fn is_chained_immediately_after(source: &str, end_pos: usize) -> bool {
+    source
+        .get(end_pos..)
+        .map(|rest| RE_IMMEDIATE_CHAIN.is_match(rest))
+        .unwrap_or(false)
+}
 /// Matches key: `...`, key: "...", or key: '...' — captures the string value in group 2/3/4.
 static RE_FLAT_STRING: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r#"(\w[\w-]*)\s*:\s*(?:`([^`]*)`|"([^"]*)"|'([^']*)')"#).unwrap()
@@ -725,6 +744,21 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                         all_classes.extend(normalise_classes(&sub.classes));
                     }
 
+                    // Reconstruct the full match: tw.tag`content`
+                    let full_match = format!("tw.{}`{}`", tmpl.tag, tmpl.content);
+
+                    // Guard: skip static replacement kalau ada .extend/.withVariants/
+                    // .animate/.withSub langsung nempel di backtick penutup — lihat
+                    // is_chained_immediately_after di atas. Classes udah dikumpulkan
+                    // di atas, jadi safelist CSS tetap benar walau JS rewrite di-skip.
+                    let match_end = snap[tmpl.position..]
+                        .find(&full_match)
+                        .map(|off| tmpl.position + off + full_match.len())
+                        .unwrap_or(tmpl.position + full_match.len());
+                    if is_chained_immediately_after(&snap, match_end) {
+                        continue;
+                    }
+
                     let hash = short_hash(&format!("{}_{}", comp_name, base_classes));
                     let base_scoped = format!("{}_{}", comp_name, hash);
                     let meta = build_metadata_json(&comp_name, &tmpl.tag, &base_scoped, &sub_comps);
@@ -743,8 +777,6 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                         )
                     };
 
-                    // Reconstruct the full match: tw.tag`content`
-                    let full_match = format!("tw.{}`{}`", tmpl.tag, tmpl.content);
                     replacements.push((full_match, replacement));
                 }
                 if !replacements.is_empty() {
@@ -757,7 +789,9 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
         // Regex fallback (or primary path for small files / AST errors)
         if replacements.is_empty() {
             for cap in RE_TEMPLATE.captures_iter(&snap) {
-                let full_match = cap[0].to_string();
+                let mat = cap.get(0).unwrap();
+                let full_match = mat.as_str().to_string();
+                let match_end = mat.end();
                 let tag = cap[2].to_string();
                 let content = cap[3].to_string();
 
@@ -785,6 +819,17 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 all_classes.extend(base_classes_vec.clone());
                 for sub in &sub_comps {
                     all_classes.extend(normalise_classes(&sub.classes));
+                }
+
+                // Guard: skip static replacement (bukan class collection di atas) kalau
+                // ada .extend/.withVariants/.animate/.withSub langsung nempel di backtick
+                // penutup. Tanpa ini, `tw.nav\`...\`.withSub<>()` jadi
+                // React.forwardRef(...).withSub() → TypeError runtime karena forwardRef
+                // gak punya method itu. Classes udah dikumpulkan di atas, jadi safelist
+                // CSS tetap benar walau JS rewrite di-skip — sama pola dengan is_chained
+                // di STEP 3.
+                if is_chained_immediately_after(&snap, match_end) {
+                    continue;
                 }
 
                 let hash = short_hash(&format!("{}_{}", comp_name, base_classes));
