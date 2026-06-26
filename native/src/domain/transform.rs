@@ -26,10 +26,12 @@ static RE_INTERACTIVE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"\b(hover:|focus:|active:|group-hover:|peer-|on[A-Z]|useState|useEffect|useRef)\b")
         .unwrap()
 });
-static RE_IMPORT_TW: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r#"import\s*\{[^}]*\btw\b[^}]*\}\s*from\s*["']tailwind-styled-v4["'];?\n?"#).unwrap()
+// Captures the brace contents of `import { ... } from "tailwind-styled-v4"`
+// so STEP 4 (below) can check each named specifier individually instead of
+// an all-or-nothing `tw`-only check.
+static RE_IMPORT_LINE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r#"import\s*\{([^}]*)\}\s*from\s*["']tailwind-styled-v4["'];?\n?"#).unwrap()
 });
-static RE_STILL_TW: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(server\.)?\w+[`(]").unwrap());
 // STEP 3 — object config syntax: tw.tag({ base, variants, sizes, states })
 static RE_OBJ_CONFIG_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(\w+)\s*\(").unwrap());
 static RE_OBJ_COMP_NAME: Lazy<Regex> =
@@ -1013,10 +1015,59 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
         code = format!("import React from \"react\";\n{}", code);
     }
 
-    // STEP 4: Strip tw import if no longer needed
-    let still_uses_tw = RE_STILL_TW.is_match(&code);
-    if !still_uses_tw {
-        code = RE_IMPORT_TW.replace_all(&code, "").to_string();
+    // STEP 4: Strip named imports from "tailwind-styled-v4" that are no longer
+    // referenced anywhere in the transformed code.
+    //
+    // BUG (fixed here): the old logic only checked whether any `tw.xxx(`/
+    // `tw.xxx\`` usage remained, and if not, deleted the *entire* import
+    // line — including any OTHER still-used specifier on the same line
+    // (`server`, `cn`, `t`, `cssVar`, ...). Anything not written as `tw.*`
+    // — e.g. Avatar.tsx's `server.div({...})` (object-config, RSC-only) or
+    // Card.tsx's bare `cn(className)` call — kept its call site in the code
+    // while losing its import binding, producing
+    // `ReferenceError: server is not defined` / `ReferenceError: cn is not defined`
+    // at module evaluation.
+    //
+    // Fix: check each named specifier individually against the code with
+    // the import line itself removed, and only drop the ones that truly
+    // have no remaining reference. This also naturally subsumes the old
+    // `tw`-specific check (a bare `\btw\b` match covers `tw.div(`, `tw.div\`` `,
+    // and `tw(Component)\`` ` alike).
+    if let Some(import_caps) = RE_IMPORT_LINE.captures(&code) {
+        let full_import = import_caps.get(0).unwrap().as_str().to_string();
+        let specifiers_raw = import_caps.get(1).unwrap().as_str().to_string();
+        let code_minus_import = code.replacen(&full_import, "", 1);
+
+        let all_specifiers: Vec<String> = specifiers_raw
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        let kept_specifiers: Vec<String> = all_specifiers
+            .iter()
+            .filter(|spec| {
+                // Handle potential `Foo as Bar` aliases — the binding actually
+                // referenced in the file body is the local (right-hand) name.
+                let local_name = spec.split_whitespace().last().map(|s| s.to_string()).unwrap_or_else(|| (*spec).clone());
+                match Regex::new(&format!(r"\b{}\b", regex::escape(&local_name))) {
+                    Ok(usage_re) => usage_re.is_match(&code_minus_import),
+                    Err(_) => true, // never drop a specifier on a regex build failure
+                }
+            })
+            .cloned()
+            .collect();
+
+        if kept_specifiers.is_empty() {
+            code = code.replacen(&full_import, "", 1);
+        } else if kept_specifiers.len() != all_specifiers.len() {
+            let new_import = format!(
+                "import {{ {} }} from \"tailwind-styled-v4\";\n",
+                kept_specifiers.join(", ")
+            );
+            code = code.replacen(&full_import, &new_import, 1);
+        }
+        // else: every specifier is still referenced — leave the import line untouched.
     }
 
     // STEP 5: Inject transform marker

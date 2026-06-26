@@ -53,7 +53,12 @@ impl StructuralVisitor {
 
     fn is_tw(expr: &Expression) -> bool {
         match expr.get_inner_expression() {
-            Expression::Identifier(id) => id.name == "tw",
+            // "server" is the RSC-only sibling of "tw" (same object-config /
+            // template-literal call surface, e.g. `server.div({...})`) — see
+            // RE_TEMPLATE/RE_COMP_NAME in transform.rs which already special-case
+            // `tw.server.*`. Recognizing the bare `server` root here keeps the
+            // AST-based component-name pass consistent with that.
+            Expression::Identifier(id) => id.name == "tw" || id.name == "server",
             expr if expr.is_member_expression() => {
                 Self::is_tw(expr.to_member_expression().object())
             }
