@@ -14,12 +14,25 @@ import * as path from "node:path"
 
 const isBrowser = typeof window !== "undefined" || typeof document !== "undefined"
 
-// ESM-safe require — works in both ESM and CJS contexts
-const _require = createRequire(
-  typeof require !== "undefined"
-    ? (typeof __filename !== "undefined" ? `file://${__filename}` : "file://unknown")
-    : import.meta.url
-)
+// ESM-safe require — works in both ESM and CJS contexts.
+// Ref: Node.js docs — module.createRequire(filename) hanya terima:
+//   - file URL object, file URL string, atau absolute path string.
+// "file://unknown" crash karena bukan URL valid — gunakan process.cwd() sebagai fallback.
+// Ref: https://nodejs.org/api/module.html#modulecreaterequirefilename
+function _safeCreateRequire(): NodeRequire {
+  // ESM context: import.meta.url selalu absolute file URL yang valid
+  if (typeof import.meta !== "undefined" && import.meta.url && !import.meta.url.includes("unknown")) {
+    return createRequire(import.meta.url)
+  }
+  // CJS context: __filename adalah absolute path yang valid
+  if (typeof __filename !== "undefined") {
+    return createRequire(__filename)
+  }
+  // Fallback: process.cwd() mengembalikan absolute path (Node.js docs — process.cwd())
+  return createRequire(new URL(`file://${process.cwd()}/`).href)
+}
+
+const _require = _safeCreateRequire()
 
 export interface NativeResolutionResult {
   path: string | null

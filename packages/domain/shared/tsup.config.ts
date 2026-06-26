@@ -3,6 +3,10 @@ import { defineConfig } from "tsup"
 export default defineConfig({
   entry: ["src/index.ts"],
   format: ["cjs", "esm"],
+  // Fix: gunakan shims:true (tsup built-in) untuk polyfill import.meta.url di CJS
+  // dan __dirname/__filename di ESM. Lebih robust dari manual banner dan handle
+  // browser context juga. Ref: https://tsup.egoist.dev/#inject-cjs-and-esm-shims
+  shims: true,
   dts: {
     resolve: false,
   },
@@ -18,16 +22,4 @@ export default defineConfig({
     "@tailwind-styled/compiler",
     "@tailwind-styled/compiler/internal",
   ],
-  esbuildOptions(options, context) {
-    if (context.format === "cjs") {
-      options.define = {
-        ...options.define,
-        // Polyfill import.meta.url so CJS consumers get correct __filename-based URL
-        "import.meta.url": "__importMetaUrl",
-      }
-      options.banner = {
-        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";`,
-      }
-    }
-  },
 })

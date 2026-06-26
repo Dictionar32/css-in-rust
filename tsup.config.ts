@@ -65,10 +65,15 @@ const sharedConfig = {
   sourcemap: true,
   treeshake: false,
   minify: false,
+  // Ref: tsup docs — shims:true otomatis polyfill import.meta.url di CJS
+  // dan __dirname/__filename di ESM. Menggantikan manual banner "file://unknown"
+  // yang crash di Next.js Turbopack ESM context.
+  // https://tsup.egoist.dev/#inject-cjs-and-esm-shims
+  shims: true,
   banner: {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
   },
-  esbuildOptions(options: import("esbuild").BuildOptions, context: { format: string }) {
+  esbuildOptions(options: import("esbuild").BuildOptions, _context: { format: string }) {
     // The compiler package's native-bridge chunk is split out as a shared
     // chunk and marked sideEffects:false. When other packages bundle it in
     // (via noExternal above) but only use a subset of its exports, esbuild
@@ -79,28 +84,6 @@ const sharedConfig = {
     options.logOverride = {
       ...options.logOverride,
       "ignored-bare-import": "silent",
-    }
-    if (context.format === "cjs") {
-      // Polyfill import.meta for CJS bundles.
-      // This eliminates "import.meta not available in cjs" warnings from esbuild
-      // while keeping correct behaviour: import.meta.url resolves to __filename URL.
-      options.define = {
-        ...options.define,
-        "import.meta.url": "__importMetaUrl",
-        // Bare references (e.g. `typeof import.meta !== "undefined"`) aren't
-        // covered by the "import.meta.url" define above, since esbuild matches
-        // the longest dotted path. Without this, esbuild falls back to its
-        // built-in CJS handling for bare `import.meta` and emits the
-        // "empty-import-meta" warning. Defining it as the identifier
-        // `undefined` makes the typeof guard correctly evaluate to false in
-        // CJS, matching the intended ESM-only behaviour of import.meta.url.
-        "import.meta": "undefined",
-      }
-      const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
-      options.banner = {
-        ...options.banner,
-        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";\n${existingBanner}`,
-      }
     }
   },
 }

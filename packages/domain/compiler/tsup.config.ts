@@ -24,30 +24,8 @@ export default defineConfig({
     "postcss",
     "oxc-parser"
   ],
-  esbuildOptions(options, context) {
-    if (context.format === "esm") {
-      options.banner = {
-        ...options.banner,
-        js: [
-          options.banner?.js ?? "",
-          `import { createRequire as __createRequire } from "node:module";`,
-          `const require = __createRequire(import.meta.url);`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      }
-    }
-    if (context.format === "cjs") {
-      options.define = {
-        ...options.define,
-        "import.meta.url": "__importMetaUrl",
-        "import.meta": "undefined",
-      }
-      const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
-      options.banner = {
-        ...options.banner,
-        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";\n${existingBanner}`,
-      }
-    }
-  },
+  // Ref: tsup docs — shims:true otomatis polyfill import.meta.url untuk CJS
+  // dan __dirname/__filename untuk ESM, tanpa manual banner.
+  // https://tsup.egoist.dev/#inject-cjs-and-esm-shims
+  shims: true,
 })
