@@ -1,5 +1,6 @@
 import { defineConfig } from "tsup"
 import { existsSync } from "fs"
+import { readFile, writeFile, rm } from "node:fs/promises"
 import path from "node:path"
 
 const projectRoot = new URL(".", import.meta.url).pathname
@@ -55,6 +56,75 @@ const nodeBuiltins = [
   "node:stream", "node:events", "node:util",
 ]
 
+// ─── Preserve RSC directives via metafile ────────────────────────────────────
+// esbuild strips leading directives ("use client", "use server") ketika
+// directive ada di *imported* module, bukan di bundle entry point.
+//
+// Solusi: setelah tsup selesai tulis dist/, baca metafile-esm.json untuk tau
+// input → output mapping, lalu trace balik: kalau ada input file yang mulai
+// dengan directive → prepend directive ke output chunk tersebut.
+//
+// Pattern ini zero-dependency, granular (hanya inject ke chunk yang relevan),
+// dan robust terhadap code splitting. Ref: github.com/azex-ai/ledger
+// ─────────────────────────────────────────────────────────────────────────────
+const DIRECTIVE_RE = /^\s*["'](use (?:client|server))["']\s*[;\n]/
+
+interface Metafile {
+  outputs: Record<string, { inputs: Record<string, unknown> }>
+}
+
+async function preserveDirectives(distDir: string): Promise<void> {
+  const metaPath = path.resolve(distDir, "metafile-esm.json")
+
+  let meta: Metafile
+  try {
+    meta = JSON.parse(await readFile(metaPath, "utf8")) as Metafile
+  } catch {
+    // metafile tidak ada (misal hanya CJS build) — skip
+    return
+  }
+
+  const cwd = process.cwd()
+  const cache = new Map<string, string | null>()
+
+  const directiveOf = async (input: string): Promise<string | null> => {
+    if (cache.has(input)) return cache.get(input)!
+    try {
+      const src = await readFile(path.resolve(cwd, input), "utf8")
+      const directive = DIRECTIVE_RE.exec(src)?.[1] ?? null
+      cache.set(input, directive)
+      return directive
+    } catch {
+      cache.set(input, null)
+      return null
+    }
+  }
+
+  await Promise.all(
+    Object.entries(meta.outputs).map(async ([outPath, output]) => {
+      // Hanya proses .js files (skip .map, .d.ts, dll)
+      if (!outPath.endsWith(".js")) return
+
+      // Cari directive dari semua input files yang masuk ke chunk ini
+      let directive: string | null = null
+      for (const input of Object.keys(output.inputs)) {
+        directive = await directiveOf(input)
+        if (directive) break
+      }
+      if (!directive) return
+
+      // Prepend directive ke output file jika belum ada
+      const abs = path.resolve(cwd, outPath)
+      const text = await readFile(abs, "utf8")
+      if (text.startsWith(`"${directive}"`)) return
+      await writeFile(abs, `"${directive}";\n${text}`)
+    })
+  )
+
+  // Hapus metafile — build artifact only, jangan ikut ke-publish
+  await rm(metaPath, { force: true })
+}
+
 const sharedConfig = {
   clean: false,
   dts: false,
@@ -70,8 +140,10 @@ const sharedConfig = {
   // yang crash di Next.js Turbopack ESM context.
   // https://tsup.egoist.dev/#inject-cjs-and-esm-shims
   shims: true,
-  banner: {
-    js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
+  // footer bukan banner — supaya tidak push "use client" ke baris ke-2.
+  // preserveDirectives() akan inject directive di baris 1 via onSuccess.
+  footer: {
+    js: "/* tailwind-styled-v4 v5.1.9 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
   },
   esbuildOptions(options: import("esbuild").BuildOptions, _context: { format: string }) {
     // The compiler package's native-bridge chunk is split out as a shared
@@ -152,6 +224,12 @@ export default defineConfig([
     platform: "node" as const,
     format: ["esm", "cjs"] as const,
     external: [...sharedExternal, ...nodeBuiltins],
+    // metafile: true wajib untuk preserveDirectives() — tsup tulis
+    // metafile-esm.json yang kita pakai buat trace input → output mapping.
+    metafile: true,
+    async onSuccess() {
+      await preserveDirectives("dist")
+    },
   },
 
   // Browser bundle — zero Node built-ins, safe untuk Next.js Client Components.

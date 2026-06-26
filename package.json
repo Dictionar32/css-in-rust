@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.1.7",
+  "version": "5.1.10",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -264,6 +264,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.10",
+    "@hyperse/esbuild-plugin-preserve-directives": "^1.0.2",
     "@napi-rs/cli": "^3.6.2",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.39",
@@ -292,10 +293,10 @@
     "ts-pattern": "^5.9.0"
   },
   "allowScripts": {
-  "electron@35.7.5": true,
-  "electron-winstaller@5.4.0": true,
-  "esbuild@0.27.7": true,
-  "esbuild@0.28.1": true,
-  "sharp@0.34.5": true
-}
+    "electron@35.7.5": true,
+    "electron-winstaller@5.4.0": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.1": true,
+    "sharp@0.34.5": true
+  }
 }
