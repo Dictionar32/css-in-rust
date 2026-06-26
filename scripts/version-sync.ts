@@ -5,7 +5,6 @@ const rootDir = process.cwd()
 const rootPackagePath = path.join(rootDir, "package.json")
 const rootPackage = JSON.parse(fs.readFileSync(rootPackagePath, "utf8"))
 const version = rootPackage.version
-const workspaceRoot = "packages"
 const dependencySections = [
   "dependencies",
   "devDependencies",
@@ -18,11 +17,28 @@ const bannerFiles = [
   path.join(rootDir, "packages/domain/engine/tsup.config.ts"),
 ]
 
-const workspacePackagePaths = fs
-  .readdirSync(path.join(rootDir, workspaceRoot), { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => path.join(rootDir, workspaceRoot, entry.name, "package.json"))
-  .filter((packagePath) => fs.existsSync(packagePath))
+// Derive workspace package paths from the root `workspaces` field itself — this is the
+// single source of truth npm uses to resolve workspace members. Previously this hardcoded
+// `packages/*` (one level deep), which silently stopped matching anything after the
+// monorepo-restructure-v2 move to `packages/{domain,infrastructure,presentation}/*` (two
+// levels deep). That made this whole script a no-op for years without ever erroring —
+// see plans/monorepo-restructure-v2-*.md and references/known-issues.md in the
+// css-in-rust-debugger skill for the version-drift fallout this caused.
+const workspaceGlobs: string[] = Array.isArray(rootPackage.workspaces) ? rootPackage.workspaces : []
+
+const workspacePackagePaths = workspaceGlobs.flatMap((glob) => {
+  if (!glob.endsWith("/*")) {
+    console.warn(`version-sync: unsupported workspace glob "${glob}" — skipping (only "<dir>/*" is supported)`)
+    return []
+  }
+  const baseDir = path.join(rootDir, glob.slice(0, -2))
+  if (!fs.existsSync(baseDir)) return []
+  return fs
+    .readdirSync(baseDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(baseDir, entry.name, "package.json"))
+    .filter((packagePath) => fs.existsSync(packagePath))
+})
 
 const workspacePackageNames = new Set()
 for (const packagePath of workspacePackagePaths) {
