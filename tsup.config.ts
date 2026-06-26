@@ -69,6 +69,17 @@ const sharedConfig = {
     js: "/* tailwind-styled-v4 v5.0.4 | MIT | https://github.com/dictionar32/tailwind-styled-v4 */",
   },
   esbuildOptions(options: import("esbuild").BuildOptions, context: { format: string }) {
+    // The compiler package's native-bridge chunk is split out as a shared
+    // chunk and marked sideEffects:false. When other packages bundle it in
+    // (via noExternal above) but only use a subset of its exports, esbuild
+    // correctly drops the now-unused bare import — but still warns about it.
+    // Confirmed harmless: that chunk only contains top-level declarations
+    // (no code actually runs at import time), so silence just this warning
+    // code instead of changing tree-shaking/sideEffects behaviour repo-wide.
+    options.logOverride = {
+      ...options.logOverride,
+      "ignored-bare-import": "silent",
+    }
     if (context.format === "cjs") {
       // Polyfill import.meta for CJS bundles.
       // This eliminates "import.meta not available in cjs" warnings from esbuild
@@ -76,6 +87,14 @@ const sharedConfig = {
       options.define = {
         ...options.define,
         "import.meta.url": "__importMetaUrl",
+        // Bare references (e.g. `typeof import.meta !== "undefined"`) aren't
+        // covered by the "import.meta.url" define above, since esbuild matches
+        // the longest dotted path. Without this, esbuild falls back to its
+        // built-in CJS handling for bare `import.meta` and emits the
+        // "empty-import-meta" warning. Defining it as the identifier
+        // `undefined` makes the typeof guard correctly evaluate to false in
+        // CJS, matching the intended ESM-only behaviour of import.meta.url.
+        "import.meta": "undefined",
       }
       const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
       options.banner = {

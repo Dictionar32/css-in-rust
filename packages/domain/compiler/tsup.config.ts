@@ -37,5 +37,17 @@ export default defineConfig({
           .join("\n"),
       }
     }
+    if (context.format === "cjs") {
+      options.define = {
+        ...options.define,
+        "import.meta.url": "__importMetaUrl",
+        "import.meta": "undefined",
+      }
+      const existingBanner = typeof options.banner?.js === "string" ? options.banner.js : ""
+      options.banner = {
+        ...options.banner,
+        js: `const __importMetaUrl = typeof __filename !== "undefined" ? require("node:url").pathToFileURL(__filename).href : "file://unknown";\n${existingBanner}`,
+      }
+    }
   },
 })

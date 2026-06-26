@@ -4,7 +4,7 @@
   "description": "Compiler pipeline for tailwind-styled-v4",
   "license": "MIT",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": ["./dist/chunk-*.js"],
   "engines": {
     "node": ">=20"
   },
