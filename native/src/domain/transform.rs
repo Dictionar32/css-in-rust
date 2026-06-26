@@ -971,17 +971,18 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 .max_by_key(|(_, &pos)| pos)
                 .map(|(name, _)| name.clone())
                 .unwrap_or_else(|| format!("Tw_{}", tag));
-
-            // Guard: skip static replacement if this binding is later chained via
-            // the runtime API (.extend / .withVariants / .animate / .withSub).
-            // The static forwardRef emitted below is a bare component — it has
-            // none of those methods attached. Replacing the declaration here
-            // would silently turn `Foo.extend(...)` into a runtime TypeError
-            // ("Foo.extend is not a function") even though the source looks fine.
-            // Classes were already collected into all_classes above, so the
-            // CSS safelist output is unaffected by skipping the JS rewrite.
-            // Regex (not plain `contains`) so `Foo .extend(` / `Foo\n  .extend(`
-            // formatting still trips the guard, not just the no-space form.
+                
+            // Pengaman: lewati penggantian statis jika binding ini nantinya dirangkai (chained)
+            // melalui API runtime (.extend / .withVariants / .animate / .withSub).
+            // forwardRef statis yang dihasilkan di bawah ini adalah komponen polos —
+            // tidak memiliki metode-metode tersebut. Mengganti deklarasi di sini
+            // akan secara diam-diam mengubah `Foo.extend(...)` menjadi TypeError runtime
+            // ("Foo.extend is not a function") meskipun kode sumbernya tampak benar.
+            // Kelas-kelas sudah dikumpulkan ke dalam all_classes di atas, sehingga
+            // output safelist CSS tidak terpengaruh oleh dilewatinya penulisan ulang JS.
+            // Menggunakan Regex (bukan `contains` biasa) agar pemformatan seperti
+            // `Foo .extend(` atau `Foo\n  .extend(` tetap memicu pengaman ini,
+            // bukan hanya bentuk tanpa spasi saja.
             let is_chained = Regex::new(&format!(
                 r"\b{}\s*\.\s*(?:extend|withVariants|animate|withSub)\b",
                 regex::escape(&comp_name)
