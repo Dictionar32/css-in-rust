@@ -972,6 +972,27 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                 .map(|(name, _)| name.clone())
                 .unwrap_or_else(|| format!("Tw_{}", tag));
 
+            // Guard: skip static replacement if this binding is later chained via
+            // the runtime API (.extend / .withVariants / .animate / .withSub).
+            // The static forwardRef emitted below is a bare component — it has
+            // none of those methods attached. Replacing the declaration here
+            // would silently turn `Foo.extend(...)` into a runtime TypeError
+            // ("Foo.extend is not a function") even though the source looks fine.
+            // Classes were already collected into all_classes above, so the
+            // CSS safelist output is unaffected by skipping the JS rewrite.
+            // Regex (not plain `contains`) so `Foo .extend(` / `Foo\n  .extend(`
+            // formatting still trips the guard, not just the no-space form.
+            let is_chained = Regex::new(&format!(
+                r"\b{}\s*\.\s*(?:extend|withVariants|animate|withSub)\b",
+                regex::escape(&comp_name)
+            ))
+            .map(|re| re.is_match(&snap))
+            .unwrap_or(false);
+            if is_chained {
+                search_from = paren_end + 1;
+                continue;
+            }
+
             let fn_name = format!("_Tw_{}", comp_name);
             let full_match = snap[abs_match_start..=paren_end].to_string();
             let replacement = render_object_config_component(
