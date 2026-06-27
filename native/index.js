@@ -815,6 +815,7 @@ module.exports.twMerge = nativeBinding.twMerge
 module.exports.twMergeMany = nativeBinding.twMergeMany
 module.exports.twMergeManyWithSeparator = nativeBinding.twMergeManyWithSeparator
 module.exports.twMergeRaw = nativeBinding.twMergeRaw
+module.exports.twMergeRawWithOptions = nativeBinding.twMergeRawWithOptions
 module.exports.twMergeWithSeparator = nativeBinding.twMergeWithSeparator
 module.exports.validateVariantConfig = nativeBinding.validateVariantConfig
 module.exports.valueIdToString = nativeBinding.valueIdToString

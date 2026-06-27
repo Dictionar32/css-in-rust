@@ -3160,6 +3160,31 @@ export interface TwMergeOptions {
  */
 export declare function twMergeRaw(classLists: Array<string>): string
 
+/** Options untuk tw_merge_raw_with_options */
+export interface TwMergeRawOptions {
+  /**
+   * Custom Tailwind prefix (e.g. "tw-") — classes dengan prefix ini
+   * di-strip sebelum conflict group lookup, sehingga "tw-bg-red tw-bg-blue"
+   * menghasilkan "tw-bg-blue" (konflik terdeteksi dengan benar).
+   */
+  prefix?: string
+  /** Separator output (default: " ") */
+  separator?: string
+}
+
+/**
+ * tw_merge_raw dengan support custom Tailwind prefix.
+ *
+ * ```ts
+ * twMergeRawWithOptions(["tw-p-4", "tw-p-8"], { prefix: "tw-" })
+ * // → "tw-p-8"  (conflict terdeteksi setelah strip prefix)
+ *
+ * twMergeRawWithOptions(["p-4", "p-8"], {})
+ * // → "p-8"     (tanpa prefix, sama seperti twMergeRaw)
+ * ```
+ */
+export declare function twMergeRawWithOptions(classLists: Array<string>, opts: TwMergeRawOptions): string
+
 /**
  * tw_merge dengan custom separator.
  *

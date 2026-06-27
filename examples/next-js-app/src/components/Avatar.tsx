@@ -1,15 +1,15 @@
 import React from "react"
-import { tw, server, cn } from "tailwind-styled-v4"
+import { tw, cn } from "tailwind-styled-v4"
 
 /**
  * Avatar — object config API
  *
- * server.div({ base, variants, ... }) — RSC-only, compiler enforced.
+ * tw.div({ base, variants, ... }) — works in both RSC and client context.
  * Deterministic color dari name hash — zero runtime randomness.
  */
 
-// -- Avatar root — server component, size via variants -------------------------
-const AvatarRoot = server.div({
+// -- Avatar root — size via variants ------------------------------------------
+const AvatarRoot = tw.div({
   base: `
     relative inline-flex shrink-0 items-center justify-center
     rounded-full font-semibold select-none overflow-hidden
@@ -89,7 +89,7 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
 // -- AvatarGroup ---------------------------------------------------------------
 const GroupRoot = tw.div({ base: "flex -space-x-2" })
 
-const Overflow = server.div({
+const Overflow = tw.div({
   base: `
     relative inline-flex shrink-0 items-center justify-center
     rounded-full bg-gray-200 text-gray-600 font-semibold ring-2 ring-white text-xs
