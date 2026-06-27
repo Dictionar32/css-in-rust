@@ -28,9 +28,7 @@ export default function RootLayout({
       <head>
         {/*
          * TwCssInjector — inject route-specific CSS inline ke <head>.
-         * Baca dari manifest yang di-emit withTailwindStyled() saat build.
-         * Hasilnya: critical CSS langsung di HTML, tidak ada extra <link> request.
-         * Opsional — app tetap jalan tanpa ini via globals.css.
+         * Server Component async — harus import dari runtime-css (server-safe entry).
          */}
         <TwCssInjector />
       </head>
