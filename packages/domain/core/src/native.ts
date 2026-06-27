@@ -190,11 +190,27 @@ interface NativeBinding {
 let nativeBinding: NativeBinding | null = null
 let bindingLoadAttempted = false
 
-const getBinding = (): NativeBinding => {
+/**
+ * Returns the loaded native binding, or `null` when none is available.
+ *
+ * In the browser this is the EXPECTED case, not an error: a `.node` N-API
+ * addon is platform-specific Node.js machine code and can never be loaded
+ * by a browser JS engine — no amount of fixing the Rust side changes that.
+ * Callers (e.g. merge.ts's twMerge()) are expected to handle `null` and
+ * fall back to a pure-TS implementation for the handful of functions that
+ * genuinely need to run client-side.
+ *
+ * Outside the browser (Node.js / build time / SSR), native IS expected to
+ * be available — if it still fails to load there, that's a real
+ * misconfiguration, so this keeps throwing in that case (callers already
+ * rely on this: every call site does `binding?.xxx` + its own descriptive
+ * "Native binding 'xxx' is required but not available" error).
+ */
+const getBinding = (): NativeBinding | null => {
   if (isBrowser) {
-    throw new Error(NATIVE_UNAVAILABLE_MESSAGE + "\n\nNative bindings are not available in browser. Use the compiled CSS output instead.")
+    return null
   }
-  
+
   if (nativeBinding) return nativeBinding
 
   if (bindingLoadAttempted) {
@@ -204,14 +220,12 @@ const getBinding = (): NativeBinding => {
   bindingLoadAttempted = true
 
   try {
-    const runtimeDir = isBrowser ? "" : dirname(
+    const runtimeDir = dirname(
       typeof __filename !== "undefined"
         ? __filename
         : (typeof import.meta !== "undefined" && import.meta.url ? fileURLToPath(import.meta.url) : process.cwd())
     )
-    const result = isBrowser
-      ? { path: null, source: "not-found", platform: "browser", tried: [] }
-      : resolveNativeBinary(runtimeDir)
+    const result = resolveNativeBinary(runtimeDir)
 
     if (result.path && result.path.endsWith(".node")) {
       const mod = _loadNative(result.path) as NativeBinding

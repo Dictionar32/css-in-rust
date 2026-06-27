@@ -4,32 +4,40 @@
  * Native Rust binding (twMergeRaw) is used when available (Node.js, build
  * time, SSR) for maximum performance/parity with the rest of the pipeline.
  *
- * FIX (Bug C — "Uncaught Error: Native binding 'twMergeRaw' is required but
- * not available." crashing in the browser):
+ * Browser fallback (Bug C — "Uncaught Error: Native binding 'twMergeRaw' is
+ * required but not available." crashing in the browser):
  *
- * This function used to THROW whenever the native binding was missing,
- * documented as "Pure Node.js — requires native Rust binding". That's true
- * of the binding itself, but NOT of how this function is actually used:
  * createComponent.ts calls twMerge() unconditionally inside the React render
  * function for EVERY tw.* component, on EVERY render — including the very
  * first client-side render of any component that runs/re-renders in the
  * browser. A `.node` native addon can never load inside a browser JS engine,
- * so throwing here means ANY tw.* component crashes the instant it has to
- * render client-side (mount, hydration, re-render, .extend() at module
- * scope, etc.) — this isn't a rare edge case, it's unconditional.
+ * so this isn't a rare edge case, it's unconditional: any tw.* component
+ * rendering client-side needs a working fallback path.
  *
- * Fallback: pure-JS conflict-aware merge via `tailwind-merge` — the same
- * reference implementation `twMergeRaw`/`twMerge` in native.ts was explicitly
- * built to port (see comment there: "conflict-aware Tailwind class merger —
- * port of tailwind-merge"). Using the canonical library itself as the
- * fallback (rather than a hand-rolled approximation) keeps merge semantics
- * consistent with the Rust path instead of risking subtly-wrong CSS output.
+ * getNativeBinding() returns `null` (not a throw) when running in the
+ * browser — see native.ts. When that happens we use mergeFallback.ts, a
+ * hand-written pure-TS port of the SAME algorithm as `tw_merge_raw` in
+ * tw_merge.rs (conflict_group / split_variants / merge_class_string),
+ * instead of the third-party `tailwind-merge` package. This keeps merge
+ * behavior defined by one algorithm — ours — rather than risking the
+ * browser and the server silently disagreeing on merged className output
+ * because two different implementations drifted apart. The cost: when
+ * tw_merge.rs's conflict_group() changes, mergeFallback.ts must be updated
+ * by hand to match (see comments there).
  */
 
 import { getNativeBinding } from "./native"
+import { twMergeRawJs } from "./mergeFallback"
 import type { ThemeConfig } from "./themeReader"
 
 export interface MergeOptions {
+  /**
+   * NOTE: not currently applied — matches the native path, which calls
+   * `native.twMergeRaw(inputs)` without ever forwarding a prefix either.
+   * Kept on the type for API stability; wire it through conflictGroup()
+   * in mergeFallback.ts (and tw_merge_raw on the Rust side) together if a
+   * custom Tailwind prefix needs to be supported correctly end-to-end.
+   */
   prefix?: string
   separator?: string
   theme?: ThemeConfig
@@ -42,34 +50,10 @@ function warnFallbackOnce(): void {
   if (typeof console !== "undefined") {
     console.warn(
       "[tailwind-styled-v4] Native binding 'twMergeRaw' tidak tersedia " +
-        "(normal di browser) — pakai pure-JS fallback (tailwind-merge). " +
+        "(normal di browser) — pakai pure-TS port dari algoritma Rust-nya. " +
         "Hasil className tetap benar; ini cuma informasi, bukan error."
     )
   }
-}
-
-// Lazy + cached per-prefix JS fallback instance — extendTailwindMerge()
-// builds a config object that's relatively expensive to construct, jadi
-// jangan dipanggil ulang setiap render.
-const jsFallbackCache = new Map<string, (...args: string[]) => string>()
-
-function getJsFallback(prefix?: string): (...args: string[]) => string {
-  const key = prefix ?? ""
-  const cached = jsFallbackCache.get(key)
-  if (cached) return cached
-
-  // require() dipakai (bukan static import) supaya bundler browser-target
-  // tetap tree-shake "tailwind-merge" kalau native binding SELALU tersedia
-  // di environment itu (mis. custom Node-only consumer) — tapi untuk build
-  // browser package ini, dependency-nya memang dibundle langsung (lihat
-  // tsup.config.ts: noExternal tidak include "tailwind-merge", jadi default
-  // behavior tsup adalah bundle dependency biasa kecuali di-external-kan).
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { twMerge: twMergeJs, extendTailwindMerge } = require("tailwind-merge") as typeof import("tailwind-merge")
-
-  const fn = prefix ? extendTailwindMerge({ prefix }) : twMergeJs
-  jsFallbackCache.set(key, fn)
-  return fn
 }
 
 export function createTwMerge(options: MergeOptions = {}) {
@@ -87,7 +71,7 @@ export function createTwMerge(options: MergeOptions = {}) {
     }
 
     warnFallbackOnce()
-    return getJsFallback(options.prefix)(...inputs)
+    return twMergeRawJs(inputs)
   }
 }
 
