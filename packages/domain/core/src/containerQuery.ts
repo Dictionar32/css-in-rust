@@ -74,16 +74,28 @@ if (typeof window !== "undefined") {
 // Sama dengan _hashStateCache di stateEngine.ts.
 const _hashContainerCache = new Map<string, string>()
 
+/**
+ * Pure-TS FNV-1a 32-bit hash — mirrors Rust fnv implementation.
+ * Used as browser fallback for hashContent("fnv", 6).
+ */
+function _fnvHash6(s: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = (Math.imul(h, 0x01000193) >>> 0)
+  }
+  return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6)
+}
+
 function hashContainer(tag: string, container: ContainerConfig, name?: string): string {
   const sortedKey = tag + (name ?? "") + JSON.stringify(Object.entries(container).sort())
   const cached = _hashContainerCache.get(sortedKey)
   if (cached) return cached
 
   const native = getNativeBinding()
-  if (!native?.hashContent) {
-    throw new Error("FATAL: Native binding 'hashContent' is required but not available.")
-  }
-  const id = `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
+  const id = native?.hashContent
+    ? `tw-cq-${native.hashContent(sortedKey, "fnv", 6)}`
+    : `tw-cq-${_fnvHash6(sortedKey)}`   // browser fallback
 
   _hashContainerCache.set(sortedKey, id)
   return id
@@ -100,7 +112,10 @@ function hashContainer(tag: string, container: ContainerConfig, name?: string): 
 function layoutClassesToCss(classes: string): string {
   const native = getNativeBinding()
   if (!native?.layoutClassesToCss) {
-    throw new Error("FATAL: Native binding 'layoutClassesToCss' is required but not available.")
+    // Browser fallback: container CSS is injected from build-time static file.
+    // Runtime generation is not needed — return empty so buildContainerRules
+    // produces no rules (injectContainerStyles becomes a no-op).
+    return ""
   }
   return native.layoutClassesToCss(classes)
 }

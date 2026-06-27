@@ -37,22 +37,39 @@ static RE_OBJ_CONFIG_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"\btw\.(\w+)\
 static RE_OBJ_COMP_NAME: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)(?:const|let|var)\s+(\w+)\s*=\s*tw\.\w+\s*\(").unwrap());
 // Chain yang nempel LANGSUNG di backtick penutup template literal, sebelum nama
-// variabel mana pun ada — pola: tw.nav`...`.withSub<"a"|"b">() atau
-// tw.div`...`.extend({...}). Beda dari is_chained di STEP 3 (yang nyari nama
-// variabel di tempat lain di file) karena di sini belum ada nama variabel
-// sama sekali — chain-nya terjadi sebelum hasil tagged-template diassign.
-static RE_IMMEDIATE_CHAIN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*\.\s*(?:extend|withVariants|animate|withSub)\s*[(<]").unwrap()
+// RE_CHAIN_SKIP: chain methods yang butuh full createComponent runtime —
+// TIDAK bisa di-static-replace karena forwardRef gak punya method ini.
+// .extend()       → butuh base + config + twMerge
+// .withVariants() → butuh config object
+// .animate()      → async, butuh AnimateOptions
+static RE_CHAIN_SKIP: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^\s*\.\s*(?:extend|withVariants|animate)\s*[(<]").unwrap()
 });
 
-/// Cek apakah teks tepat setelah posisi `end_pos` adalah chain langsung ke
-/// API runtime. Kalau ya, template literal ini TIDAK BOLEH di-static-replace
-/// jadi forwardRef polos — forwardRef gak punya method .extend/.withSub dll,
-/// jadi chain-nya bakal jadi TypeError runtime padahal source-nya valid.
-fn is_chained_immediately_after(source: &str, end_pos: usize) -> bool {
+// RE_CHAIN_WITH_SUB: .withSub<...>() — runtime-nya pure no-op (() => component),
+// jadi AMAN di-static-replace. Compiler tetap emit `.withSub()` call di output
+// (tanpa generic args — Rust gak perlu parse TS generics) karena runtime-nya
+// hanya return component itu sendiri, dan kita attach method itu ke forwardRef.
+static RE_CHAIN_WITH_SUB: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"^\s*\.\s*withSub\s*[(<]").unwrap()
+});
+
+/// Cek apakah chain setelah `end_pos` adalah .extend/.withVariants/.animate —
+/// method yang butuh full createComponent runtime, sehingga static replacement
+/// harus di-skip sepenuhnya.
+fn must_skip_chain(source: &str, end_pos: usize) -> bool {
     source
         .get(end_pos..)
-        .map(|rest| RE_IMMEDIATE_CHAIN.is_match(rest))
+        .map(|rest| RE_CHAIN_SKIP.is_match(rest))
+        .unwrap_or(false)
+}
+
+/// Cek apakah chain setelah `end_pos` adalah .withSub<...>() — no-op runtime,
+/// static replacement AMAN tapi perlu emit withSub() call di output.
+fn has_with_sub_chain(source: &str, end_pos: usize) -> bool {
+    source
+        .get(end_pos..)
+        .map(|rest| RE_CHAIN_WITH_SUB.is_match(rest))
         .unwrap_or(false)
 }
 /// Matches key: `...`, key: "...", or key: '...' — captures the string value in group 2/3/4.
@@ -748,16 +765,18 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                     let full_match = format!("tw.{}`{}`", tmpl.tag, tmpl.content);
 
                     // Guard: skip static replacement kalau ada .extend/.withVariants/
-                    // .animate/.withSub langsung nempel di backtick penutup — lihat
-                    // is_chained_immediately_after di atas. Classes udah dikumpulkan
-                    // di atas, jadi safelist CSS tetap benar walau JS rewrite di-skip.
+                    // .animate langsung nempel di backtick penutup — method2 ini butuh
+                    // full createComponent runtime, forwardRef polos gak punya mereka.
+                    // .withSub<>() TIDAK di-skip — runtime-nya no-op (() => component),
+                    // jadi aman di-static-replace + emit withSub() call di output.
                     let match_end = snap[tmpl.position..]
                         .find(&full_match)
                         .map(|off| tmpl.position + off + full_match.len())
                         .unwrap_or(tmpl.position + full_match.len());
-                    if is_chained_immediately_after(&snap, match_end) {
+                    if must_skip_chain(&snap, match_end) {
                         continue;
                     }
+                    let with_sub = has_with_sub_chain(&snap, match_end);
 
                     let hash = short_hash(&format!("{}_{}", comp_name, base_classes));
                     let base_scoped = format!("{}_{}", comp_name, hash);
@@ -766,7 +785,7 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
 
                     let fn_name = format!("_Tw_{}", comp_name);
                     let replacement = if sub_comps.is_empty() {
-                        render_static_component(&tmpl.tag, &base_classes, &fn_name)
+                        render_static_component(&tmpl.tag, &base_classes, &fn_name, with_sub)
                     } else {
                         render_compound_component(
                             &tmpl.tag,
@@ -774,6 +793,7 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                             &fn_name,
                             &sub_comps,
                             &comp_name,
+                            with_sub,
                         )
                     };
 
@@ -821,16 +841,14 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
                     all_classes.extend(normalise_classes(&sub.classes));
                 }
 
-                // Guard: skip static replacement (bukan class collection di atas) kalau
-                // ada .extend/.withVariants/.animate/.withSub langsung nempel di backtick
-                // penutup. Tanpa ini, `tw.nav\`...\`.withSub<>()` jadi
-                // React.forwardRef(...).withSub() → TypeError runtime karena forwardRef
-                // gak punya method itu. Classes udah dikumpulkan di atas, jadi safelist
-                // CSS tetap benar walau JS rewrite di-skip — sama pola dengan is_chained
-                // di STEP 3.
-                if is_chained_immediately_after(&snap, match_end) {
+                // Guard: skip hanya untuk .extend/.withVariants/.animate — butuh full
+                // createComponent runtime. .withSub<>() tetap di-static-replace karena
+                // runtime-nya no-op (() => component); compiler emit withSub() call di
+                // output dan attach method ke forwardRef result via render helper.
+                if must_skip_chain(&snap, match_end) {
                     continue;
                 }
+                let with_sub = has_with_sub_chain(&snap, match_end);
 
                 let hash = short_hash(&format!("{}_{}", comp_name, base_classes));
                 let base_scoped = format!("{}_{}", comp_name, hash);
@@ -840,9 +858,9 @@ pub fn transform_source(source: String, opts: Option<HashMap<String, String>>) -
 
                 let fn_name = format!("_Tw_{}", comp_name);
                 let replacement = if sub_comps.is_empty() {
-                    render_static_component(&tag, &base_classes, &fn_name)
+                    render_static_component(&tag, &base_classes, &fn_name, with_sub)
                 } else {
-                    render_compound_component(&tag, &base_classes, &fn_name, &sub_comps, &comp_name)
+                    render_compound_component(&tag, &base_classes, &fn_name, &sub_comps, &comp_name, with_sub)
                 };
 
                 replacements.push((full_match, replacement));

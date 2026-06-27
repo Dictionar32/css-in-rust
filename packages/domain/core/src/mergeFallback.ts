@@ -67,118 +67,122 @@ const BORDER_SIDE_PREFIXES = ["t-", "r-", "b-", "l-", "x-", "y-", "s-", "e-"]
 const BORDER_STYLE_VALUES = new Set(["solid", "dashed", "dotted", "double", "hidden", "none"])
 
 /**
- * Conflict group for a base Tailwind class (variant prefix already stripped).
- * `null` = class never conflicts with anything (e.g. `sr-only`).
+ * Conflict group untuk base Tailwind class (variant prefix sudah di-strip).
+ * Jika `prefix` diberikan (e.g. "tw-"), strip dari `base` sebelum lookup.
+ * `null` = class tidak pernah konflik (e.g. `sr-only`).
  *
- * Mirrors `conflict_group()` in tw_merge.rs — keep both in sync.
+ * Mirrors `conflict_group_with_prefix()` in tw_merge.rs — keep both in sync.
  */
-export function conflictGroup(base: string): string | null {
+export function conflictGroup(base: string, prefix = ""): string | null {
+  // Strip custom Tailwind prefix sebelum matching conflict groups.
+  // "tw-bg-red-500" dengan prefix "tw-" → base menjadi "bg-red-500"
+  const b = prefix && base.startsWith(prefix) ? base.slice(prefix.length) : base
   // Arbitrary value — everything before the first `[` is the group.
-  const bracket = base.indexOf("[")
+  const bracket = b.indexOf("[")
   if (bracket !== -1) {
-    const prefix = base.slice(0, bracket).replace(/-+$/, "")
-    return prefix.length > 0 ? prefix : "arbitrary"
+    const grp = b.slice(0, bracket).replace(/-+$/, "")
+    return grp.length > 0 ? grp : "arbitrary"
   }
 
-  if (DISPLAY_VALUES.has(base)) return "display"
-  if (POSITION_VALUES.has(base)) return "position"
+  if (DISPLAY_VALUES.has(b)) return "display"
+  if (POSITION_VALUES.has(b)) return "position"
 
-  if (base.startsWith("overflow-x-")) return "overflow-x"
-  if (base.startsWith("overflow-y-")) return "overflow-y"
-  if (base.startsWith("overflow-")) return "overflow"
+  if (b.startsWith("overflow-x-")) return "overflow-x"
+  if (b.startsWith("overflow-y-")) return "overflow-y"
+  if (b.startsWith("overflow-")) return "overflow"
 
-  if (base.startsWith("flex-")) return "flex"
-  if (base.startsWith("grid-cols-")) return "grid-cols"
-  if (base.startsWith("grid-rows-")) return "grid-rows"
-  if (base.startsWith("grid-flow-")) return "grid-flow"
-  if (base.startsWith("col-")) return "col"
-  if (base.startsWith("row-")) return "row"
-  if (base === "grow" || base.startsWith("grow-")) return "grow"
-  if (base === "shrink" || base.startsWith("shrink-")) return "shrink"
+  if (b.startsWith("flex-")) return "flex"
+  if (b.startsWith("grid-cols-")) return "grid-cols"
+  if (b.startsWith("grid-rows-")) return "grid-rows"
+  if (b.startsWith("grid-flow-")) return "grid-flow"
+  if (b.startsWith("col-")) return "col"
+  if (b.startsWith("row-")) return "row"
+  if (b === "grow" || b.startsWith("grow-")) return "grow"
+  if (b === "shrink" || b.startsWith("shrink-")) return "shrink"
 
-  if (base.startsWith("gap-x-")) return "gap-x"
-  if (base.startsWith("gap-y-")) return "gap-y"
-  if (base.startsWith("gap-")) return "gap"
+  if (b.startsWith("gap-x-")) return "gap-x"
+  if (b.startsWith("gap-y-")) return "gap-y"
+  if (b.startsWith("gap-")) return "gap"
 
-  if (base.startsWith("justify-items-")) return "justify-items"
-  if (base.startsWith("justify-self-")) return "justify-self"
-  if (base.startsWith("justify-")) return "justify"
-  if (base.startsWith("items-")) return "items"
-  if (base.startsWith("self-")) return "self"
-  if (base.startsWith("place-content-")) return "place-content"
-  if (base.startsWith("place-items-")) return "place-items"
-  if (base.startsWith("place-self-")) return "place-self"
-  if (base.startsWith("content-")) return "content"
+  if (b.startsWith("justify-items-")) return "justify-items"
+  if (b.startsWith("justify-self-")) return "justify-self"
+  if (b.startsWith("justify-")) return "justify"
+  if (b.startsWith("items-")) return "items"
+  if (b.startsWith("self-")) return "self"
+  if (b.startsWith("place-content-")) return "place-content"
+  if (b.startsWith("place-items-")) return "place-items"
+  if (b.startsWith("place-self-")) return "place-self"
+  if (b.startsWith("content-")) return "content"
 
-  if (base.startsWith("px-")) return "px"
-  if (base.startsWith("py-")) return "py"
-  if (base.startsWith("pt-")) return "pt"
-  if (base.startsWith("pr-")) return "pr"
-  if (base.startsWith("pb-")) return "pb"
-  if (base.startsWith("pl-")) return "pl"
-  if (base.startsWith("ps-")) return "ps"
-  if (base.startsWith("pe-")) return "pe"
-  if (base.startsWith("p-")) return "p"
+  if (b.startsWith("px-")) return "px"
+  if (b.startsWith("py-")) return "py"
+  if (b.startsWith("pt-")) return "pt"
+  if (b.startsWith("pr-")) return "pr"
+  if (b.startsWith("pb-")) return "pb"
+  if (b.startsWith("pl-")) return "pl"
+  if (b.startsWith("ps-")) return "ps"
+  if (b.startsWith("pe-")) return "pe"
+  if (b.startsWith("p-")) return "p"
 
-  if (base.startsWith("mx-")) return "mx"
-  if (base.startsWith("my-")) return "my"
-  if (base.startsWith("mt-")) return "mt"
-  if (base.startsWith("mr-")) return "mr"
-  if (base.startsWith("mb-")) return "mb"
-  if (base.startsWith("ml-")) return "ml"
-  if (base.startsWith("ms-")) return "ms"
-  if (base.startsWith("me-")) return "me"
-  if (base === "-m" || base.startsWith("m-") || base.startsWith("-m-")) return "m"
+  if (b.startsWith("mx-")) return "mx"
+  if (b.startsWith("my-")) return "my"
+  if (b.startsWith("mt-")) return "mt"
+  if (b.startsWith("mr-")) return "mr"
+  if (b.startsWith("mb-")) return "mb"
+  if (b.startsWith("ml-")) return "ml"
+  if (b.startsWith("ms-")) return "ms"
+  if (b.startsWith("me-")) return "me"
+  if (b === "-m" || b.startsWith("m-") || b.startsWith("-m-")) return "m"
 
-  if (base.startsWith("space-x-")) return "space-x"
-  if (base.startsWith("space-y-")) return "space-y"
+  if (b.startsWith("space-x-")) return "space-x"
+  if (b.startsWith("space-y-")) return "space-y"
 
-  if (base.startsWith("size-")) return "size"
-  if (base.startsWith("min-w-")) return "min-w"
-  if (base.startsWith("max-w-")) return "max-w"
-  if (base.startsWith("w-")) return "w"
-  if (base.startsWith("min-h-")) return "min-h"
-  if (base.startsWith("max-h-")) return "max-h"
-  if (base.startsWith("h-")) return "h"
+  if (b.startsWith("size-")) return "size"
+  if (b.startsWith("min-w-")) return "min-w"
+  if (b.startsWith("max-w-")) return "max-w"
+  if (b.startsWith("w-")) return "w"
+  if (b.startsWith("min-h-")) return "min-h"
+  if (b.startsWith("max-h-")) return "max-h"
+  if (b.startsWith("h-")) return "h"
 
-  if (base.startsWith("inset-x-")) return "inset-x"
-  if (base.startsWith("inset-y-")) return "inset-y"
-  if (base.startsWith("inset-")) return "inset"
-  if (base.startsWith("top-")) return "top"
-  if (base.startsWith("right-") || base.startsWith("end-")) return "right"
-  if (base.startsWith("bottom-")) return "bottom"
-  if (base.startsWith("left-") || base.startsWith("start-")) return "left"
+  if (b.startsWith("inset-x-")) return "inset-x"
+  if (b.startsWith("inset-y-")) return "inset-y"
+  if (b.startsWith("inset-")) return "inset"
+  if (b.startsWith("top-")) return "top"
+  if (b.startsWith("right-") || b.startsWith("end-")) return "right"
+  if (b.startsWith("bottom-")) return "bottom"
+  if (b.startsWith("left-") || b.startsWith("start-")) return "left"
 
-  if (base.startsWith("z-")) return "z"
-  if (base.startsWith("opacity-")) return "opacity"
+  if (b.startsWith("z-")) return "z"
+  if (b.startsWith("opacity-")) return "opacity"
 
-  if (base.startsWith("bg-")) {
-    if (base.startsWith("bg-opacity-")) return "bg-opacity"
+  if (b.startsWith("bg-")) {
+    if (b.startsWith("bg-opacity-")) return "bg-opacity"
     return "bg"
   }
-  if (base.startsWith("from-")) return "from"
-  if (base.startsWith("via-")) return "via"
-  if (base.startsWith("to-")) return "to"
+  if (b.startsWith("from-")) return "from"
+  if (b.startsWith("via-")) return "via"
+  if (b.startsWith("to-")) return "to"
 
-  if (base.startsWith("text-")) {
-    const suffix = base.slice("text-".length)
+  if (b.startsWith("text-")) {
+    const suffix = b.slice("text-".length)
     if (isTextSize(suffix)) return "text-size"
     if (suffix.startsWith("opacity-")) return "text-opacity"
     if (TEXT_ALIGN_VALUES.has(suffix)) return "text-align"
     return "text-color"
   }
 
-  if (base.startsWith("font-")) {
-    const suffix = base.slice("font-".length)
+  if (b.startsWith("font-")) {
+    const suffix = b.slice("font-".length)
     if (FONT_WEIGHT_NAMES.has(suffix) || isAsciiDigits(suffix)) return "font-weight"
     return "font-family"
   }
 
-  if (base.startsWith("leading-")) return "leading"
-  if (base.startsWith("tracking-")) return "tracking"
+  if (b.startsWith("leading-")) return "leading"
+  if (b.startsWith("tracking-")) return "tracking"
 
-  if (base.startsWith("border-")) {
-    const suffix = base.slice("border-".length)
+  if (b.startsWith("border-")) {
+    const suffix = b.slice("border-".length)
     const sidePrefix = BORDER_SIDE_PREFIXES.find((p) => suffix.startsWith(p))
     if (sidePrefix) {
       const side = suffix.slice(0, 1)
@@ -192,31 +196,31 @@ export function conflictGroup(base: string): string | null {
     if (BORDER_STYLE_VALUES.has(suffix)) return "border-style"
     return "border-color"
   }
-  if (base === "border") return "border-width"
+  if (b === "border") return "border-width"
 
-  if (base.startsWith("outline-")) return "outline"
-  if (base === "outline") return "outline"
+  if (b.startsWith("outline-")) return "outline"
+  if (b === "outline") return "outline"
 
   if (
-    base.startsWith("rounded-t") ||
-    base.startsWith("rounded-r") ||
-    base.startsWith("rounded-b") ||
-    base.startsWith("rounded-l") ||
-    base.startsWith("rounded-s") ||
-    base.startsWith("rounded-e")
+    b.startsWith("rounded-t") ||
+    b.startsWith("rounded-r") ||
+    b.startsWith("rounded-b") ||
+    b.startsWith("rounded-l") ||
+    b.startsWith("rounded-s") ||
+    b.startsWith("rounded-e")
   ) {
-    const firstChar = base.slice("rounded-".length).charAt(0) || "x"
+    const firstChar = b.slice("rounded-".length).charAt(0) || "x"
     return `rounded-${firstChar}`
   }
-  if (base === "rounded" || base.startsWith("rounded-")) return "rounded"
+  if (b === "rounded" || b.startsWith("rounded-")) return "rounded"
 
-  if (base === "shadow" || base.startsWith("shadow-")) return "shadow"
+  if (b === "shadow" || b.startsWith("shadow-")) return "shadow"
 
   // See file header re: `ring-offset-*` — only one group is reachable.
-  if (base.startsWith("ring-offset-")) return "ring-offset"
-  if (base === "ring") return "ring-width"
-  if (base.startsWith("ring-")) {
-    const rest = base.slice("ring-".length)
+  if (b.startsWith("ring-offset-")) return "ring-offset"
+  if (b === "ring") return "ring-width"
+  if (b.startsWith("ring-")) {
+    const rest = b.slice("ring-".length)
     const isWidth =
       rest === "0" || rest === "1" || rest === "2" || rest === "4" || rest === "8" ||
       /^-?\d+(\.\d+)?$/.test(rest) ||
@@ -226,58 +230,58 @@ export function conflictGroup(base: string): string | null {
     return "ring-color"
   }
 
-  if (base.startsWith("rotate-")) return "rotate"
-  if (base.startsWith("scale-x-")) return "scale-x"
-  if (base.startsWith("scale-y-")) return "scale-y"
-  if (base.startsWith("scale-")) return "scale"
-  if (base.startsWith("translate-x-")) return "translate-x"
-  if (base.startsWith("translate-y-")) return "translate-y"
-  if (base.startsWith("skew-x-")) return "skew-x"
-  if (base.startsWith("skew-y-")) return "skew-y"
+  if (b.startsWith("rotate-")) return "rotate"
+  if (b.startsWith("scale-x-")) return "scale-x"
+  if (b.startsWith("scale-y-")) return "scale-y"
+  if (b.startsWith("scale-")) return "scale"
+  if (b.startsWith("translate-x-")) return "translate-x"
+  if (b.startsWith("translate-y-")) return "translate-y"
+  if (b.startsWith("skew-x-")) return "skew-x"
+  if (b.startsWith("skew-y-")) return "skew-y"
 
-  if (base === "transition" || base.startsWith("transition-")) return "transition"
-  if (base.startsWith("duration-")) return "duration"
-  if (base.startsWith("ease-")) return "ease"
-  if (base.startsWith("delay-")) return "delay"
+  if (b === "transition" || b.startsWith("transition-")) return "transition"
+  if (b.startsWith("duration-")) return "duration"
+  if (b.startsWith("ease-")) return "ease"
+  if (b.startsWith("delay-")) return "delay"
 
-  if (base === "animate" || base.startsWith("animate-")) return "animate"
-  if (base.startsWith("cursor-")) return "cursor"
-  if (base.startsWith("pointer-events-")) return "pointer-events"
-  if (base.startsWith("select-")) return "select"
+  if (b === "animate" || b.startsWith("animate-")) return "animate"
+  if (b.startsWith("cursor-")) return "cursor"
+  if (b.startsWith("pointer-events-")) return "pointer-events"
+  if (b.startsWith("select-")) return "select"
 
-  if (base === "visible" || base === "invisible" || base === "collapse") return "visibility"
+  if (b === "visible" || b === "invisible" || b === "collapse") return "visibility"
 
-  if (base.startsWith("object-")) return "object"
-  if (base.startsWith("aspect-")) return "aspect"
-  if (base.startsWith("order-")) return "order"
-  if (base.startsWith("whitespace-")) return "whitespace"
-  if (base.startsWith("list-")) return "list"
-  if (base.startsWith("fill-")) return "fill"
-  if (base.startsWith("stroke-")) return "stroke"
+  if (b.startsWith("object-")) return "object"
+  if (b.startsWith("aspect-")) return "aspect"
+  if (b.startsWith("order-")) return "order"
+  if (b.startsWith("whitespace-")) return "whitespace"
+  if (b.startsWith("list-")) return "list"
+  if (b.startsWith("fill-")) return "fill"
+  if (b.startsWith("stroke-")) return "stroke"
 
-  if (base.startsWith("backdrop-")) {
-    const rest = base.slice("backdrop-".length)
+  if (b.startsWith("backdrop-")) {
+    const rest = b.slice("backdrop-".length)
     const seg = rest.split("-")[0] || "x"
     return `backdrop-${seg}`
   }
 
-  if (base.startsWith("scroll-")) return "scroll"
-  if (base.startsWith("snap-")) return "snap"
-  if (base.startsWith("touch-")) return "touch"
-  if (base.startsWith("decoration-")) return "text-decoration"
-  if (base.startsWith("caret-")) return "caret"
-  if (base.startsWith("accent-")) return "accent"
-  if (base.startsWith("appearance-")) return "appearance"
+  if (b.startsWith("scroll-")) return "scroll"
+  if (b.startsWith("snap-")) return "snap"
+  if (b.startsWith("touch-")) return "touch"
+  if (b.startsWith("decoration-")) return "text-decoration"
+  if (b.startsWith("caret-")) return "caret"
+  if (b.startsWith("accent-")) return "accent"
+  if (b.startsWith("appearance-")) return "appearance"
 
-  if (base === "isolate" || base === "isolation-auto") return "isolation"
+  if (b === "isolate" || b === "isolation-auto") return "isolation"
 
-  if (base.startsWith("mix-blend-")) return "mix-blend"
-  if (base.startsWith("bg-blend-")) return "bg-blend"
+  if (b.startsWith("mix-blend-")) return "mix-blend"
+  if (b.startsWith("bg-blend-")) return "bg-blend"
 
-  if (base.startsWith("float-")) return "float"
-  if (base.startsWith("clear-")) return "clear"
-  if (base.startsWith("break-")) return "break"
-  if (base.startsWith("columns-")) return "columns"
+  if (b.startsWith("float-")) return "float"
+  if (b.startsWith("clear-")) return "clear"
+  if (b.startsWith("break-")) return "break"
+  if (b.startsWith("columns-")) return "columns"
 
   // No known conflict group → class is always kept as-is.
   return null
@@ -307,9 +311,9 @@ export function splitVariants(klass: string): [variants: string, base: string] {
  * Conflict-aware merge of a single space-separated class string — last class
  * wins per `{variants}::{conflictGroup}` key, original order otherwise kept.
  *
- * Mirrors `merge_class_string()` in tw_merge.rs — keep both in sync.
+ * Mirrors `merge_class_string_with_prefix()` in tw_merge.rs — keep both in sync.
  */
-export function mergeClassStringJs(input: string): string {
+export function mergeClassStringJs(input: string, prefix = ""): string {
   const tokens = input.split(/\s+/).filter(Boolean)
   if (tokens.length === 0) return ""
   if (tokens.length === 1) return tokens[0]
@@ -319,7 +323,7 @@ export function mergeClassStringJs(input: string): string {
 
   for (const token of tokens) {
     const [variants, base] = splitVariants(token)
-    const group = conflictGroup(base)
+    const group = conflictGroup(base, prefix)
     if (group !== null) {
       const key = `${variants}::${group}`
       const prevIdx = groupOwner.get(key)
@@ -335,14 +339,14 @@ export function mergeClassStringJs(input: string): string {
 }
 
 /**
- * Browser-side equivalent of the native `twMergeRaw` NAPI export.
- * Mirrors `tw_merge_raw()` in tw_merge.rs — keep both in sync.
+ * Browser-side equivalent of the native `twMergeRaw` / `twMergeRawWithOptions` NAPI export.
+ * Mirrors `tw_merge_raw_with_options()` in tw_merge.rs — keep both in sync.
  */
-export function twMergeRawJs(classLists: string[]): string {
+export function twMergeRawJs(classLists: string[], prefix = ""): string {
   const joined = classLists
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
     .join(" ")
   if (joined.length === 0) return ""
-  return mergeClassStringJs(joined)
+  return mergeClassStringJs(joined, prefix)
 }
