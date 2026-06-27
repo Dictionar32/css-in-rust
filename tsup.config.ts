@@ -60,30 +60,36 @@ const nodeBuiltins = [
 // esbuild strips leading directives ("use client", "use server") ketika
 // directive ada di *imported* module, bukan di bundle entry point.
 //
-// Solusi: setelah tsup selesai tulis dist/, baca metafile-esm.json untuk tau
-// input → output mapping, lalu trace balik: kalau ada input file yang mulai
-// dengan directive → prepend directive ke output chunk tersebut.
+// Solusi: setelah tsup selesai tulis dist/, baca metafile-{format}.json untuk
+// tau input → output mapping, lalu trace balik: kalau ada input file yang
+// mulai dengan directive → prepend directive ke output chunk tersebut.
 //
 // Pattern ini zero-dependency, granular (hanya inject ke chunk yang relevan),
 // dan robust terhadap code splitting. Ref: github.com/azex-ai/ledger
+//
+// FIX (2026-06-27): function ini sebelumnya cuma baca "metafile-esm.json" lalu
+// filter output dengan `outPath.endsWith(".js")`. tsup nulis SATU metafile per
+// format — `metafile-${format}.json` (lihat tsup@8.5.0 dist/index.js:628) —
+// dan karena package.json di sini TIDAK punya "type":"module", output esm-nya
+// berekstensi ".mjs", bukan ".js". Jadi filter lama itu skip SEMUA entry di
+// metafile-esm.json (".mjs".endsWith(".js") === false), dan metafile-cjs.json
+// (yang outputnya emang ".js") tidak pernah ikut dibaca sama sekali — net
+// effect: directive TIDAK PERNAH ke-inject ke dist mana pun, walau source-nya
+// sudah benar punya "use client" (lihat known-issues.md 2026-06-27). Sekarang
+// loop kedua metafile, masing-masing dicocokkan ke ekstensi format-nya sendiri.
 // ─────────────────────────────────────────────────────────────────────────────
 const DIRECTIVE_RE = /^\s*["'](use (?:client|server))["']\s*[;\n]/
+
+const FORMAT_EXTENSIONS: Record<string, string> = {
+  esm: ".mjs",
+  cjs: ".js",
+}
 
 interface Metafile {
   outputs: Record<string, { inputs: Record<string, unknown> }>
 }
 
 async function preserveDirectives(distDir: string): Promise<void> {
-  const metaPath = path.resolve(distDir, "metafile-esm.json")
-
-  let meta: Metafile
-  try {
-    meta = JSON.parse(await readFile(metaPath, "utf8")) as Metafile
-  } catch {
-    // metafile tidak ada (misal hanya CJS build) — skip
-    return
-  }
-
   const cwd = process.cwd()
   const cache = new Map<string, string | null>()
 
@@ -100,29 +106,42 @@ async function preserveDirectives(distDir: string): Promise<void> {
     }
   }
 
-  await Promise.all(
-    Object.entries(meta.outputs).map(async ([outPath, output]) => {
-      // Hanya proses .js files (skip .map, .d.ts, dll)
-      if (!outPath.endsWith(".js")) return
+  for (const [format, ext] of Object.entries(FORMAT_EXTENSIONS)) {
+    const metaPath = path.resolve(distDir, `metafile-${format}.json`)
 
-      // Cari directive dari semua input files yang masuk ke chunk ini
-      let directive: string | null = null
-      for (const input of Object.keys(output.inputs)) {
-        directive = await directiveOf(input)
-        if (directive) break
-      }
-      if (!directive) return
+    let meta: Metafile
+    try {
+      meta = JSON.parse(await readFile(metaPath, "utf8")) as Metafile
+    } catch {
+      // metafile tidak ada (format ini tidak di-build di config ini) — skip
+      continue
+    }
 
-      // Prepend directive ke output file jika belum ada
-      const abs = path.resolve(cwd, outPath)
-      const text = await readFile(abs, "utf8")
-      if (text.startsWith(`"${directive}"`)) return
-      await writeFile(abs, `"${directive}";\n${text}`)
-    })
-  )
+    await Promise.all(
+      Object.entries(meta.outputs).map(async ([outPath, output]) => {
+        // Hanya proses output dengan ekstensi format ini (.mjs untuk esm,
+        // .js untuk cjs) — skip .map, .d.ts, dan output format lain.
+        if (!outPath.endsWith(ext)) return
 
-  // Hapus metafile — build artifact only, jangan ikut ke-publish
-  await rm(metaPath, { force: true })
+        // Cari directive dari semua input files yang masuk ke chunk ini
+        let directive: string | null = null
+        for (const input of Object.keys(output.inputs)) {
+          directive = await directiveOf(input)
+          if (directive) break
+        }
+        if (!directive) return
+
+        // Prepend directive ke output file jika belum ada
+        const abs = path.resolve(cwd, outPath)
+        const text = await readFile(abs, "utf8")
+        if (text.startsWith(`"${directive}"`)) return
+        await writeFile(abs, `"${directive}";\n${text}`)
+      })
+    )
+
+    // Hapus metafile — build artifact only, jangan ikut ke-publish
+    await rm(metaPath, { force: true })
+  }
 }
 
 const sharedConfig = {

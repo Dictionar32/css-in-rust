@@ -12,6 +12,7 @@
 import React from "react"
 import { createComponent } from "./createComponent"
 import { getNativeBinding } from "./native"
+import { parseTemplateJs } from "./parseTemplateFallback"
 import type {
   ComponentConfig,
   TwComponentFactory,
@@ -41,9 +42,29 @@ interface ParsedTemplate {
 // Cache untuk parseTemplate — raw template string tidak berubah antar hot reloads
 const _parsedTemplateCache = new Map<string, ParsedTemplate>()
 
+let warnedParseTemplateFallback = false
+function warnParseTemplateFallbackOnce(): void {
+  if (warnedParseTemplateFallback) return
+  warnedParseTemplateFallback = true
+  if (typeof console !== "undefined") {
+    console.warn(
+      "[tailwind-styled-v4] Native binding 'parseTemplate' tidak tersedia " +
+        "(normal di browser, untuk komponen yang di-chain dengan .extend/" +
+        ".withVariants/.animate/.withSub) — pakai pure-TS port dari algoritma " +
+        "Rust-nya. Hasil tetap benar; ini cuma informasi, bukan error."
+    )
+  }
+}
+
 /**
- * parseTemplate — native-first, cache-first.
- * Native-only: delegates ke Rust `parse_template`.
+ * parseTemplate — native-first, cache-first, pure-TS fallback di browser.
+ *
+ * Bug D fix: sebelumnya fungsi ini THROW FATAL tanpa fallback kalau native
+ * binding tidak ada (lihat parseTemplateFallback.ts untuk detail lengkap
+ * kenapa ini wajib — ringkasnya: template literal yang di-chain dengan
+ * .extend/.withVariants/.animate/.withSub SENGAJA tidak di-static-replace
+ * oleh compiler Rust, jadi selalu butuh parseTemplate() runtime, termasuk di
+ * render pertama di browser, dimana native binding TIDAK PERNAH ada).
  */
 function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
   const raw = strings.raw.reduce((acc, str, i) => {
@@ -56,13 +77,16 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
   if (cached) return cached
 
   const binding = getNativeBinding()
-  if (!binding?.parseTemplate) {
-    throw new Error("FATAL: Native binding 'parseTemplate' is required but not available.")
+  let result: ParsedTemplate
+  if (binding?.parseTemplate) {
+    const r = binding.parseTemplate(raw)
+    const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
+    result = { base: r.base, subs, hasSubs: r.hasSubs }
+  } else {
+    warnParseTemplateFallbackOnce()
+    result = parseTemplateJs(raw)
   }
 
-  const r = binding.parseTemplate(raw)
-  const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
-  const result: ParsedTemplate = { base: r.base, subs, hasSubs: r.hasSubs }
   _parsedTemplateCache.set(raw, result)
   return result
 }

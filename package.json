@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.1.11",
+  "version": "5.1.12",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
