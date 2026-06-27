@@ -1,6 +1,6 @@
 {
   "name": "tailwind-styled-v4",
-  "version": "5.1.15",
+  "version": "5.1.16",
   "packageManager": "npm@11.11.1",
   "engines": {
     "node": ">=20"
@@ -57,9 +57,9 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "browser": "./dist/index.browser.mjs",
       "react-server": "./dist/index.mjs",
       "node": "./dist/index.mjs",
-      "browser": "./dist/index.browser.mjs",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
@@ -116,6 +116,8 @@
     "./runtime-css": {
       "types": "./dist/runtime-css.d.ts",
       "browser": "./dist/runtime-css.mjs",
+      "react-server": "./dist/runtime-css.mjs",
+      "node": "./dist/runtime-css.mjs",
       "import": "./dist/runtime-css.mjs",
       "require": "./dist/runtime-css.js"
     },

@@ -34,6 +34,7 @@ interface LiveTokenEngineRuntime {
   applyTokenSet(tokens: TokenMap): void
   generateTokenCssString(): string
   subscribe(fn: TokenSubscriber): () => void
+  markHydrated(): void
 }
 
 const TOKEN_ENGINE_KEY = "__TW_TOKEN_ENGINE__"
@@ -58,11 +59,18 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
   const state = {
     currentTokens: {} as TokenMap,
     styleEl: null as HTMLStyleElement | null,
+    // Belum boleh nyentuh live DOM sampai komponen pertama selesai mount.
+    // Ini yang nyegah hydration mismatch: tanpa flag ini, liveToken() yang
+    // dipanggil di module top-level akan langsung document.documentElement
+    // .style.setProperty(...) saat bundle client di-evaluasi — JAUH sebelum
+    // React selesai hydrate — sehingga <html> versi live DOM beda dengan
+    // <html> yang di-render server (yang gak pernah nyentuh `document`).
+    hydrated: false,
   }
   const subscribers = new Set<TokenSubscriber>()
 
   const syncStyleEl = (): void => {
-    if (typeof document === "undefined") return
+    if (!state.hydrated || typeof document === "undefined") return
 
     if (!state.styleEl) {
       const styleEl = document.createElement("style")
@@ -88,7 +96,7 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
 
   const setToken = (name: string, value: string): void => {
     state.currentTokens = { ...state.currentTokens, [name]: value }
-    if (typeof document !== "undefined") {
+    if (state.hydrated && typeof document !== "undefined") {
       document.documentElement.style.setProperty(tokenVar(name), value)
     }
     syncStyleEl()
@@ -97,7 +105,7 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
 
   const setTokens = (tokens: TokenMap): void => {
     state.currentTokens = { ...state.currentTokens, ...tokens }
-    if (typeof document !== "undefined") {
+    if (state.hydrated && typeof document !== "undefined") {
       const root = document.documentElement
       for (const [name, value] of Object.entries(tokens)) {
         root.style.setProperty(tokenVar(name), value)
@@ -108,7 +116,7 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
   }
 
   const applyTokenSet = (tokens: TokenMap): void => {
-    if (typeof document !== "undefined") {
+    if (state.hydrated && typeof document !== "undefined") {
       const root = document.documentElement
       for (const name of Object.keys(state.currentTokens)) {
         if (!(name in tokens)) {
@@ -125,7 +133,28 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
     notifySubscribers()
   }
 
+  // Dipanggil sekali setelah mount pertama (lewat useTokens()'s useEffect, atau
+  // fallback rAF di bawah buat consumer yang pakai API imperative tanpa hook).
+  // Setelah ini true, semua write di atas balik sinkron langsung seperti semula.
+  const markHydrated = (): void => {
+    if (state.hydrated || typeof document === "undefined") return
+    state.hydrated = true
+    const root = document.documentElement
+    for (const [name, value] of Object.entries(state.currentTokens)) {
+      root.style.setProperty(tokenVar(name), value)
+    }
+    syncStyleEl()
+  }
+
+  if (typeof window !== "undefined") {
+    // Fallback buat consumer yang gak pakai useTokens() hook (cuma pakai
+    // liveToken().set() imperatif): tetap flush setelah paint pertama,
+    // jauh lebih aman daripada langsung saat module di-evaluasi.
+    requestAnimationFrame(markHydrated)
+  }
+
   return {
+    markHydrated,
     liveToken(tokens: TokenMap): LiveTokenSet {
       setTokens(tokens)
 
@@ -216,6 +245,10 @@ export function createUseTokens() {
     const [tokens, setTokensState] = React.useState<TokenMap>({})
 
     React.useEffect(() => {
+      // Baru sekarang aman nyentuh document.documentElement — hydration
+      // udah pasti selesai di titik ini. markHydrated() flush token yang
+      // sempat ditunda dari liveToken() init call (lihat createLiveTokenEngine).
+      engine.markHydrated()
       // Set ke nilai aktual setelah mount (client-only)
       setTokensState(engine.getTokens())
       return engine.subscribe((nextTokens) => setTokensState(nextTokens))

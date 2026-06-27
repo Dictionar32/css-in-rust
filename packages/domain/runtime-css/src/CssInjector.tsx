@@ -49,6 +49,11 @@ export async function TwCssInjector(props: CssInjectorProps = {}): Promise<React
     fs = await import("node:fs")
     path = await import("node:path")
   } catch {
+    warnOnceDev(
+      "TwCssInjector dipanggil tapi gak bisa akses 'node:fs'/'node:path' " +
+      "(kemungkinan jalan di environment non-Node, misal Edge runtime). " +
+      "CSS injection di-skip — komponen tetap render normal, tapi route CSS lo gak ikut inline."
+    )
     return React.createElement(React.Fragment, null)
   }
 
@@ -62,9 +67,21 @@ export async function TwCssInjector(props: CssInjectorProps = {}): Promise<React
   try {
     if (fs.existsSync(manifestPath)) {
       manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"))
+    } else {
+      warnOnceDev(
+        `TwCssInjector aktif tapi manifest gak ketemu di "${manifestPath}". ` +
+        `CSS injection di-skip diam-diam — biasanya ini berarti "routeCss: true" ` +
+        `belum diset di withTailwindStyled(...) di next.config, atau dev/build server ` +
+        `belum sempat generate manifest-nya. Cek konfigurasi sebelum lanjut.`
+      )
+      return React.createElement(React.Fragment, null)
     }
-  } catch {
-    // Manifest tidak ada — mungkin belum build atau native binding belum ready
+  } catch (err) {
+    warnOnceDev(
+      `TwCssInjector gagal parse manifest di "${manifestPath}": ` +
+      `${err instanceof Error ? err.message : String(err)}. ` +
+      `CSS injection di-skip — manifest mungkin korup atau lagi setengah ditulis saat dibaca.`
+    )
     return React.createElement(React.Fragment, null)
   }
 
@@ -105,6 +122,14 @@ export function useTwClasses(classes: string): string {
 }
 
 // Helpers
+const warnedKeys = new Set<string>()
+function warnOnceDev(message: string): void {
+  if (process.env.NODE_ENV === "production") return
+  if (warnedKeys.has(message)) return
+  warnedKeys.add(message)
+  console.warn(`[tailwind-styled-v4] ${message}`)
+}
+
 function readFile(fs: typeof import("node:fs"), filepath: string): string | null {
   try {
     if (fs.existsSync(filepath)) return fs.readFileSync(filepath, "utf-8")
