@@ -50,13 +50,14 @@ function warnFallbackOnce(): void {
   if (typeof console !== "undefined") {
     console.warn(
       "[tailwind-styled-v4] Native binding 'twMergeRaw' tidak tersedia " +
-        "(normal di browser) — pakai pure-TS port dari algoritma Rust-nya. " +
-        "Hasil className tetap benar; ini cuma informasi, bukan error."
+      "(normal di browser) — pakai pure-TS port dari algoritma Rust-nya. " +
+      "Hasil className tetap benar; ini cuma informasi, bukan error."
     )
   }
 }
 
 export function createTwMerge(options: MergeOptions = {}) {
+  const prefix = options.prefix ?? ""
   return function twMerge(...classLists: Array<string | undefined | null | false>): string {
     const inputs: string[] = []
     for (let i = 0; i < classLists.length; i++) {
@@ -66,12 +67,18 @@ export function createTwMerge(options: MergeOptions = {}) {
     if (inputs.length === 0) return ""
 
     const native = getNativeBinding()
-    if (native?.twMergeRaw) {
-      return native.twMergeRaw(inputs)
+    if (native) {
+      // Gunakan twMergeRawWithOptions jika prefix tersedia, twMergeRaw jika tidak
+      if (prefix && native.twMergeRawWithOptions) {
+        return native.twMergeRawWithOptions(inputs, { prefix })
+      }
+      if (native.twMergeRaw) {
+        return native.twMergeRaw(inputs)
+      }
     }
 
     warnFallbackOnce()
-    return twMergeRawJs(inputs)
+    return twMergeRawJs(inputs, prefix)
   }
 }
 
