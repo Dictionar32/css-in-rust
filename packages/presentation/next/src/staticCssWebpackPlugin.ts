@@ -3,6 +3,22 @@
  *
  * Webpack plugin companion untuk tailwind-styled-v4 build-time migration.
  *
+ * STATUS (2026-06-27): hanya aktif kalau Next.js benar-benar pakai webpack
+ * (flag `--webpack` eksplisit). Next.js 16 default Turbopack untuk `next dev`
+ * MAUPUN `next build` — di kondisi itu, fungsi webpack(config, options) di
+ * withTailwindStyled.ts (tempat plugin ini di-register) TIDAK PERNAH
+ * dipanggil sama sekali, jadi plugin ini gak ke-apply. Lihat known-issues.md.
+ *
+ * BUKAN murni dead weight meski begitu — ini SENGAJA dipertahankan (bukan
+ * dihapus sebagai code-hygiene), karena masih menyediakan kapabilitas nyata
+ * yang gak ada gantinya di mode --webpack: update incremental/HMR-aware
+ * untuk _tw-state-static.css saat file di-edit selama dev session jalan.
+ * `appendStaticStateCssToSafelist()` (dipanggil dari config-eval-time IIFE
+ * di withTailwindStyled.ts, jalan terlepas dari bundler) cuma generate versi
+ * AWAL sekali waktu startup — gak react ke perubahan file berikutnya tanpa
+ * restart dev server. Plugin ini (kalau aktif, i.e. mode --webpack) yang
+ * nutup gap itu lewat hook `done` tiap recompile.
+ *
  * Masalah yang diselesaikan:
  * - `webpackLoader.ts` di-invoke per-file saat transform. Kalau pakai append-to-file
  *   langsung, ada dua bug: (1) rules lama tidak dibersihkan saat file di-edit/hapus

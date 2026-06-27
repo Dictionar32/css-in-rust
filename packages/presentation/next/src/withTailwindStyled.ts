@@ -464,7 +464,10 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
             const result = scanWorkspace(srcDir)
             if (result.uniqueClasses.length > 0) {
               // Filter false positives yang lolos dari scanner (sebelum ast_extract.rs fix di-build)
-              // "div:action", "header:topBar" dll — sub-component keys bukan Tailwind class
+              // "div:action", "header:topBar" dll — sub-component keys bukan Tailwind class.
+              // Fungsi ini dipakai dobel: filter flat uniqueClasses (initial-scan) DAN filter
+              // per-file classes (route attribution) — supaya konsisten, false positive yang
+              // sama gak nyelip lewat salah satu jalur doang.
               const VALID_VARIANT_PREFIXES = new Set([
                 "hover","focus","active","disabled","visited","checked","first","last",
                 "odd","even","focus-within","focus-visible","placeholder","before","after",
@@ -472,7 +475,7 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                 "group","peer","aria","data","supports","not","has","is","where",
                 "rtl","ltr","open","print","portrait","landscape",
               ])
-              const filteredClasses = result.uniqueClasses.filter((cls: string) => {
+              const isValidTwClass = (cls: string): boolean => {
                 // Filter variant prefix yang tidak valid
                 if (cls.includes(":")) {
                   const prefix = cls.split(":")[0]
@@ -491,7 +494,8 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                 if (/\[[\d]{5,}(?:px|rem|em)?\]/.test(cls)) return false
 
                 return true
-              })
+              }
+              const filteredClasses = result.uniqueClasses.filter(isValidTwClass)
               // Baca globals.css user — auto-detect tanpa bergantung tailwind-styled.config.json
               // supaya custom @theme (warna, font, dll) ikut di-generate oleh Tailwind
               let cssEntryContent: string | null = null
@@ -575,7 +579,12 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
               void (async () => {
                 try {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const compiler = await import("@tailwind-styled/compiler") as { generateCssForClasses?: (...args: unknown[]) => unknown; [key: string]: unknown }
+                  const compiler = await import("@tailwind-styled/compiler") as {
+                    generateCssForClasses?: (...args: unknown[]) => unknown
+                    buildRouteClassBuckets?: (...args: unknown[]) => unknown
+                    routeToCssFilename?: (...args: unknown[]) => unknown
+                    [key: string]: unknown
+                  }
                   const generateCssForClasses = compiler.generateCssForClasses as (
                     classes: string[],
                     config?: Record<string, unknown>,
@@ -608,6 +617,113 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
                       resolvedCss: css,
                     })
                     if (options.verbose) console.log(summary)
+
+                    // ── Route CSS manifest — per-route splitting asli, opsi `routeCss: true` ──
+                    //
+                    // SENGAJA ditulis di sini (config-eval time, fire-and-forget IIFE yang sama
+                    // dengan _initial-scan.css di atas), BUKAN sebagai webpack plugin terpisah
+                    // di compiler.hooks.done. Next.js 16 default-nya Turbopack untuk `next dev`
+                    // MAUPUN `next build` — fungsi webpack(config, options) di bawah TIDAK PERNAH
+                    // dipanggil sama sekali kalau Turbopack aktif (sudah divalidasi empiris,
+                    // lihat known-issues.md). Plugin compiler.hooks.done apa pun — termasuk
+                    // StaticCssWebpackPlugin yang sudah ada — jadi dead code di kondisi default.
+                    // Nulis di sini aman terlepas dari bundler mana yang dipakai.
+                    //
+                    // SENGAJA pakai `result.files` (hasil scanWorkspace() di atas, classes per
+                    // file) + buildRouteClassBuckets() (static import-graph), BUKAN
+                    // getAllRegisteredClasses() dari @tailwind-styled/compiler/internal. Registry
+                    // itu ke-isi progresif lewat registerFileClasses() yang dipanggil dari
+                    // webpackLoader.ts/turbopackLoader.ts SAAT bundler benar-benar meng-compile
+                    // tiap file — proses yang baru mulai SETELAH next.config.ts selesai di-eval.
+                    // IIFE ini jalan sekali, di awal, SEBELUM bundler menyentuh satu file pun —
+                    // baca registry di titik ini akan selalu dapat set kosong.
+                    //
+                    // buildRouteClassBuckets() bener-bener nge-split: file yang exclusively
+                    // ke-reach dari satu route (lewat static import graph dari page.tsx) masuk
+                    // bucket route itu; file yang shared 2+ route, layout/loading/error/template,
+                    // atau gak ke-reach sama sekali (misal dynamic import non-literal) jatuh ke
+                    // "__global" — selalu aman, gak pernah salah atribusi, cuma bisa under-split
+                    // di edge case tertentu. Lihat routeGraph.ts utk detail + keterbatasan.
+                    if (normalizedOptions.routeCss) {
+                      try {
+                        const buildRouteClassBuckets = compiler.buildRouteClassBuckets as (
+                          root: string,
+                          srcDir: string,
+                          files: Array<{ file: string; classes: string[] }>
+                        ) => { routes: Map<string, Set<string>>; global: Set<string> }
+                        const routeToCssFilename = compiler.routeToCssFilename as (route: string) => string
+                        if (typeof buildRouteClassBuckets !== "function" || typeof routeToCssFilename !== "function") {
+                          throw new Error(
+                            "buildRouteClassBuckets/routeToCssFilename tidak tersedia di @tailwind-styled/compiler"
+                          )
+                        }
+
+                        const filesForGraph = result.files.map((f: { file: string; classes: string[] }) => ({
+                          file: f.file,
+                          classes: f.classes.filter(isValidTwClass),
+                        }))
+                        const buckets = buildRouteClassBuckets(process.cwd(), srcDir, filesForGraph)
+
+                        const cssManifestDir = path.join(process.cwd(), ".next", "static", "css", "tw")
+                        fs.mkdirSync(cssManifestDir, { recursive: true })
+                        const manifestRoutes: Record<string, string> = {}
+                        const usedFilenames = new Set<string>(["_global.css"])
+                        const minifyManifestCss = process.env.NODE_ENV === "production"
+
+                        if (buckets.global.size > 0) {
+                          const globalCss = await generateCssForClasses(
+                            Array.from(buckets.global), {}, process.cwd(), cssEntryContent ?? undefined, minifyManifestCss
+                          )
+                          const globalUtilities = extractUtilitiesLayer(globalCss)
+                          if (globalUtilities.trim()) {
+                            const filename = "_global.css"
+                            atomicWriteFile(path.join(cssManifestDir, filename), globalUtilities)
+                            manifestRoutes.__global = filename
+                          }
+                        }
+
+                        for (const [route, classSet] of buckets.routes) {
+                          if (classSet.size === 0) continue
+                          const routeCss = await generateCssForClasses(
+                            Array.from(classSet), {}, process.cwd(), cssEntryContent ?? undefined, minifyManifestCss
+                          )
+                          const routeUtilities = extractUtilitiesLayer(routeCss)
+                          if (!routeUtilities.trim()) continue
+                          // Slugify bisa collision (mis. dynamic "/blog/[slug]" vs literal
+                          // "/blog/slug" — keduanya valid route Next.js yang bisa coexist).
+                          // Disambiguasi dengan suffix angka supaya gak ada yang ke-overwrite.
+                          let filename = routeToCssFilename(route)
+                          let suffix = 2
+                          while (usedFilenames.has(filename)) {
+                            filename = routeToCssFilename(route).replace(/\.css$/, `_${suffix}.css`)
+                            suffix++
+                          }
+                          usedFilenames.add(filename)
+                          atomicWriteFile(path.join(cssManifestDir, filename), routeUtilities)
+                          manifestRoutes[route] = filename
+                        }
+
+                        atomicWriteFile(
+                          path.join(cssManifestDir, "css-manifest.json"),
+                          JSON.stringify({ routes: manifestRoutes }, null, 2)
+                        )
+
+                        if (options.verbose) {
+                          console.log(
+                            `[tailwind-styled] css-manifest.json ditulis di ${cssManifestDir} — ` +
+                            `${buckets.routes.size} route eksklusif + ${manifestRoutes.__global ? "1" : "0"} global bucket.`
+                          )
+                        }
+                      } catch (err) {
+                        // Non-fatal — TwCssInjector sudah fallback ke <></> kalau manifest gak
+                        // ada/gagal dibaca. Tidak ada alasan untuk gagalkan seluruh build karena
+                        // fitur opsional ini gagal nulis.
+                        console.warn(
+                          "[tailwind-styled] Gagal tulis css-manifest.json:",
+                          err instanceof Error ? err.message : err
+                        )
+                      }
+                    }
                   }
                 } catch (err) {
                   throw new Error(
@@ -646,7 +762,17 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
         //
         // Fix: skip webpack transform di dev mode sepenuhnya.
         // Proxy runtime handle SSR + client secara seragam → identical output → no mismatch.
-        // Production (next build): webpack handle keduanya → transform aman, optimal.
+        //
+        // KOREKSI (sebelumnya komentar ini bilang "Production (next build): webpack handle
+        // keduanya → transform aman, optimal" — itu SALAH untuk Next.js 16+). Sudah divalidasi
+        // empiris: kalau Turbopack aktif (default Next.js 16 untuk `next build` JUGA, bukan
+        // cuma `next dev`), fungsi webpack(config, options) ini TIDAK PERNAH dipanggil sama
+        // sekali oleh Next.js — bukan cuma hook done-nya, seluruh body fungsi ini dead code.
+        // Konsumer yang gak pasang `--webpack` flag secara eksplisit gak akan pernah kena
+        // cabang ini sama sekali di production. Lihat known-issues.md. Implikasi: apa pun yang
+        // logic-nya HARUS jalan terlepas dari bundler (CSS generation, manifest, dll) sebaiknya
+        // ditaruh di IIFE config-eval-time di atas (lihat blok `void (async () => {...})()`),
+        // bukan di sini.
         if (webpackOptions.dev) {
           if (typeof previousWebpack !== "function") return config
           try {

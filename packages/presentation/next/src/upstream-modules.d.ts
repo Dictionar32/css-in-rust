@@ -84,8 +84,11 @@ declare module "@tailwind-styled/compiler/internal" {
 
   /**
    * Semua classes yang ke-register (semua file + registerGlobalClasses),
-   * tanpa peduli route. Dipakai RouteCssManifestPlugin untuk generate
-   * bundle "__global".
+   * tanpa peduli route. TIDAK dipakai untuk generate manifest per-route —
+   * itu sekarang ditulis langsung di withTailwindStyled.ts dari
+   * buildRouteClassBuckets() (lihat packages/domain/compiler/src/routeGraph.ts,
+   * import-graph tracing asli), karena registry ini baru ke-isi progresif
+   * saat bundler meng-compile file, setelah config-eval selesai.
    */
   export function getAllRegisteredClasses(): Set<string>
 
