@@ -86,13 +86,24 @@ pub(crate) fn parse_subcomponent_blocks(
 // Component code generators
 // ─────────────────────────────────────────────────────────────────────────────
 
-pub(crate) fn render_static_component(tag: &str, classes: &str, fn_name: &str) -> String {
-    format!(
+pub(crate) fn render_static_component(tag: &str, classes: &str, fn_name: &str, with_sub: bool) -> String {
+    let base = format!(
         "React.forwardRef(function {fn_name}(props, ref) {{\n  var _c = props.className;\n  var _r = Object.assign({{}}, props);\n  delete _r.className;\n  return React.createElement(\"{tag}\", Object.assign({{ ref }}, _r, {{ className: [{classes_json}, _c].filter(Boolean).join(\" \") }}));\n}})",
         fn_name = fn_name,
         tag = tag,
         classes_json = serde_json_string(classes),
-    )
+    );
+    // .withSub<...>() runtime adalah no-op (() => component). Attach method ke
+    // forwardRef result via IIFE — source-nya tetap bisa .withSub() call,
+    // hasilnya identik secara runtime tapi gak butuh parseTemplate native.
+    if with_sub {
+        format!(
+            "(function(){{ var _c = {base}; _c.withSub = function(){{ return _c; }}; return _c; }})()",
+            base = base,
+        )
+    } else {
+        base
+    }
 }
 
 pub(crate) fn render_compound_component(
@@ -101,6 +112,7 @@ pub(crate) fn render_compound_component(
     fn_name: &str,
     sub_components: &[SubComponent],
     component_name: &str,
+    with_sub: bool,
 ) -> String {
     let base = format!(
         "React.forwardRef(function {fn_name}(props, ref) {{\n  var _c = props.className;\n  var _r = Object.assign({{}}, props);\n  delete _r.className;\n  return React.createElement(\"{tag}\", Object.assign({{ ref }}, _r, {{ className: [{base_json}, _c].filter(Boolean).join(\" \") }}));\n}})",
@@ -110,6 +122,14 @@ pub(crate) fn render_compound_component(
     );
 
     if sub_components.is_empty() {
+        // .withSub<>() tanpa sub-block syntax di template — attach method ke
+        // forwardRef result via IIFE sama seperti render_static_component.
+        if with_sub {
+            return format!(
+                "(function(){{ var _c = {base}; _c.withSub = function(){{ return _c; }}; return _c; }})()",
+                base = base,
+            );
+        }
         return base;
     }
 
@@ -137,11 +157,22 @@ pub(crate) fn render_compound_component(
         ));
     }
 
-    format!(
+    let iife = format!(
         "(function() {{\n  var _base = {base};\n{subs}\n  return _base;\n}})()",
         base = base,
         subs = sub_assignments.join("\n"),
-    )
+    );
+    // Jika .withSub<>() chained, method sudah ter-assign di _base dari sub-assignments
+    // loop di atas (setiap sub: _base.logo, _base.links, dst). Tapi withSub() method
+    // sendiri juga perlu ada di _base agar call `.withSub()` setelah IIFE tidak throw.
+    if with_sub {
+        format!(
+            "(function(){{ var _c = {iife}; _c.withSub = function(){{ return _c; }}; return _c; }})()",
+            iife = iife,
+        )
+    } else {
+        iife
+    }
 }
 
 pub(crate) fn build_metadata_json(

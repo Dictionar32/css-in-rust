@@ -37,13 +37,25 @@ fn is_text_size(suffix: &str) -> bool {
 }
 
 /// Return the conflict group for a base Tailwind class (without variant prefix).
+/// If `prefix` is non-empty, strip it from `base` before matching.
 /// Returns `None` for classes that never conflict (e.g. `sr-only`, `not-sr-only`).
 fn conflict_group(base: &str) -> Option<String> {
+    conflict_group_with_prefix(base, "")
+}
+
+fn conflict_group_with_prefix(base: &str, prefix: &str) -> Option<String> {
+    // Strip custom Tailwind prefix (e.g. "tw-") before matching conflict groups.
+    // tw-bg-red-500 with prefix "tw-" → base becomes "bg-red-500"
+    let base = if !prefix.is_empty() && base.starts_with(prefix) {
+        &base[prefix.len()..]
+    } else {
+        base
+    };
     // ── Arbitrary value — use everything before `[` as group ──────────────
     if let Some(bracket) = base.find('[') {
-        let prefix = base[..bracket].trim_end_matches('-');
-        if !prefix.is_empty() {
-            return Some(prefix.to_string());
+        let grp = base[..bracket].trim_end_matches('-');
+        if !grp.is_empty() {
+            return Some(grp.to_string());
         }
         return Some("arbitrary".to_string());
     }
@@ -651,6 +663,10 @@ pub(crate) fn split_variants(class: &str) -> (&str, &str) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 pub fn merge_class_string(input: &str) -> String {
+    merge_class_string_with_prefix(input, "")
+}
+
+pub fn merge_class_string_with_prefix(input: &str, prefix: &str) -> String {
     let tokens: SmallVec<[&str; 8]> = input.split_whitespace().collect();
     if tokens.is_empty() {
         return String::new();
@@ -664,7 +680,7 @@ pub fn merge_class_string(input: &str) -> String {
 
     for token in &tokens {
         let (variants, base) = split_variants(token);
-        if let Some(group) = conflict_group(base) {
+        if let Some(group) = conflict_group_with_prefix(base, prefix) {
             let key = format!("{}::{}", variants, group);
             if let Some(&prev_idx) = group_owner.get(&key) {
                 slots[prev_idx] = None;
@@ -1020,6 +1036,53 @@ pub fn tw_merge_raw(class_lists: Vec<String>) -> String {
     }
 
     merge_class_string(&joined)
+}
+
+/// Options untuk tw_merge_raw_with_options
+#[napi(object)]
+pub struct TwMergeRawOptions {
+    /// Custom Tailwind prefix (e.g. "tw-") — classes dengan prefix ini
+    /// di-strip sebelum conflict group lookup, sehingga "tw-bg-red tw-bg-blue"
+    /// menghasilkan "tw-bg-blue" (konflik terdeteksi dengan benar).
+    pub prefix: Option<String>,
+    /// Separator output (default: " ")
+    pub separator: Option<String>,
+}
+
+/// tw_merge_raw dengan support custom Tailwind prefix.
+///
+/// ```ts
+/// twMergeRawWithOptions(["tw-p-4", "tw-p-8"], { prefix: "tw-" })
+/// // → "tw-p-8"  (conflict terdeteksi setelah strip prefix)
+///
+/// twMergeRawWithOptions(["p-4", "p-8"], {})
+/// // → "p-8"     (tanpa prefix, sama seperti twMergeRaw)
+/// ```
+#[napi]
+pub fn tw_merge_raw_with_options(class_lists: Vec<String>, opts: TwMergeRawOptions) -> String {
+    let prefix = opts.prefix.as_deref().unwrap_or("");
+    let sep = opts.separator.as_deref().unwrap_or(" ");
+
+    let joined = class_lists
+        .iter()
+        .filter_map(|s| {
+            let t = s.trim();
+            if t.is_empty() { None } else { Some(t) }
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    if joined.is_empty() {
+        return String::new();
+    }
+
+    let resolved = merge_class_string_with_prefix(&joined, prefix);
+
+    if sep == " " {
+        resolved
+    } else {
+        resolved.split_whitespace().collect::<Vec<_>>().join(sep)
+    }
 }
 
 /// flatten_and_resolve — flatten nested JSON array + join dalam satu NAPI call.

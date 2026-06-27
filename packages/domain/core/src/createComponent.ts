@@ -5,6 +5,7 @@ import React from "react"
 import { processContainer } from "./containerQuery"
 import { twMerge } from "./merge"
 import { getNativeBinding } from "./native"
+import { parseTemplateJs } from "./parseTemplateFallback"
 import { processState } from "./stateEngine"
 import type { ComponentConfig, InferSubFromConfig, SubValue, TwStyledComponent } from "./types"
 
@@ -47,10 +48,17 @@ function _getParsedTemplate(template: string): _ParsedTemplate {
     return result
   }
 
-  // Template punya sub-block syntax → wajib native Rust untuk parse
+  // Template punya sub-block syntax → prefer native Rust, fallback ke pure-TS
   const native = getNativeBinding()
   if (!native?.parseSubcomponentBlocksNapi) {
-    throw new Error("FATAL: Native binding 'parseSubcomponentBlocksNapi' is required but not available.")
+    // Browser fallback — pure-TS parser (mirrors Rust output)
+    const fb = parseTemplateJs(template)
+    const result: _ParsedTemplate = {
+      baseClasses: fb.base,
+      subMap: new Map(Object.entries(fb.subs)),
+    }
+    _templateParseCache.set(template, result)
+    return result
   }
   const r = native.parseSubcomponentBlocksNapi(template, "tw")
   const raw = JSON.parse(r.subMapJson) as Record<string, string>
@@ -237,12 +245,21 @@ function resolveVariants(
     if (v !== undefined && v !== null) cleanProps[k] = String(v)
   }
 
+  // TAMBAHKAN: pure-TS fallback untuk browser
   const binding = getNativeBinding()
   if (!binding?.resolveSimpleVariants) {
-    throw new Error("FATAL: Native binding 'resolveSimpleVariants' is required but not available.")
+    // Browser fallback: manual variant lookup
+    const classes: string[] = []
+    for (const key of Object.keys(variants)) {
+      const propValue = cleanProps[key] ?? defaults[key]
+      if (propValue !== undefined && variants[key]?.[propValue]) {
+        classes.push(variants[key][propValue])
+      }
+    }
+    return classes.join(" ").trim().replace(/\s+/g, " ")
   }
-  const result = binding.resolveSimpleVariants(null, variants, defaults, cleanProps)
-  return result.trim().replace(/\s+/g, " ")
+  // Server path — TIDAK DIUBAH: tetap call native
+  return binding.resolveSimpleVariants(null, variants, defaults, cleanProps).trim().replace(/\s+/g, " ")
 }
 
 /**
@@ -303,7 +320,7 @@ function carryOverSubComponents<P extends object>(
   const INTERNAL_KEYS = new Set(["extend", "withVariants", "animate", "withSub", "displayName"])
   for (const key of Object.keys(source)) {
     if (!INTERNAL_KEYS.has(key)) {
-      ;(target as unknown as Record<string, unknown>)[key] = (source as unknown as Record<string, unknown>)[key]
+      ; (target as unknown as Record<string, unknown>)[key] = (source as unknown as Record<string, unknown>)[key]
     }
   }
 }
@@ -478,12 +495,12 @@ export function createComponent<TConfig extends ComponentConfig>(
 
   const stateResult = stateConfig
     ? processState(
-        typeof tag === "string" ? tag : "component",
-        stateConfig,
-        // Pakai pre-computed hash dari turbopackLoader (Rust inject_state_hash)
-        // kalau tersedia — skip runtime hashState() computation sepenuhnya
-        (config as { __hash?: string }).__hash
-      )
+      typeof tag === "string" ? tag : "component",
+      stateConfig,
+      // Pakai pre-computed hash dari turbopackLoader (Rust inject_state_hash)
+      // kalau tersedia — skip runtime hashState() computation sepenuhnya
+      (config as { __hash?: string }).__hash
+    )
     : null
   const containerResult = containerConfig
     ? processContainer(typeof tag === "string" ? tag : "component", containerConfig, containerName)
