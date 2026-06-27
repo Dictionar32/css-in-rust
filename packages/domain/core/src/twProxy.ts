@@ -42,29 +42,10 @@ interface ParsedTemplate {
 // Cache untuk parseTemplate — raw template string tidak berubah antar hot reloads
 const _parsedTemplateCache = new Map<string, ParsedTemplate>()
 
-let warnedParseTemplateFallback = false
-function warnParseTemplateFallbackOnce(): void {
-  if (warnedParseTemplateFallback) return
-  warnedParseTemplateFallback = true
-  if (typeof console !== "undefined") {
-    console.warn(
-      "[tailwind-styled-v4] Native binding 'parseTemplate' tidak tersedia " +
-        "(normal di browser, untuk komponen yang di-chain dengan .extend/" +
-        ".withVariants/.animate/.withSub) — pakai pure-TS port dari algoritma " +
-        "Rust-nya. Hasil tetap benar; ini cuma informasi, bukan error."
-    )
-  }
-}
-
 /**
- * parseTemplate — native-first, cache-first, pure-TS fallback di browser.
- *
- * Bug D fix: sebelumnya fungsi ini THROW FATAL tanpa fallback kalau native
- * binding tidak ada (lihat parseTemplateFallback.ts untuk detail lengkap
- * kenapa ini wajib — ringkasnya: template literal yang di-chain dengan
- * .extend/.withVariants/.animate/.withSub SENGAJA tidak di-static-replace
- * oleh compiler Rust, jadi selalu butuh parseTemplate() runtime, termasuk di
- * render pertama di browser, dimana native binding TIDAK PERNAH ada).
+ * parseTemplate — native-only. Selalu di-handle compiler Rust untuk static
+ * template literals. Dynamic template (${...}) tetap butuh native binding
+ * di server; di browser bukan valid use case.
  */
 function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedTemplate {
   const raw = strings.raw.reduce((acc, str, i) => {
@@ -77,15 +58,17 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
   if (cached) return cached
 
   const binding = getNativeBinding()
-  let result: ParsedTemplate
-  if (binding?.parseTemplate) {
-    const r = binding.parseTemplate(raw)
-    const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
-    result = { base: r.base, subs, hasSubs: r.hasSubs }
-  } else {
-    warnParseTemplateFallbackOnce()
-    result = parseTemplateJs(raw)
+  if (!binding?.parseTemplate) {
+    // Browser fallback — pure-TS parser untuk template literal
+    const fb = parseTemplateJs(raw)
+    const result: ParsedTemplate = { base: fb.base, subs: fb.subs, hasSubs: fb.hasSubs }
+    _parsedTemplateCache.set(raw, result)
+    return result
   }
+
+  const r = binding.parseTemplate(raw)
+  const subs: Record<string, string> = r.hasSubs ? JSON.parse(r.subsJson) : {}
+  const result: ParsedTemplate = { base: r.base, subs, hasSubs: r.hasSubs }
 
   _parsedTemplateCache.set(raw, result)
   return result
@@ -136,7 +119,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
           }, children)
         )
         SubComp.displayName = `tw.${typeof tag === "string" ? tag : "component"}.${name}`;
-        ;(component as unknown as Record<string, unknown>)[name] = SubComp
+        ; (component as unknown as Record<string, unknown>)[name] = SubComp
       }
     }
 
@@ -185,7 +168,7 @@ function makeServerTag(tag: React.ElementType): RuntimeTagFactory {
           : ((tag as { displayName?: string }).displayName ?? "Component")
       console.warn(
         `[tailwind-styled-v4] tw.server.${tagName} rendered in browser. ` +
-          `Ensure withTailwindStyled or Vite plugin is configured.`
+        `Ensure withTailwindStyled or Vite plugin is configured.`
       )
       return baseFactory(stringsOrConfig, ...exprs)
     }) as RuntimeTagFactory

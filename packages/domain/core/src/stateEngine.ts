@@ -50,17 +50,28 @@ if (typeof window !== "undefined") {
 // hash hanya perlu dihitung sekali per (tag, state) kombinasi.
 const _hashStateCache = new Map<string, string>()
 
+/**
+ * Pure-TS FNV-1a 32-bit hash — mirrors Rust fnv implementation.
+ * Used as browser fallback for hashContent("fnv", 6).
+ */
+function _fnvHash6(s: string): string {
+  let h = 0x811c9dc5
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i)
+    h = (Math.imul(h, 0x01000193) >>> 0)
+  }
+  return (h >>> 0).toString(16).padStart(8, "0").slice(0, 6)
+}
+
 function hashState(tag: string, state: StateConfig): string {
-  // Key untuk cache: sort untuk determinism (Object.entries order tidak guaranteed)
   const sortedKey = tag + JSON.stringify(Object.entries(state).sort())
   const cached = _hashStateCache.get(sortedKey)
   if (cached) return cached
 
   const native = getNativeBinding()
-  if (!native?.hashContent) {
-    throw new Error("FATAL: Native binding 'hashContent' is required but not available.")
-  }
-  const id = `tw-s-${native.hashContent(sortedKey, "fnv", 6)}`
+  const id = native?.hashContent
+    ? `tw-s-${native.hashContent(sortedKey, "fnv", 6)}`
+    : `tw-s-${_fnvHash6(sortedKey)}`   // browser fallback
 
   _hashStateCache.set(sortedKey, id)
   return id
@@ -78,7 +89,11 @@ function hashState(tag: string, state: StateConfig): string {
 function generateStateRules(id: string, state: StateConfig): string[] {
   const native = getNativeBinding()
   if (!native?.generateRuntimeStateCss) {
-    throw new Error("FATAL: Native binding 'generateRuntimeStateCss' is required but not available.")
+    // Browser fallback: state CSS is pre-generated at build time into
+    // _tw-state-static.css via withTailwindStyled. Runtime generation
+    // is not needed in the browser — return empty so injectStateStyles
+    // detects the static CSS and skips injection.
+    return []
   }
   return native.generateRuntimeStateCss(id, JSON.stringify(state), null).map((rule) => rule.cssRule)
 }
