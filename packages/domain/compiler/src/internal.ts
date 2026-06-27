@@ -46,6 +46,8 @@ import {
   getRouteClasses,
   registerFileClasses,
   registerGlobalClasses,
+  getAllRegisteredClasses,
+  resetRouteClassRegistry,
   getIncrementalEngine,
   resetIncrementalEngine,
   getBucketEngine,
@@ -102,6 +104,8 @@ export {
   getRouteClasses,
   registerFileClasses,
   registerGlobalClasses,
+  getAllRegisteredClasses,
+  resetRouteClassRegistry,
   getIncrementalEngine,
   resetIncrementalEngine,
   getBucketEngine,
@@ -137,4 +141,3 @@ export * from "./analyzer"
 export * from "./cache"
 export * from "./redis"
 export * from "./watch"
-

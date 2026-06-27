@@ -150,7 +150,29 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
     // Fallback buat consumer yang gak pakai useTokens() hook (cuma pakai
     // liveToken().set() imperatif): tetap flush setelah paint pertama,
     // jauh lebih aman daripada langsung saat module di-evaluasi.
-    requestAnimationFrame(markHydrated)
+    //
+    // PENTING — kenapa DOUBLE rAF, bukan satu (FIX):
+    // Satu rAF cuma menjamin "sebelum repaint berikutnya", BUKAN "setelah
+    // React selesai hydrate". Module top-level (lihat LiveTokenDemo.tsx —
+    // `liveToken({...})` dipanggil di luar komponen) di-evaluasi sebagai
+    // bagian dari client bundle eval, yang notabene bisa kelar SEBELUM
+    // React selesai memproses hydrateRoot() untuk seluruh tree — apalagi
+    // di dev mode (React Compiler, Fast Refresh instrumentation, banyak
+    // component) yang hydration-nya lebih lambat dari production build.
+    // Kalau rAF pertama kebetulan menembak document.documentElement.style
+    // (root <html>!) DI TENGAH proses hydrate, React lapor hydration
+    // mismatch — persis kasus yang dilaporkan: `<html style={{--tw-token-
+    // primary:...}}>` muncul di warning padahal layout.tsx gak pernah
+    // nulis style itu di JSX-nya.
+    // Dua rAF berturut-turut menjamin minimal satu frame penuh sudah lewat
+    // SETELAH frame pertama (rAF kedua baru di-schedule SETELAH rAF
+    // pertama selesai jalan) — kasih React jauh lebih banyak waktu utk
+    // menyelesaikan commit + passive effects sebelum kita nyentuh
+    // dokumen. Ini bukan garansi matematis 100% (gak ada API publik utk
+    // "tunggu sampai hydration React kelar" di luar useEffect), tapi
+    // margin amannya jauh lebih lebar daripada satu rAF — tervalidasi via
+    // simulasi frame-by-frame: mutasi DOM mundur dari frame 1 ke frame 2.
+    requestAnimationFrame(() => requestAnimationFrame(markHydrated))
   }
 
   return {

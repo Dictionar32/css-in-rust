@@ -82,6 +82,16 @@ declare module "@tailwind-styled/compiler/internal" {
    */
   export function registerGlobalClasses(classes: string[]): void
 
+  /**
+   * Semua classes yang ke-register (semua file + registerGlobalClasses),
+   * tanpa peduli route. Dipakai RouteCssManifestPlugin untuk generate
+   * bundle "__global".
+   */
+  export function getAllRegisteredClasses(): Set<string>
+
+  /** Reset route/class registry — dipakai test. */
+  export function resetRouteClassRegistry(): void
+
   export interface LoaderOutput {
     code: string
     changed: boolean
