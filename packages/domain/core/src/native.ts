@@ -55,8 +55,10 @@ interface NativeBinding {
     isArbitrary: boolean
     hasModifier: boolean
   }>
-  
+
   twMergeRaw?: (classLists: string[]) => string
+  /** tw_merge_raw dengan support custom Tailwind prefix dan output separator */
+  twMergeRawWithOptions?: (classLists: string[], opts: { prefix?: string; separator?: string }) => string
   flattenAndResolve?: (nestedJson: string) => string
   resolveConflictGroup?: (base: string) => string
 
@@ -370,7 +372,7 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
   if (!binding?.parseCssRules) {
     throw new Error(NATIVE_UNAVAILABLE_MESSAGE)
   }
-  
+
   const properties = binding.parseCssRules(cssContent)
   const theme: ThemeConfig = {
     colors: {},
@@ -380,7 +382,7 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
     animations: {},
     raw: {},
   }
-  
+
   const prefixMap: Record<string, keyof ThemeConfig> = {
     "color-": "colors",
     "spacing-": "spacing",
@@ -388,11 +390,11 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
     "breakpoint-": "breakpoints",
     "animate-": "animations",
   }
-  
+
   for (const prop of properties) {
     const cssVar = prop.property.replace(/^--/, "")
     theme.raw[cssVar] = prop.value
-    
+
     for (const [prefix, category] of Object.entries(prefixMap)) {
       if (cssVar.startsWith(prefix)) {
         const name = cssVar.slice(prefix.length)
@@ -401,6 +403,6 @@ export function extractThemeFromCSS(cssContent: string): ThemeConfig {
       }
     }
   }
-  
+
   return theme
 }

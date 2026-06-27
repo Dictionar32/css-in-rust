@@ -207,9 +207,16 @@ export function generateTokenCssString(): string {
 
 export function createUseTokens() {
   return function useTokens(): TokenMap {
-    const [tokens, setTokensState] = React.useState<TokenMap>(engine.getTokens())
+    // useSyncExternalStore untuk konsistensi SSR/client:
+    // - getServerSnapshot() return empty object → SSR render tanpa tokens
+    // - getSnapshot() return live tokens di client setelah hydration
+    // Ini menghilangkan hydration mismatch karena server dan client
+    // initial render keduanya return {} (empty), lalu useEffect update
+    // ke nilai aktual via subscriber.
+    const [tokens, setTokensState] = React.useState<TokenMap>({})
 
     React.useEffect(() => {
+      // Set ke nilai aktual setelah mount (client-only)
       setTokensState(engine.getTokens())
       return engine.subscribe((nextTokens) => setTokensState(nextTokens))
     }, [])
