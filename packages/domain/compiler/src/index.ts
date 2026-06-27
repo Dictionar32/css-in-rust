@@ -400,9 +400,74 @@ export const getAllRoutes = (): string[] => {
   return ["/", "__global"]
 }
 
-export const getRouteClasses = (_route: string): Set<string> => new Set()
-export const registerFileClasses = (_filepath: string, _classes: string[]): void => {}
-export const registerGlobalClasses = (_classes: string[]): void => {}
+// ── Route/class registry (FIX) ──────────────────────────────────────────────
+// Sebelumnya getRouteClasses/registerFileClasses/registerGlobalClasses adalah
+// no-op stubs (params di-prefix underscore, body kosong) — akibatnya
+// TwCssInjector SELALU gagal nemu manifest CSS walau "routeCss: true" sudah
+// diset di withTailwindStyled(...), karena memang tidak ada satu pun kode
+// yang pernah menulis isi map ini. webpackLoader.ts/turbopackLoader.ts sudah
+// benar memanggil registerFileClasses(filepath, output.classes) per file,
+// tapi panggilan itu jatuh ke lubang hitam.
+//
+// Map ini di-key per filepath (bukan per route langsung) — sama pola dengan
+// _fileStaticCssMap di staticCssWebpackPlugin.ts — supaya file yang
+// diedit/dihapus saat HMR gak nyisain stale classes dari versi lama file
+// tersebut. getRouteClasses() menghitung ulang dari scratch tiap dipanggil
+// dengan mem-bucket lewat fileToRoute(); ini O(files) per call, yang cukup
+// murah untuk ukuran project tipikal dan menghindari kelas bug "double
+// counting" kalau dihitung incremental.
+const _fileClassesMap = new Map<string, Set<string>>()
+const _globalClasses = new Set<string>()
+
+export const getRouteClasses = (route: string): Set<string> => {
+  const result = new Set<string>()
+  for (const [filepath, classes] of _fileClassesMap) {
+    const fileRoute = fileToRoute(filepath) ?? "__global"
+    if (fileRoute === route) {
+      for (const cls of classes) result.add(cls)
+    }
+  }
+  return result
+}
+
+/**
+ * Semua classes yang ke-register dari semua file + registerGlobalClasses(),
+ * tanpa peduli route. Dipakai oleh RouteCssManifestPlugin untuk generate
+ * bundle "__global" — KETERBATASAN SAAT INI: belum ada per-route code
+ * splitting yang sesungguhnya (classes eksklusif per halaman), karena itu
+ * butuh import-graph tracing (siapa import siapa) yang belum ada di
+ * compiler ini. Lihat juga native analyze_route_class_distribution (dipakai
+ * `tw split` CLI) — itu jalur terpisah yang juga belum tersambung ke build
+ * Next.js. Untuk sekarang, semua classes dibundle jadi satu CSS global yang
+ * di-inject TwCssInjector — sudah lebih baik daripada tidak ada CSS sama
+ * sekali, tapi belum "true" route splitting.
+ */
+export const getAllRegisteredClasses = (): Set<string> => {
+  const result = new Set<string>(_globalClasses)
+  for (const classes of _fileClassesMap.values()) {
+    for (const cls of classes) result.add(cls)
+  }
+  return result
+}
+
+/** Dipanggil oleh webpackLoader.ts/turbopackLoader.ts setiap file di-transform. */
+export const registerFileClasses = (filepath: string, classes: string[]): void => {
+  if (!classes || classes.length === 0) {
+    _fileClassesMap.delete(filepath)
+    return
+  }
+  _fileClassesMap.set(filepath, new Set(classes))
+}
+
+export const registerGlobalClasses = (classes: string[]): void => {
+  for (const cls of classes) _globalClasses.add(cls)
+}
+
+/** Reset registry — dipakai test, atau awal compilation run kalau perlu state bersih. */
+export const resetRouteClassRegistry = (): void => {
+  _fileClassesMap.clear()
+  _globalClasses.clear()
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INCREMENTAL ENGINE
