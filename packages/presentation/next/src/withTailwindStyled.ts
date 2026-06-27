@@ -685,10 +685,40 @@ return function wrap(nextConfig: NextConfig = {}): NextConfig {
           })
         }
       },
+      // FIX (Bug A — SSR 500 / "Cannot read properties of null (reading
+      // 'useState')"): "tailwind-styled-v4" SENGAJA DIKELUARKAN dari list ini.
+      //
+      // Sebelumnya package utama ini ikut di-externalize bareng subpackage
+      // Node-only lainnya. Akibatnya Next.js TIDAK pernah melewatkan resolusi-nya
+      // lewat bundler sendiri (webpack/Turbopack) — melainkan lewat raw Node
+      // require()/import() yang cuma tahu package.json "exports" conditions,
+      // dan SAMA SEKALI tidak mengerti directive "use client". Di package.json
+      // root, condition "react-server" dan "node" untuk "." menunjuk ke FILE
+      // YANG SAMA (dist/index.mjs) — yang juga berisi implementasi hook asli
+      // (createUseTokens / useBrandTokens). Begitu resolusi murni-Node ini
+      // terjadi di context yang punya active condition "react-server" (RSC
+      // layer-nya Next), import React di dalam file itu ikut ke-resolve ke
+      // build "react-server" React sendiri (yang hook-nya sengaja di-null-kan
+      // karena Server Component tidak boleh punya hook) → tokens jadi null →
+      // "Cannot read properties of null (reading 'useState')".
+      //
+      // "tailwind-styled-v4" sebenarnya SUDAH didesain untuk dibundle normal:
+      // ada dist/index.browser.mjs terpisah (exports["."].browser) yang bebas
+      // Node built-ins, dan dist/index.mjs sekarang sudah benar diawali
+      // directive "use client" (lihat fix preserveDirectives() di
+      // tsup.config.ts). Begitu Next.js memproses file ini lewat bundler-nya
+      // sendiri (bukan raw require), "use client" itu dibaca SEBAGAI directive
+      // boundary asli — Next generate client reference yang benar untuk
+      // Server Component, dan tetap bundle implementasi React-nya yang asli
+      // untuk SSR Client Component (yang resolve "react" via condition normal,
+      // BUKAN "react-server") — jadi tidak ada lagi collision.
+      //
+      // Subpackage Node-only lain (shared/compiler/engine/dll) TETAP di
+      // externalize — mereka tidak punya varian browser sama sekali dan
+      // memang tidak pernah seharusnya masuk ke client bundle.
       serverExternalPackages: [
         ...new Set([
           ...(nextConfig.serverExternalPackages ?? []),
-          "tailwind-styled-v4",
           "@tailwind-styled/core",
           "@tailwind-styled/shared",
           "@tailwind-styled/compiler",
