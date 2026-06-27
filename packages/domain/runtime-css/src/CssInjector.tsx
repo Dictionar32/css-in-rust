@@ -5,7 +5,9 @@
  * Zero client JS, no hydration overhead, streaming-friendly.
  *
  * Pipeline:
- *   1. withTailwindStyled webpack plugin emit CSS manifest ke .next/static/css/tw/
+ *   1. withTailwindStyled (config-eval time, lihat fire-and-forget IIFE di
+ *      withTailwindStyled.ts — bukan webpack plugin, supaya jalan terlepas
+ *      dari Turbopack/webpack) tulis CSS manifest ke .next/static/css/tw/
  *   2. TwCssInjector baca manifest → inject <style> inline per route
  *
  * Usage:
@@ -37,7 +39,7 @@ interface CssInjectorProps {
 
 /**
  * Server Component — inject CSS per route ke <head>.
- * Baca dari manifest yang di-emit oleh TwCssManifestPlugin.
+ * Baca manifest yang ditulis withTailwindStyled (lihat catatan di atas).
  */
 export async function TwCssInjector(props: CssInjectorProps = {}): Promise<React.ReactElement> {
   const { route, includeGlobal = true, minify = true, cssDir } = props

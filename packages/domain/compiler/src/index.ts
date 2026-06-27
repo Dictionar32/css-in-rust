@@ -48,6 +48,9 @@ export * from './redis'
 // Watch sub-entry - File watching and monitoring
 export * from './watch'
 
+// Route graph - static import-graph based per-route class attribution
+export * from './routeGraph'
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PURE RUST SYNC API (v5.0.19+) — NO FALLBACK
 // ═══════════════════════════════════════════════════════════════════════════
@@ -432,15 +435,19 @@ export const getRouteClasses = (route: string): Set<string> => {
 
 /**
  * Semua classes yang ke-register dari semua file + registerGlobalClasses(),
- * tanpa peduli route. Dipakai oleh RouteCssManifestPlugin untuk generate
- * bundle "__global" — KETERBATASAN SAAT INI: belum ada per-route code
- * splitting yang sesungguhnya (classes eksklusif per halaman), karena itu
- * butuh import-graph tracing (siapa import siapa) yang belum ada di
- * compiler ini. Lihat juga native analyze_route_class_distribution (dipakai
- * `tw split` CLI) — itu jalur terpisah yang juga belum tersambung ke build
- * Next.js. Untuk sekarang, semua classes dibundle jadi satu CSS global yang
- * di-inject TwCssInjector — sudah lebih baik daripada tidak ada CSS sama
- * sekali, tapi belum "true" route splitting.
+ * tanpa peduli route. TIDAK dipakai untuk manifest per-route (lihat
+ * withTailwindStyled.ts — manifest ditulis dari `result.files` hasil
+ * scanWorkspace() + buildRouteClassBuckets() di ./routeGraph.ts, karena
+ * registry ini baru ke-isi progresif saat bundler benar-benar meng-compile
+ * file, sementara manifest ditulis di config-eval time, sebelum itu).
+ * getRouteClasses()/fileToRoute() di bawah juga TIDAK dipakai jalur itu —
+ * cuma mengenali page.tsx/layout.tsx/loading.tsx/error.tsx secara langsung,
+ * gak ngikutin import transitif. Per-route splitting yang sesungguhnya
+ * (import-graph tracing: file mana di-import transitif oleh route mana)
+ * sudah ada — lihat ./routeGraph.ts (buildRouteClassBuckets), dipanggil
+ * dari withTailwindStyled.ts, bukan dari registry/fungsi di bawah ini.
+ * Fungsi-fungsi di bawah dipertahankan untuk konsumer lain (CLI `tw split`,
+ * dll) yang mungkin masih bergantung pada registry incremental ini.
  */
 export const getAllRegisteredClasses = (): Set<string> => {
   const result = new Set<string>(_globalClasses)
