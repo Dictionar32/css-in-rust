@@ -1,0 +1,29 @@
+File yang berubah di patch ini:
+
+NEW:
+  packages/domain/compiler/src/routeGraph.ts
+    -> import-graph based per-route CSS class attribution (buildRouteClassBuckets,
+       routeToCssFilename). Ini fix utamanya.
+
+EDITED:
+  packages/presentation/next/src/withTailwindStyled.ts
+    -> tulis css-manifest.json + per-route CSS files di config-eval IIFE yang sudah
+       ada (bukan webpack plugin). Komentar dev-mode guard yang basi dibenerin.
+  packages/domain/compiler/src/index.ts
+    -> getAllRoutes() dihapus (unused, misleading stub). Doc comment diupdate.
+  packages/domain/compiler/src/internal.ts
+    -> referensi getAllRoutes dihapus dari import/export list.
+  packages/presentation/next/src/upstream-modules.d.ts
+    -> doc comment diupdate, gak lagi nyebut RouteCssManifestPlugin yang udah gak ada.
+  packages/presentation/next/src/staticCssWebpackPlugin.ts
+    -> TIDAK dihapus (lihat known-issues.md) -- cuma ditambah comment status, karena
+       ini masih berguna kalau user pakai --webpack eksplisit (incremental HMR utk
+       _tw-state-static.css yang gak di-cover IIFE startup-only).
+  packages/domain/runtime-css/src/CssInjector.tsx
+    -> doc comment diupdate.
+
+DELETE MANUAL (lihat REMOVE_THIS_FILE.txt):
+  packages/presentation/next/src/Routecssmanifestplugin .ts
+
+Detail lengkap + hasil validasi (real example app + synthetic fixtures untuk
+shared-component/circular-import/dynamic-segment/route-group) ada di known-issues.md.

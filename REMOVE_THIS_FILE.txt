@@ -1,0 +1,5 @@
+Hapus manual file ini dari repo asli (mangled name, abandoned design):
+  packages/presentation/next/src/Routecssmanifestplugin .ts
+
+(salah case + ada spasi sebelum .ts — gak pernah importable, desainnya
+juga udah diganti sama routeGraph.ts. Lihat known-issues.md.)
