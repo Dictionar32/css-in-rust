@@ -6,7 +6,8 @@
  * Semua komponen yang subscribe otomatis re-render.
  */
 import React, { useState } from "react"
-import { tw, liveToken, tokenVar, createUseTokens } from "tailwind-styled-v4"
+import { tw } from "tailwind-styled-v4"
+import { liveToken, tokenVar, createUseTokens } from "tailwind-styled-v4/runtime"
 
 // -- Deklarasi live tokens -----------------------------------------------------
 const brandTokens = liveToken({

@@ -5,6 +5,134 @@ Append-only log of diagnosed issues in this repo, newest first. Format per entry
 
 ---
 
+## 2026-06-28 — `dist/index.mjs` "use client" taint: Turbopack `Can't resolve 'fs'` at build time, then `tw.div is not a function` at runtime even after that's fixed; same bug also hit `dist/theme.mjs`
+
+- **Symptom (layer 1 — build-time):** `next build` with Turbopack: `Module not found: Can't
+  resolve 'fs'` / `'module'`, traced to `dist/index.mjs:27` / `:139` (`native-resolution.ts` +
+  `packages/domain/shared/src/index.ts`'s top-level `node:fs`/`node:module`/`node:crypto`/`node:url`
+  imports). `next dev` showed the same failure for any route reachable from a Server Component
+  importing the package (e.g. `/docs`), not just Client Components.
+- **Symptom (layer 2 — same bug, different entry):** `dist/theme.mjs` (the `"./theme"` subpath)
+  carries the identical pattern — also picked up the `"use client"` tag, also leaks
+  `node:path`/`node:url` (via `packages/domain/theme/src/native-bridge.ts` →
+  `@tailwind-styled/shared`). Not yet hit by an actual user report at the time of fixing — found by
+  auditing every `dist/*.mjs` for the same (`"use client"` + leaked builtin) combination.
+- **Symptom (layer 3 — runtime, only visible *after* layers 1–2 are fixed):** Turbopack build
+  reports `✓ Compiled successfully`, but `next build`'s "Collecting page data" step then throws
+  `TypeError: tw.div is not a function` for any Server Component that does `const X = tw.div\`...\``
+  at module scope — i.e. the exact pattern already used by `docs/page.tsx`
+  (`const Container = tw.main({...})`) and basically every component in `examples/next-js-app`.
+- **Where:** `tsup.config.ts` (`preserveDirectives()` + the build-config split for `"index"`,
+  added earlier today — see updated comment block above `defineConfig`); `src/umbrella/index.ts`;
+  `src/umbrella/theme.ts`; `packages/domain/theme/src/index.server.ts` (new);
+  `packages/domain/runtime/src/index.ts`; `examples/next-js-app/src/components/LiveTokenDemo.tsx`.
+- **Root cause (all three layers trace to the same mechanism):** `splitting: false` means each
+  `tsup` entry is ONE physical output file. `preserveDirectives()` correctly scans every source
+  file bundled into that one output and, if *any* of them has `"use client"` at the top, prepends
+  it to the *whole* file — there's no way to tag only part of a single-file bundle. Both `index.ts`
+  and `theme.ts`'s entries transitively pull in `packages/domain/theme/src/liveTokenEngine.ts`,
+  which legitimately needs `"use client"` (`createUseTokens` calls `React.useState`/`useEffect`).
+  That correctly-applied directive then drags two unrelated problems in with it:
+  1. The *same* entry also bundles `native.ts` / `native-bridge.ts`, whose top-level
+     `node:fs`/`node:module`/`node:path`/`node:url` imports are fine for a plain Node-targeted
+     bundle (`external: nodeBuiltins` keeps them un-inlined, correct for real Node.js) but fatal
+     once Turbopack treats the file as part of the `"use client"` app-client chunking layer — that
+     layer cannot resolve Node builtins in *any* form (bare `"fs"`, `"node:fs"`, or a dynamic
+     `require()` trick — all three were tried against an isolated minimal repro and all three
+     failed, with three different Turbopack error shapes).
+  2. Independent of the build error, a `"use client"` directive at the top of a file means React's
+     RSC bundler treats **every** export from that file as an opaque "client reference" when the
+     file is imported into a Server Component — not just the actual React-hook-using export
+     (`createUseTokens`). Since `tw`/`cv`/`cx`/`createComponent` (server-safe, no hooks) are bundled
+     into the *same physical file* as `liveTokenEngine`, they get the same treatment, and
+     `tw.div`/`tw.main` stop being callable from any Server Component. This is invisible at build
+     time (Turbopack's own bundling succeeds) — it only throws during the later
+     "Collecting page data"/static-generation pass that actually executes the module.
+     Confirmed empirically: manually stripping the `"use client"` line from an otherwise-identical
+     `dist/index.mjs` made the full Next.js 16.2.4 Turbopack production build (Server Component +
+     Client Component) pass end-to-end with no other change.
+- **Fix:**
+  1. Split the `"index"` entry into its own `tsup` build config with an `esbuildPlugins`
+     redirect (`./native`, `./compatibility`, `@tailwind-styled/shared` → the existing
+     `native.browser.ts` / `shared.browser.ts` stubs, same ones the browser build already uses).
+     Safe because every `getNativeBinding()` call site (`cv.ts`, `cx.ts`, `createComponent.ts`,
+     `merge.ts`, `stateEngine.ts`, `containerQuery.ts`, `styledSystem.ts`, `themeReader.ts`,
+     `twProxy.ts`) already has a graceful JS fallback for `null` — the exact path already exercised
+     today in the browser build.
+  2. For `"./theme"`: the same redirect is **not** safe — `createTheme()` /
+     `compileDesignTokens()` in `packages/domain/theme/src/index.ts` intentionally `throw
+     "FATAL: Native binding ... required"` when the binding is `null`, with no JS fallback by
+     design. Created `packages/domain/theme/src/index.server.ts`: the theme-engine surface only
+     (`defineThemeContract`, `createTheme`, `ThemeRegistry`, `createMultiTheme`,
+     `compileDesignTokens`, schema re-exports), deliberately *not* importing `liveTokenEngine` at
+     all. `src/umbrella/theme.ts` now points at this file directly (relative import, same pattern
+     `index.ts` already uses for `domain/core`). `native-bridge.ts` is untouched/un-redirected here
+     — native binding stays fully real.
+  3. For the RSC client-reference issue: removed the `liveTokenEngine` re-export block from
+     `src/umbrella/index.ts` entirely, so `dist/index.mjs` no longer transitively reaches any
+     `"use client"` source file at all. Live-token functions (`applyTokenSet`, `liveToken`,
+     `tokenVar`, `createUseTokens`, `subscribeTokens`, etc.) remain fully available via
+     `"tailwind-styled-v4/runtime"` (`packages/domain/runtime/src/index.ts`), which was already
+     correctly isolated (`"use client"`, zero native-builtin leakage). Added a `tokenRef as
+     containerRef` alias there too, since that alias previously only existed on the main entry and
+     would otherwise have quietly disappeared. Updated the one real internal consumer,
+     `examples/next-js-app/src/components/LiveTokenDemo.tsx`, to import `tw` from the main entry
+     and `liveToken`/`tokenVar`/`createUseTokens` from `"tailwind-styled-v4/runtime"`.
+- **Validated empirically (real source rebuild, not just the synthetic repro used to diagnose
+  layer 1):** rebuilt `dist/index.mjs`/`theme.mjs`/`runtime.mjs`/`index.browser.mjs` from the
+  patched source, confirmed: `index.mjs` no longer starts with `"use client"`, zero leaked Node
+  builtin imports, no `liveToken`/`applyTokenSet` in its export list; `theme.mjs` no longer starts
+  with `"use client"`, `getNativeThemeBinding` is the real function (not the browser stub),
+  `node:path`/`node:url` imports still present and real; `runtime.mjs` unchanged behavior plus the
+  new `containerRef` export. Wired all four into a real Next.js 16.2.4 + Turbopack app exercising
+  all three patterns together — Server Component with `tw.main`/`tw.h1` at module scope +
+  `"tailwind-styled-v4/theme"`'s `createTheme`/`defineThemeContract`, a Client Component with
+  `tw.button` + `twMerge`, and `"tailwind-styled-v4/runtime"`'s `liveToken`/`createUseTokens` —
+  `next build` completed with `✓ Compiled successfully`, `Finished TypeScript`, and
+  `Generating static pages (5/5)` for all routes including `/_not-found`.
+- **Known limitations:**
+  - **Breaking change to the public API surface.** Any consumer currently doing
+    `import { liveToken } from "tailwind-styled-v4"` (or `tokenVar`/`createUseTokens`/
+    `applyTokenSet`/`getToken`/`getTokens`/`setToken`/`setTokens`/`subscribeTokens`/`tokenRef`/
+    `containerRef`/`generateTokenCssString` from the main entry) will get a type error / missing
+    export and must switch to `"tailwind-styled-v4/runtime"`. Only one such consumer exists inside
+    this repo (`LiveTokenDemo.tsx`, already updated) — no way to audit external consumers of the
+    published package from here. Needs a CHANGELOG entry and probably a minor (not patch) version
+    bump.
+  - **Native acceleration lost specifically for the first SSR render of a Client Component reached
+    through the main `"."` entry.** `cv`/`cx`/`createComponent`/`merge`/etc. now always take the JS
+    fallback path when loaded via `dist/index.mjs`, identically to how they already behave in the
+    browser bundle — not a correctness issue, just slightly slower on that one render path.
+    Build-time scanner/compiler (separate entries, not touched by this redirect) keep full native
+    acceleration. `"./theme"`'s `createTheme`/`compileDesignTokens` are unaffected — those keep
+    native acceleration unconditionally (that was the whole point of the separate
+    `index.server.ts` split rather than reusing the same redirect).
+  - **The general failure mode (one `"use client"`-needing file silently tainting every other
+    export bundled into the same un-split output) was fixed for `"index"` and `"theme"` specifically
+    because those were the only two entries where it combined with a leaked Node builtin and/or an
+    actual Server-Component-reachable non-hook export. It was not turned into a structural
+    guarantee — e.g. a lint rule or a build-time assertion that no Server-Component-safe export
+    ever shares a physical chunk with a `"use client"`-sourced one. If a future entry mixes the two
+    again (`splitting: false` makes this easy to do by accident), the same class of bug — passes
+    Turbopack bundling, throws later at "Collecting page data" — could resurface silently. A
+    proper code-splitting setup (so `"use client"` lands on its own physical chunk and `index.mjs`
+    merely re-exports from it without itself carrying the directive) was considered as an
+    alternative that would have preserved the single-import public API instead of requiring the
+    `/runtime` migration above, but wasn't implemented — `splitting: false` is relied on elsewhere
+    in this config and turning it on for just one entry needs more validation than there was time
+    for here.
+  - Only `index`, `theme`, and `runtime` were audited for the (`"use client"` + leaked builtin)
+    combination (via a full grep across every `dist/*.mjs` after a real build). Other entries with
+    no `"use client"` tag were not re-examined for the separate RSC client-reference issue, since
+    that issue only matters for entries that *do* carry the directive while also exporting
+    server-safe values — none of the other 25 entries currently do both.
+- **Status:** Fixed and validated end-to-end (real rebuild + real Next.js 16.2.4 Turbopack
+  production build, all routes). Outstanding: CHANGELOG entry + version bump for the breaking
+  `/runtime` migration (not written yet); no lint/build-time guard added against the same failure
+  mode recurring in a future entry (see known limitations above).
+
+---
+
 ## 2026-06-27 — Removed `getAllRoutes()` — claimed a native-binding dependency, then ignored its result
 
 - **Symptom:** none observed — found while reviewing `compiler/index.ts` for the per-route

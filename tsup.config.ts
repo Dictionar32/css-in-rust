@@ -279,23 +279,43 @@ const nativeBrowserPlugin = {
 // lambat di render SSR pertama saja. Build-time scanner/compiler (entry
 // terpisah, tidak kena redirect ini) tetap full native.
 //
-// CATATAN PENTING (belum di-fix di sini, butuh treatment berbeda):
-// dist/theme.mjs (entry "theme" di atas, dari @tailwind-styled/theme) KENA
-// BUG YANG SAMA — juga ke-tag "use client" (via liveTokenEngine yang sama)
-// DAN juga bawa node:path/node:url + @tailwind-styled/shared lewat
-// native-bridge.ts. TAPI redirect yang sama TIDAK aman di sini: createTheme()
-// dan compileDesignTokens() di packages/domain/theme/src/index.ts sengaja
-// `throw new Error("FATAL: Native binding ... required but not available")`
-// kalau binding null — TIDAK ADA JS fallback seperti di domain/core. Kalau
-// native-bridge.ts di-redirect ke stub null, dua fungsi itu bakal throw FATAL
-// begitu ada yang memanggilnya dari bundle yang ke-tag client. Fix yang benar
-// kemungkinan ngikutin pattern yang udah dipakai di src/umbrella/runtime-css.ts:
-// pisahkan export live-token (yang emang butuh "use client") dari export
-// createTheme/compileDesignTokens (yang Node-only, gak boleh ke-taint) di
-// barrel terpisah, supaya directive gak ikut nyemplung ke fungsi yang
-// butuh native wajib. Belum di-apply di patch ini karena scope-nya beda dan
-// butuh keputusan desain dari kamu (apakah createTheme tetap "no fallback by
-// design" atau perlu fallback juga).
+// CATATAN (2026-06-28, UPDATE): dist/theme.mjs SUDAH di-fix dengan pattern
+// yang sama persis seperti dijelaskan di atas — lihat
+// packages/domain/theme/src/index.server.ts (cuma createTheme/
+// compileDesignTokens/ThemeRegistry dkk, TANPA liveTokenEngine sama sekali)
+// dan src/umbrella/theme.ts (sekarang import relative ke index.server, bukan
+// "@tailwind-styled/theme" full barrel). native-bridge.ts TETAP penuh/real,
+// TIDAK di-redirect ke stub — sudah divalidasi: dist/theme.mjs tidak
+// "use client", masih bawa node:path/node:url asli, getNativeThemeBinding()
+// adalah fungsi asli (bukan stub null).
+//
+// TEMUAN LEBIH DALAM (2026-06-28): bahkan SETELAH index.mjs lolos Turbopack
+// BUILD (fix di atas), ternyata ada bug RUNTIME terpisah yang baru kelihatan
+// pas benar-benar render: begitu SATU file ke-tag "use client", React/Next
+// RSC mengubah SEMUA export dari file itu jadi "client reference" ketika
+// di-import dari Server Component — bukan cuma export yang React component.
+// Karena index.ts re-export liveTokenEngine (legit butuh "use client" —
+// createUseTokens pakai React.useState/useEffect) ke DALAM bundle yang sama
+// dengan tw/cv/cx/createComponent (splitting:false → satu file, satu
+// directive untuk semua), Server Component manapun yang pakai `tw.div` di
+// module scope (pattern yang SAMA dengan docs/page.tsx kamu) akan dapat
+// `TypeError: tw.div is not a function` — BUKAN error build, baru muncul di
+// fase "Collecting page data"/static generation. Dibuktikan empiris: strip
+// manual "use client" dari dist/index.mjs → seluruh build (Server + Client
+// Component) langsung lolos total.
+//
+// Fix: hapus re-export liveTokenEngine dari src/umbrella/index.ts (lihat
+// file itu). Live-token functions (applyTokenSet, liveToken, tokenVar,
+// createUseTokens, dkk — plus alias containerRef yang sebelumnya cuma ada
+// di main entry, sekarang dipindah ke sini juga) sudah lengkap tersedia
+// lewat "tailwind-styled-v4/runtime" (packages/domain/runtime/src/index.ts)
+// — subpath itu SUDAH benar terisolasi sejak awal (dist/runtime.mjs "use
+// client" tapi nol native builtin leak). Konsumen yang sebelumnya import
+// live-token functions dari "tailwind-styled-v4" (main entry) — termasuk
+// examples/next-js-app/src/components/LiveTokenDemo.tsx, sudah di-update di
+// patch ini — perlu pindah ke "tailwind-styled-v4/runtime". Ini breaking
+// change kecil untuk public API, catat di CHANGELOG.
+
 const indexBuildConfig = {
   ...sharedConfig,
   entry: indexEntry,
