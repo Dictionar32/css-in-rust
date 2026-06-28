@@ -133,9 +133,33 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
     notifySubscribers()
   }
 
-  // Dipanggil sekali setelah mount pertama (lewat useTokens()'s useEffect, atau
-  // fallback rAF di bawah buat consumer yang pakai API imperative tanpa hook).
-  // Setelah ini true, semua write di atas balik sinkron langsung seperti semula.
+  // Dipanggil sekali setelah mount pertama, EKSKLUSIF lewat useTokens()'s
+  // useEffect. Setelah ini true, semua write di atas balik sinkron langsung
+  // seperti semula.
+  //
+  // KENAPA TIDAK ADA FALLBACK rAF/timer DI SINI (root cause bug sebelumnya):
+  // Versi lama nyoba nge-flush via `requestAnimationFrame(() =>
+  // requestAnimationFrame(markHydrated))` sebagai fallback buat consumer
+  // imperative-only. Itu SALAH karena rAF terikat ke jadwal repaint browser,
+  // BUKAN ke commit React. Untuk tree client component yang besar/berat
+  // (banyak demo widget sekaligus) atau saat dev server lagi lambat
+  // (Turbopack first compile, Fast Refresh instrumentation), React bisa
+  // belum kelar nge-hydrate <html> di titik rAF itu nembak — begitu rAF
+  // nulis ke document.documentElement.style DI TENGAH proses hydrate, React
+  // lapor mismatch tepat di <html> (root element-nya), persis seperti yang
+  // dilaporkan: `<html style={{--tw-token-primary:...}}>` padahal
+  // layout.tsx gak pernah nulis style itu di JSX-nya.
+  // Dikonfirmasi via repro React + jsdom: nulis ke documentElement.style
+  // SEBELUM hydrateRoot() menghasilkan warning yang identik byte-per-byte
+  // dengan yang dilaporkan; begitu write yang sama dipindah ke dalam
+  // useEffect (jalan persis setelah commit), warning-nya hilang total.
+  // useEffect dijamin React baru jalan SETELAH seluruh tree (termasuk
+  // <html>) selesai di-commit/di-hydrate — gak ada race seperti rAF.
+  // Konsekuensinya: consumer yang cuma pakai liveToken().set() imperatif
+  // tanpa pernah render komponen yang panggil useTokens() (hook dari
+  // createUseTokens()) gak akan ke-flush ke DOM. Itu trade-off yang
+  // disengaja — render satu komponen yang pakai useTokens() di mana aja
+  // dalam tree buat "bootstrap" hydration-nya.
   const markHydrated = (): void => {
     if (state.hydrated || typeof document === "undefined") return
     state.hydrated = true
@@ -144,35 +168,6 @@ const createLiveTokenEngine = (): LiveTokenEngineRuntime => {
       root.style.setProperty(tokenVar(name), value)
     }
     syncStyleEl()
-  }
-
-  if (typeof window !== "undefined") {
-    // Fallback buat consumer yang gak pakai useTokens() hook (cuma pakai
-    // liveToken().set() imperatif): tetap flush setelah paint pertama,
-    // jauh lebih aman daripada langsung saat module di-evaluasi.
-    //
-    // PENTING — kenapa DOUBLE rAF, bukan satu (FIX):
-    // Satu rAF cuma menjamin "sebelum repaint berikutnya", BUKAN "setelah
-    // React selesai hydrate". Module top-level (lihat LiveTokenDemo.tsx —
-    // `liveToken({...})` dipanggil di luar komponen) di-evaluasi sebagai
-    // bagian dari client bundle eval, yang notabene bisa kelar SEBELUM
-    // React selesai memproses hydrateRoot() untuk seluruh tree — apalagi
-    // di dev mode (React Compiler, Fast Refresh instrumentation, banyak
-    // component) yang hydration-nya lebih lambat dari production build.
-    // Kalau rAF pertama kebetulan menembak document.documentElement.style
-    // (root <html>!) DI TENGAH proses hydrate, React lapor hydration
-    // mismatch — persis kasus yang dilaporkan: `<html style={{--tw-token-
-    // primary:...}}>` muncul di warning padahal layout.tsx gak pernah
-    // nulis style itu di JSX-nya.
-    // Dua rAF berturut-turut menjamin minimal satu frame penuh sudah lewat
-    // SETELAH frame pertama (rAF kedua baru di-schedule SETELAH rAF
-    // pertama selesai jalan) — kasih React jauh lebih banyak waktu utk
-    // menyelesaikan commit + passive effects sebelum kita nyentuh
-    // dokumen. Ini bukan garansi matematis 100% (gak ada API publik utk
-    // "tunggu sampai hydration React kelar" di luar useEffect), tapi
-    // margin amannya jauh lebih lebar daripada satu rAF — tervalidasi via
-    // simulasi frame-by-frame: mutasi DOM mundur dari frame 1 ke frame 2.
-    requestAnimationFrame(() => requestAnimationFrame(markHydrated))
   }
 
   return {
