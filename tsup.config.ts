@@ -321,7 +321,7 @@ const indexBuildConfig = {
   entry: indexEntry,
   target: "node20" as const,
   platform: "node" as const,
-  format: ["esm", "cjs"] as const,
+  format: ["esm", "cjs"] as ["esm", "cjs"],
   external: [...sharedExternal, ...nodeBuiltins],
   esbuildPlugins: [nativeBrowserPlugin],
   metafile: true,
