@@ -22,21 +22,24 @@ export { resolveStyledClassName, styled } from "../../packages/domain/core/src/s
 // Theme
 export { createTheme, cssVar, twVar, t, v4Tokens } from "../../packages/domain/core/src/twTheme"
 
-// Live tokens
-export {
-  applyTokenSet,
-  createUseTokens,
-  generateTokenCssString,
-  getToken,
-  getTokens,
-  liveToken,
-  setToken,
-  setTokens,
-  subscribeTokens,
-  tokenRef,
-  tokenRef as containerRef,
-  tokenVar,
-} from "../../packages/domain/core/src/liveTokenEngine"
+// Live tokens — SENGAJA TIDAK di-re-export dari sini (lihat known-issues
+// 2026-06-28). liveTokenEngine.ts punya "use client" (createUseTokens pakai
+// React.useState/useEffect — directive itu LEGIT, bukan bug). Tapi karena
+// splitting:false, "use client" itu nge-tag SELURUH dist/index.mjs, bukan
+// cuma bagian live-token-nya — dan React/Next RSC mengubah SEMUA export dari
+// file "use client" jadi client reference begitu di-import dari Server
+// Component, termasuk tw/cv/cx/createComponent yang sebenarnya aman dipakai
+// di server. Akibatnya `tw.div` (dipakai di module scope Server Component,
+// pattern yang sama dengan docs/page.tsx) jadi "is not a function" — bukan
+// build-time error, baru muncul di runtime/static-generation. Dibuktikan
+// empiris: strip "use client" dari dist/index.mjs → semua Server + Client
+// Component lolos build. Live-token functions sudah tersedia lengkap (plus
+// alias containerRef) lewat "tailwind-styled-v4/runtime" — subpath itu
+// SUDAH benar terisolasi: "use client"-nya cuma nge-cover file itu sendiri,
+// tidak ikut menaungi entry utama. Konsumen yang sebelumnya import
+// liveToken/tokenVar/createUseTokens/containerRef dari "tailwind-styled-v4"
+// (main entry) perlu pindah ke "tailwind-styled-v4/runtime" — lihat
+// CHANGELOG.
 
 // Registry
 export {
