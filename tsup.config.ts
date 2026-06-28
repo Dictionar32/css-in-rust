@@ -8,7 +8,6 @@ const projectRoot = new URL(".", import.meta.url).pathname
 const root = (p: string) => `${projectRoot}${p}`
 
 const entries = {
-  index: "src/umbrella/index.ts",
   webpackLoader: "packages/presentation/next/src/webpackLoader.ts",
   turbopackLoader: "packages/presentation/next/src/turbopackLoader.ts",
   animate: "src/umbrella/animate.ts",
@@ -38,6 +37,10 @@ const entries = {
   vite: "src/umbrella/vite.ts",
   vue: "src/umbrella/vue.ts",
 }
+
+// "index" (the "." export) di-build TERPISAH dari entries di atas — lihat
+// alasannya di komentar dekat nativeBrowserPlugin / defineConfig di bawah.
+const indexEntry = { index: "src/umbrella/index.ts" }
 
 const sharedExternal = [
   "react", "react-dom", "react/jsx-runtime",
@@ -234,7 +237,83 @@ const nativeBrowserPlugin = {
   },
 }
 
+// ─── Kenapa "index" punya build config sendiri ───────────────────────────────
+// Bug (2026-06-28): `tailwind-styled-v4`'s main "." export ("dist/index.mjs")
+// di-tag "use client" oleh preserveDirectives() di atas — bukan karena
+// index.ts sendiri punya directive itu, tapi karena dia re-export
+// liveTokenEngine dari @tailwind-styled/theme/live-tokens, dan FILE ITU
+// (packages/domain/theme/src/liveTokenEngine.ts) punya "use client" di baris
+// pertama. preserveDirectives() benar mem-propagate directive itu ke SELURUH
+// chunk index.mjs (karena splitting:false → satu file, satu directive untuk
+// semuanya) — itu sendiri bukan bug, itu correct.
+//
+// Masalahnya: index.ts JUGA (transitif, lewat cv/cx/createComponent/merge/
+// stateEngine/containerQuery/styledSystem/twProxy → ./native →
+// @tailwind-styled/shared) bawa native.ts yang punya top-level
+// `import { createRequire } from "node:module"` dkk — dan config Node di
+// bawah ini sengaja set `external: nodeBuiltins` supaya import itu TIDAK
+// di-inline, tetap sebagai `import ... from "fs"` literal di output (benar
+// untuk konsumsi Node.js murni). Begitu file yang sama juga ke-tag
+// "use client", Next.js/Turbopack mem-bundle dia sebagai bagian dari
+// app-client chunking layer — dan layer itu (sudah divalidasi via repro
+// minimal terpisah, lihat catatan investigasi) TIDAK BISA punya import Node
+// builtin dalam bentuk APA PUN (bare "fs", "node:fs", maupun dynamic
+// require() — sudah dicoba ketiganya). Makanya Turbopack build gagal dengan
+// "Module not found: Can't resolve 'fs'/'module'" persis di dist/index.mjs.
+//
+// Fix: pisah "index" jadi config sendiri (tetap platform:"node", tetap
+// format esm+cjs, tetap external nodeBuiltins — SAMA seperti config Node di
+// bawah) tapi pasang nativeBrowserPlugin yang SAMA dengan yang browser build
+// sudah pakai. Plugin ini redirect ./native + ./compatibility +
+// @tailwind-styled/shared ke stub (native.browser.ts / shared.browser.ts)
+// yang getNativeBinding()-nya selalu return null.
+//
+// Ini AMAN, bukan cuma nutup symptom: SEMUA pemanggil getNativeBinding() di
+// cv.ts/cx.ts/createComponent.ts/merge.ts/stateEngine.ts/containerQuery.ts/
+// styledSystem.ts/themeReader.ts/twProxy.ts sudah handle null dengan
+// graceful JS fallback (mergeFallback.ts dkk) — pattern yang SAMA yang
+// sudah jalan production hari ini di dist/index.browser.mjs. Konsekuensinya
+// cuma: render SSR-pertama dari Client Component yang pakai tw.*/cv/cx via
+// entry "." ini kehilangan akselerasi native Rust (jatuh ke JS fallback,
+// sama seperti di browser) — bukan masalah korektnes, cuma sedikit lebih
+// lambat di render SSR pertama saja. Build-time scanner/compiler (entry
+// terpisah, tidak kena redirect ini) tetap full native.
+//
+// CATATAN PENTING (belum di-fix di sini, butuh treatment berbeda):
+// dist/theme.mjs (entry "theme" di atas, dari @tailwind-styled/theme) KENA
+// BUG YANG SAMA — juga ke-tag "use client" (via liveTokenEngine yang sama)
+// DAN juga bawa node:path/node:url + @tailwind-styled/shared lewat
+// native-bridge.ts. TAPI redirect yang sama TIDAK aman di sini: createTheme()
+// dan compileDesignTokens() di packages/domain/theme/src/index.ts sengaja
+// `throw new Error("FATAL: Native binding ... required but not available")`
+// kalau binding null — TIDAK ADA JS fallback seperti di domain/core. Kalau
+// native-bridge.ts di-redirect ke stub null, dua fungsi itu bakal throw FATAL
+// begitu ada yang memanggilnya dari bundle yang ke-tag client. Fix yang benar
+// kemungkinan ngikutin pattern yang udah dipakai di src/umbrella/runtime-css.ts:
+// pisahkan export live-token (yang emang butuh "use client") dari export
+// createTheme/compileDesignTokens (yang Node-only, gak boleh ke-taint) di
+// barrel terpisah, supaya directive gak ikut nyemplung ke fungsi yang
+// butuh native wajib. Belum di-apply di patch ini karena scope-nya beda dan
+// butuh keputusan desain dari kamu (apakah createTheme tetap "no fallback by
+// design" atau perlu fallback juga).
+const indexBuildConfig = {
+  ...sharedConfig,
+  entry: indexEntry,
+  target: "node20" as const,
+  platform: "node" as const,
+  format: ["esm", "cjs"] as const,
+  external: [...sharedExternal, ...nodeBuiltins],
+  esbuildPlugins: [nativeBrowserPlugin],
+  metafile: true,
+  async onSuccess() {
+    await preserveDirectives("dist")
+  },
+}
+
 export default defineConfig([
+  // "." export — lihat blok komentar panjang di atas kenapa ini terpisah.
+  indexBuildConfig,
+
   // Server / Node.js bundle — untuk tools, CLI, compiler (bukan SSR Next.js)
   {
     ...sharedConfig,
