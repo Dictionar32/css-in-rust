@@ -128,6 +128,65 @@ export type InferSubFromConfig<C extends ComponentConfig> =
       }[keyof S]
     : never
 
+/**
+ * HTML tags yang otomatis dikenali sebagai tag dari bare sub-key (tanpa "tag:name" syntax).
+ * HARUS identik dengan SEMANTIC_HTML_TAGS di createComponent.ts (parseSubKey) — kalau
+ * drift, sub-component bisa di-tipe-kan dengan native attributes yang salah (tag yang
+ * benar2 di-render di runtime beda dari yang dipakai untuk inference type-nya).
+ */
+export type SemanticSubTag =
+  | "article" | "aside" | "details" | "figcaption" | "figure"
+  | "footer" | "header" | "main" | "mark" | "nav" | "section" | "summary" | "time"
+  | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
+  | "p" | "ul" | "ol" | "li" | "dl" | "dt" | "dd"
+  | "table" | "thead" | "tbody" | "tfoot" | "tr" | "th" | "td"
+  | "form" | "fieldset" | "legend" | "label"
+  | "a" | "button" | "img" | "span" | "div"
+  | "blockquote" | "pre" | "code" | "em" | "strong" | "small"
+
+/**
+ * Resolve tag HTML dari satu sub-key string — mirror logic `parseSubKey()` runtime
+ * di createComponent.ts:
+ * - "a:link"  → tag eksplisit sebelum colon ("a")
+ * - "header"  → bare key, fallback ke key itu sendiri kalau termasuk SemanticSubTag
+ * - "icon"    → bare key, bukan semantic tag → fallback "span" (default runtime)
+ */
+type ResolveSubTag<K extends string> =
+  K extends `${infer Tag}:${string}`
+    ? Tag extends HtmlTagName ? Tag : "span"
+    : K extends SemanticSubTag
+      ? K
+      : "span"
+
+/** Gabungkan union of object types jadi satu intersection — dipakai untuk merge per-key tag map. */
+type UnionToIntersection<U> =
+  (U extends unknown ? (k: U) => void : never) extends (k: infer I) => void ? I : never
+
+/**
+ * Infer mapping { subComponentName: htmlTag } dari config.sub — dipakai supaya setiap
+ * sub-component (Card.icon, Breadcrumb.link, dst) punya native HTML attributes yang
+ * SESUAI tag yang benar2 di-render (href untuk <a>, src untuk <img>, dst), bukan cuma
+ * `{ children?, className? }` generik.
+ *
+ * @example
+ * sub: { "a:link": "...", "span:sep": "..." } → { link: "a"; sep: "span" }
+ * sub: { header: { topBar: "..." } }          → { topBar: "header" }
+ */
+export type InferSubTagsFromConfig<C extends ComponentConfig> =
+  C extends { sub: infer S extends Record<string, SubValue> }
+    ? UnionToIntersection<
+        {
+          [K in keyof S]: K extends string
+            ? S[K] extends string
+              ? { [N in ExtractSubName<K>]: ResolveSubTag<K> }
+              : S[K] extends Record<string, string>
+                ? { [N in keyof S[K]]: K extends HtmlTagName ? K : "span" }
+                : never
+            : never
+        }[keyof S]
+      >
+    : Record<string, never>
+
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
   base?: string
@@ -163,8 +222,10 @@ export type SubComponentMap = Record<string, unknown>
 
 // ── Tw Object ────────────────────────────────────────────────────────────────
 // ── Tw Styled Component ──────────────────────────────────────────────────────
-// Sub-component accessor — typed untuk registered sub-components
-export type TwSubComponentAccessor = React.FC<{ children?: React.ReactNode; className?: string }>
+// Sub-component accessor — typed sesuai HTML tag asli yang di-render (href untuk <a>,
+// src untuk <img>, dst), bukan cuma children/className generik.
+export type TwSubComponentAccessor<Tag extends HtmlTagName = "span"> =
+  React.FC<React.ComponentPropsWithoutRef<Tag>>
 
 // Sub-component props yang bisa di-extend user
 // ── Template Literal Sub-Component Inference ─────────────────────────────────
@@ -207,32 +268,33 @@ export interface TwSubComponentProps {
 
 // Helper: kalau S = string (belum di-narrow karena TypeScript tidak bisa
 // infer nama dari multiline template literal), fallback ke loose index signature.
-// Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid.
-// Gunakan .withSub<"icon" | "footer">() untuk opt-in ke strict mode manual.
-type SubComponentKeys<S extends string> =
+// Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid, dan
+// setiap key di-tipe-kan sesuai tag asli-nya lewat TagMap (default "span" kalau tidak diketahui).
+type SubComponentKeys<S extends string, TagMap extends Record<string, string> = Record<string, never>> =
   string extends S
     ? { [key: string]: TwSubComponentAccessor }  // loose — TypeScript gagal infer
-    : { [K in S]: TwSubComponentAccessor }        // strict — hanya nama terdaftar
+    : { [K in S]: TwSubComponentAccessor<K extends keyof TagMap ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span") : "span"> }
 
 // TwStyledComponent dengan generic Sub untuk nama sub-component
 // S = union of sub-component names — di-infer otomatis dari [name] patterns
 // di template literal via ExtractSubNames, atau di-declare manual via .withSub<>()
 export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
-  S extends string = string
+  S extends string = string,
+  TagMap extends Record<string, string> = Record<string, never>
 > = {
   (props: StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
-    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S>
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap>
     (config: {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config, S>
+    }): TwStyledComponent<Config, S, TagMap>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S>
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap>
   /**
    * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
    *
@@ -246,9 +308,9 @@ export type TwStyledComponent<
    * Button.footer // ✅ autocomplete
    * Button.xyz    // ❌ TypeScript error
    */
-  withSub<NewS extends string>(): TwStyledComponent<Config, NewS>
-  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S>>
-} & SubComponentKeys<S>
+  withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap>
+  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S, TagMap>>
+} & SubComponentKeys<S, TagMap>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
 export interface TwSubComponent<P = unknown> {
@@ -263,7 +325,11 @@ export interface TwTemplateFactory<Config extends ComponentConfig = ComponentCon
   <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>>
   (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string>
   // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
-  <C extends ComponentConfig>(config: C): TwStyledComponent<C, InferSubFromConfig<C>>
+  <C extends ComponentConfig>(config: C): TwStyledComponent<
+    C,
+    InferSubFromConfig<C>,
+    InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>
+  >
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────

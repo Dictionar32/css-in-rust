@@ -534,7 +534,7 @@ export function createComponent<TConfig extends ComponentConfig>(
 
     const component = baseComponent as unknown as TwStyledComponent<TConfig, InferSubFromConfig<TConfig>>
     component.displayName = `tw.${tagLabel}`
-    const result = attachExtend<TConfig>(component, tag, base, config as ComponentConfig)
+    const result = attachExtend<TConfig>(component as unknown as TwStyledComponent<TConfig, string>, tag, base, config as ComponentConfig)
     registerSubComponents(result, base, configSub)
     return wrapWithSubProxy(result, tagLabel)
   }
@@ -562,7 +562,7 @@ export function createComponent<TConfig extends ComponentConfig>(
 
   const component = baseComponent as unknown as TwStyledComponent<TConfig, InferSubFromConfig<TConfig>>
   component.displayName = `tw.${tagLabel}`
-  const result = attachExtend<TConfig>(component, tag, base, config as ComponentConfig)
+  const result = attachExtend<TConfig>(component as unknown as TwStyledComponent<TConfig, string>, tag, base, config as ComponentConfig)
   registerSubComponents(result, base, configSub)
   return wrapWithSubProxy(result, tagLabel)
 }
