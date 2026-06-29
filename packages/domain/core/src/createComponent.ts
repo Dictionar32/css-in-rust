@@ -132,24 +132,27 @@ function createSubComponentAccessor(
   classes: string,
   tag: string = "span",
   asChild: boolean = false
-): React.FC<{ children?: React.ReactNode; className?: string }> {
-  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+): React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> {
+  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> = ({
     children,
     className,
+    ...rest  // tangkap semua native HTML props (href, onClick, src, alt, dll)
   }) => {
     const mergedClass = className ? `${classes} ${className}` : classes
 
-    // asChild: clone direct child element dan merge className ke dalamnya
+    // asChild: clone direct child element dan merge className + rest ke dalamnya
     if (asChild && React.isValidElement(children)) {
       const child = React.Children.only(children) as React.ReactElement<{ className?: string }>
       return React.cloneElement(child, {
+        ...rest,
         className: child.props.className
           ? `${mergedClass} ${child.props.className}`
           : mergedClass,
       })
     }
 
-    return React.createElement(tag, { className: mergedClass }, children)
+    // Teruskan semua extra props ke elemen DOM (href, onClick, target, src, dll)
+    return React.createElement(tag, { ...rest, className: mergedClass }, children)
   }
   SubComponent.displayName = `${parentDisplayName}[${name}]`
   return SubComponent
@@ -592,10 +595,11 @@ function wrapWithSubProxy<P extends object>(
       if (typeof prop === "symbol") return value
       if (SKIP_PROXY_KEYS.has(prop as string)) return value
       // Fallback: buat passthrough <span> untuk sub-component yang tidak terdefinisi
-      const Fallback: React.FC<{ children?: React.ReactNode; className?: string }> = ({
+      const Fallback: React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> = ({
         children,
         className,
-      }) => React.createElement("span", { className }, children)
+        ...rest
+      }) => React.createElement("span", { ...rest, className }, children)
       Fallback.displayName = `tw.${tagLabel}.${prop as string}(fallback)`
       return Fallback
     },

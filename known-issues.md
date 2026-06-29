@@ -5,6 +5,67 @@ Append-only log of diagnosed issues in this repo, newest first. Format per entry
 
 ---
 
+## 2026-06-30 — TS2322 `Property 'href' does not exist` on `"a:link"` sub-components; same root also silently drops `href` (and all extra props) at runtime even when TypeScript is satisfied
+
+- **Symptom (layer 1 — TypeScript):** TS2322 on any sub-component declared via `"tag:name"` key
+  syntax (e.g. `"a:link"`, `"a:anchor"`, `"button:cta"`) when the caller passes a native HTML
+  attribute that is valid for the underlying tag but not for the generic `FC` type the library
+  emitted — most commonly `href`. Repro: any component following this pattern in
+  `examples/next-js-app/.../box-model/page.tsx`:
+  ```tsx
+  const Breadcrumb = tw.div({ sub: { "a:link": "...", "span:sep": "..." } })
+  // TS2322: Property 'href' does not exist on type
+  //         'IntrinsicAttributes & { children?: ReactNode; className?: string | undefined; }'
+  <Breadcrumb.link href="/docs">Docs</Breadcrumb.link>
+  ```
+- **Symptom (layer 2 — runtime, *silent*):** Even after silencing the TS error by other means
+  (e.g. `as any` cast), `href` never appears on the rendered DOM element. The anchor renders as
+  `<a class="hover:text-...">Docs</a>` — **link is not clickable**. No console warning.
+- **Where (layer 1):** `packages/domain/core/src/types.ts` — `TwSubComponentAccessor` type
+  definition and `SubComponentKeys<S>` mapped type.
+- **Where (layer 2):** `packages/domain/core/src/createComponent.ts` —
+  `createSubComponentAccessor()` function (line ~129) and the `Fallback` component inside
+  `wrapWithProxy()` (line ~595).
+- **Root cause (layer 1 — type):** `TwSubComponentAccessor` was non-generic, typed as
+  `React.FC<{ children?: ReactNode; className?: string }>` regardless of the actual backing HTML
+  tag. The `sub` key format `"a:link"` carries the tag (`a`) and the name (`link`) as separate
+  tokens, but only the name was used when building the sub-component accessor map — the tag portion
+  was silently discarded before it reached the type system. Every sub-component therefore got
+  identical props regardless of whether it backed `<a>`, `<button>`, `<img>`, etc.
+- **Root cause (layer 2 — runtime):** `createSubComponentAccessor` explicitly destructured only
+  `{ children, className }` from its props parameter, making all other props (`href`, `onClick`,
+  `target`, `src`, `alt`, `type`, etc.) unreachable via standard closure scope. The resulting
+  `React.createElement(tag, { className: mergedClass }, children)` call never included them, so
+  they were silently dropped regardless of what the caller passed. The proxy `Fallback` component
+  had the identical pattern.
+- **Fix (layer 1 — `types.ts`):** Added `InferSubTagsFromConfig<C>` — a conditional mapped type
+  that walks `config.sub`, splits each key on `:`, and builds a `{ name → tag }` record (e.g.
+  `{ link: "a"; sep: "span"; curr: "span" }`). `TwSubComponentAccessor` is now generic over
+  `Tag extends HtmlTagName = "span"`, resolving to
+  `React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref"> & { children?: ReactNode; className?: string }>`.
+  `SubComponentKeys<S, TagMap>` uses the per-key tag to instantiate the right
+  `TwSubComponentAccessor<Tag>` for each sub-component name. The third `TagMap` generic parameter
+  was threaded through `TwStyledComponent` and the config-object overload of `TwTemplateFactory`.
+  A guard ensures `InferSubTagsFromConfig<C>` resolves to `Record<string, string>` (satisfying the
+  `TagMap` constraint) in both the "has sub" and "no sub" branches. The two `attachExtend` call
+  sites inside `createComponent` were updated with an `as unknown as TwStyledComponent<TConfig,
+  string>` cast to prevent a structural mismatch between the concrete
+  `TwStyledComponent<TConfig, InferSubFromConfig<TConfig>>` held internally and the looser
+  `TwStyledComponent<TConfig, string>` declared in `attachExtend`'s parameter.
+  Precision check: `Breadcrumb.link href="/docs"` — accepted ✅; `Breadcrumb.sep href="/should-fail"`
+  (span element) — still a TS error ✅; no new errors introduced anywhere else in the monorepo ✅.
+- **Fix (layer 2 — `createComponent.ts`):** Changed `createSubComponentAccessor`'s `SubComponent`
+  to destructure `{ children, className, ...rest }` and spread `...rest` in both code paths:
+  `React.createElement(tag, { ...rest, className: mergedClass }, children)` (normal path) and
+  `React.cloneElement(child, { ...rest, className: ... })` (asChild path). Updated the proxy
+  `Fallback` component identically. The function's return type annotation was widened to
+  `React.FC<{ children?: ReactNode; className?: string; [key: string]: unknown }>` to match.
+- **Status:** both layers fixed and validated. `packages/domain/core/src/types.ts` and
+  `packages/domain/core/src/createComponent.ts` updated. `tsc -p tsconfig.json --noEmit` clean
+  (excluding the pre-existing unrelated `runtime-css/server` module resolution error).
+
+---
+
 ## 2026-06-28 — `dist/index.mjs` "use client" taint: Turbopack `Can't resolve 'fs'` at build time, then `tw.div is not a function` at runtime even after that's fixed; same bug also hit `dist/theme.mjs`
 
 - **Symptom (layer 1 — build-time):** `next build` with Turbopack: `Module not found: Can't

@@ -225,7 +225,10 @@ export type SubComponentMap = Record<string, unknown>
 // Sub-component accessor — typed sesuai HTML tag asli yang di-render (href untuk <a>,
 // src untuk <img>, dst), bukan cuma children/className generik.
 export type TwSubComponentAccessor<Tag extends HtmlTagName = "span"> =
-  React.FC<React.ComponentPropsWithoutRef<Tag>>
+  React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref"> & {
+    children?: React.ReactNode
+    className?: string
+  }>
 
 // Sub-component props yang bisa di-extend user
 // ── Template Literal Sub-Component Inference ─────────────────────────────────
@@ -270,10 +273,13 @@ export interface TwSubComponentProps {
 // infer nama dari multiline template literal), fallback ke loose index signature.
 // Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid, dan
 // setiap key di-tipe-kan sesuai tag asli-nya lewat TagMap (default "span" kalau tidak diketahui).
-type SubComponentKeys<S extends string, TagMap extends Record<string, string> = Record<string, never>> =
-  string extends S
-    ? { [key: string]: TwSubComponentAccessor }  // loose — TypeScript gagal infer
-    : { [K in S]: TwSubComponentAccessor<K extends keyof TagMap ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span") : "span"> }
+type SubComponentKeys<S extends string, TagMap extends Record<string, string> = ...> = {
+  [K in S]: TwSubComponentAccessor<
+    K extends keyof TagMap
+      ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")
+      : "span"
+  >
+}
 
 // TwStyledComponent dengan generic Sub untuk nama sub-component
 // S = union of sub-component names — di-infer otomatis dari [name] patterns
