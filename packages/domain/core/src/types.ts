@@ -273,7 +273,7 @@ export interface TwSubComponentProps {
 // infer nama dari multiline template literal), fallback ke loose index signature.
 // Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid, dan
 // setiap key di-tipe-kan sesuai tag asli-nya lewat TagMap (default "span" kalau tidak diketahui).
-type SubComponentKeys<S extends string, TagMap extends Record<string, string> = ...> = {
+type SubComponentKeys<S extends string, TagMap extends Record<string, string> = Record<string, never>> = {
   [K in S]: TwSubComponentAccessor<
     K extends keyof TagMap
       ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")

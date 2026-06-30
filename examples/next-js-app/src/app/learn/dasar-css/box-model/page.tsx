@@ -397,6 +397,206 @@ const NegMarginBox = tw.div({
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// calc() playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CalcParent = tw.div({
+  base: "bg-gray-100 border border-gray-300 rounded-lg p-3 relative",
+})
+
+const CalcChild = tw.div({
+  base: "bg-purple-100 border-2 border-purple-400 rounded-lg flex items-center justify-center text-[11px] font-mono text-purple-800 h-16 transition-all duration-200",
+  variants: {
+    mode: {
+      full:     "w-full",
+      "minus":  "w-[calc(100%-80px)]",
+      "minus2": "w-[calc(100%-160px)]",
+      half:     "w-[calc(50%-8px)]",
+      third:    "w-[calc(33.333%-11px)]",
+    },
+  },
+  defaultVariants: { mode: "full" },
+})
+
+const CalcSidebar = tw.div({
+  base: "bg-purple-300 border-2 border-purple-500 rounded-lg flex items-center justify-center text-[10px] font-mono text-purple-900 h-16 w-20 shrink-0",
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// aspect-ratio playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AspectBox = tw.div({
+  base: "bg-gradient-to-br from-cyan-200 to-blue-300 border-2 border-blue-400 rounded-lg flex items-center justify-center text-[11px] font-mono text-blue-900 transition-all duration-200 w-full",
+  variants: {
+    ratio: {
+      square: "aspect-square",
+      video:  "aspect-video",
+      "4-3":  "aspect-[4/3]",
+      "21-9": "aspect-[21/9]",
+      "9-16": "aspect-[9/16]",
+    },
+  },
+  defaultVariants: { ratio: "video" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Logical properties playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const LogicalBox = tw.div({
+  base: "bg-teal-50 border-2 border-dashed border-teal-300 rounded-lg flex items-center justify-center text-[11px] font-mono text-teal-800 transition-all duration-200",
+  variants: {
+    dir: {
+      ltr: "",
+      rtl: "",
+    },
+    size: {
+      "4": "ps-4 pe-2 py-3",
+      "8": "ps-8 pe-2 py-3",
+    },
+  },
+  defaultVariants: { dir: "ltr", size: "4" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// box-decoration-break playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DecorationText = tw.span({
+  base: "bg-amber-200 text-amber-900 px-2 py-1 rounded box-decoration-slice leading-loose",
+  variants: {
+    mode: {
+      slice: "box-decoration-slice",
+      clone: "box-decoration-clone",
+    },
+  },
+  defaultVariants: { mode: "slice" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// min-width: 0 flex playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FlexRow = tw.div({
+  base: "flex gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3",
+})
+
+const FlexSidebarFixed = tw.div({
+  base: "w-20 h-16 bg-indigo-200 border-2 border-indigo-400 rounded flex items-center justify-center text-[10px] font-mono text-indigo-800 shrink-0",
+})
+
+const FlexTextItem = tw.div({
+  base: "flex-1 bg-red-100 border-2 border-red-400 rounded p-2 text-[11px] font-mono text-red-800 transition-all duration-200",
+  variants: {
+    fix: {
+      broken: "min-w-0",
+      ok:     "min-w-0",
+    },
+  },
+  defaultVariants: { fix: "broken" },
+})
+
+const FlexTextContent = tw.p({
+  base: "transition-all duration-200",
+  variants: {
+    fix: {
+      broken: "whitespace-nowrap overflow-visible",
+      ok:     "truncate",
+    },
+  },
+  defaultVariants: { fix: "broken" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// writing-mode playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const WritingModeBox = tw.div({
+  base: "bg-rose-100 border-2 border-rose-400 rounded-lg flex items-center justify-center text-[11px] font-mono text-rose-900 p-4 transition-all duration-200",
+  variants: {
+    mode: {
+      horizontal: "writing-mode-horizontal-tb h-24 w-full",
+      vertical:   "[writing-mode:vertical-rl] h-48 w-24",
+      verticalLr: "[writing-mode:vertical-lr] h-48 w-24",
+    },
+  },
+  defaultVariants: { mode: "horizontal" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// resize playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ResizeBox = tw.textarea({
+  base: "bg-white border-2 border-indigo-300 rounded-lg p-3 text-xs font-mono text-gray-700 w-full",
+  variants: {
+    mode: {
+      none:       "resize-none",
+      both:       "resize",
+      horizontal: "resize-x",
+      vertical:   "resize-y",
+    },
+  },
+  defaultVariants: { mode: "both" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// table box model playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const DemoTable = tw.table({
+  base: "w-full text-xs font-mono",
+  variants: {
+    mode: {
+      collapse: "border-collapse",
+      separate: "border-separate",
+    },
+  },
+  defaultVariants: { mode: "collapse" },
+})
+
+const DemoTh = tw.th({
+  base: "border-2 border-purple-400 bg-purple-100 text-purple-800 px-3 py-2",
+})
+
+const DemoTd = tw.td({
+  base: "border-2 border-purple-300 px-3 py-2 text-purple-700",
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// contain playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ContainBox = tw.div({
+  base: "bg-cyan-50 border-2 border-cyan-400 rounded-lg p-3 overflow-hidden transition-all duration-200",
+  variants: {
+    contain: {
+      none:    "",
+      layout:  "[contain:layout]",
+      paint:   "[contain:paint]",
+      strict:  "[contain:strict]",
+    },
+  },
+  defaultVariants: { contain: "none" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// scrollbar-gutter playground
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ScrollGutterBox = tw.div({
+  base: "bg-white border-2 border-emerald-400 rounded-lg h-32 overflow-y-scroll p-3 text-xs font-mono text-gray-600 transition-all duration-200",
+  variants: {
+    gutter: {
+      auto:   "",
+      stable: "[scrollbar-gutter:stable]",
+    },
+  },
+  defaultVariants: { gutter: "auto" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Spacing scale lookup
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -430,6 +630,16 @@ const TOC = [
   { id: "width-variants", label: "width / min / max",      depth: "2" as const },
   { id: "height",         label: "height: 100%",           depth: "2" as const },
   { id: "inline-box",     label: "Inline & Box Model",     depth: "2" as const },
+  { id: "calc",           label: "calc()",                  depth: "2" as const },
+  { id: "aspect-ratio",   label: "aspect-ratio",            depth: "2" as const },
+  { id: "logical-props",  label: "Logical Properties",      depth: "2" as const },
+  { id: "box-decoration", label: "box-decoration-break",    depth: "2" as const },
+  { id: "min-width-flex", label: "min-width: 0 di Flex",    depth: "2" as const },
+  { id: "writing-mode",   label: "writing-mode",            depth: "2" as const },
+  { id: "resize",         label: "resize",                  depth: "2" as const },
+  { id: "table-box",      label: "Box Model di Tabel",      depth: "2" as const },
+  { id: "contain",        label: "contain",                 depth: "2" as const },
+  { id: "scrollbar-gutter", label: "scrollbar-gutter",      depth: "2" as const },
   { id: "tw-usage",       label: "Pakai di tw",            depth: "2" as const },
   { id: "exercise",       label: "Latihan",                depth: "2" as const },
 ]
@@ -858,6 +1068,434 @@ function NegativeMarginPlayground() {
           : `.b { margin-top: ${parseInt(neg) * 4}px; } /* negative — tarik ke atas */`
         }
       </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: calc()
+// ─────────────────────────────────────────────────────────────────────────────
+
+type CalcMode = "full" | "minus" | "minus2" | "half" | "third"
+
+function CalcPlayground() {
+  const [mode, setMode] = useState<CalcMode>("minus")
+
+  const descriptions: Record<CalcMode, string> = {
+    full:    "width: 100% — full lebar parent, tidak ada sidebar.",
+    minus:   "width: calc(100% - 80px) — sisakan ruang 80px untuk sidebar.",
+    minus2:  "width: calc(100% - 160px) — sisakan ruang 160px (dua sidebar).",
+    half:    "width: calc(50% - 8px) — dua kolom dengan gap 16px di antaranya.",
+    third:   "width: calc(33.333% - 11px) — tiga kolom dengan gap.",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 calc() — kombinasi unit berbeda dalam satu nilai</PlaygroundWrap.label>
+        <ChipRow>
+          {(["full","minus","minus2","half","third"] as CalcMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <CalcParent>
+          <div className="flex gap-2 items-center">
+            {(mode === "minus" || mode === "minus2") && <CalcSidebar>sidebar</CalcSidebar>}
+            {mode === "minus2" && <CalcSidebar>sidebar 2</CalcSidebar>}
+            <CalcChild mode={mode}>
+              {mode === "half" ? "kolom 1 (50%)" : mode === "third" ? "kolom 1/3" : "main content"}
+            </CalcChild>
+            {mode === "half" && <CalcChild mode={mode}>kolom 2 (50%)</CalcChild>}
+            {mode === "third" && (
+              <>
+                <CalcChild mode={mode}>kolom 2/3</CalcChild>
+                <CalcChild mode={mode}>kolom 3/3</CalcChild>
+              </>
+            )}
+          </div>
+        </CalcParent>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {mode === "full"   ? "width: 100%;"
+        : mode === "minus"  ? "width: calc(100% - 80px);"
+        : mode === "minus2" ? "width: calc(100% - 160px);"
+        : mode === "half"   ? "width: calc(50% - 8px); /* gap: 16px */"
+        :                     "width: calc(33.333% - 11px); /* gap: 16px */"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: aspect-ratio
+// ─────────────────────────────────────────────────────────────────────────────
+
+type AspectMode = "square" | "video" | "4-3" | "21-9" | "9-16"
+
+function AspectRatioPlayground() {
+  const [ratio, setRatio] = useState<AspectMode>("video")
+
+  const ratioLabel: Record<AspectMode, string> = {
+    square: "1:1",
+    video:  "16:9",
+    "4-3":  "4:3",
+    "21-9": "21:9 (cinematic)",
+    "9-16": "9:16 (portrait/stories)",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 aspect-ratio — jaga proporsi tanpa height eksplisit</PlaygroundWrap.label>
+        <ChipRow>
+          {(["square","video","4-3","21-9","9-16"] as AspectMode[]).map(v => (
+            <Chip key={v} active={ratio === v ? "true" : "false"} onClick={() => setRatio(v)}>{ratioLabel[v]}</Chip>
+          ))}
+        </ChipRow>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <div className="w-full max-w-xs mx-auto">
+          <AspectBox ratio={ratio}>{ratioLabel[ratio]}</AspectBox>
+        </div>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {`aspect-ratio: ${ratio === "square" ? "1 / 1" : ratio === "video" ? "16 / 9" : ratio === "4-3" ? "4 / 3" : ratio === "21-9" ? "21 / 9" : "9 / 16"};`}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: logical properties
+// ─────────────────────────────────────────────────────────────────────────────
+
+type DirMode = "ltr" | "rtl"
+
+function LogicalPropsPlayground() {
+  const [dir, setDir] = useState<DirMode>("ltr")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 Logical Properties — padding-inline-start vs padding-left</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={dir === "ltr" ? "true" : "false"} onClick={() => setDir("ltr")}>ltr (kiri ke kanan)</Chip>
+          <Chip active={dir === "rtl" ? "true" : "false"} onClick={() => setDir("rtl")}>rtl (kanan ke kiri)</Chip>
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+          <IC>ps-4</IC> (padding-inline-start) otomatis mengikuti arah teks — di RTL dia jadi padding kanan, bukan kiri.
+        </p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <div dir={dir} className="w-full max-w-sm mx-auto">
+          <LogicalBox size="4" dir={dir}>
+            ps-4 pe-2 → {dir === "ltr" ? "padding kiri lebih besar" : "padding kanan lebih besar"}
+          </LogicalBox>
+        </div>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {dir === "ltr"
+          ? "padding-inline-start: 16px; /* = padding-left di LTR */"
+          : "padding-inline-start: 16px; /* = padding-right di RTL! */"
+        }
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: box-decoration-break
+// ─────────────────────────────────────────────────────────────────────────────
+
+type DecorationMode = "slice" | "clone"
+
+function BoxDecorationPlayground() {
+  const [mode, setMode] = useState<DecorationMode>("slice")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 box-decoration-break — styling elemen inline yang wrap ke baris baru</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={mode === "slice" ? "true" : "false"} onClick={() => setMode("slice")}>slice (default)</Chip>
+          <Chip active={mode === "clone" ? "true" : "false"} onClick={() => setMode("clone")}>clone</Chip>
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+          {mode === "slice"
+            ? "Default — box diperlakukan sebagai satu kesatuan yang 'dipotong' di line break, border kiri/kanan hanya muncul di ujung."
+            : "Setiap baris diperlakukan sebagai box terpisah — border dan padding muncul utuh di setiap baris."}
+        </p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <p className="text-sm leading-loose max-w-xs">
+          Teks biasa dengan{" "}
+          <DecorationText mode={mode}>
+            highlight yang sangat panjang sehingga akan wrap ke baris berikutnya
+          </DecorationText>
+          {" "}lalu lanjut teks normal lagi.
+        </p>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>{`box-decoration-break: ${mode};`}</PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: min-width: 0 di Flex
+// ─────────────────────────────────────────────────────────────────────────────
+
+type FixMode = "broken" | "ok"
+
+function MinWidthFlexPlayground() {
+  const [fix, setFix] = useState<FixMode>("broken")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 min-width: 0 — kenapa teks panjang bikin flex item overflow</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={fix === "broken" ? "true" : "false"} onClick={() => setFix("broken")}>❌ tanpa min-w-0</Chip>
+          <Chip active={fix === "ok" ? "true" : "false"} onClick={() => setFix("ok")}>✅ dengan min-w-0 + truncate</Chip>
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+          {fix === "broken"
+            ? "min-width default flex item adalah 'auto' — artinya tidak akan pernah lebih kecil dari konten terpanjangnya, walau itu bikin overflow."
+            : "min-w-0 mengizinkan flex item menyusut di bawah ukuran kontennya, dikombinasikan truncate untuk ellipsis."}
+        </p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <div className="w-full max-w-xs mx-auto">
+          <FlexRow>
+            <FlexSidebarFixed>icon</FlexSidebarFixed>
+            <FlexTextItem fix={fix}>
+              <FlexTextContent fix={fix}>
+                Ini adalah judul yang sangat sangat panjang dan akan overflow kalau tidak di-handle dengan benar
+              </FlexTextContent>
+            </FlexTextItem>
+          </FlexRow>
+        </div>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {fix === "broken"
+          ? "/* flex item: min-width: auto (default) → overflow! */"
+          : "/* flex item: min-width: 0; + text: truncate; → ellipsis ✓ */"
+        }
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: writing-mode
+// ─────────────────────────────────────────────────────────────────────────────
+
+type WritingMode = "horizontal" | "vertical" | "verticalLr"
+
+function WritingModePlayground() {
+  const [mode, setMode] = useState<WritingMode>("horizontal")
+
+  const descriptions: Record<WritingMode, string> = {
+    horizontal: "Default — block axis vertikal (top-to-bottom), inline axis horizontal (left-to-right).",
+    vertical:   "vertical-rl — block axis horizontal (right-to-left), inline axis vertikal. Umum untuk teks Jepang/Cina tradisional.",
+    verticalLr: "vertical-lr — sama seperti vertical-rl tapi block axis dari kiri ke kanan. Jarang dipakai, tapi ada di Mongolian.",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 writing-mode — block & inline axis bisa diputar</PlaygroundWrap.label>
+        <ChipRow>
+          {(["horizontal","vertical","verticalLr"] as WritingMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
+              {v === "horizontal" ? "horizontal-tb (default)" : v === "vertical" ? "vertical-rl" : "vertical-lr"}
+            </Chip>
+          ))}
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <div className="flex items-center justify-center min-h-48">
+          <WritingModeBox mode={mode}>
+            ぼ Sample テキスト Text
+          </WritingModeBox>
+        </div>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {mode === "horizontal" ? "writing-mode: horizontal-tb;" : mode === "vertical" ? "writing-mode: vertical-rl;" : "writing-mode: vertical-lr;"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: resize
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ResizeMode = "none" | "both" | "horizontal" | "vertical"
+
+function ResizePlayground() {
+  const [mode, setMode] = useState<ResizeMode>("both")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 resize — biarkan user resize elemen manual (drag pojok kanan bawah)</PlaygroundWrap.label>
+        <ChipRow>
+          {(["none","both","horizontal","vertical"] as ResizeMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <ResizeBox mode={mode} defaultValue="Coba drag pojok kanan-bawah box ini (kalau mode bukan 'none')..." rows={4} />
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>{`resize: ${mode}; overflow: auto; /* resize butuh overflow bukan visible */`}</PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: table box model
+// ─────────────────────────────────────────────────────────────────────────────
+
+type TableMode = "collapse" | "separate"
+
+function TableBoxPlayground() {
+  const [mode, setMode] = useState<TableMode>("collapse")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 border-collapse — box model tabel berbeda dari elemen biasa</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={mode === "collapse" ? "true" : "false"} onClick={() => setMode("collapse")}>border-collapse</Chip>
+          <Chip active={mode === "separate" ? "true" : "false"} onClick={() => setMode("separate")}>border-separate</Chip>
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+          {mode === "collapse"
+            ? "Border antar cell yang bersebelahan 'digabung' jadi satu garis — tidak ada double border."
+            : "Setiap cell punya border sendiri yang terpisah — terlihat double border di antara cell."}
+        </p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <DemoTable mode={mode}>
+          <thead>
+            <tr>
+              <DemoTh>Header A</DemoTh>
+              <DemoTh>Header B</DemoTh>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <DemoTd>Cell 1</DemoTd>
+              <DemoTd>Cell 2</DemoTd>
+            </tr>
+            <tr>
+              <DemoTd>Cell 3</DemoTd>
+              <DemoTd>Cell 4</DemoTd>
+            </tr>
+          </tbody>
+        </DemoTable>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>{`border-collapse: ${mode};`}</PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: contain
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ContainMode = "none" | "layout" | "paint" | "strict"
+
+function ContainPlayground() {
+  const [contain, setContain] = useState<ContainMode>("none")
+
+  const descriptions: Record<ContainMode, string> = {
+    none:   "Tanpa containment — browser harus selalu cek seluruh dokumen saat elemen ini berubah.",
+    layout: "contain: layout — perubahan internal elemen ini tidak mempengaruhi layout di luar. Bagus untuk performa.",
+    paint:  "contain: paint — konten yang overflow di-clip, dan elemen ini jadi containing block untuk painting.",
+    strict: "contain: strict — gabungan semua containment (layout + paint + size + style). Maksimal isolasi performa.",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 contain — CSS Containment untuk optimasi performa rendering</PlaygroundWrap.label>
+        <ChipRow>
+          {(["none","layout","paint","strict"] as ContainMode[]).map(v => (
+            <Chip key={v} active={contain === v ? "true" : "false"} onClick={() => setContain(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[contain]}</p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <ContainBox contain={contain}>
+          <p className="text-xs font-mono text-cyan-800">
+            Widget independen dengan <IC>contain: {contain}</IC> — browser tahu perubahan
+            di dalam box ini tidak perlu re-layout/re-paint elemen di luar.
+          </p>
+        </ContainBox>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>{`contain: ${contain};`}</PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: scrollbar-gutter
+// ─────────────────────────────────────────────────────────────────────────────
+
+type GutterMode = "auto" | "stable"
+
+function ScrollbarGutterPlayground() {
+  const [gutter, setGutter] = useState<GutterMode>("auto")
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 scrollbar-gutter — cegah layout shift saat scrollbar muncul/hilang</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={gutter === "auto" ? "true" : "false"} onClick={() => setGutter("auto")}>auto (default)</Chip>
+          <Chip active={gutter === "stable" ? "true" : "false"} onClick={() => setGutter("stable")}>stable</Chip>
+        </ChipRow>
+        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+          {gutter === "auto"
+            ? "Space untuk scrollbar hanya muncul kalau konten benar-benar overflow — konten 'loncat' saat scrollbar muncul/hilang."
+            : "Space untuk scrollbar selalu di-reserve, walau scrollbar belum muncul — tidak ada layout shift."}
+        </p>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas>
+        <ScrollGutterBox gutter={gutter}>
+          Konten panjang yang akan menyebabkan scroll vertikal muncul.
+          <br /><br />
+          Baris tambahan untuk memastikan overflow benar-benar terjadi dan scrollbar muncul di kanan box ini.
+        </ScrollGutterBox>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>{`scrollbar-gutter: ${gutter};`}</PlaygroundWrap.codeline>
     </PlaygroundWrap>
   )
 }
@@ -1363,6 +2001,471 @@ span, a, strong {
           <Divider />
 
           {/* ══════════════════════════════════════════════════════════════
+              CALC()
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="calc" onClick={() => setActiveSection("calc")}>
+            <H2>
+              calc() — kombinasi unit berbeda
+              <H2.anchor href="#calc">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>calc()</IC> memungkinkan kombinasi unit berbeda (px, %, rem, vh) dalam satu
+              ekspresi matematika. Sangat berguna untuk layout dengan sidebar fixed-width
+              dan konten yang harus mengisi sisa space.
+            </P>
+
+            <CalcPlayground />
+
+            <Code file="calc.css">{`
+/* Sidebar fixed 80px, konten mengisi sisa */
+.content {
+  width: calc(100% - 80px);
+}
+
+/* Dua kolom dengan gap 16px */
+.col {
+  width: calc(50% - 8px); /* setengah lebar, kurangi setengah gap */
+}
+
+/* Full-height minus header dan footer */
+.main {
+  min-height: calc(100vh - 64px - 48px);
+}
+
+/* Bisa nested dan kombinasi operator: + - * / */
+.box {
+  padding: calc(1rem + 2vw);
+}
+            `}</Code>
+
+            <Callout type="tip">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                Untuk kasus dua/tiga kolom dengan gap, Flexbox/Grid dengan <IC>gap</IC> biasanya
+                lebih simpel daripada <IC>calc()</IC> manual. <IC>calc()</IC> paling berguna saat
+                kamu butuh kombinasi unit yang tidak didukung Flexbox/Grid secara native,
+                seperti <IC>calc(100vh - 64px)</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              ASPECT-RATIO
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="aspect-ratio" onClick={() => setActiveSection("aspect-ratio")}>
+            <H2>
+              aspect-ratio
+              <H2.anchor href="#aspect-ratio">#</H2.anchor>
+            </H2>
+
+            <P>
+              Sebelum <IC>aspect-ratio</IC> ada, menjaga proporsi gambar/video butuh trik
+              "padding-bottom hack". Sekarang cukup satu baris CSS — height otomatis
+              dihitung dari width berdasarkan rasio yang ditentukan.
+            </P>
+
+            <AspectRatioPlayground />
+
+            <Code file="aspect-ratio.css">{`
+/* Cara modern */
+.video-embed {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+/* Cara lama (padding-bottom hack) — masih kadang dipakai untuk browser lama */
+.video-embed-legacy {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 9/16 = 0.5625 */
+}
+.video-embed-legacy iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Tailwind: aspect-square, aspect-video, aspect-[4/3] */
+            `}</Code>
+
+            <Callout type="note">
+              <Callout.icon>ℹ️</Callout.icon>
+              <Callout.content>
+                <Callout.title>Default browser untuk img dan video</Callout.title>
+                Browser modern otomatis menghitung <IC>aspect-ratio</IC> dari atribut
+                <IC>width</IC> dan <IC>height</IC> di tag <IC>{"<img>"}</IC> — ini mencegah
+                layout shift sebelum gambar selesai dimuat (penting untuk Core Web Vitals).
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              LOGICAL PROPERTIES
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="logical-props" onClick={() => setActiveSection("logical-props")}>
+            <H2>
+              Logical Properties
+              <H2.anchor href="#logical-props">#</H2.anchor>
+            </H2>
+
+            <P>
+              Property fisik seperti <IC>margin-left</IC> dan <IC>padding-right</IC> selalu
+              merujuk ke arah yang sama secara visual. Logical properties seperti
+              <IC>margin-inline-start</IC> mengikuti arah penulisan teks (LTR/RTL) —
+              penting untuk dukungan internasionalisasi (Arab, Ibrani, dll).
+            </P>
+
+            <LogicalPropsPlayground />
+
+            <Code file="logical-properties.css">{`
+/* Physical — selalu kiri, apapun arah bahasanya */
+.box-physical {
+  margin-left: 16px;
+  padding-right: 8px;
+}
+
+/* Logical — otomatis ikut arah teks */
+.box-logical {
+  margin-inline-start: 16px;  /* kiri di LTR, kanan di RTL */
+  padding-inline-end: 8px;    /* kanan di LTR, kiri di RTL */
+}
+
+/* Block axis (vertikal, tidak berubah dengan RTL tapi berubah dengan writing-mode) */
+.box-block {
+  margin-block-start: 16px;  /* setara margin-top di mode horizontal */
+  margin-block-end: 8px;     /* setara margin-bottom */
+}
+
+/* Tailwind: ps-4 (padding-inline-start), pe-2 (padding-inline-end),
+   ms-4 (margin-inline-start), me-2 (margin-inline-end) */
+            `}</Code>
+
+            <Callout type="tip">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                Kalau project kamu tidak butuh dukungan RTL, physical properties
+                (<IC>ml-4</IC>, <IC>pr-2</IC>) tetap sepenuhnya valid dan lebih familiar.
+                Logical properties jadi penting begitu kamu butuh dukungan multi-bahasa
+                dengan arah teks berbeda.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              BOX-DECORATION-BREAK
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="box-decoration" onClick={() => setActiveSection("box-decoration")}>
+            <H2>
+              box-decoration-break
+              <H2.anchor href="#box-decoration">#</H2.anchor>
+            </H2>
+
+            <P>
+              Ketika elemen <IC>inline</IC> dengan background/border/padding wrap ke baris
+              baru, browser harus memutuskan apakah box-nya diperlakukan sebagai satu
+              kesatuan yang "dipotong" (<IC>slice</IC>, default) atau setiap baris jadi
+              box terpisah (<IC>clone</IC>).
+            </P>
+
+            <BoxDecorationPlayground />
+
+            <Code file="box-decoration-break.css">{`
+/* slice (default) — box dipotong di line break,
+   border kiri hanya di awal, border kanan hanya di akhir */
+.highlight-slice {
+  background: yellow;
+  padding: 4px 8px;
+  box-decoration-break: slice;
+}
+
+/* clone — setiap baris dapat padding/border penuh,
+   seperti highlight di banyak editor teks */
+.highlight-clone {
+  background: yellow;
+  padding: 4px 8px;
+  border-radius: 4px;
+  box-decoration-break: clone;
+}
+            `}</Code>
+
+            <Callout type="note">
+              <Callout.icon>ℹ️</Callout.icon>
+              <Callout.content>
+                Ini niche tapi berguna untuk styling teks ber-highlight yang panjang
+                (seperti hasil pencarian) atau efek "marker" yang konsisten di setiap baris.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              MIN-WIDTH 0 DI FLEX
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="min-width-flex" onClick={() => setActiveSection("min-width-flex")}>
+            <H2>
+              min-width: 0 — flex item overflow trap
+              <H2.anchor href="#min-width-flex">#</H2.anchor>
+            </H2>
+
+            <P>
+              Ini bug yang hampir semua developer pernah alami: flex item berisi teks panjang
+              malah overflow keluar container, padahal sudah pakai <IC>flex-1</IC>. Penyebabnya:
+              <IC>min-width</IC> default flex item adalah <IC>auto</IC>, bukan <IC>0</IC>.
+            </P>
+
+            <MinWidthFlexPlayground />
+
+            <Code file="min-width-flex.css">{`
+/* ❌ Bug klasik — flex item tidak mau menyusut di bawah ukuran kontennya */
+.flex-item {
+  flex: 1;
+  /* min-width: auto (default) — tidak bisa lebih kecil dari konten! */
+}
+
+/* ✅ Fix — izinkan flex item menyusut */
+.flex-item {
+  flex: 1;
+  min-width: 0; /* sekarang bisa menyusut, kombinasikan dengan truncate */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Tailwind: min-w-0 truncate */
+            `}</Code>
+
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>Sama berlaku untuk Grid</Callout.title>
+                Grid item juga punya <IC>min-width: auto</IC> dan <IC>min-height: auto</IC>
+                sebagai default. Kalau grid item dengan teks panjang overflow, fix-nya sama:
+                tambahkan <IC>min-w-0</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              WRITING MODE
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="writing-mode" onClick={() => setActiveSection("writing-mode")}>
+            <H2>
+              writing-mode
+              <H2.anchor href="#writing-mode">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>writing-mode</IC> bisa memutar arah block dan inline axis sepenuhnya.
+              Ini terkait erat dengan Logical Properties — di <IC>vertical-rl</IC>,
+              "block axis" jadi horizontal dan "inline axis" jadi vertikal, jadi
+              <IC>padding-inline-start</IC> sekarang berarti padding atas, bukan kiri.
+            </P>
+
+            <WritingModePlayground />
+
+            <Code file="writing-mode.css">{`
+/* Default */
+.text { writing-mode: horizontal-tb; }
+
+/* Vertikal — teks mengalir top-to-bottom, kolom kanan ke kiri */
+.vertical-text {
+  writing-mode: vertical-rl;
+}
+
+/* Kombinasi umum untuk teks CJK (Chinese/Japanese/Korean) tradisional */
+.cjk-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed; /* karakter latin tetap horizontal, CJK vertikal */
+}
+            `}</Code>
+
+            <Callout type="note">
+              <Callout.icon>ℹ️</Callout.icon>
+              <Callout.content>
+                <Callout.title>Kapan ini relevan?</Callout.title>
+                Selain untuk teks CJK tradisional, <IC>writing-mode</IC> kadang dipakai untuk
+                efek desain seperti label vertikal di sidebar, judul artikel majalah,
+                atau tab vertikal dengan teks miring.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              RESIZE
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="resize" onClick={() => setActiveSection("resize")}>
+            <H2>
+              resize
+              <H2.anchor href="#resize">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>resize</IC> mengizinkan user mengubah ukuran elemen secara manual dengan
+              drag handle di pojok. Browser otomatis menambahkannya untuk <IC>{"<textarea>"}</IC>,
+              tapi bisa diaktifkan untuk elemen block lain juga.
+            </P>
+
+            <ResizePlayground />
+
+            <Code file="resize.css">{`
+textarea {
+  resize: both;       /* default browser untuk textarea */
+  resize: vertical;   /* hanya tinggi — lebih umum di form modern */
+  resize: horizontal; /* hanya lebar — jarang dipakai */
+  resize: none;       /* matikan resize handle sepenuhnya */
+  overflow: auto;     /* wajib — resize butuh overflow bukan visible */
+}
+
+/* Bisa juga di div biasa, bukan cuma textarea */
+.resizable-panel {
+  resize: horizontal;
+  overflow: auto;
+  min-width: 200px;
+  max-width: 600px;
+}
+            `}</Code>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              TABLE BOX MODEL
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="table-box" onClick={() => setActiveSection("table-box")}>
+            <H2>
+              Box Model di Tabel
+              <H2.anchor href="#table-box">#</H2.anchor>
+            </H2>
+
+            <P>
+              Elemen tabel (<IC>table</IC>, <IC>tr</IC>, <IC>td</IC>, <IC>th</IC>) punya
+              aturan box model sendiri yang berbeda dari elemen biasa — terutama soal
+              bagaimana border antar cell diperlakukan.
+            </P>
+
+            <TableBoxPlayground />
+
+            <Code file="table-box-model.css">{`
+table {
+  border-collapse: collapse; /* border antar cell jadi satu garis (umum dipakai) */
+  border-collapse: separate; /* setiap cell border sendiri-sendiri (default browser) */
+  border-spacing: 8px;       /* hanya berlaku di border-collapse: separate */
+}
+
+/* Tailwind: border-collapse, border-separate, border-spacing-2 */
+            `}</Code>
+
+            <Callout type="tip">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                Hampir selalu, kamu ingin <IC>border-collapse: collapse</IC> untuk tabel data —
+                ini yang terlihat "normal" seperti tabel pada umumnya. <IC>border-separate</IC>
+                lebih jarang dipakai kecuali kamu sengaja ingin efek visual cell terpisah.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              CONTAIN
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="contain" onClick={() => setActiveSection("contain")}>
+            <H2>
+              contain
+              <H2.anchor href="#contain">#</H2.anchor>
+            </H2>
+
+            <P>
+              CSS Containment memberitahu browser bahwa perubahan di dalam elemen ini
+              tidak akan mempengaruhi elemen di luar — sehingga browser bisa skip
+              re-layout/re-paint elemen lain saat elemen ini berubah. Berguna untuk
+              performa di komponen yang sering update (widget, kartu interaktif, dll).
+            </P>
+
+            <ContainPlayground />
+
+            <Code file="contain.css">{`
+.widget {
+  contain: layout;  /* perubahan size internal tidak trigger reflow di luar */
+  contain: paint;   /* overflow di-clip, jadi containing block untuk paint */
+  contain: size;    /* ukuran elemen tidak dipengaruhi oleh konten anaknya */
+  contain: strict;  /* layout + paint + size + style — maksimal isolasi */
+
+  /* Shortcut modern yang sering dipakai bareng contain */
+  content-visibility: auto; /* skip rendering elemen yang di luar viewport */
+}
+            `}</Code>
+
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>contain: size butuh height eksplisit</Callout.title>
+                Kalau pakai <IC>contain: size</IC> atau <IC>strict</IC>, elemen perlu
+                <IC>width</IC>/<IC>height</IC> eksplisit — karena browser "mengabaikan"
+                ukuran dari konten anaknya, elemen bisa collapse jadi 0px kalau tidak diset.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              SCROLLBAR GUTTER
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="scrollbar-gutter" onClick={() => setActiveSection("scrollbar-gutter")}>
+            <H2>
+              scrollbar-gutter
+              <H2.anchor href="#scrollbar-gutter">#</H2.anchor>
+            </H2>
+
+            <P>
+              Bug visual klasik: konten "loncat" sedikit ke kiri saat scrollbar muncul
+              (karena scrollbar mengambil space dari content area). <IC>scrollbar-gutter</IC>
+              memberitahu browser untuk selalu reserve space scrollbar, walau belum muncul.
+            </P>
+
+            <ScrollbarGutterPlayground />
+
+            <Code file="scrollbar-gutter.css">{`
+/* Reserve space untuk scrollbar walau belum overflow — cegah layout shift */
+.scrollable-content {
+  scrollbar-gutter: stable;
+  overflow-y: auto;
+}
+
+/* Reserve di kedua sisi — berguna untuk centered content */
+.scrollable-content {
+  scrollbar-gutter: stable both-edges;
+}
+            `}</Code>
+
+            <Callout type="note">
+              <Callout.icon>ℹ️</Callout.icon>
+              <Callout.content>
+                Ini paling terasa manfaatnya di halaman dengan konten dinamis (misal modal yang
+                buka/tutup, atau filter yang mengubah jumlah hasil) — tanpa <IC>scrollbar-gutter</IC>,
+                seluruh layout "bergeser" setiap kali scrollbar muncul/hilang.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
               11 PAKAI DI TW
           ══════════════════════════════════════════════════════════════ */}
           <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
@@ -1370,6 +2473,7 @@ span, a, strong {
               Box Model di tailwind-styled-v4
               <H2.anchor href="#tw-usage">#</H2.anchor>
             </H2>
+
 
             <P>
               Semua konsep Box Model di atas langsung bisa dipakai di <IC>tw</IC> API
@@ -1506,6 +2610,30 @@ const ScrollArea = tw.div({
                 <p>3. Tambahkan border 1px pada wrapper</p>
               </ExerciseCard.body>
             </ExerciseCard>
+
+            <ExerciseCard>
+              <ExerciseCard.header>
+                <span>🏋️</span>
+                <ExerciseCard.title>Latihan 4 — Video card dengan aspect-ratio dan calc()</ExerciseCard.title>
+              </ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat komponen <IC>VideoCard</IC> dengan <IC>tw.div</IC> yang punya:</p>
+                <p>1. Thumbnail dengan <IC>aspect-video</IC> (16:9)</p>
+                <p>2. Layout sidebar 240px + konten <IC>calc(100% - 240px)</IC> untuk halaman watch</p>
+                <p>3. Title yang truncate dengan <IC>min-w-0</IC> kalau diletakkan di flex row bersama durasi video</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+
+            <ExerciseCard>
+              <ExerciseCard.header>
+                <span>🏋️</span>
+                <ExerciseCard.title>Latihan 5 — Komponen siap RTL</ExerciseCard.title>
+              </ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Ambil komponen Card dari Latihan 1, ganti semua physical properties (<IC>pl-</IC>, <IC>pr-</IC>, <IC>ml-</IC>, <IC>mr-</IC>) jadi logical properties (<IC>ps-</IC>, <IC>pe-</IC>, <IC>ms-</IC>, <IC>me-</IC>).</p>
+                <p>Test dengan menambahkan <IC>dir="rtl"</IC> di parent dan pastikan layout tetap benar tanpa ubah CSS apapun.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
           </Section>
 
           {/* Prev/Next */}
@@ -1514,7 +2642,7 @@ const ScrollArea = tw.div({
               <NavBtn.hint>← Previous</NavBtn.hint>
               <NavBtn.label>CSS Layout Overview</NavBtn.label>
             </NavBtn>
-            <NavBtn href="/docs/learn/normal-flow" dir="next">
+            <NavBtn href="/learn/dasar-css/normal-flow" dir="next">
               <NavBtn.hint>Next →</NavBtn.hint>
               <NavBtn.label>Normal Flow</NavBtn.label>
             </NavBtn>
