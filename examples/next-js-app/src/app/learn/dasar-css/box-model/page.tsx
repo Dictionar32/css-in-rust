@@ -34,8 +34,8 @@ const TopBarInner = tw.div({
 const Breadcrumb = tw.div({
   base: "flex items-center gap-1.5 text-xs text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]",
   sub: {
-    "a:link":    "hover:text-[var(--foreground)] transition-colors",
-    "span:sep":  "opacity-40",
+    "a:link": "hover:text-[var(--foreground)] transition-colors",
+    "span:sep": "opacity-40",
     "span:curr": "text-[var(--foreground)] font-medium",
   },
 })
@@ -60,7 +60,7 @@ const TocItem = tw.a({
   base: "block text-xs py-1 leading-snug transition-colors pl-0",
   variants: {
     active: {
-      true:  "text-[var(--accent)] font-semibold",
+      true: "text-[var(--accent)] font-semibold",
       false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
     },
     depth: {
@@ -120,17 +120,17 @@ const Callout = tw.div({
   base: "rounded-xl border px-4 py-3 my-5 text-sm leading-relaxed flex gap-3",
   variants: {
     type: {
-      note:    "bg-blue-50 border-blue-200 text-blue-900",
-      tip:     "bg-emerald-50 border-emerald-200 text-emerald-900",
+      note: "bg-blue-50 border-blue-200 text-blue-900",
+      tip: "bg-emerald-50 border-emerald-200 text-emerald-900",
       warning: "bg-amber-50 border-amber-200 text-amber-900",
-      php:     "bg-violet-50 border-violet-200 text-violet-900",
-      danger:  "bg-red-50 border-red-200 text-red-900",
+      php: "bg-violet-50 border-violet-200 text-violet-900",
+      danger: "bg-red-50 border-red-200 text-red-900",
     },
   },
   defaultVariants: { type: "note" },
   sub: {
-    "span:icon":    "text-base shrink-0 mt-0.5",
-    "div:content":  "flex-1",
+    "span:icon": "text-base shrink-0 mt-0.5",
+    "div:content": "flex-1",
     "strong:title": "block font-semibold mb-0.5",
   },
 })
@@ -139,8 +139,8 @@ const Callout = tw.div({
 const CodeWrap = tw.div({
   base: "rounded-xl overflow-hidden border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] my-5",
   sub: {
-    header:     "flex items-center justify-between px-4 py-2.5 bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]",
-    filename:   "text-[11px] font-mono text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]",
+    header: "flex items-center justify-between px-4 py-2.5 bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]",
+    filename: "text-[11px] font-mono text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]",
     "pre:body": "p-4 overflow-x-auto text-xs font-mono leading-6 bg-[var(--surface)] text-[var(--foreground)] m-0",
   },
 })
@@ -157,8 +157,8 @@ const ExerciseCard = tw.div({
   base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[var(--surface)] overflow-hidden my-5",
   sub: {
     header: "flex items-center gap-2 px-4 py-3 border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]",
-    title:  "text-xs font-semibold",
-    body:   "p-4 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] leading-relaxed space-y-1",
+    title: "text-xs font-semibold",
+    body: "p-4 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] leading-relaxed space-y-1",
   },
 })
 
@@ -177,7 +177,7 @@ const NavBtn = tw.a({
   },
   defaultVariants: { dir: "next" },
   sub: {
-    "span:hint":  "text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] uppercase tracking-wider",
+    "span:hint": "text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] uppercase tracking-wider",
     "span:label": "font-semibold",
   },
 })
@@ -189,19 +189,123 @@ const NavBtn = tw.a({
 const PlaygroundWrap = tw.div({
   base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden my-5",
   sub: {
-    controls:  "p-4 border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[color-mix(in_srgb,var(--foreground)_2%,transparent)] space-y-3",
+    controls: "p-4 border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[color-mix(in_srgb,var(--foreground)_2%,transparent)] space-y-3",
     "p:label": "text-[10px] font-semibold uppercase tracking-widest text-[color-mix(in_srgb,var(--foreground)_35%,transparent)]",
-    canvas:    "p-6 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] flex items-center justify-center min-h-52",
-    codeline:  "px-4 py-3 border-t border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] bg-[var(--surface)] font-mono text-[11px] text-[var(--accent)]",
+    canvas: "p-6 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] flex items-center justify-center min-h-52",
+    codeline: "px-4 py-3 border-t border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] bg-[var(--surface)] font-mono text-[11px] text-[var(--accent)]",
   },
 })
 
 const SliderRow = tw.div({
   base: "space-y-1",
   sub: {
-    header:      "flex justify-between items-center text-xs",
-    "span:lbl":  "font-semibold",
-    "span:val":  "font-mono text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]",
+    header: "flex justify-between items-center text-xs",
+    "span:lbl": "font-semibold",
+    "span:val": "font-mono text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]",
+  },
+})
+
+// Label warna untuk slider
+const SliderLabel = tw.span({
+  base: "font-semibold text-xs",
+  variants: {
+    color: {
+      blue: "text-blue-600",
+      green: "text-green-600",
+      orange: "text-orange-600",
+    },
+  },
+  defaultVariants: { color: "blue" },
+})
+
+// Control group dengan label dan content
+const ControlGroup = tw.div({
+  base: "space-y-1.5",
+  sub: {
+    "p:label": "text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider",
+  },
+})
+
+// Row untuk multiple control groups
+const ControlsRow = tw.div({ base: "flex items-center gap-4" })
+
+// Wrapper compare columns (box-sizing, dll)
+const CompareCol = tw.div({
+  base: "flex flex-col items-center gap-2",
+})
+
+// Label untuk compare header
+const CompareLabel = tw.p({
+  base: "text-[10px] font-bold uppercase tracking-wider",
+  variants: {
+    color: {
+      blue: "text-blue-600",
+      emerald: "text-emerald-600",
+    },
+  },
+  defaultVariants: { color: "blue" },
+})
+
+// Mono caption di bawah demo
+const MonoCaption = tw.p({
+  base: "text-[10px] font-mono",
+  variants: {
+    color: {
+      gray: "text-gray-400",
+      amber: "text-amber-600",
+      emerald: "text-emerald-600",
+    },
+  },
+  defaultVariants: { color: "gray" },
+})
+
+// Info text untuk status hint
+const StatusHint = tw.p({
+  base: "text-[10px] text-center font-semibold mt-2",
+  variants: {
+    status: {
+      warning: "text-amber-600",
+      ok: "text-emerald-600",
+    },
+  },
+  defaultVariants: { status: "ok" },
+})
+
+// Container untuk outline/border demo
+const OutlineContainer = tw.div({
+  base: "bg-amber-50 border border-dashed border-amber-300 rounded p-4 flex gap-4 items-center",
+})
+
+// Label text untuk OutlineBorderBox
+const OutlineItemLabel = tw.span({ base: "text-gray-600 text-[11px] font-mono" })
+
+// Content overflow demo wrapper
+const OverflowContent = tw.div({ base: "p-3" })
+
+// Width playground parent container
+const WidthParent = tw.div({
+  base: "w-full bg-gray-100 rounded-lg p-3 relative",
+  sub: {
+    "p:label": "text-[9px] text-gray-400 mb-2 uppercase tracking-wider font-bold",
+  },
+})
+
+// Negative margin parent element A
+const NegMarginParent = tw.div({
+  base: "bg-blue-100 border-2 border-blue-300 rounded px-6 py-4 text-xs font-mono text-blue-800 text-center w-48",
+})
+
+// Calc demo group
+const CalcGroup = tw.div({
+  base: "flex gap-2 items-center",
+})
+
+// shadow demo container
+const ShadowContainer = tw.div({
+  base: "flex gap-8 items-end flex-wrap",
+  sub: {
+    "div:group": "flex flex-col items-center gap-3",
+    "p:caption": "text-[10px] font-mono text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] text-center",
   },
 })
 
@@ -209,7 +313,7 @@ const Chip = tw.button({
   base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all",
   variants: {
     active: {
-      true:  "bg-[var(--accent)] text-white border-[var(--accent)]",
+      true: "bg-[var(--accent)] text-white border-[var(--accent)]",
       false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
     },
   },
@@ -282,8 +386,8 @@ const ContentBoxEl = tw.div({
   variants: {
     padding: {
       none: "p-0  w-40 h-16",
-      md:   "p-4  w-40 h-16",
-      lg:   "p-8  w-40 h-16",
+      md: "p-4  w-40 h-16",
+      lg: "p-8  w-40 h-16",
     },
   },
   defaultVariants: { padding: "md" },
@@ -295,8 +399,8 @@ const BorderBoxEl = tw.div({
   variants: {
     padding: {
       none: "p-0  h-16",
-      md:   "p-4  h-16",
-      lg:   "p-8  h-16",
+      md: "p-4  h-16",
+      lg: "p-8  h-16",
     },
   },
   defaultVariants: { padding: "md" },
@@ -314,9 +418,9 @@ const CollapseBlock = tw.div({
   base: "bg-blue-100 border border-blue-300 rounded px-4 py-2 text-blue-800 text-xs font-mono text-center",
   variants: {
     margin: {
-      "2":  "my-2",
-      "4":  "my-4",
-      "8":  "my-8",
+      "2": "my-2",
+      "4": "my-4",
+      "8": "my-8",
       "12": "my-12",
     },
   },
@@ -332,10 +436,10 @@ const OverflowBox = tw.div({
   variants: {
     overflow: {
       visible: "overflow-visible",
-      hidden:  "overflow-hidden",
-      scroll:  "overflow-scroll",
-      auto:    "overflow-auto",
-      clip:    "overflow-clip",
+      hidden: "overflow-hidden",
+      scroll: "overflow-scroll",
+      auto: "overflow-auto",
+      clip: "overflow-clip",
     },
   },
   defaultVariants: { overflow: "visible" },
@@ -349,9 +453,9 @@ const WidthBox = tw.div({
   base: "bg-indigo-100 border-2 border-indigo-400 rounded-lg px-3 py-4 text-[11px] font-mono text-indigo-800 text-center transition-all duration-200",
   variants: {
     type: {
-      width:     "w-48",
-      minWidth:  "min-w-48 w-0",
-      maxWidth:  "max-w-48 w-full",
+      width: "w-48",
+      minWidth: "min-w-48 w-0",
+      maxWidth: "max-w-48 w-full",
       minContent: "w-min",
       maxContent: "w-max",
       fitContent: "w-fit",
@@ -368,11 +472,11 @@ const OutlineBorderBox = tw.div({
   base: "w-32 h-16 rounded-lg flex items-center justify-center text-[11px] font-mono transition-all duration-200",
   variants: {
     type: {
-      none:         "bg-gray-100",
-      border:       "bg-blue-50 border-4 border-blue-500",
-      outline:      "bg-blue-50 outline outline-4 outline-blue-500",
-      "border+m":   "bg-blue-50 border-4 border-blue-500 m-2",
-      "outline+m":  "bg-blue-50 outline outline-4 outline-blue-500 m-2",
+      none: "bg-gray-100",
+      border: "bg-blue-50 border-4 border-blue-500",
+      outline: "bg-blue-50 outline outline-4 outline-blue-500",
+      "border+m": "bg-blue-50 border-4 border-blue-500 m-2",
+      "outline+m": "bg-blue-50 outline outline-4 outline-blue-500 m-2",
     },
   },
   defaultVariants: { type: "border" },
@@ -386,10 +490,10 @@ const NegMarginBox = tw.div({
   base: "bg-pink-100 border-2 border-pink-400 rounded-lg px-4 py-3 text-[11px] font-mono text-pink-800 text-center transition-all duration-200 relative",
   variants: {
     neg: {
-      "0":   "",
-      "-2":  "-mt-2",
-      "-4":  "-mt-4",
-      "-8":  "-mt-8",
+      "0": "",
+      "-2": "-mt-2",
+      "-4": "-mt-4",
+      "-8": "-mt-8",
       "-12": "-mt-12",
     },
   },
@@ -408,11 +512,11 @@ const CalcChild = tw.div({
   base: "bg-purple-100 border-2 border-purple-400 rounded-lg flex items-center justify-center text-[11px] font-mono text-purple-800 h-16 transition-all duration-200",
   variants: {
     mode: {
-      full:     "w-full",
-      "minus":  "w-[calc(100%-80px)]",
+      full: "w-full",
+      "minus": "w-[calc(100%-80px)]",
       "minus2": "w-[calc(100%-160px)]",
-      half:     "w-[calc(50%-8px)]",
-      third:    "w-[calc(33.333%-11px)]",
+      half: "w-[calc(50%-8px)]",
+      third: "w-[calc(33.333%-11px)]",
     },
   },
   defaultVariants: { mode: "full" },
@@ -431,8 +535,8 @@ const AspectBox = tw.div({
   variants: {
     ratio: {
       square: "aspect-square",
-      video:  "aspect-video",
-      "4-3":  "aspect-[4/3]",
+      video: "aspect-video",
+      "4-3": "aspect-[4/3]",
       "21-9": "aspect-[21/9]",
       "9-16": "aspect-[9/16]",
     },
@@ -491,7 +595,7 @@ const FlexTextItem = tw.div({
   variants: {
     fix: {
       broken: "min-w-0",
-      ok:     "min-w-0",
+      ok: "min-w-0",
     },
   },
   defaultVariants: { fix: "broken" },
@@ -502,7 +606,7 @@ const FlexTextContent = tw.p({
   variants: {
     fix: {
       broken: "whitespace-nowrap overflow-visible",
-      ok:     "truncate",
+      ok: "truncate",
     },
   },
   defaultVariants: { fix: "broken" },
@@ -517,7 +621,7 @@ const WritingModeBox = tw.div({
   variants: {
     mode: {
       horizontal: "writing-mode-horizontal-tb h-24 w-full",
-      vertical:   "[writing-mode:vertical-rl] h-48 w-24",
+      vertical: "[writing-mode:vertical-rl] h-48 w-24",
       verticalLr: "[writing-mode:vertical-lr] h-48 w-24",
     },
   },
@@ -532,10 +636,10 @@ const ResizeBox = tw.textarea({
   base: "bg-white border-2 border-indigo-300 rounded-lg p-3 text-xs font-mono text-gray-700 w-full",
   variants: {
     mode: {
-      none:       "resize-none",
-      both:       "resize",
+      none: "resize-none",
+      both: "resize",
       horizontal: "resize-x",
-      vertical:   "resize-y",
+      vertical: "resize-y",
     },
   },
   defaultVariants: { mode: "both" },
@@ -572,10 +676,11 @@ const ContainBox = tw.div({
   base: "bg-cyan-50 border-2 border-cyan-400 rounded-lg p-3 overflow-hidden transition-all duration-200",
   variants: {
     contain: {
-      none:    "",
-      layout:  "[contain:layout]",
-      paint:   "[contain:paint]",
-      strict:  "[contain:strict]",
+      none: "",
+      layout: "[contain:layout]",
+      paint: "[contain:paint]",
+      content: "[contain:content]",
+      strict: "[contain:strict]",
     },
   },
   defaultVariants: { contain: "none" },
@@ -589,7 +694,7 @@ const ScrollGutterBox = tw.div({
   base: "bg-white border-2 border-emerald-400 rounded-lg h-32 overflow-y-scroll p-3 text-xs font-mono text-gray-600 transition-all duration-200",
   variants: {
     gutter: {
-      auto:   "",
+      auto: "",
       stable: "[scrollbar-gutter:stable]",
     },
   },
@@ -607,42 +712,275 @@ const SPACING_PX: Record<string, string> = {
 const BORDER_PX: Record<string, string> = {
   "0": "0px", "1": "1px", "2": "2px", "4": "4px", "8": "8px",
 }
-const MARGIN_STEPS  = ["0","1","2","3","4","5","6","8","10","12"] as const
-const PADDING_STEPS = ["0","1","2","3","4","5","6","8","10","12"] as const
-const BORDER_STEPS  = ["0","1","2","4","8"] as const
+const MARGIN_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
+const PADDING_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
+const BORDER_STEPS = ["0", "1", "2", "4", "8"] as const
 
-type MarginSize  = typeof MARGIN_STEPS[number]
+type MarginSize = typeof MARGIN_STEPS[number]
 type PaddingSize = typeof PADDING_STEPS[number]
-type BorderSize  = typeof BORDER_STEPS[number]
+type BorderSize = typeof BORDER_STEPS[number]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOC data
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TOC = [
-  { id: "anatomy",        label: "Anatomi Box Model",     depth: "2" as const },
-  { id: "playground",     label: "Interactive Playground", depth: "2" as const },
-  { id: "box-sizing",     label: "box-sizing",             depth: "2" as const },
-  { id: "outline",        label: "outline vs border",      depth: "2" as const },
-  { id: "margin-collapse",label: "Margin Collapse",        depth: "2" as const },
-  { id: "negative-margin",label: "Negative Margin",        depth: "2" as const },
-  { id: "overflow",       label: "overflow",               depth: "2" as const },
-  { id: "width-variants", label: "width / min / max",      depth: "2" as const },
-  { id: "height",         label: "height: 100%",           depth: "2" as const },
-  { id: "inline-box",     label: "Inline & Box Model",     depth: "2" as const },
-  { id: "calc",           label: "calc()",                  depth: "2" as const },
-  { id: "aspect-ratio",   label: "aspect-ratio",            depth: "2" as const },
-  { id: "logical-props",  label: "Logical Properties",      depth: "2" as const },
-  { id: "box-decoration", label: "box-decoration-break",    depth: "2" as const },
-  { id: "min-width-flex", label: "min-width: 0 di Flex",    depth: "2" as const },
-  { id: "writing-mode",   label: "writing-mode",            depth: "2" as const },
-  { id: "resize",         label: "resize",                  depth: "2" as const },
-  { id: "table-box",      label: "Box Model di Tabel",      depth: "2" as const },
-  { id: "contain",        label: "contain",                 depth: "2" as const },
-  { id: "scrollbar-gutter", label: "scrollbar-gutter",      depth: "2" as const },
-  { id: "tw-usage",       label: "Pakai di tw",            depth: "2" as const },
-  { id: "exercise",       label: "Latihan",                depth: "2" as const },
+  { id: "anatomy", label: "Anatomi Box Model", depth: "2" as const },
+  { id: "playground", label: "Interactive Playground", depth: "2" as const },
+  { id: "box-sizing", label: "box-sizing", depth: "2" as const },
+  { id: "outline", label: "outline vs border", depth: "2" as const },
+  { id: "margin-collapse", label: "Margin Collapse", depth: "2" as const },
+  { id: "negative-margin", label: "Negative Margin", depth: "2" as const },
+  { id: "overflow", label: "overflow", depth: "2" as const },
+  { id: "width-variants", label: "width / min / max", depth: "2" as const },
+  { id: "height", label: "height: 100%", depth: "2" as const },
+  { id: "inline-box", label: "Inline & Box Model", depth: "2" as const },
+  { id: "calc", label: "calc()", depth: "2" as const },
+  { id: "aspect-ratio", label: "aspect-ratio", depth: "2" as const },
+  { id: "logical-props", label: "Logical Properties", depth: "2" as const },
+  { id: "box-decoration", label: "box-decoration-break", depth: "2" as const },
+  { id: "min-width-flex", label: "min-width: 0 di Flex", depth: "2" as const },
+  { id: "writing-mode", label: "writing-mode", depth: "2" as const },
+  { id: "resize", label: "resize", depth: "2" as const },
+  { id: "table-box", label: "Box Model di Tabel", depth: "2" as const },
+  { id: "contain", label: "contain", depth: "2" as const },
+  { id: "scrollbar-gutter", label: "scrollbar-gutter", depth: "2" as const },
+  { id: "visibility", label: "visibility vs display vs opacity", depth: "2" as const },
+  { id: "margin-auto", label: "margin: auto centering", depth: "2" as const },
+  { id: "box-shadow", label: "box-shadow vs drop-shadow", depth: "2" as const },
+  { id: "border-radius", label: "border-radius", depth: "2" as const },
+  { id: "border-style", label: "border-style lengkap", depth: "2" as const },
+  { id: "clamp", label: "clamp() sizing", depth: "2" as const },
+  { id: "tw-usage", label: "Pakai di tw", depth: "2" as const },
+  { id: "exercise", label: "Latihan", depth: "2" as const },
 ]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// border-radius playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RadiusBox = tw.div({
+  base: "w-32 h-32 bg-[var(--accent)] flex items-center justify-center text-white text-[10px] font-mono transition-all duration-300",
+  variants: {
+    radius: {
+      none: "rounded-none",
+      sm: "rounded-sm",
+      md: "rounded-md",
+      lg: "rounded-lg",
+      xl: "rounded-xl",
+      "2xl": "rounded-2xl",
+      full: "rounded-full",
+      "tl-only": "rounded-tl-3xl",
+      "t-only": "rounded-t-3xl",
+      pill: "rounded-full w-48 h-16",
+      ellipse: "[border-radius:50%] w-48",
+      custom: "[border-radius:30%_70%_70%_30%/30%_30%_70%_70%]",
+    },
+  },
+  defaultVariants: { radius: "lg" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// border-style playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BorderStyleBox = tw.div({
+  base: "w-40 h-16 flex items-center justify-center text-[11px] font-mono text-gray-700 bg-white transition-all duration-200",
+  variants: {
+    style: {
+      solid: "border-4 border-solid border-blue-500",
+      dashed: "border-4 border-dashed border-blue-500",
+      dotted: "border-4 border-dotted border-blue-500",
+      double: "border-8 border-double border-blue-500",
+      groove: "border-8 [border-style:groove] [border-color:theme(colors.blue.500)]",
+      ridge: "border-8 [border-style:ridge]  [border-color:theme(colors.blue.500)]",
+      inset: "border-8 [border-style:inset]  [border-color:theme(colors.blue.500)]",
+      outset: "border-8 [border-style:outset] [border-color:theme(colors.blue.500)]",
+      none: "border-4 border-none",
+      hidden: "border-4 border-hidden",
+    },
+  },
+  defaultVariants: { style: "solid" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// clamp() playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ClampBox = tw.div({
+  base: "bg-[var(--accent)] text-white flex items-center justify-center text-[11px] font-mono rounded-lg py-3 transition-all duration-200",
+  variants: {
+    mode: {
+      fixed: "w-48",
+      "min-w": "min-w-[8rem] w-full max-w-xs",
+      clamp: "w-[clamp(8rem,50%,24rem)]",
+      clamp2: "text-[clamp(0.75rem,2vw,1.25rem)] w-full",
+    },
+  },
+  defaultVariants: { mode: "clamp" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Visibility playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VisibilityBox = tw.div({
+  base: "w-32 h-16 rounded-lg flex items-center justify-center text-[11px] font-bold text-white transition-all duration-200 bg-[var(--accent)]",
+  variants: {
+    mode: {
+      visible: "",
+      "display-none": "hidden",
+      "visibility-hid": "invisible",
+      "opacity-0": "opacity-0",
+    },
+  },
+  defaultVariants: { mode: "visible" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// margin:auto playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AutoMarginChild = tw.div({
+  base: "bg-[var(--accent)] text-white rounded-lg flex items-center justify-center text-[11px] font-mono py-3 transition-all duration-200",
+  variants: {
+    mode: {
+      "none": "w-48",
+      "center": "w-48 mx-auto",
+      "left": "w-48 mr-auto",
+      "right": "w-48 ml-auto",
+      "flex-center": "w-48",
+    },
+  },
+  defaultVariants: { mode: "none" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// box-shadow vs drop-shadow playground primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ShadowBox = tw.div({
+  base: "w-24 h-24 bg-white rounded-xl flex items-center justify-center text-[10px] font-mono text-gray-600 transition-all duration-200",
+  variants: {
+    type: {
+      none: "",
+      "box-sm": "shadow-sm",
+      "box-md": "shadow-md",
+      "box-lg": "shadow-lg",
+      "box-xl": "shadow-xl",
+      "box-inset": "shadow-[inset_0_2px_8px_rgba(0,0,0,0.15)]",
+      "drop-sm": "[filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.1))]",
+      "drop-lg": "[filter:drop-shadow(0_4px_16px_rgba(0,0,0,0.25))]",
+    },
+  },
+  defaultVariants: { type: "box-md" },
+})
+
+// PNG-shaped shadow demo — hanya drop-shadow yang ikut shape non-rectangular
+const ShadowShape = tw.div({
+  base: "transition-all duration-200 text-4xl",
+  variants: {
+    type: {
+      "box-shadow": "shadow-xl rounded-full bg-white p-2",
+      "drop-shadow": "[filter:drop-shadow(0_4px_12px_rgba(99,102,241,0.5))]",
+    },
+  },
+  defaultVariants: { type: "box-shadow" },
+})
+
+// Slider range input
+const RangeInput = tw.input({
+  base: "w-full accent-[var(--accent)]",
+})
+
+// Teks deskripsi playground (berulang ~15x)
+const DescText = tw.p({
+  base: "text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
+})
+
+// Teks hint/caption mono kecil
+const HintText = tw.p({
+  base: "text-[10px] font-mono text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]",
+})
+
+// Teks caption clamp (text-center)
+const CenterCaption = tw.p({
+  base: "text-[10px] text-center mt-2 font-mono text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]",
+})
+
+// Span kecil dim (opacity-60) dalam box demo
+const DimSpan = tw.span({
+  base: "text-[10px] opacity-60",
+})
+
+// Flex column wrapper
+const FlexColWrap = tw.div({ base: "flex flex-col" })
+
+// Centering wrapper narrow
+const CenteredNarrow = tw.div({ base: "w-full max-w-xs mx-auto" })
+
+// Centering wrapper medium
+const CenteredMedium = tw.div({ base: "w-full max-w-sm mx-auto" })
+
+// Wrapper dengan min-height untuk writing-mode demo
+const CenteredMinH = tw.div({ base: "flex items-center justify-center min-h-48" })
+
+// Neighbor box untuk visibility demo
+const NeighborBox = tw.div({
+  base: "w-24 h-16 rounded-lg bg-emerald-100 border-2 border-emerald-400 flex items-center justify-center text-[10px] font-mono text-emerald-800",
+})
+
+// Row untuk visibility demo
+const VisibilityRow = tw.div({ base: "flex gap-3 items-start" })
+
+// Background container untuk demo (dua kali pakai)
+const DemoBackground = tw.div({
+  base: "w-full bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] rounded-lg p-3 border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)]",
+})
+
+// Teks dalam ContainBox
+const ContainText = tw.p({ base: "text-xs font-mono text-cyan-800" })
+
+// Teks paragraf leading-loose untuk decoration demo
+const DecorationPara = tw.p({ base: "text-sm leading-loose max-w-xs" })
+
+// Row info box untuk anatomy table
+const AnatomyRow = tw.div({
+  base: "flex items-start gap-4 p-4 border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] last:border-0 border-l-4",
+  variants: {
+    layer: {
+      content: "bg-white border-gray-300",
+      padding: "bg-green-50 border-green-300",
+      border: "bg-orange-50 border-orange-300",
+      margin: "bg-blue-50 border-blue-300",
+    },
+  },
+  defaultVariants: { layer: "content" },
+  sub: {
+    "p:desc": "text-sm text-[color-mix(in_srgb,var(--foreground)_75%,transparent)] leading-relaxed",
+  },
+})
+
+// Wrapper anatomy table
+const AnatomyTable = tw.div({
+  base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[var(--surface)] overflow-hidden my-5",
+})
+
+// Visibility comparison table
+const CompareTable = tw.div({
+  base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden my-5",
+})
+
+const CompareRow = tw.div({
+  base: "grid grid-cols-5 gap-2 p-3 border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] last:border-0 text-xs",
+})
+
+const CompareCell = tw.span({
+  base: "text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]",
+})
+
+const TocFooter = tw.div({ base: "mt-6 pt-4 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" })
+const TocGithubLink = tw.a({ base: "text-xs text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1" })
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Code block
@@ -675,9 +1013,9 @@ function Code({ file, children }: { file?: string; children: string }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function BoxModelPlayground() {
-  const [margin,  setMargin]  = useState<MarginSize>("6")
+  const [margin, setMargin] = useState<MarginSize>("6")
   const [padding, setPadding] = useState<PaddingSize>("4")
-  const [border,  setBorder]  = useState<BorderSize>("4")
+  const [border, setBorder] = useState<BorderSize>("4")
 
   return (
     <PlaygroundWrap>
@@ -686,35 +1024,32 @@ function BoxModelPlayground() {
 
         <SliderRow>
           <SliderRow.header>
-            <SliderRow.lbl className="text-blue-600">margin</SliderRow.lbl>
+            <SliderLabel color="blue">margin</SliderLabel>
             <SliderRow.val>{SPACING_PX[margin]}</SliderRow.val>
           </SliderRow.header>
-          <input type="range" min={0} max={MARGIN_STEPS.length - 1}
+          <RangeInput type="range" min={0} max={MARGIN_STEPS.length - 1}
             value={MARGIN_STEPS.indexOf(margin)}
-            onChange={e => setMargin(MARGIN_STEPS[+e.target.value])}
-            className="w-full accent-[var(--accent)]" />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMargin(MARGIN_STEPS[+e.target.value])} />
         </SliderRow>
 
         <SliderRow>
           <SliderRow.header>
-            <SliderRow.lbl className="text-green-600">padding</SliderRow.lbl>
+            <SliderLabel color="green">padding</SliderLabel>
             <SliderRow.val>{SPACING_PX[padding]}</SliderRow.val>
           </SliderRow.header>
-          <input type="range" min={0} max={PADDING_STEPS.length - 1}
+          <RangeInput type="range" min={0} max={PADDING_STEPS.length - 1}
             value={PADDING_STEPS.indexOf(padding)}
-            onChange={e => setPadding(PADDING_STEPS[+e.target.value])}
-            className="w-full accent-[var(--accent)]" />
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPadding(PADDING_STEPS[+e.target.value])} />
         </SliderRow>
 
         <SliderRow>
           <SliderRow.header>
-            <SliderRow.lbl className="text-orange-600">border</SliderRow.lbl>
+            <SliderLabel color="orange">border</SliderLabel>
             <SliderRow.val>{BORDER_PX[border]}</SliderRow.val>
           </SliderRow.header>
-          <input type="range" min={0} max={BORDER_STEPS.length - 1}
+          <RangeInput type="range" min={0} max={BORDER_STEPS.length - 1}
             value={BORDER_STEPS.indexOf(border)}
-            onChange={e => setBorder(BORDER_STEPS[+e.target.value])}
-            className="w-full accent-[var(--accent)]" />
+            onChange={(e: { target: { value: string | number } }) => setBorder(BORDER_STEPS[+e.target.value])} />
         </SliderRow>
       </PlaygroundWrap.controls>
 
@@ -756,42 +1091,42 @@ function BoxSizingPlayground() {
     <PlaygroundWrap>
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 box-sizing — content-box vs border-box</PlaygroundWrap.label>
-        <div className="space-y-1.5">
-          <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">padding</p>
+        <ControlGroup>
+          <ControlGroup.label>padding</ControlGroup.label>
           <ChipRow>
-            {(["none","md","lg"] as PaddingLevel[]).map(v => (
+            {(["none", "md", "lg"] as PaddingLevel[]).map(v => (
               <Chip key={v} active={padding === v ? "true" : "false"} onClick={() => setPadding(v)}>
                 {PADDING_LEVEL_MAP[v]}
               </Chip>
             ))}
           </ChipRow>
-        </div>
+        </ControlGroup>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas className="gap-12 flex-wrap">
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600">content-box</p>
+        <CompareCol>
+          <CompareLabel color="blue">content-box</CompareLabel>
           <ContentBoxEl padding={padding}>
             <span>content-box</span>
-            <span className="text-[10px] opacity-60">
+            <DimSpan>
               width expands → {padding === "none" ? "160px" : padding === "md" ? "192px" : "224px"}
-            </span>
+            </DimSpan>
           </ContentBoxEl>
-          <p className="text-[10px] text-gray-400 font-mono">
+          <MonoCaption>
             w-40 + p-{padding === "none" ? "0" : padding === "md" ? "4" : "8"} = {padding === "none" ? "160" : padding === "md" ? "192" : "224"}px
-          </p>
-        </div>
+          </MonoCaption>
+        </CompareCol>
 
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">border-box</p>
+        <CompareCol>
+          <CompareLabel color="emerald">border-box</CompareLabel>
           <BorderBoxEl padding={padding}>
             <span>border-box</span>
-            <span className="text-[10px] opacity-60">width stays → 160px</span>
+            <DimSpan>width stays → 160px</DimSpan>
           </BorderBoxEl>
-          <p className="text-[10px] text-gray-400 font-mono">
+          <MonoCaption>
             w-40 tetap 160px ✓
-          </p>
-        </div>
+          </MonoCaption>
+        </CompareCol>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -813,9 +1148,9 @@ function OutlineBorderPlayground() {
   const [type, setType] = useState<OutlineBorderType>("border")
 
   const descriptions: Record<OutlineBorderType, string> = {
-    "border":    "border — part of box model, takes up space, pushes content",
-    "outline":   "outline — outside box model, takes NO space, doesn't affect layout",
-    "border+m":  "border dengan margin — total space: border + margin",
+    "border": "border — part of box model, takes up space, pushes content",
+    "outline": "outline — outside box model, takes NO space, doesn't affect layout",
+    "border+m": "border dengan margin — total space: border + margin",
     "outline+m": "outline dengan margin — margin normal, outline tidak tambah space",
   }
 
@@ -824,24 +1159,24 @@ function OutlineBorderPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 outline vs border</PlaygroundWrap.label>
         <ChipRow>
-          {(["border","outline","border+m","outline+m"] as OutlineBorderType[]).map(v => (
+          {(["border", "outline", "border+m", "outline+m"] as OutlineBorderType[]).map(v => (
             <Chip key={v} active={type === v ? "true" : "false"} onClick={() => setType(v)}>{v}</Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {descriptions[type]}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas className="gap-4 flex-wrap">
-        <div className="bg-amber-50 border border-dashed border-amber-300 rounded p-4 flex gap-4 items-center">
+        <OutlineContainer>
           <OutlineBorderBox type={type}>
-            <span className="text-gray-600">{type}</span>
+            <OutlineItemLabel>{type}</OutlineItemLabel>
           </OutlineBorderBox>
           <OutlineBorderBox type={type}>
-            <span className="text-gray-600">sibling</span>
+            <OutlineItemLabel>sibling</OutlineItemLabel>
           </OutlineBorderBox>
-        </div>
+        </OutlineContainer>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -868,25 +1203,25 @@ function MarginCollapsePlayground() {
     <PlaygroundWrap>
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Margin Collapse — vertical margin "merge"</PlaygroundWrap.label>
-        <div className="flex items-center gap-4">
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">margin-top/bottom</p>
+        <ControlsRow>
+          <ControlGroup>
+            <ControlGroup.label>margin-top/bottom</ControlGroup.label>
             <ChipRow>
-              {(["2","4","8","12"] as CollapseMargin[]).map(v => (
+              {(["2", "4", "8", "12"] as CollapseMargin[]).map(v => (
                 <Chip key={v} active={margin === v ? "true" : "false"} onClick={() => setMargin(v)}>
                   {SPACING_PX[v]}
                 </Chip>
               ))}
             </ChipRow>
-          </div>
-          <div className="space-y-1.5">
-            <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">mode</p>
+          </ControlGroup>
+          <ControlGroup>
+            <ControlGroup.label>mode</ControlGroup.label>
             <ChipRow>
               <Chip active={showCollapse ? "true" : "false"} onClick={() => setShowCollapse(true)}>collapse (block)</Chip>
               <Chip active={!showCollapse ? "true" : "false"} onClick={() => setShowCollapse(false)}>no collapse (flex)</Chip>
             </ChipRow>
-          </div>
-        </div>
+          </ControlGroup>
+        </ControlsRow>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas className="flex-col gap-0">
@@ -896,19 +1231,19 @@ function MarginCollapsePlayground() {
             <div>
               <CollapseBlock margin={margin}>Block A (margin: {SPACING_PX[margin]})</CollapseBlock>
               <CollapseBlock margin={margin}>Block B (margin: {SPACING_PX[margin]})</CollapseBlock>
-              <p className="text-[10px] text-center text-amber-600 mt-2 font-semibold">
+              <StatusHint status="warning">
                 ⚠️ Gap antara A dan B = {SPACING_PX[margin]} (bukan {parseInt(SPACING_PX[margin]) * 2}px) — collapsed!
-              </p>
+              </StatusHint>
             </div>
           ) : (
             /* Flex context — margin collapse TIDAK terjadi */
-            <div className="flex flex-col">
+            <FlexColWrap>
               <CollapseBlock margin={margin}>Block A (margin: {SPACING_PX[margin]})</CollapseBlock>
               <CollapseBlock margin={margin}>Block B (margin: {SPACING_PX[margin]})</CollapseBlock>
-              <p className="text-[10px] text-center text-emerald-600 mt-2 font-semibold">
+              <StatusHint status="ok">
                 ✅ Gap antara A dan B = {parseInt(SPACING_PX[margin]) * 2}px — tidak collapse di flex!
-              </p>
-            </div>
+              </StatusHint>
+            </FlexColWrap>
           )}
         </CollapseBox>
       </PlaygroundWrap.canvas>
@@ -919,7 +1254,7 @@ function MarginCollapsePlayground() {
           : `/* Flex context: margin tidak collapse → ${parseInt(SPACING_PX[margin]) * 2}px total */`
         }
       </PlaygroundWrap.codeline>
-    </PlaygroundWrap>
+    </PlaygroundWrap >
   )
 }
 
@@ -934,10 +1269,10 @@ function OverflowPlayground() {
 
   const descriptions: Record<OverflowValue, string> = {
     visible: "Default. Konten yang melebihi box tetap terlihat di luar.",
-    hidden:  "Konten yang melebihi box dipotong. Tidak ada scrollbar.",
-    scroll:  "Selalu tampilkan scrollbar, meski konten tidak overflow.",
-    auto:    "Scrollbar hanya muncul kalau konten benar-benar overflow.",
-    clip:    "Dipotong seperti hidden, tapi tidak bisa di-scroll secara programmatic.",
+    hidden: "Konten yang melebihi box dipotong. Tidak ada scrollbar.",
+    scroll: "Selalu tampilkan scrollbar, meski konten tidak overflow.",
+    auto: "Scrollbar hanya muncul kalau konten benar-benar overflow.",
+    clip: "Dipotong seperti hidden, tapi tidak bisa di-scroll secara programmatic.",
   }
 
   return (
@@ -945,20 +1280,20 @@ function OverflowPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 overflow — apa yang terjadi kalau konten melebihi box</PlaygroundWrap.label>
         <ChipRow>
-          {(["visible","hidden","scroll","auto","clip"] as OverflowValue[]).map(v => (
+          {(["visible", "hidden", "scroll", "auto", "clip"] as OverflowValue[]).map(v => (
             <Chip key={v} active={overflow === v ? "true" : "false"} onClick={() => setOverflow(v)}>{v}</Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {descriptions[overflow]}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
         <OverflowBox overflow={overflow}>
-          <div className="p-3">
+          <OverflowContent>
             Ini konten yang sangat panjang dan akan melebihi batas box yang sudah ditentukan. Lihat apa yang terjadi!
-          </div>
+          </OverflowContent>
         </OverflowBox>
       </PlaygroundWrap.canvas>
 
@@ -977,18 +1312,18 @@ function WidthPlayground() {
   const [type, setType] = useState<WidthType>("width")
 
   const descriptions: Record<WidthType, string> = {
-    width:      "width: 192px — lebar eksplisit, tidak peduli konten",
-    minWidth:   "min-width: 192px — minimal selebar ini, bisa lebih lebar",
-    maxWidth:   "max-width: 192px — maksimal selebar ini, bisa lebih sempit",
+    width: "width: 192px — lebar eksplisit, tidak peduli konten",
+    minWidth: "min-width: 192px — minimal selebar ini, bisa lebih lebar",
+    maxWidth: "max-width: 192px — maksimal selebar ini, bisa lebih sempit",
     minContent: "width: min-content — sesempit mungkin, cukup untuk kata terpanjang",
     maxContent: "width: max-content — selebar konten penuh, tidak wrap",
     fitContent: "width: fit-content — seperti max-content tapi tidak melebihi parent",
   }
 
   const textOptions: Record<WidthType, string> = {
-    width:      "Fixed width",
-    minWidth:   "Min width — expands if content is wider",
-    maxWidth:   "Max width — shrinks if content is narrower",
+    width: "Fixed width",
+    minWidth: "Min width — expands if content is wider",
+    maxWidth: "Max width — shrinks if content is narrower",
     minContent: "Min",
     maxContent: "Max content — full width no wrap",
     fitContent: "Fit content",
@@ -999,33 +1334,33 @@ function WidthPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 width / min-width / max-width / intrinsic sizing</PlaygroundWrap.label>
         <ChipRow>
-          {(["width","minWidth","maxWidth","minContent","maxContent","fitContent"] as WidthType[]).map(v => (
+          {(["width", "minWidth", "maxWidth", "minContent", "maxContent", "fitContent"] as WidthType[]).map(v => (
             <Chip key={v} active={type === v ? "true" : "false"} onClick={() => setType(v)}>
               {v === "width" ? "width" : v === "minWidth" ? "min-w" : v === "maxWidth" ? "max-w" : v === "minContent" ? "min-content" : v === "maxContent" ? "max-content" : "fit-content"}
             </Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {descriptions[type]}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <div className="w-full bg-gray-100 rounded-lg p-3 relative">
-          <p className="text-[9px] text-gray-400 mb-2 uppercase tracking-wider font-bold">parent container (full width)</p>
+        <WidthParent>
+          <WidthParent.label>parent container (full width)</WidthParent.label>
           <WidthBox type={type}>
             {textOptions[type]}
           </WidthBox>
-        </div>
+        </WidthParent>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
-        {type === "width"      ? "width: 192px;"
-        : type === "minWidth"  ? "min-width: 192px; width: 0;"
-        : type === "maxWidth"  ? "max-width: 192px; width: 100%;"
-        : type === "minContent"? "width: min-content;"
-        : type === "maxContent"? "width: max-content;"
-        :                        "width: fit-content;"}
+        {type === "width" ? "width: 192px;"
+          : type === "minWidth" ? "min-width: 192px; width: 0;"
+            : type === "maxWidth" ? "max-width: 192px; width: 100%;"
+              : type === "minContent" ? "width: min-content;"
+                : type === "maxContent" ? "width: max-content;"
+                  : "width: fit-content;"}
       </PlaygroundWrap.codeline>
     </PlaygroundWrap>
   )
@@ -1045,7 +1380,7 @@ function NegativeMarginPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Negative margin — tarik elemen ke arah sebaliknya</PlaygroundWrap.label>
         <ChipRow>
-          {(["0","-2","-4","-8","-12"] as NegMarginVal[]).map(v => (
+          {(["0", "-2", "-4", "-8", "-12"] as NegMarginVal[]).map(v => (
             <Chip key={v} active={neg === v ? "true" : "false"} onClick={() => setNeg(v)}>
               margin-top: {v === "0" ? "0" : v + " (" + Math.abs(parseInt(v)) * 4 + "px)"}
             </Chip>
@@ -1054,9 +1389,9 @@ function NegativeMarginPlayground() {
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas className="flex-col gap-0 items-center">
-        <div className="bg-blue-100 border-2 border-blue-300 rounded px-6 py-4 text-xs font-mono text-blue-800 text-center w-48">
+        <NegMarginParent>
           Element A
-        </div>
+        </NegMarginParent>
         <NegMarginBox neg={neg}>
           Element B {neg !== "0" && `(mt: ${neg})`}
         </NegMarginBox>
@@ -1082,11 +1417,11 @@ function CalcPlayground() {
   const [mode, setMode] = useState<CalcMode>("minus")
 
   const descriptions: Record<CalcMode, string> = {
-    full:    "width: 100% — full lebar parent, tidak ada sidebar.",
-    minus:   "width: calc(100% - 80px) — sisakan ruang 80px untuk sidebar.",
-    minus2:  "width: calc(100% - 160px) — sisakan ruang 160px (dua sidebar).",
-    half:    "width: calc(50% - 8px) — dua kolom dengan gap 16px di antaranya.",
-    third:   "width: calc(33.333% - 11px) — tiga kolom dengan gap.",
+    full: "width: 100% — full lebar parent, tidak ada sidebar.",
+    minus: "width: calc(100% - 80px) — sisakan ruang 80px untuk sidebar.",
+    minus2: "width: calc(100% - 160px) — sisakan ruang 160px (dua sidebar).",
+    half: "width: calc(50% - 8px) — dua kolom dengan gap 16px di antaranya.",
+    third: "width: calc(33.333% - 11px) — tiga kolom dengan gap.",
   }
 
   return (
@@ -1094,16 +1429,16 @@ function CalcPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 calc() — kombinasi unit berbeda dalam satu nilai</PlaygroundWrap.label>
         <ChipRow>
-          {(["full","minus","minus2","half","third"] as CalcMode[]).map(v => (
+          {(["full", "minus", "minus2", "half", "third"] as CalcMode[]).map(v => (
             <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
+        <DescText>{descriptions[mode]}</DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
         <CalcParent>
-          <div className="flex gap-2 items-center">
+          <CalcGroup>
             {(mode === "minus" || mode === "minus2") && <CalcSidebar>sidebar</CalcSidebar>}
             {mode === "minus2" && <CalcSidebar>sidebar 2</CalcSidebar>}
             <CalcChild mode={mode}>
@@ -1116,16 +1451,16 @@ function CalcPlayground() {
                 <CalcChild mode={mode}>kolom 3/3</CalcChild>
               </>
             )}
-          </div>
+          </CalcGroup>
         </CalcParent>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
-        {mode === "full"   ? "width: 100%;"
-        : mode === "minus"  ? "width: calc(100% - 80px);"
-        : mode === "minus2" ? "width: calc(100% - 160px);"
-        : mode === "half"   ? "width: calc(50% - 8px); /* gap: 16px */"
-        :                     "width: calc(33.333% - 11px); /* gap: 16px */"}
+        {mode === "full" ? "width: 100%;"
+          : mode === "minus" ? "width: calc(100% - 80px);"
+            : mode === "minus2" ? "width: calc(100% - 160px);"
+              : mode === "half" ? "width: calc(50% - 8px); /* gap: 16px */"
+                : "width: calc(33.333% - 11px); /* gap: 16px */"}
       </PlaygroundWrap.codeline>
     </PlaygroundWrap>
   )
@@ -1142,8 +1477,8 @@ function AspectRatioPlayground() {
 
   const ratioLabel: Record<AspectMode, string> = {
     square: "1:1",
-    video:  "16:9",
-    "4-3":  "4:3",
+    video: "16:9",
+    "4-3": "4:3",
     "21-9": "21:9 (cinematic)",
     "9-16": "9:16 (portrait/stories)",
   }
@@ -1153,16 +1488,16 @@ function AspectRatioPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 aspect-ratio — jaga proporsi tanpa height eksplisit</PlaygroundWrap.label>
         <ChipRow>
-          {(["square","video","4-3","21-9","9-16"] as AspectMode[]).map(v => (
+          {(["square", "video", "4-3", "21-9", "9-16"] as AspectMode[]).map(v => (
             <Chip key={v} active={ratio === v ? "true" : "false"} onClick={() => setRatio(v)}>{ratioLabel[v]}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <div className="w-full max-w-xs mx-auto">
+        <CenteredNarrow>
           <AspectBox ratio={ratio}>{ratioLabel[ratio]}</AspectBox>
-        </div>
+        </CenteredNarrow>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -1189,17 +1524,17 @@ function LogicalPropsPlayground() {
           <Chip active={dir === "ltr" ? "true" : "false"} onClick={() => setDir("ltr")}>ltr (kiri ke kanan)</Chip>
           <Chip active={dir === "rtl" ? "true" : "false"} onClick={() => setDir("rtl")}>rtl (kanan ke kiri)</Chip>
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           <IC>ps-4</IC> (padding-inline-start) otomatis mengikuti arah teks — di RTL dia jadi padding kanan, bukan kiri.
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <div dir={dir} className="w-full max-w-sm mx-auto">
+        <CenteredMedium dir={dir}>
           <LogicalBox size="4" dir={dir}>
             ps-4 pe-2 → {dir === "ltr" ? "padding kiri lebih besar" : "padding kanan lebih besar"}
           </LogicalBox>
-        </div>
+        </CenteredMedium>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -1229,21 +1564,21 @@ function BoxDecorationPlayground() {
           <Chip active={mode === "slice" ? "true" : "false"} onClick={() => setMode("slice")}>slice (default)</Chip>
           <Chip active={mode === "clone" ? "true" : "false"} onClick={() => setMode("clone")}>clone</Chip>
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {mode === "slice"
             ? "Default — box diperlakukan sebagai satu kesatuan yang 'dipotong' di line break, border kiri/kanan hanya muncul di ujung."
             : "Setiap baris diperlakukan sebagai box terpisah — border dan padding muncul utuh di setiap baris."}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <p className="text-sm leading-loose max-w-xs">
+        <DecorationPara>
           Teks biasa dengan{" "}
           <DecorationText mode={mode}>
             highlight yang sangat panjang sehingga akan wrap ke baris berikutnya
           </DecorationText>
           {" "}lalu lanjut teks normal lagi.
-        </p>
+        </DecorationPara>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>{`box-decoration-break: ${mode};`}</PlaygroundWrap.codeline>
@@ -1268,15 +1603,15 @@ function MinWidthFlexPlayground() {
           <Chip active={fix === "broken" ? "true" : "false"} onClick={() => setFix("broken")}>❌ tanpa min-w-0</Chip>
           <Chip active={fix === "ok" ? "true" : "false"} onClick={() => setFix("ok")}>✅ dengan min-w-0 + truncate</Chip>
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {fix === "broken"
             ? "min-width default flex item adalah 'auto' — artinya tidak akan pernah lebih kecil dari konten terpanjangnya, walau itu bikin overflow."
             : "min-w-0 mengizinkan flex item menyusut di bawah ukuran kontennya, dikombinasikan truncate untuk ellipsis."}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <div className="w-full max-w-xs mx-auto">
+        <CenteredNarrow>
           <FlexRow>
             <FlexSidebarFixed>icon</FlexSidebarFixed>
             <FlexTextItem fix={fix}>
@@ -1285,7 +1620,7 @@ function MinWidthFlexPlayground() {
               </FlexTextContent>
             </FlexTextItem>
           </FlexRow>
-        </div>
+        </CenteredNarrow>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -1309,7 +1644,7 @@ function WritingModePlayground() {
 
   const descriptions: Record<WritingMode, string> = {
     horizontal: "Default — block axis vertikal (top-to-bottom), inline axis horizontal (left-to-right).",
-    vertical:   "vertical-rl — block axis horizontal (right-to-left), inline axis vertikal. Umum untuk teks Jepang/Cina tradisional.",
+    vertical: "vertical-rl — block axis horizontal (right-to-left), inline axis vertikal. Umum untuk teks Jepang/Cina tradisional.",
     verticalLr: "vertical-lr — sama seperti vertical-rl tapi block axis dari kiri ke kanan. Jarang dipakai, tapi ada di Mongolian.",
   }
 
@@ -1318,21 +1653,21 @@ function WritingModePlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 writing-mode — block & inline axis bisa diputar</PlaygroundWrap.label>
         <ChipRow>
-          {(["horizontal","vertical","verticalLr"] as WritingMode[]).map(v => (
+          {(["horizontal", "vertical", "verticalLr"] as WritingMode[]).map(v => (
             <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
               {v === "horizontal" ? "horizontal-tb (default)" : v === "vertical" ? "vertical-rl" : "vertical-lr"}
             </Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
+        <DescText>{descriptions[mode]}</DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <div className="flex items-center justify-center min-h-48">
+        <CenteredMinH>
           <WritingModeBox mode={mode}>
             ぼ Sample テキスト Text
           </WritingModeBox>
-        </div>
+        </CenteredMinH>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
@@ -1356,7 +1691,7 @@ function ResizePlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 resize — biarkan user resize elemen manual (drag pojok kanan bawah)</PlaygroundWrap.label>
         <ChipRow>
-          {(["none","both","horizontal","vertical"] as ResizeMode[]).map(v => (
+          {(["none", "both", "horizontal", "vertical"] as ResizeMode[]).map(v => (
             <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
@@ -1388,11 +1723,11 @@ function TableBoxPlayground() {
           <Chip active={mode === "collapse" ? "true" : "false"} onClick={() => setMode("collapse")}>border-collapse</Chip>
           <Chip active={mode === "separate" ? "true" : "false"} onClick={() => setMode("separate")}>border-separate</Chip>
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {mode === "collapse"
             ? "Border antar cell yang bersebelahan 'digabung' jadi satu garis — tidak ada double border."
             : "Setiap cell punya border sendiri yang terpisah — terlihat double border di antara cell."}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
@@ -1425,16 +1760,17 @@ function TableBoxPlayground() {
 // Playground: contain
 // ─────────────────────────────────────────────────────────────────────────────
 
-type ContainMode = "none" | "layout" | "paint" | "strict"
+type ContainMode = "none" | "layout" | "paint" | "content" | "strict"
 
 function ContainPlayground() {
   const [contain, setContain] = useState<ContainMode>("none")
 
   const descriptions: Record<ContainMode, string> = {
-    none:   "Tanpa containment — browser harus selalu cek seluruh dokumen saat elemen ini berubah.",
+    none: "Tanpa containment — browser harus selalu cek seluruh dokumen saat elemen ini berubah.",
     layout: "contain: layout — perubahan internal elemen ini tidak mempengaruhi layout di luar. Bagus untuk performa.",
-    paint:  "contain: paint — konten yang overflow di-clip, dan elemen ini jadi containing block untuk painting.",
-    strict: "contain: strict — gabungan semua containment (layout + paint + size + style). Maksimal isolasi performa.",
+    paint: "contain: paint — konten yang overflow di-clip, dan elemen ini jadi containing block untuk painting.",
+    content: "contain: content — shorthand untuk layout + paint + style (TANPA size). Aman dipakai luas karena tidak berisiko box jadi 0px.",
+    strict: "contain: strict — shorthand untuk size + layout + paint + style. Maksimal isolasi performa, tapi berisiko box collapse kalau lupa set ukuran eksplisit.",
   }
 
   return (
@@ -1442,19 +1778,19 @@ function ContainPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 contain — CSS Containment untuk optimasi performa rendering</PlaygroundWrap.label>
         <ChipRow>
-          {(["none","layout","paint","strict"] as ContainMode[]).map(v => (
+          {(["none", "layout", "paint", "content", "strict"] as ContainMode[]).map(v => (
             <Chip key={v} active={contain === v ? "true" : "false"} onClick={() => setContain(v)}>{v}</Chip>
           ))}
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[contain]}</p>
+        <DescText>{descriptions[contain]}</DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
         <ContainBox contain={contain}>
-          <p className="text-xs font-mono text-cyan-800">
+          <ContainText>
             Widget independen dengan <IC>contain: {contain}</IC> — browser tahu perubahan
             di dalam box ini tidak perlu re-layout/re-paint elemen di luar.
-          </p>
+          </ContainText>
         </ContainBox>
       </PlaygroundWrap.canvas>
 
@@ -1480,11 +1816,11 @@ function ScrollbarGutterPlayground() {
           <Chip active={gutter === "auto" ? "true" : "false"} onClick={() => setGutter("auto")}>auto (default)</Chip>
           <Chip active={gutter === "stable" ? "true" : "false"} onClick={() => setGutter("stable")}>stable</Chip>
         </ChipRow>
-        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+        <DescText>
           {gutter === "auto"
             ? "Space untuk scrollbar hanya muncul kalau konten benar-benar overflow — konten 'loncat' saat scrollbar muncul/hilang."
             : "Space untuk scrollbar selalu di-reserve, walau scrollbar belum muncul — tidak ada layout shift."}
-        </p>
+        </DescText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
@@ -1504,6 +1840,346 @@ function ScrollbarGutterPlayground() {
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: visibility vs display:none vs opacity:0
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: border-radius
+// ─────────────────────────────────────────────────────────────────────────────
+
+type RadiusMode = "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "full" | "tl-only" | "t-only" | "pill" | "ellipse" | "custom"
+
+function BorderRadiusPlayground() {
+  const [radius, setRadius] = useState<RadiusMode>("lg")
+
+  const descriptions: Record<RadiusMode, string> = {
+    none: "rounded-none — sudut tajam 0px",
+    sm: "rounded-sm — 2px",
+    md: "rounded-md — 6px",
+    lg: "rounded-lg — 8px",
+    xl: "rounded-xl — 12px",
+    "2xl": "rounded-2xl — 16px",
+    full: "rounded-full — 9999px — lingkaran sempurna kalau width=height",
+    "tl-only": "rounded-tl-3xl — hanya sudut kiri atas (rounded-{corner}-{size})",
+    "t-only": "rounded-t-3xl — hanya sudut atas (kiri + kanan sekaligus)",
+    pill: "rounded-full pada elemen lebar — menghasilkan bentuk pill/capsule",
+    ellipse: "border-radius: 50% — elips, mengikuti ukuran elemen",
+    custom: "border-radius: 30% 70% 70% 30% / 30% 30% 70% 70% — nilai berbeda per sumbu X dan Y (blob shape)",
+  }
+
+  const radii: RadiusMode[] = ["none", "sm", "md", "lg", "xl", "2xl", "full", "tl-only", "t-only", "pill", "ellipse", "custom"]
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 border-radius — dari kotak ke lingkaran ke blob</PlaygroundWrap.label>
+        <ChipRow>
+          {radii.map(v => (
+            <Chip key={v} active={radius === v ? "true" : "false"} onClick={() => setRadius(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <DescText>{descriptions[radius]}</DescText>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas>
+        <RadiusBox radius={radius}>{radius}</RadiusBox>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {radius === "custom"
+          ? "border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; /* X-axis / Y-axis */"
+          : radius === "ellipse"
+            ? "border-radius: 50%; /* elips — mengikuti aspect ratio elemen */"
+            : radius === "tl-only"
+              ? "border-top-left-radius: 1.5rem; /* individual corner */"
+              : radius === "t-only"
+                ? "border-top-left-radius: 1.5rem; border-top-right-radius: 1.5rem; /* shorthand: rounded-t-3xl */"
+                : `border-radius: Tailwind rounded-${radius};`}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: border-style
+// ─────────────────────────────────────────────────────────────────────────────
+
+type BorderStyleMode = "solid" | "dashed" | "dotted" | "double" | "groove" | "ridge" | "inset" | "outset" | "none" | "hidden"
+
+function BorderStylePlayground() {
+  const [style, setStyle] = useState<BorderStyleMode>("solid")
+
+  const descriptions: Record<BorderStyleMode, string> = {
+    solid: "solid — garis penuh biasa. Paling sering dipakai.",
+    dashed: "dashed — garis putus-putus. Cocok untuk border 'dropzone' atau 'placeholder'.",
+    dotted: "dotted — titik-titik. Cocok untuk efek vintage atau dekoratif.",
+    double: "double — dua garis paralel. Total ketebalan = nilai border-width (butuh minimal 3px agar terlihat).",
+    groove: "groove — ilusi 3D seperti 'terukir'. Warna terang/gelap dihitung dari border-color.",
+    ridge: "ridge — kebalikan groove — ilusi 3D seperti 'menonjol'.",
+    inset: "inset — seluruh box tampak 'terbenam'. Warna tepi kiri-atas lebih gelap.",
+    outset: "outset — kebalikan inset — seluruh box tampak 'menonjol'. Tampak 3D keluar.",
+    none: "none — tidak ada border, tidak ada space. Berbeda dengan hidden.",
+    hidden: "hidden — tidak tampak, tapi dalam konteks tabel border-collapse, hidden menang atas border lain.",
+  }
+
+  const styles: BorderStyleMode[] = ["solid", "dashed", "dotted", "double", "groove", "ridge", "inset", "outset", "none", "hidden"]
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 border-style — semua 10 nilai</PlaygroundWrap.label>
+        <ChipRow>
+          {styles.map(v => (
+            <Chip key={v} active={style === v ? "true" : "false"} onClick={() => setStyle(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <DescText>{descriptions[style]}</DescText>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas>
+        <BorderStyleBox style={style}>{style}</BorderStyleBox>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {`border-style: ${style}; /* Tailwind: border-${style === "solid" ? "solid" : style === "dashed" ? "dashed" : style === "dotted" ? "dotted" : style === "double" ? "double" : style === "none" ? "0" : `[border-style:${style}]`} */`}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: clamp()
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ClampMode = "fixed" | "min-w" | "clamp" | "clamp2"
+
+function ClampPlayground() {
+  const [mode, setMode] = useState<ClampMode>("clamp")
+
+  const descriptions: Record<ClampMode, string> = {
+    fixed: "w-48 — lebar tetap 192px. Tidak responsif sama sekali.",
+    "min-w": "min-w + w-full + max-w — tiga property terpisah. Efektif tapi verbose.",
+    clamp: "clamp(8rem, 50%, 24rem) — MIN 128px, PREFERRED 50% container, MAX 384px. Satu property, responsif otomatis.",
+    clamp2: "clamp() untuk font-size — font mengecil di layar kecil (min 12px), membesar di layar besar (max 20px), mengikuti viewport di tengah.",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 clamp(MIN, PREFERRED, MAX) — fluid sizing dalam satu fungsi</PlaygroundWrap.label>
+        <ChipRow>
+          {(["fixed", "min-w", "clamp", "clamp2"] as ClampMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <DescText>{descriptions[mode]}</DescText>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas className="flex-col items-stretch">
+        <DemoBackground>
+          <ClampBox mode={mode}>
+            {mode === "clamp2" ? "Fluid text" : `width: ${mode}`}
+          </ClampBox>
+        </DemoBackground>
+        <CenterCaption>
+          {mode === "clamp" && "Resize jendela browser — lebar berubah antara 128px–384px"}
+          {mode === "clamp2" && "Resize jendela browser — font size berubah antara 12px–20px"}
+          {mode === "fixed" && "Lebar selalu 192px — overflow di layar kecil"}
+          {mode === "min-w" && "Tiga property terpisah — hasil sama tapi lebih verbose"}
+        </CenterCaption>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {mode === "clamp" && "width: clamp(8rem, 50%, 24rem); /* Tailwind: w-[clamp(8rem,50%,24rem)] */"}
+        {mode === "clamp2" && "font-size: clamp(0.75rem, 2vw, 1.25rem); /* Tailwind: text-[clamp(0.75rem,2vw,1.25rem)] */"}
+        {mode === "fixed" && "width: 12rem; /* w-48 — tidak responsif */"}
+        {mode === "min-w" && "min-width: 8rem; width: 100%; max-width: 24rem; /* verbose tapi setara clamp */"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+type VisMode = "visible" | "display-none" | "visibility-hid" | "opacity-0"
+
+function VisibilityPlayground() {
+  const [mode, setMode] = useState<VisMode>("visible")
+
+  const descriptions: Record<VisMode, string> = {
+    "visible": "Normal — elemen tampak, occupy space, bisa diklik.",
+    "display-none": "display: none — elemen TIDAK ada di layout sama sekali. Tidak occupy space, tidak bisa diklik, tidak muncul di accessibility tree.",
+    "visibility-hid": "visibility: hidden — elemen TIDAK tampak, tapi TETAP occupy space-nya. Elemen kedua tidak bergeser. Tidak bisa diklik. Masih bisa di-inherit oleh child (bisa di-override dengan visibility: visible di child).",
+    "opacity-0": "opacity: 0 — elemen TIDAK tampak, tapi TETAP occupy space dan TETAP BISA DIKLIK (pointer events masih aktif). Beda dengan visibility: hidden!",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 visibility vs display:none vs opacity:0</PlaygroundWrap.label>
+        <ChipRow>
+          {(["visible", "display-none", "visibility-hid", "opacity-0"] as VisMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
+              {v}
+            </Chip>
+          ))}
+        </ChipRow>
+        <DescText>{descriptions[mode]}</DescText>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas className="gap-3 flex-col items-center">
+        <VisibilityRow>
+          <VisibilityBox mode={mode}>Target Box</VisibilityBox>
+          <NeighborBox>
+            Neighbor Box
+          </NeighborBox>
+        </VisibilityRow>
+        <HintText>
+          {mode === "display-none" && "← Neighbor langsung geser kiri — space hilang"}
+          {mode === "visibility-hid" && "← Neighbor tetap di posisi — space masih ada"}
+          {mode === "opacity-0" && "← Neighbor tetap di posisi — tapi area klik masih aktif!"}
+          {mode === "visible" && "Kedua box tampak normal"}
+        </HintText>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {mode === "display-none" && "display: none; /* hilang dari layout sepenuhnya */"}
+        {mode === "visibility-hid" && "visibility: hidden; /* tak terlihat, space tetap ada */"}
+        {mode === "opacity-0" && "opacity: 0; /* tak terlihat, TAPI masih bisa diklik! */"}
+        {mode === "visible" && "/* tampak normal */"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: margin: auto centering
+// ─────────────────────────────────────────────────────────────────────────────
+
+type AutoMode = "none" | "center" | "left" | "right" | "flex-center"
+
+function MarginAutoPlayground() {
+  const [mode, setMode] = useState<AutoMode>("center")
+
+  const descriptions: Record<AutoMode, string> = {
+    "none": "Tanpa margin auto — elemen align kiri (default block).",
+    "center": "mx-auto — margin-left dan margin-right keduanya auto → sisa space dibagi rata → center.",
+    "left": "mr-auto — hanya margin-right yang auto → elemen terdesak ke kiri.",
+    "right": "ml-auto — hanya margin-left yang auto → elemen terdesak ke kanan.",
+    "flex-center": "Di flex container: ml-auto/mr-auto push elemen ke sisi. Trick populer untuk navbar: logo kiri, tombol kanan dengan ml-auto di tombol.",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 margin: auto — cara kerja centering klasik</PlaygroundWrap.label>
+        <ChipRow>
+          {(["none", "center", "left", "right", "flex-center"] as AutoMode[]).map(v => (
+            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+          ))}
+        </ChipRow>
+        <DescText>{descriptions[mode]}</DescText>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas className="flex-col items-stretch">
+        <DemoBackground>
+          {mode === "flex-center" ? (
+            <div className="flex items-center">
+              <div className="px-3 py-2 rounded-lg bg-[var(--accent)] text-white text-[11px] font-mono">Logo</div>
+              <div className="px-3 py-2 rounded-lg bg-blue-400 text-white text-[11px] font-mono ml-auto">Button</div>
+            </div>
+          ) : (
+            <AutoMarginChild mode={mode}>
+              {mode === "none" ? "w-48 (no auto)" : `w-48 · ${mode === "center" ? "mx-auto" : mode === "left" ? "mr-auto" : "ml-auto"}`}
+            </AutoMarginChild>
+          )}
+        </DemoBackground>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {mode === "none" && "/* no margin auto — align kiri */"}
+        {mode === "center" && "margin-left: auto; margin-right: auto; /* atau margin: 0 auto */"}
+        {mode === "left" && "margin-right: auto; /* push ke kiri */"}
+        {mode === "right" && "margin-left: auto; /* push ke kanan */"}
+        {mode === "flex-center" && ".nav { display: flex; } .button { margin-left: auto; } /* push ke kanan */"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Playground: box-shadow vs filter: drop-shadow
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ShadowMode = "none" | "box-sm" | "box-md" | "box-lg" | "box-xl" | "box-inset" | "drop-sm" | "drop-lg"
+type ShapeMode = "box-shadow" | "drop-shadow"
+
+function BoxShadowPlayground() {
+  const [shadow, setShadow] = useState<ShadowMode>("box-md")
+  const [shape, setShape] = useState<ShapeMode>("box-shadow")
+
+  const shadowDescriptions: Record<ShadowMode, string> = {
+    "none": "Tanpa shadow",
+    "box-sm": "box-shadow kecil — shadow-sm",
+    "box-md": "box-shadow medium — shadow-md",
+    "box-lg": "box-shadow besar — shadow-lg",
+    "box-xl": "box-shadow ekstra besar — shadow-xl",
+    "box-inset": "box-shadow inset — shadow di dalam elemen, bukan di luar",
+    "drop-sm": "filter: drop-shadow kecil",
+    "drop-lg": "filter: drop-shadow besar",
+  }
+
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎛 box-shadow vs filter: drop-shadow</PlaygroundWrap.label>
+        <ControlGroup>
+          <ControlGroup.label>Pilih shadow type</ControlGroup.label>
+          <ChipRow>
+            {(["none", "box-sm", "box-md", "box-lg", "box-xl", "box-inset", "drop-sm", "drop-lg"] as ShadowMode[]).map(v => (
+              <Chip key={v} active={shadow === v ? "true" : "false"} onClick={() => setShadow(v)}>{v}</Chip>
+            ))}
+          </ChipRow>
+          <DescText>{shadowDescriptions[shadow]}</DescText>
+        </ControlGroup>
+        <ControlGroup>
+          <ControlGroup.label>Shape test (lihat perbedaan pada icon/clip-path)</ControlGroup.label>
+          <ChipRow>
+            <Chip active={shape === "box-shadow" ? "true" : "false"} onClick={() => setShape("box-shadow")}>box-shadow</Chip>
+            <Chip active={shape === "drop-shadow" ? "true" : "false"} onClick={() => setShape("drop-shadow")}>drop-shadow</Chip>
+          </ChipRow>
+          <DescText>
+            {shape === "box-shadow"
+              ? "box-shadow selalu mengikuti BENTUK BOX (rectangular bounding box) — tidak peduli transparent area di dalam."
+              : "filter: drop-shadow mengikuti ALPHA CHANNEL aktual — shadow menyesuaikan bentuk transparan PNG/SVG."}
+          </DescText>
+        </ControlGroup>
+      </PlaygroundWrap.controls>
+
+      <PlaygroundWrap.canvas className="gap-12 flex-wrap">
+        <ShadowContainer>
+          <ShadowContainer.group>
+            <ShadowContainer.caption>Box (rectangular)</ShadowContainer.caption>
+            <ShadowBox type={shadow}>box</ShadowBox>
+          </ShadowContainer.group>
+          <ShadowContainer.group>
+            <ShadowContainer.caption>Non-rectangular shape</ShadowContainer.caption>
+            <ShadowShape type={shape}>⭐</ShadowShape>
+            <ShadowContainer.caption>
+              {shape === "box-shadow" ? "shadow = kotak ⭐'s bounding box" : "shadow = ikut bentuk ⭐"}
+            </ShadowContainer.caption>
+          </ShadowContainer.group>
+        </ShadowContainer>
+      </PlaygroundWrap.canvas>
+
+      <PlaygroundWrap.codeline>
+        {shadow.startsWith("drop")
+          ? `filter: drop-shadow(0 4px 16px rgba(0,0,0,0.25)); /* mengikuti shape alpha */`
+          : shadow === "box-inset"
+            ? `box-shadow: inset 0 2px 8px rgba(0,0,0,0.15); /* shadow di DALAM */`
+            : `box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); /* selalu rectangular bounding box */`}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function BoxModelPage() {
   const [activeSection, setActiveSection] = useState("anatomy")
 
@@ -1512,10 +2188,9 @@ export default function BoxModelPage() {
       <TopBar>
         <TopBarInner>
           <Breadcrumb>
-            <Breadcrumb.link href="/docs">Docs</Breadcrumb.link>
+            <Breadcrumb.link href="/learn">Learn</Breadcrumb.link>
             <Breadcrumb.sep>/</Breadcrumb.sep>
-            <Breadcrumb.link href="/docs/learn">Learn</Breadcrumb.link>
-            <Breadcrumb.sep>/</Breadcrumb.sep>
+            <Breadcrumb.link href="/learn/dasar-css">Dasar CSS</Breadcrumb.link>
             <Breadcrumb.curr>Box Model</Breadcrumb.curr>
           </Breadcrumb>
         </TopBarInner>
@@ -1551,19 +2226,19 @@ export default function BoxModelPage() {
               Setiap elemen HTML punya 4 lapisan dari dalam ke luar:
             </P>
 
-            <div className="rounded-xl border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[var(--surface)] overflow-hidden my-5">
+            <AnatomyTable>
               {[
-                { layer: "content",  color: "bg-white border-gray-300",        label: "Content",  desc: "Isi sebenarnya — teks, gambar, child elements. Dikontrol lewat width dan height." },
-                { layer: "padding",  color: "bg-green-50 border-green-300",    label: "Padding",  desc: "Jarak antara content dan border. Masih kena background color. Tidak transparan." },
-                { layer: "border",   color: "bg-orange-50 border-orange-300",  label: "Border",   desc: "Garis tepi elemen. Punya width, style (solid, dashed, dotted), dan color." },
-                { layer: "margin",   color: "bg-blue-50 border-blue-300",      label: "Margin",   desc: "Jarak ke elemen lain di luar. Selalu transparan — tidak kena background." },
-              ].map(({ layer, color, label, desc }) => (
-                <div key={layer} className={`flex items-start gap-4 p-4 border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] last:border-0 ${color} border-l-4`}>
+                { layer: "content" as const, label: "Content", desc: "Isi sebenarnya — teks, gambar, child elements. Dikontrol lewat width dan height." },
+                { layer: "padding" as const, label: "Padding", desc: "Jarak antara content dan border. Masih kena background color. Tidak transparan." },
+                { layer: "border" as const, label: "Border", desc: "Garis tepi elemen. Punya width, style (solid, dashed, dotted), dan color." },
+                { layer: "margin" as const, label: "Margin", desc: "Jarak ke elemen lain di luar. Selalu transparan — tidak kena background." },
+              ].map(({ layer, label, desc }) => (
+                <AnatomyRow key={layer} layer={layer}>
                   <IC>{label.toLowerCase()}</IC>
-                  <p className="text-sm text-[color-mix(in_srgb,var(--foreground)_75%,transparent)] leading-relaxed">{desc}</p>
-                </div>
+                  <AnatomyRow.desc>{desc}</AnatomyRow.desc>
+                </AnatomyRow>
               ))}
-            </div>
+            </AnatomyTable>
           </Section>
 
           {/* ══════════════════════════════════════════════════════════════
@@ -2203,6 +2878,17 @@ span, a, strong {
                 (seperti hasil pencarian) atau efek "marker" yang konsisten di setiap baris.
               </Callout.content>
             </Callout>
+
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>Belum termasuk Baseline</Callout.title>
+                Per dokumentasi MDN, <IC>box-decoration-break</IC> belum termasuk fitur
+                Baseline karena belum didukung di sebagian browser populer. Tambahkan
+                prefix <IC>-webkit-box-decoration-break</IC> untuk cakupan lebih luas,
+                dan uji di browser target sebelum production.
+              </Callout.content>
+            </Callout>
           </Section>
 
           <Divider />
@@ -2400,10 +3086,13 @@ table {
 
             <Code file="contain.css">{`
 .widget {
-  contain: layout;  /* perubahan size internal tidak trigger reflow di luar */
-  contain: paint;   /* overflow di-clip, jadi containing block untuk paint */
-  contain: size;    /* ukuran elemen tidak dipengaruhi oleh konten anaknya */
-  contain: strict;  /* layout + paint + size + style — maksimal isolasi */
+  contain: layout;   /* internal layout tidak mempengaruhi elemen di luar */
+  contain: paint;    /* overflow di-clip, jadi containing block untuk paint */
+  contain: size;     /* ukuran elemen tidak dipengaruhi oleh konten anaknya */
+
+  /* Shorthand value */
+  contain: content;  /* = layout + paint + style (TANPA size) — paling aman */
+  contain: strict;   /* = size + layout + paint + style — maksimal isolasi */
 
   /* Shortcut modern yang sering dipakai bareng contain */
   content-visibility: auto; /* skip rendering elemen yang di luar viewport */
@@ -2413,10 +3102,12 @@ table {
             <Callout type="warning">
               <Callout.icon>⚠️</Callout.icon>
               <Callout.content>
-                <Callout.title>contain: size butuh height eksplisit</Callout.title>
+                <Callout.title>contain: size / strict butuh ukuran eksplisit</Callout.title>
                 Kalau pakai <IC>contain: size</IC> atau <IC>strict</IC>, elemen perlu
                 <IC>width</IC>/<IC>height</IC> eksplisit — karena browser "mengabaikan"
                 ukuran dari konten anaknya, elemen bisa collapse jadi 0px kalau tidak diset.
+                Untuk penggunaan luas yang lebih aman, <IC>contain: content</IC> lebih
+                direkomendasikan karena tidak menyertakan <IC>size</IC>.
               </Callout.content>
             </Callout>
           </Section>
@@ -2459,6 +3150,380 @@ table {
                 Ini paling terasa manfaatnya di halaman dengan konten dinamis (misal modal yang
                 buka/tutup, atau filter yang mengubah jumlah hasil) — tanpa <IC>scrollbar-gutter</IC>,
                 seluruh layout "bergeser" setiap kali scrollbar muncul/hilang.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              VISIBILITY VS DISPLAY VS OPACITY
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="visibility" onClick={() => setActiveSection("visibility")}>
+            <H2>
+              visibility vs display:none vs opacity:0
+              <H2.anchor href="#visibility">#</H2.anchor>
+            </H2>
+
+            <P>
+              Tiga cara "menyembunyikan" elemen — tapi ketiganya berbeda drastis dari
+              sisi box model, aksesibilitas, dan interaktivitas.
+            </P>
+
+            <VisibilityPlayground />
+
+            <CompareTable>
+              {[
+                { prop: "display: none", space: "❌ Tidak ada", click: "❌ Tidak", a11y: "❌ Hilang dari a11y tree" },
+                { prop: "visibility: hidden", space: "✅ Ada", click: "❌ Tidak", a11y: "❌ Hidden (tapi masih di DOM)" },
+                { prop: "opacity: 0", space: "✅ Ada", click: "✅ Ya!", a11y: "⚠️ Masih readable screen reader" },
+              ].map(row => (
+                <CompareRow key={row.prop}>
+                  <IC>{row.prop}</IC>
+                  <CompareCell>{row.space}</CompareCell>
+                  <CompareCell>{row.click}</CompareCell>
+                  <CompareCell className="col-span-2">{row.a11y}</CompareCell>
+                </CompareRow>
+              ))}
+            </CompareTable>
+
+            <Code file="visibility.css">{`
+/* display: none — hilang total dari layout dan accessibility tree */
+.hidden { display: none; }
+
+/* visibility: hidden — space tetap ada, tidak bisa diklik,
+   child bisa override dengan visibility: visible */
+.invisible { visibility: hidden; }
+.invisible .child-visible { visibility: visible; } /* child bisa "muncul kembali" */
+
+/* opacity: 0 — tak terlihat, space ada, MASIH BISA DIKLIK
+   Gunakan pointer-events: none kalau tidak mau bisa diklik */
+.transparent {
+  opacity: 0;
+  pointer-events: none; /* matikan interaksi */
+}
+
+/* Tailwind: hidden | invisible | opacity-0 | pointer-events-none */
+            `}</Code>
+
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>opacity:0 masih bisa diklik!</Callout.title>
+                Bug klasik yang susah di-debug: tombol di-<IC>opacity-0</IC> tapi masih
+                merespons klik karena area pointer events masih aktif.
+                Kalau mau benar-benar tidak interaktif, tambahkan <IC>pointer-events-none</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              MARGIN AUTO
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="margin-auto" onClick={() => setActiveSection("margin-auto")}>
+            <H2>
+              margin: auto — cara kerja centering
+              <H2.anchor href="#margin-auto">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>margin: auto</IC> membagi sisa ruang yang tersedia secara merata.
+              Untuk centering horizontal, <IC>mx-auto</IC> adalah solusi klasik yang
+              bekerja di block context. Di flex/grid context, <IC>margin: auto</IC>
+              punya superpower tambahan — bisa mendorong elemen ke sisi berlawanan.
+            </P>
+
+            <MarginAutoPlayground />
+
+            <Code file="margin-auto.css">{`
+/* Centering horizontal klasik — hanya bekerja di block context
+   dengan width eksplisit (atau max-width) */
+.container {
+  width: 800px;      /* atau max-width */
+  margin-left: auto;
+  margin-right: auto;
+  /* shorthand: margin: 0 auto; */
+}
+
+/* Di flex context — auto margin "memakan" sisa space */
+.navbar {
+  display: flex;
+  align-items: center;
+}
+.navbar .logo   { /* normal, di kiri */ }
+.navbar .button { margin-left: auto; } /* push ke kanan, ambil semua sisa space */
+
+/* Tailwind: mx-auto | ml-auto | mr-auto | my-auto | m-auto */
+            `}</Code>
+
+            <Callout type="php">
+              <Callout.icon>🐘</Callout.icon>
+              <Callout.content>
+                <Callout.title>Analogi PHP</Callout.title>
+                <IC>margin: auto</IC> seperti <IC>str_pad($str, $total, ' ', STR_PAD_BOTH)</IC> —
+                sisa space dibagi rata ke dua sisi. <IC>ml-auto</IC> lebih seperti
+                <IC>str_pad($str, $total, ' ', STR_PAD_LEFT)</IC> — semua sisa ke satu sisi.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              BOX-SHADOW VS DROP-SHADOW
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="box-shadow" onClick={() => setActiveSection("box-shadow")}>
+            <H2>
+              box-shadow vs filter: drop-shadow
+              <H2.anchor href="#box-shadow">#</H2.anchor>
+            </H2>
+
+            <P>
+              Dua cara membuat bayangan di CSS — terlihat mirip tapi berperilaku sangat
+              berbeda. <IC>box-shadow</IC> selalu mengikuti bounding box rectangular element.
+              <IC>filter: drop-shadow</IC> mengikuti alpha channel aktual — cocok untuk
+              PNG transparan, SVG, atau elemen dengan <IC>clip-path</IC>.
+            </P>
+
+            <BoxShadowPlayground />
+
+            <Code file="shadows.css">{`
+/* box-shadow — selalu rectangular bounding box */
+.card {
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.1),   /* layer 1 — dekat, lembut */
+    0 4px 6px rgba(0,0,0,0.07);  /* layer 2 — jauh, transparan */
+}
+
+/* box-shadow inset — shadow di DALAM element */
+.input:focus {
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Multiple shadows — dirender kiri ke kanan (pertama = paling atas) */
+.button {
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.2) inset,  /* highlight atas */
+    0 2px 4px rgba(0,0,0,0.2);            /* shadow bawah */
+}
+
+/* filter: drop-shadow — mengikuti alpha channel / clip-path */
+.icon-png {
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+/* Perbedaan penting:
+   - box-shadow: bisa multiple, bisa inset, performa lebih baik, selalu rectangular
+   - drop-shadow: mengikuti bentuk, tidak bisa inset, tidak bisa multiple filter mudah */
+
+/* Tailwind: shadow-sm/md/lg/xl/2xl, shadow-inner, [filter:drop-shadow(...)] */
+            `}</Code>
+
+            <Callout type="tip">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                <Callout.title>Kapan pakai mana?</Callout.title>
+                <strong>box-shadow</strong> untuk card, button, modal — elemen rectangular.
+                <strong> filter: drop-shadow</strong> untuk icon PNG, SVG logo, atau element
+                dengan <IC>clip-path</IC> di mana shadow harusnya mengikuti bentuk visual,
+                bukan bounding box kotak.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              BORDER-RADIUS
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="border-radius" onClick={() => setActiveSection("border-radius")}>
+            <H2>
+              border-radius
+              <H2.anchor href="#border-radius">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>border-radius</IC> membulatkan sudut elemen. Bisa diatur per-sudut,
+              per-sisi, atau bahkan secara berbeda untuk sumbu horizontal dan vertikal —
+              yang memungkinkan bentuk elips, pill, hingga blob organik.
+            </P>
+
+            <BorderRadiusPlayground />
+
+            <Code file="border-radius.css">{`
+/* Semua sudut sama */
+.card { border-radius: 8px; }
+
+/* Shorthand 4 nilai — searah jarum jam: TL, TR, BR, BL */
+.card { border-radius: 4px 8px 16px 4px; }
+
+/* Shorthand 2 nilai — TL+BR, TR+BL */
+.card { border-radius: 4px 16px; }
+
+/* Individual corners */
+.card {
+  border-top-left-radius:     12px;
+  border-top-right-radius:    12px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius:  4px;
+}
+
+/* Logical properties equivalents */
+.card {
+  border-start-start-radius: 12px; /* TL di LTR, TR di RTL */
+  border-start-end-radius:   12px;
+  border-end-start-radius:   4px;
+  border-end-end-radius:     4px;
+}
+
+/* Elips — nilai berbeda per sumbu X dan Y (dipisah /) */
+.blob { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+/* Format: TL-x TR-x BR-x BL-x / TL-y TR-y BR-y BL-y */
+
+/* Tailwind: rounded-{none|sm|md|lg|xl|2xl|3xl|full} */
+/* Per-sisi: rounded-t-lg (top), rounded-b-lg (bottom), rounded-l, rounded-r */
+/* Per-sudut: rounded-tl-lg, rounded-tr-lg, rounded-bl-lg, rounded-br-lg */
+            `}</Code>
+
+            <Callout type="tip">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                <IC>rounded-full</IC> menghasilkan lingkaran hanya kalau <IC>width === height</IC>.
+                Untuk elemen dengan rasio berbeda, hasilnya adalah pill/capsule.
+                Untuk lingkaran yang guarantee bundar, pakai <IC>aspect-square rounded-full</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              BORDER-STYLE
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="border-style" onClick={() => setActiveSection("border-style")}>
+            <H2>
+              border-style — semua 10 nilai
+              <H2.anchor href="#border-style">#</H2.anchor>
+            </H2>
+
+            <P>
+              CSS mendefinisikan 10 nilai <IC>border-style</IC>. Di production kebanyakan
+              hanya pakai <IC>solid</IC> dan <IC>dashed</IC>, tapi nilai 3D seperti
+              <IC>groove</IC>, <IC>ridge</IC>, <IC>inset</IC>, <IC>outset</IC> masih valid
+              dan kadang berguna untuk efek visual tanpa perlu box-shadow tambahan.
+            </P>
+
+            <BorderStylePlayground />
+
+            <Code file="border-style.css">{`
+/* Shorthand — width style color sekaligus */
+.box { border: 2px solid #6366f1; }
+
+/* Individual sides */
+.box {
+  border-top:    2px dashed blue;
+  border-right:  4px double green;
+  border-bottom: 2px solid red;
+  border-left:   0; /* none */
+}
+
+/* border-style saja (tanpa shorthand) */
+.box {
+  border-width: 4px;
+  border-color: #6366f1;
+  border-style: groove; /* atau ridge, inset, outset, dashed, dotted, double */
+}
+
+/* Per-sisi style */
+.box { border-style: solid dashed; } /* top/bottom solid, left/right dashed */
+.box { border-style: solid dashed dotted double; } /* TL, TR, BR, BL */
+
+/* double butuh minimum 3px untuk terlihat dua garisnya */
+.double { border: 6px double #6366f1; }
+
+/* hidden vs none — sama secara visual, beda di tabel border-collapse:
+   hidden "menang" atas border lain yang berbenturan */
+.table-cell { border-style: hidden; }
+            `}</Code>
+
+            <Callout type="note">
+              <Callout.icon>ℹ️</Callout.icon>
+              <Callout.content>
+                <Callout.title>groove, ridge, inset, outset</Callout.title>
+                Keempat nilai ini menghasilkan efek 3D berdasarkan <IC>border-color</IC> —
+                browser menghitung warna terang dan gelap secara otomatis.
+                Hasilnya sangat bergantung pada warna yang dipilih; warna abu-abu
+                biasanya menghasilkan efek paling natural.
+              </Callout.content>
+            </Callout>
+          </Section>
+
+          <Divider />
+
+          {/* ══════════════════════════════════════════════════════════════
+              CLAMP()
+          ══════════════════════════════════════════════════════════════ */}
+          <Section id="clamp" onClick={() => setActiveSection("clamp")}>
+            <H2>
+              clamp() — fluid sizing dalam satu fungsi
+              <H2.anchor href="#clamp">#</H2.anchor>
+            </H2>
+
+            <P>
+              <IC>clamp(MIN, PREFERRED, MAX)</IC> menggantikan kombinasi verbose
+              <IC>min-width</IC> + <IC>width</IC> + <IC>max-width</IC> dengan satu
+              fungsi. Nilai preferred biasanya relatif (<IC>%</IC>, <IC>vw</IC>, <IC>vmin</IC>)
+              sehingga elemen berubah ukuran secara fluid antara batas MIN dan MAX.
+            </P>
+
+            <ClampPlayground />
+
+            <Code file="clamp.css">{`
+/* clamp(MIN, PREFERRED, MAX) */
+
+/* Fluid width — tidak pernah di bawah 8rem atau di atas 24rem */
+.container {
+  width: clamp(8rem, 50%, 24rem);
+  /* Setara dengan: min-width: 8rem; width: 50%; max-width: 24rem; */
+}
+
+/* Fluid font-size — tidak perlu @media queries! */
+h1 {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+  /* Di layar 400px: 4vw = 16px → pakai min 1.5rem = 24px */
+  /* Di layar 768px: 4vw = 30.7px → pakai 30.7px */
+  /* Di layar 1400px: 4vw = 56px → pakai max 3rem = 48px */
+}
+
+/* Fluid spacing */
+.section {
+  padding: clamp(1rem, 5vw, 4rem);
+}
+
+/* min() dan max() — fungsi terkait */
+.box {
+  width: min(100%, 800px);  /* ambil nilai TERKECIL */
+  width: max(300px, 50%);   /* ambil nilai TERBESAR */
+}
+
+/* Tailwind: pakai arbitrary values */
+/* w-[clamp(8rem,50%,24rem)] */
+/* text-[clamp(1rem,4vw,2rem)] */
+/* p-[clamp(1rem,5vw,4rem)] */
+            `}</Code>
+
+            <Callout type="php">
+              <Callout.icon>🐘</Callout.icon>
+              <Callout.content>
+                <Callout.title>Analogi PHP</Callout.title>
+                <IC>clamp(min, preferred, max)</IC> persis seperti
+                <IC>max($min, min($preferred, $max))</IC> di PHP —
+                atau lebih mudah: <IC>min(max($min, $preferred), $max)</IC>.
+                Ini memang implementasi internalnya di CSS.
               </Callout.content>
             </Callout>
           </Section>
@@ -2634,13 +3699,35 @@ const ScrollArea = tw.div({
                 <p>Test dengan menambahkan <IC>dir="rtl"</IC> di parent dan pastikan layout tetap benar tanpa ubah CSS apapun.</p>
               </ExerciseCard.body>
             </ExerciseCard>
+
+            <ExerciseCard>
+              <ExerciseCard.header>
+                <span>🏋️</span>
+                <ExerciseCard.title>Latihan 6 — Tabel data dengan border-collapse</ExerciseCard.title>
+              </ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat komponen <IC>DataTable</IC> dengan <IC>tw.table</IC> menggunakan <IC>border-collapse</IC>, header sticky, dan zebra striping pada baris (warna selang-seling).</p>
+                <p>Bandingkan visual dengan <IC>border-separate</IC> + <IC>border-spacing</IC> untuk lihat perbedaannya.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+
+            <ExerciseCard>
+              <ExerciseCard.header>
+                <span>🏋️</span>
+                <ExerciseCard.title>Latihan 7 — Widget performant dengan contain</ExerciseCard.title>
+              </ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat komponen <IC>StatCard</IC> dengan <IC>tw.div</IC> yang menampilkan angka yang berubah-ubah (simulasikan dengan <IC>setInterval</IC>).</p>
+                <p>Tambahkan <IC>contain: layout</IC> di variants dan jelaskan kenapa ini membantu performa kalau ada banyak <IC>StatCard</IC> di satu halaman.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
           </Section>
 
           {/* Prev/Next */}
           <PageNav>
-            <NavBtn href="/docs/learn" dir="prev">
-              <NavBtn.hint>← Previous</NavBtn.hint>
-              <NavBtn.label>CSS Layout Overview</NavBtn.label>
+            <NavBtn href="/learn/dasar-css" dir="prev">
+              <NavBtn.hint>← Back</NavBtn.hint>
+              <NavBtn.label>Dasar CSS</NavBtn.label>
             </NavBtn>
             <NavBtn href="/learn/dasar-css/normal-flow" dir="next">
               <NavBtn.hint>Next →</NavBtn.hint>
@@ -2664,15 +3751,14 @@ const ScrollArea = tw.div({
               {item.label}
             </TocItem>
           ))}
-          <div className="mt-6 pt-4 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]">
-            <a
+          <TocFooter>
+            <TocGithubLink
               href="https://github.com/Dictionar32/tailwind-styled-v4"
               target="_blank"
-              className="text-xs text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
             >
               Edit on GitHub ↗
-            </a>
-          </div>
+            </TocGithubLink>
+          </TocFooter>
         </Toc>
 
       </Body>
