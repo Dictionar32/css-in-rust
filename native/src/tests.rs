@@ -295,6 +295,55 @@ mod new_module_tests {
         assert_eq!(h1.len(), 6); // 6-char hex
     }
 
+    // ── Sub-key tag resolution (Rust/JS parity) ───────────────────────────────
+
+    /// Bare non-semantic key (e.g. "body", "title", "icon") MUST fall back to <span>,
+    /// not be used as an HTML tag — mirrors JS SEMANTIC_HTML_TAGS check in createComponent.ts.
+    /// Regression: before fix, `body: "..."` in sub config → <body> element → hydration crash.
+    #[test]
+    fn transform_sub_bare_non_semantic_key_falls_back_to_span() {
+        let src = r#"
+import { tw } from "tailwind-styled-v4";
+const Card = tw.div({ base: "p-4", sub: { body: "text-sm leading-relaxed", title: "text-xl font-bold", icon: "w-4 h-4" } });
+"#;
+        let result = transform_source(src.to_string(), None);
+        assert!(result.changed, "should transform");
+        // None of these bare keys should generate their literal name as an HTML tag
+        assert!(!result.code.contains("createElement(\"body\""), "bare 'body' must not render <body>");
+        assert!(!result.code.contains("createElement(\"title\""), "bare 'title' must not render <title>");
+        // They should fall back to span
+        assert!(result.code.contains("createElement(\"span\""), "non-semantic bare keys must fall back to <span>");
+    }
+
+    /// Semantic HTML tags used as bare keys MUST render as that tag (no fallback).
+    #[test]
+    fn transform_sub_bare_semantic_tag_renders_as_that_tag() {
+        let src = r#"
+import { tw } from "tailwind-styled-v4";
+const Nav = tw.nav({ base: "flex", sub: { header: "font-bold", footer: "text-sm", section: "px-4" } });
+"#;
+        let result = transform_source(src.to_string(), None);
+        assert!(result.changed, "should transform");
+        assert!(result.code.contains("createElement(\"header\""), "bare 'header' must render <header>");
+        assert!(result.code.contains("createElement(\"footer\""), "bare 'footer' must render <footer>");
+        assert!(result.code.contains("createElement(\"section\""), "bare 'section' must render <section>");
+    }
+
+    /// Explicit tag:name format MUST always use the specified tag regardless of semantic check.
+    #[test]
+    fn transform_sub_explicit_tag_colon_name_uses_that_tag() {
+        let src = r#"
+import { tw } from "tailwind-styled-v4";
+const Card = tw.div({ base: "p-4", sub: { "div:body": "text-sm", "pre:code": "font-mono", "a:link": "underline" } });
+"#;
+        let result = transform_source(src.to_string(), None);
+        assert!(result.changed, "should transform");
+        assert!(result.code.contains("createElement(\"div\""), "div:body must render <div>");
+        assert!(result.code.contains("createElement(\"pre\""), "pre:code must render <pre>");
+        assert!(result.code.contains("createElement(\"a\""), "a:link must render <a>");
+    }
+    }
+
     // ── Scanner ───────────────────────────────────────────────────────────────
 
     #[test]

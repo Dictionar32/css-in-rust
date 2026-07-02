@@ -372,11 +372,32 @@ fn parse_sub_map(content: &str) -> HashMap<String, SubEntry> {
             .unwrap_or("");
 
         // "div:action" → tag="div", sub_name="action"
-        // "header"     → tag="header", sub_name="header"
+        // "header"     → tag="header", sub_name="header"  (semantic HTML tag)
+        // "icon"       → tag="span",   sub_name="icon"    (non-semantic → fallback span)
         let (tag, sub_name) = if let Some(pos) = raw_key.find(':') {
-            (raw_key[..pos].to_string(), raw_key[pos + 1..].to_string())
+            let t = raw_key[..pos].to_string();
+            let n = raw_key[pos + 1..].to_string();
+            (if t.is_empty() { "span".to_string() } else { t }, n)
         } else {
-            (raw_key.to_string(), raw_key.to_string())
+            // Mirror JS SEMANTIC_HTML_TAGS check — bare keys that are NOT valid
+            // HTML semantic tags fall back to "span", just like the JS runtime path.
+            // Without this check, bare "body" → <body>, "title" → <title>, etc.
+            const SEMANTIC_HTML_TAGS: &[&str] = &[
+                "article", "aside", "details", "figcaption", "figure",
+                "footer", "header", "main", "mark", "nav", "section", "summary", "time",
+                "h1", "h2", "h3", "h4", "h5", "h6",
+                "p", "ul", "ol", "li", "dl", "dt", "dd",
+                "table", "thead", "tbody", "tfoot", "tr", "th", "td",
+                "form", "fieldset", "legend", "label",
+                "a", "button", "img", "span", "div",
+                "blockquote", "pre", "code", "em", "strong", "small",
+            ];
+            let tag = if SEMANTIC_HTML_TAGS.contains(&raw_key) {
+                raw_key.to_string()
+            } else {
+                "span".to_string()
+            };
+            (tag, raw_key.to_string())
         };
 
         let abs_end = search_from + cap.get(0).unwrap().end();
