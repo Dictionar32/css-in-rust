@@ -23,8 +23,8 @@ export type InferVariantProps<T extends ComponentConfig> = {
 
 export type InferSizeProps<T extends ComponentConfig> =
   T["sizes"] extends Record<string, string>
-    ? { size?: keyof T["sizes"] }
-    : Record<never, never>
+  ? { size?: keyof T["sizes"] }
+  : Record<never, never>
 
 /**
  * Infer boolean props dari states config.
@@ -117,16 +117,16 @@ type ExtractSubName<K extends string> =
  */
 export type InferSubFromConfig<C extends ComponentConfig> =
   C extends { sub: infer S extends Record<string, SubValue> }
-    ? {
-        [K in keyof S]: S[K] extends string
-          ? K extends string
-            ? ExtractSubName<K>         // strip "tag:name" → "name"
-            : never
-          : S[K] extends Record<infer N extends string, string>
-            ? N                         // nested object → nested keys
-            : never
-      }[keyof S]
+  ? {
+    [K in keyof S]: S[K] extends string
+    ? K extends string
+    ? ExtractSubName<K>         // strip "tag:name" → "name"
     : never
+    : S[K] extends Record<infer N extends string, string>
+    ? N                         // nested object → nested keys
+    : never
+  }[keyof S]
+  : never
 
 /**
  * HTML tags yang otomatis dikenali sebagai tag dari bare sub-key (tanpa "tag:name" syntax).
@@ -153,10 +153,10 @@ export type SemanticSubTag =
  */
 type ResolveSubTag<K extends string> =
   K extends `${infer Tag}:${string}`
-    ? Tag extends HtmlTagName ? Tag : "span"
-    : K extends SemanticSubTag
-      ? K
-      : "span"
+  ? Tag extends HtmlTagName ? Tag : "span"
+  : K extends SemanticSubTag
+  ? K
+  : "span"
 
 /** Gabungkan union of object types jadi satu intersection — dipakai untuk merge per-key tag map. */
 type UnionToIntersection<U> =
@@ -174,18 +174,18 @@ type UnionToIntersection<U> =
  */
 export type InferSubTagsFromConfig<C extends ComponentConfig> =
   C extends { sub: infer S extends Record<string, SubValue> }
-    ? UnionToIntersection<
-        {
-          [K in keyof S]: K extends string
-            ? S[K] extends string
-              ? { [N in ExtractSubName<K>]: ResolveSubTag<K> }
-              : S[K] extends Record<string, string>
-                ? { [N in keyof S[K]]: K extends HtmlTagName ? K : "span" }
-                : never
-            : never
-        }[keyof S]
-      >
-    : Record<string, never>
+  ? UnionToIntersection<
+    {
+      [K in keyof S]: K extends string
+      ? S[K] extends string
+      ? { [N in ExtractSubName<K>]: ResolveSubTag<K> }
+      : S[K] extends Record<string, string>
+      ? { [N in keyof S[K]]: K extends HtmlTagName ? K : "span" }
+      : never
+      : never
+    }[keyof S]
+  >
+  : Record<string, never>
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
@@ -214,7 +214,6 @@ export interface StyledComponentProps {
   className?: string
   as?: HtmlTagName
   children?: React.ReactNode
-  [key: string]: unknown
 }
 
 // ── Sub Component Map ────────────────────────────────────────────────────────
@@ -237,15 +236,15 @@ type TrimLeft<S extends string> =
   S extends ` ${infer R}` | `
 ${infer R}` | `	${infer R}` | `
 ${infer R}`
-    ? TrimLeft<R>
-    : S
+  ? TrimLeft<R>
+  : S
 
 type TrimRight<S extends string> =
   S extends `${infer L} ` | `${infer L}
 ` | `${infer L}	` | `${infer L}
 `
-    ? TrimRight<L>
-    : S
+  ? TrimRight<L>
+  : S
 
 type Trim<S extends string> = TrimLeft<TrimRight<S>>
 
@@ -255,10 +254,10 @@ type Trim<S extends string> = TrimLeft<TrimRight<S>>
 //   - No-bracket: `name { ... }`
 type ExtractSubNames<T extends string> =
   T extends `${string}[${infer Name}]${string}{${string}}${infer Rest}`
-    ? Trim<Name> | ExtractSubNames<Rest>
-    : T extends `${string}\n${infer Name}{${string}}${infer Rest}`
-    ? (Trim<Name> extends "" ? never : Trim<Name>) | ExtractSubNames<Rest>
-    : never
+  ? Trim<Name> | ExtractSubNames<Rest>
+  : T extends `${string}\n${infer Name}{${string}}${infer Rest}`
+  ? (Trim<Name> extends "" ? never : Trim<Name>) | ExtractSubNames<Rest>
+  : never
 
 // ── DetectedSubComponents — di-generate oleh `npx tw generate-types`
 // Fallback ke string kalau belum di-generate
@@ -276,8 +275,8 @@ export interface TwSubComponentProps {
 type SubComponentKeys<S extends string, TagMap extends Record<string, string> = Record<string, never>> = {
   [K in S]: TwSubComponentAccessor<
     K extends keyof TagMap
-      ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")
-      : "span"
+    ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")
+    : "span"
   >
 }
 
@@ -287,20 +286,21 @@ type SubComponentKeys<S extends string, TagMap extends Record<string, string> = 
 export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
   S extends string = string,
-  TagMap extends Record<string, string> = Record<string, never>
+  TagMap extends Record<string, string> = Record<string, never>,
+  Tag extends HtmlTagName = HtmlTagName
 > = {
-  (props: StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
+  (props: React.ComponentPropsWithoutRef<Tag> & StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
-    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap>
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap, Tag>
     (config: {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config, S, TagMap>
+    }): TwStyledComponent<Config, S, TagMap, Tag>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap>
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap, Tag>
   /**
    * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
    *
@@ -314,8 +314,8 @@ export type TwStyledComponent<
    * Button.footer // ✅ autocomplete
    * Button.xyz    // ❌ TypeScript error
    */
-  withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap>
-  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S, TagMap>>
+  withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap, Tag>
+  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S, TagMap, Tag>>
 } & SubComponentKeys<S, TagMap>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
@@ -324,23 +324,27 @@ export interface TwSubComponent<P = unknown> {
   displayName?: string
 }
 
-export interface TwTemplateFactory<Config extends ComponentConfig = ComponentConfig> {
+export interface TwTemplateFactory<
+  Config extends ComponentConfig = ComponentConfig,
+  Tag extends HtmlTagName = HtmlTagName
+> {
   // Template literal — TypeScript infer sub-component names dari [name] { ... }
   // Catatan: infer hanya works pada template TANPA expression (no ${}).
   // Untuk template kompleks gunakan config object syntax: tw.button({ base: "...", sub: { icon: "..." } })
-  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>>
-  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string>
+  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>, Record<string, never>, Tag>
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string, Record<string, never>, Tag>
   // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
   <C extends ComponentConfig>(config: C): TwStyledComponent<
     C,
     InferSubFromConfig<C>,
-    InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>
+    InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>,
+    Tag
   >
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────
 export type TwTagFactory = {
-  [K in HtmlTagName]: TwTemplateFactory
+  [K in HtmlTagName]: TwTemplateFactory<ComponentConfig, K>
 }
 
 // ── Tw Tag Factory Any ───────────────────────────────────────────────────────
@@ -356,7 +360,7 @@ export type TwComponentFactory<T extends React.ElementType = React.ElementType> 
 // ── Tw Server Object ────────────────────────────────────────────────────────
 // Intersection dengan TwTagFactory — server variant yang hanya support static classes
 export type TwServerObject = TwTagFactory & {
-  [K in HtmlTagName as `${K}`]: TwTemplateFactory
+  [K in HtmlTagName as `${K}`]: TwTemplateFactory<ComponentConfig, K>
 }
 
 export type TwObject = TwComponentFactory & TwTagFactory & {

@@ -6,6 +6,8 @@
   },
   "include": [
     "src",
-    "tests/subcomponent-types.test.ts"
+    "tests/subcomponent-types.test.ts",
+    "tests/event-type-inference.test.ts",
+    "tests/preservation.test.ts"
   ]
 }
