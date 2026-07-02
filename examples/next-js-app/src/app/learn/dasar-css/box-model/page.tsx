@@ -16,6 +16,7 @@ import { tw } from "tailwind-styled-v4"
 
 const Page = tw.div({
   base: "min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans",
+  attrs: { "data-learn-page": "" },
 })
 
 const TopBar = tw.nav({
@@ -25,6 +26,7 @@ const TopBar = tw.nav({
     bg-[color-mix(in_srgb,var(--surface)_85%,transparent)]
     backdrop-blur-md
   `,
+  attrs: { "data-learn-topbar": "" },
 })
 
 const TopBarInner = tw.div({

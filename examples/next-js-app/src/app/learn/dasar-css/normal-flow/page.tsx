@@ -16,6 +16,7 @@ import { tw } from "tailwind-styled-v4"
 
 const Page = tw.div({
   base: "min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans",
+  attrs: { "data-learn-page": "" },
 })
 
 const TopBar = tw.nav({
@@ -25,6 +26,7 @@ const TopBar = tw.nav({
     bg-[color-mix(in_srgb,var(--surface)_85%,transparent)]
     backdrop-blur-md
   `,
+  attrs: { "data-learn-topbar": "" },
 })
 
 const TopBarInner = tw.div({
@@ -668,11 +670,11 @@ function DisplayPlayground() {
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas>
-        <p className="text-xs text-gray-500 mb-2">
+        <div className="text-xs text-gray-500 mb-2">
           Teks sebelum{" "}
           <DisplayBox type={type}>div ({type})</DisplayBox>
           {" "}teks sesudah — perhatikan apakah div ikut baris atau pisah baris.
-        </p>
+        </div>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>{`display: ${type};`}</PlaygroundWrap.codeline>

@@ -9,10 +9,11 @@ import { tw } from "tailwind-styled-v4"
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
-const Page = tw.div({ base: "min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans" })
+const Page = tw.div({ base: "min-h-screen bg-[var(--background)] text-[var(--foreground)] font-sans", attrs: { "data-learn-page": "" } })
 const TopBar = tw.nav({
     base: `sticky top-0 z-50 h-12 border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]
     bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] backdrop-blur-md`,
+    attrs: { "data-learn-topbar": "" },
 })
 const TopBarInner = tw.div({ base: "max-w-5xl mx-auto px-4 h-full flex items-center gap-2 text-sm" })
 const Breadcrumb = tw.div({

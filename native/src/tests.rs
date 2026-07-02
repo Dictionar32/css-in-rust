@@ -342,7 +342,6 @@ const Card = tw.div({ base: "p-4", sub: { "div:body": "text-sm", "pre:code": "fo
         assert!(result.code.contains("createElement(\"pre\""), "pre:code must render <pre>");
         assert!(result.code.contains("createElement(\"a\""), "a:link must render <a>");
     }
-    }
 
     // ── Scanner ───────────────────────────────────────────────────────────────
 

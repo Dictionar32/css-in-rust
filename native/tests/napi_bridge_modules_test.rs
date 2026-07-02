@@ -19,6 +19,7 @@ mod tests {
             value: "#1e40af".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         let json = serde_json::to_string(&rule);
@@ -131,6 +132,7 @@ mod tests {
             value: "#ffffff".to_string(),
             media: Some("@media (min-width: 768px)".to_string()),
             pseudo: Some(":hover".to_string()),
+            source: None,
         };
 
         assert_eq!(rule.selector, ".text-white");
