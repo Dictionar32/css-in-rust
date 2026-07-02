@@ -84,6 +84,7 @@ mod tests {
                 scoped_class: "Button_icon_deadbe".to_string(),
             }],
             "Button",
+            true,
         );
 
         assert!(rendered.contains("\"flex h-12 w-full\""));
@@ -146,6 +147,7 @@ mod tests {
 mod new_module_tests {
     use crate::application::engine::{compute_incremental_diff, hash_file_content};
     use crate::domain::animation::classes_to_css;
+    use crate::domain::transform::transform_source;
     use crate::*;
 
     // ── Analyzer ──────────────────────────────────────────────────────────────

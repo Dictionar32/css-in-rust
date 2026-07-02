@@ -23,6 +23,7 @@ mod napi_bridge_types_tests {
             value: "#3b82f6".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         assert_eq!(css_rule.selector, ".container");
@@ -38,6 +39,7 @@ mod napi_bridge_types_tests {
             value: "white".to_string(),
             media: Some("(min-width: 768px)".to_string()),
             pseudo: Some("hover".to_string()),
+            source: None,
         };
 
         assert!(css_rule.media.is_some());
@@ -135,6 +137,7 @@ mod napi_bridge_types_tests {
             value: "red".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         let json_str = serde_json::to_string(&css_rule).expect("Serialization failed");
@@ -404,6 +407,7 @@ mod napi_bridge_marshalling_tests {
             value: "red".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         let json_str = to_json(&rule).unwrap();
@@ -581,6 +585,7 @@ mod cross_module_integration_tests {
             value: "red".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         let response = JsonResponse::ok(rule);
@@ -631,6 +636,7 @@ mod cross_module_integration_tests {
                 value: "red".to_string(),
                 media: None,
                 pseudo: None,
+                source: None,
             },
             CssRule {
                 selector: ".rule2".to_string(),
@@ -638,6 +644,7 @@ mod cross_module_integration_tests {
                 value: "blue".to_string(),
                 media: None,
                 pseudo: None,
+                source: None,
             },
         ];
 
@@ -665,6 +672,7 @@ mod module_isolation_tests {
             value: "red".to_string(),
             media: None,
             pseudo: None,
+            source: None,
         };
 
         // Should work without error context
@@ -788,6 +796,7 @@ mod data_transformation_tests {
             value: "#3b82f6".to_string(),
             media: Some("(min-width: 768px)".to_string()),
             pseudo: Some("hover".to_string()),
+            source: None,
         };
 
         // Transform to JSON
@@ -847,6 +856,7 @@ mod data_transformation_tests {
             value: "0.5rem".to_string(),
             media: Some("print".to_string()),
             pseudo: Some("focus".to_string()),
+            source: None,
         };
 
         let json = to_json(&rule).unwrap();
