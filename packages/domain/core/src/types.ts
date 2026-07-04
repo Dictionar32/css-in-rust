@@ -25,7 +25,7 @@ export type SizesConfig = Record<string, string>
  * supaya kedua tempat itu tidak duplikasi & selalu konsisten.
  */
 type InferVariantPropsFromVariantsMap<V> = {
-  [K in keyof V]?: V[K] extends Record<infer Key, any>
+  [K in keyof V as string extends K ? never : number extends K ? never : K]?: V[K] extends Record<infer Key, unknown>
   ? Key extends "true" | "false"
   ? boolean
   : Key extends number
@@ -64,7 +64,7 @@ export type InferSizeProps<T extends ComponentConfig> =
  * // → { loading?: boolean, fullWidth?: boolean }
  */
 export type InferStatesProps<T extends ComponentConfig> = {
-  [K in keyof T["states"]]?: boolean
+  [K in keyof T["states"]as string extends K ? never : number extends K ? never : K]?: boolean
 }
 
 // ── Sub-component Config ──────────────────────────────────────────────────────
@@ -327,7 +327,7 @@ export interface StateConfig {
 // Proper generic type yang mengetahui variant keys dan values
 export type CvFn<C extends ComponentConfig> = (
   props?: {
-    [K in keyof C["variants"]]?: keyof C["variants"][K]
+    [K in keyof C["variants"]as string extends K ? never : number extends K ? never : K]?: keyof C["variants"][K]
   } & { class?: string; className?: string }
 ) => string
 
