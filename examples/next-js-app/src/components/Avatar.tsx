@@ -89,6 +89,8 @@ export function Avatar({ name, src, size = "md", className }: AvatarProps) {
 // -- AvatarGroup ---------------------------------------------------------------
 const GroupRoot = tw.div({ base: "flex -space-x-2" })
 
+const GroupItem = tw.div({ base: "ring-2 ring-white rounded-full" })
+
 const Overflow = tw.div({
   base: `
     relative inline-flex shrink-0 items-center justify-center
@@ -121,9 +123,9 @@ export function AvatarGroup({ users, max = 5, size = "md" }: AvatarGroupProps) {
   return (
     <GroupRoot>
       {visible.map((u) => (
-        <div key={u.name} className="ring-2 ring-white rounded-full">
+        <GroupItem key={u.name}>
           <Avatar name={u.name} src={u.src} size={size} />
-        </div>
+        </GroupItem>
       ))}
       {overflow > 0 && (
         <Overflow size={size}>

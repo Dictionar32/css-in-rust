@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { tw } from "tailwind-styled-v4";
+import { useTheme, getNextTheme } from "@/hooks/useTheme";
 
 /**
- * ThemeAndCartControls — tw object config API
+ * ThemeAndCartControls — theme switching dengan persistence
  *
- * tw.button({ base, variants, defaultVariants }) — build time.
+ * Features:
+ * - Persistent theme preference (localStorage)
+ * - Syncs dengan system preference (prefers-color-scheme)
+ * - Auto-detection saat user change system settings
+ * - No flash of wrong theme (SSR-safe init script)
  */
 
 const ThemeButton = tw.button({
@@ -17,67 +22,43 @@ const ThemeButton = tw.button({
     hover:bg-[var(--surface-muted)] transition-colors
     focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[var(--accent)]
   `,
-})
-
-const tokenPresets = {
-  light: {
-    label: "Light",
-    icon: "☀️",
-    vars: {
-      "--background": "#f5f7fb",
-      "--foreground": "#111827",
-      "--surface": "#ffffff",
-      "--surface-muted": "#eef2ff",
-      "--accent": "#2563eb",
-      "--accent-hover": "#1d4ed8",
-      "--accent-contrast": "#eff6ff",
-    },
+  // Wave 3: Semantic metadata untuk theme toggle button
+  '@semantic': 'button',
+  '@aria': {
+    role: 'button',
+    'aria-label': 'Toggle theme',
   },
-  dark: {
-    label: "Dark",
-    icon: "🌙",
-    vars: {
-      "--background": "#070b16",
-      "--foreground": "#e5e7eb",
-      "--surface": "#0f172a",
-      "--surface-muted": "#111b34",
-      "--accent": "#60a5fa",
-      "--accent-hover": "#93c5fd",
-      "--accent-contrast": "#0b1220",
-    },
+  '@state': {
+    disabled: 'aria-disabled',
   },
-} as const;
-
-type ThemeMode = keyof typeof tokenPresets;
-
-function applyTokens(theme: ThemeMode) {
-  const vars = tokenPresets[theme].vars;
-  const root = document.documentElement;
-  root.setAttribute("data-theme", theme);
-  for (const [key, value] of Object.entries(vars)) {
-    root.style.setProperty(key, value);
-  }
-}
+});
 
 export function ThemeAndCartControls() {
-  const [theme, setTheme] = useState<ThemeMode>("light");
-  const nextTheme = useMemo<ThemeMode>(
-    () => (theme === "light" ? "dark" : "light"),
-    [theme],
-  );
-  const next = tokenPresets[nextTheme];
+  const { theme, toggleTheme, presets, isLoaded } = useTheme();
+
+  // Get next theme untuk display
+  const nextTheme = useMemo(() => getNextTheme(theme), [theme]);
+  const nextPreset = presets[nextTheme];
+
+  // Prevent render sebelum hydrate selesai
+  if (!isLoaded) {
+    return (
+      <ThemeButton disabled aria-busy="true">
+        <span aria-hidden="true">⏳</span>
+        Loading...
+      </ThemeButton>
+    );
+  }
 
   return (
     <ThemeButton
       type="button"
-      onClick={() => {
-        setTheme(nextTheme);
-        applyTokens(nextTheme);
-      }}
-      aria-label={`Switch to ${next.label} mode`}
+      onClick={toggleTheme}
+      aria-label={`Switch to ${nextPreset.label} mode`}
+      title={`Current: ${theme} mode • Click to switch to ${nextTheme}`}
     >
-      <span aria-hidden="true">{next.icon}</span>
-      {next.label}
+      <span aria-hidden="true">{nextPreset.icon}</span>
+      {nextPreset.label}
     </ThemeButton>
   );
 }
