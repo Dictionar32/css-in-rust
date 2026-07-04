@@ -1,34 +1,15 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  entry: { index: "src/index.ts" },
-  format: ["esm"],
-  dts: true,
-  clean: true,
-  external: [
-    "@tailwind-styled/core",
-    "@tailwind-styled/shared",
-    "vue",
-    "inversify",
-    "reflect-metadata",
-    "zod",
-    "node:module",
-    "node:path",
-    "node:url",
-    "node:fs",
-  ],
-  esbuildOptions(options, context) {
-    if (context.format === "esm") {
-      options.banner = {
-        ...options.banner,
-        js: [
-          options.banner?.js ?? "",
-          `import { createRequire as __createRequire } from "node:module";`,
-          `const require = __createRequire(import.meta.url);`,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      }
-    }
+  // Multi-entry support: each entry gets its own .d.ts file
+  entry: {
+    index: "src/index.ts",
+    // Add more entries below as needed for your package
   },
+  format: ["esm", "cjs"],  // ✨ Dual format: ESM + CJS (import.meta warnings are normal)
+  dts: true,  // ✨ Modern: native tsup dts generation (works with multi-entry!)
+  clean: true,
+  target: "node20",
+  platform: "node",
+  // Configure external dependencies in your package.json
 })
