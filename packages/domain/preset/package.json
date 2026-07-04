@@ -1,7 +1,7 @@
 {
   "name": "@tailwind-styled/preset",
   "version": "5.0.4",
-  "description": "Default Tailwind preset for tailwind-styled-v5 \u2014 v5 with Tailwind v4 CSS-first support",
+  "description": "Default Tailwind preset for tailwind-styled-v5 — v5 with Tailwind v4 CSS-first support",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -27,7 +27,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/defaultPreset.ts --format cjs,esm --dts --out-dir dist --clean",
+    "build": "tsup",
     "dev": "tsup src/index.ts src/defaultPreset.ts --format cjs,esm --dts --out-dir dist --watch",
     "check": "tsc --noEmit",
     "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
