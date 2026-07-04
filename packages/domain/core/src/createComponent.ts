@@ -218,11 +218,11 @@ function registerSubComponents<P extends object>(
 import type { InferVariantProps, InferStatesProps } from "./types"
 
 // Props yang diterima component saat render — typed dari config user
-type RuntimeProps<TConfig extends ComponentConfig> =
+type RuntimeProps<TConfig extends ComponentConfig, TTag extends React.ElementType> =
   InferVariantProps<TConfig> &
   InferStatesProps<TConfig> &
-  { className?: string; children?: React.ReactNode } &
-  Record<string, unknown>  // HTML attrs dan props lainnya tetap diterima
+  React.ComponentPropsWithoutRef<TTag> &  // All native HTML props + ARIA from React's types
+  Record<string, unknown>  // Allow any other props (forward ke DOM)
 
 function normalizeClassName(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined
@@ -243,9 +243,9 @@ function makeFilterProps(variantKeys: Set<string>, stateKeys: Set<string> = new 
 }
 
 function resolveVariants(
-  variants: Record<string, Record<string | "true" | "false" | boolean, string>>,
+  variants: Record<string, Record<string | "true" | "false", string>>,
   props: Record<string, unknown>,
-  defaults: Record<string, string | boolean>
+  defaults: Record<string, string | number | boolean>
 ): string {
   // Only include declared variant keys — prevents non-variant props (e.g. `selected`, `disabled`)
   // from leaking into the resolver and causing SSR/client hydration mismatches.
@@ -263,7 +263,7 @@ function resolveVariants(
     // Browser fallback: manual variant lookup
     const classes: string[] = []
     for (const key of Object.keys(variants)) {
-      const propValue = cleanProps[key] ?? defaults[key]
+      const propValue = cleanProps[key] ?? String(defaults[key])
       if (propValue !== undefined && variants[key]?.[propValue]) {
         classes.push(variants[key][propValue])
       }
@@ -271,7 +271,7 @@ function resolveVariants(
     return classes.join(" ").trim().replace(/\s+/g, " ")
   }
   // Server path — TIDAK DIUBAH: tetap call native
-  return binding.resolveSimpleVariants(null, variants, defaults, cleanProps).trim().replace(/\s+/g, " ")
+  return binding.resolveSimpleVariants(null, variants as Record<string, Record<string, string>>, defaults as Record<string, string>, cleanProps).trim().replace(/\s+/g, " ")
 }
 
 /**
@@ -446,13 +446,7 @@ function attachExtend<TConfig extends ComponentConfig>(
 
   // .animate() dipindah ke tailwind-styled-v4/animate agar tidak bundle @tailwind-styled/animate
   // ke dalam main browser bundle (animate butuh Rust native binding → Node.js only)
-  component.animate = async (_opts: AnimateOptions) => {
-    console.warn(
-      "[tailwind-styled-v4] .animate() tidak tersedia di main bundle.\n" +
-      "Gunakan: import { animate } from \"tailwind-styled-v4/animate\""
-    )
-    return component
-  }
+  // Note: animate functionality removed from core, use @tailwind-styled/animate package instead
 
   // .withSub<"icon" | "badge">() — declare sub-component names untuk TypeScript
   // Runtime: no-op, hanya untuk type inference
@@ -527,7 +521,7 @@ export function createComponent<TConfig extends ComponentConfig>(
     typeof tag === "string" ? tag : ((tag as { displayName?: string }).displayName ?? "Component")
 
   if (isStatic || Object.keys(variants).length === 0) {
-    const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig>>((props, ref) => {
+    const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig, typeof tag>>((props, ref) => {
       const { className, ...rest } = props
       const runtimeClassName = normalizeClassName(className)
       const statesClasses = statesConfig
@@ -551,7 +545,7 @@ export function createComponent<TConfig extends ComponentConfig>(
     return wrapWithSubProxy(result, tagLabel)
   }
 
-  const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig>>((props, ref) => {
+  const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig, typeof tag>>((props, ref) => {
     const { className, ...rest } = props
     const runtimeClassName = normalizeClassName(className)
     const variantClasses = resolveVariants(variants, props, defaultVariants)

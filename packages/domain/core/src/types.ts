@@ -7,9 +7,11 @@
 
 // ── Shared types (re-exported for backward compatibility) ─────────────────────
 import type React from "react"
-import type { AnimateOptions } from "@tailwind-styled/animate"
-import type { HtmlTagName, VariantMatrix, VariantProps, VariantValue } from "@tailwind-styled/shared"
-export type { HtmlTagName, VariantProps, VariantValue, VariantMatrix } from "@tailwind-styled/shared"
+import type { HtmlTagName, VariantMatrix } from "@tailwind-styled/shared"
+export type { HtmlTagName, VariantMatrix } from "@tailwind-styled/shared"
+
+// AnimateOptions import removed — not used in this file
+// Can re-export from @tailwind-styled/animate when needed
 
 // ── Variant Types ────────────────────────────────────────────────────────────
 export type VariantLiterals = string | number | boolean
@@ -21,7 +23,28 @@ export type InferVariantProps<T extends ComponentConfig> = {
   [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer Key, any>
   ? Key extends "true" | "false"
   ? boolean
+  : Key extends `${infer N extends number}`
+  ? N | number
   : Key
+  : never
+}
+
+/**
+ * Infer allowed types for defaultVariants based on variant keys.
+ * Supports:
+ * - String keys: { variant: "primary" }
+ * - Number keys: { priority: 0 }
+ * - Boolean keys: { disabled: false } (translates true/false to "true"/"false" keys)
+ * 
+ * This helper ensures type safety when defaultVariants contains non-string values.
+ */
+export type InferDefaultVariantsType<T extends ComponentConfig> = {
+  [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer KeyType, string>
+  ? KeyType extends "true" | "false"
+  ? boolean
+  : KeyType extends string
+  ? KeyType
+  : never
   : never
 }
 
@@ -61,7 +84,7 @@ export type InferStatesProps<T extends ComponentConfig> = {
 export interface SubComponentConfig {
   base?: string
   variants?: Record<string, Record<string, string>>
-  defaultVariants?: Record<string, string>
+  defaultVariants?: Record<string, string | number | boolean>
   compoundVariants?: Array<{ class: string;[key: string]: string }>
 }
 
@@ -90,8 +113,9 @@ export interface ComponentConfig {
   /** Variants — nested: { intent: { primary: "..." }, size: { sm: "..." } } 
    * Supports string and boolean keys: { disabled: { true: "...", false: "..." } }
    */
-  variants?: Record<string, Record<string | "true" | "false" | boolean, string>>
-  defaultVariants?: Record<string, string | boolean>
+  variants?: Record<string, Record<string | "true" | "false" | number, string>>
+  /** defaultVariants accepts string | number | boolean to match all possible variant key types */
+  defaultVariants?: Record<string, string | number | boolean>
   compoundVariants?: Array<{ class: string;[key: string]: string }>
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
@@ -360,7 +384,6 @@ export type TwStyledComponent<
    * Button.xyz    // ❌ TypeScript error
    */
   withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap, Tag>
-  animate: (opts: AnimateOptions) => Promise<TwStyledComponent<Config, S, TagMap, Tag>>
 } & SubComponentKeys<S, TagMap>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
@@ -413,6 +436,15 @@ export type TwObject = TwComponentFactory & TwTagFactory & {
 }
 
 // ── Storybook utilities ──────────────────────────────────────────────────────
+/**
+ * Enumerate all combinations of variant props from a variant matrix.
+ * Uses VariantProps and VariantValue types for type-safe prop inference.
+ * 
+ * @example
+ * const matrix = { intent: ["primary", "secondary"], size: ["sm", "lg"] }
+ * const combinations = enumerateVariantProps(matrix)
+ * // → [{ intent: "primary", size: "sm" }, { intent: "primary", size: "lg" }, ...]
+ */
 export function enumerateVariantProps(
   matrix: VariantMatrix
 ): Array<Record<string, string | number | boolean>> {
@@ -428,8 +460,11 @@ export function enumerateVariantProps(
     }
     const key = keys[index]!
     for (const value of matrix[key] ?? []) {
-      current[key] = value
-      walk(index + 1, current)
+      // matrix values should always be non-undefined (filtered by VariantMatrix type)
+      if (value !== undefined) {
+        current[key] = value as string | number | boolean
+        walk(index + 1, current)
+      }
     }
   }
 
@@ -462,7 +497,7 @@ export function generateArgTypes(config: ComponentConfig): Record<string, unknow
   return argTypes
 }
 
-export function generateDefaultArgs(config: ComponentConfig): Record<string, string> {
+export function generateDefaultArgs(config: ComponentConfig): Record<string, string | number | boolean> {
   return { ...(config.defaultVariants ?? undefined) }
 }
 

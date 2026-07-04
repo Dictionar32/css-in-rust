@@ -154,7 +154,7 @@ function resolveVariantsNative<C extends ComponentConfig>(
     // Compound variants
     if (config.compoundVariants) {
       for (const compound of config.compoundVariants) {
-        const { class: compoundClass, ...conditions } = compound as { class: string; [key: string]: string }
+        const { class: compoundClass, ...conditions } = compound as { class: string;[key: string]: string }
         const resolved: Record<string, string> = {}
         for (const key of variantKeys) {
           resolved[key] = String(
@@ -199,7 +199,15 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
     }
   }
 
-  return (
+  // Convert boolean values to strings for internal use
+  const stringifiedDefaults: Record<string, string> = {}
+  if (config.defaultVariants) {
+    for (const [k, v] of Object.entries(config.defaultVariants)) {
+      stringifiedDefaults[k] = String(v)
+    }
+  }
+
+  return ((
     props: InferVariantProps<C> & { className?: string } & Readonly<Record<string, unknown>> = {} as never
   ): string => {
     let result: string
@@ -210,7 +218,7 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
       const generated = lookupGenerated(
         componentId,
         props as Record<string, unknown>,
-        config.defaultVariants as Record<string, string>,
+        stringifiedDefaults,
         variantKeys
       )
       result = generated ?? resolveVariantsNative(config, props)
@@ -220,7 +228,7 @@ export function cv<C extends ComponentConfig>(config: C, componentId?: string): 
     }
 
     return props.className ? twMerge(result, props.className) : result
-  }
+  }) as CvFn<C>
 }
 
 export interface VariantValidationError {

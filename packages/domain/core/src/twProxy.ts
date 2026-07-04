@@ -21,6 +21,7 @@ import type {
   TwStyledComponent,
   TwTagFactory,
   TwTagFactoryAny,
+  InferSubFromConfig,
 } from "./types"
 
 // types.ts is single source of truth — re-export for consumers
@@ -74,21 +75,28 @@ function parseTemplate(strings: TemplateStringsArray, exprs: unknown[]): ParsedT
   return result
 }
 
-type RuntimeTagFactory = ((
-  stringsOrConfig: TemplateStringsArray | ComponentConfig,
-  ...exprs: unknown[]
-) => TwStyledComponent<ComponentConfig, string>) &
-  TwTagFactoryAny
+type RuntimeTagFactory = {
+  // Template literal overload
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<ComponentConfig, string, Record<string, never>, any>
+  // Object config overload — properly typed dengan config object literal inference
+  <C extends ComponentConfig>(config: C): TwStyledComponent<
+    C,
+    InferSubFromConfig<C>,
+    any,
+    any
+  >
+} & TwTagFactoryAny
 
 // ─────────────────────────────────────────────────────────────────────────────
 // makeTag
 // ─────────────────────────────────────────────────────────────────────────────
 
 function makeTag(tag: React.ElementType): RuntimeTagFactory {
-  return ((
+  // Function implementation yang handle both overloads
+  const impl = ((
     stringsOrConfig: TemplateStringsArray | ComponentConfig,
     ...exprs: unknown[]
-  ): TwStyledComponent<ComponentConfig, string> => {
+  ): any => {
     // Object config path
     if (
       !Array.isArray(stringsOrConfig) &&
@@ -96,11 +104,14 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
       stringsOrConfig !== null &&
       !("raw" in stringsOrConfig)
     ) {
-      return createComponent(tag, stringsOrConfig as ComponentConfig) as unknown as TwStyledComponent<ComponentConfig, string>
+      // Config object — createComponent properly infer TConfig
+      return createComponent(tag, stringsOrConfig as ComponentConfig)
     }
 
-    // Template literal path
-    const parsed = parseTemplate(stringsOrConfig as TemplateStringsArray, exprs)
+    // Template literal path — TypeScript now knows it's TemplateStringsArray
+    // because we eliminated the config branch above via type guard
+    const strings = stringsOrConfig as TemplateStringsArray
+    const parsed = parseTemplate(strings, exprs)
 
     // Buat component dari base classes
     const component = createComponent(tag, parsed.base)
@@ -123,8 +134,10 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
       }
     }
 
-    return component as unknown as TwStyledComponent<ComponentConfig, string>
+    return component
   }) as RuntimeTagFactory
+
+  return impl
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -171,7 +184,8 @@ function makeServerTag(tag: React.ElementType): RuntimeTagFactory {
         `[tailwind-styled-v4] tw.server.${tagName} rendered in browser. ` +
         `Ensure withTailwindStyled or Vite plugin is configured.`
       )
-      return baseFactory(stringsOrConfig, ...exprs)
+      // Call baseFactory dengan proper type narrowing — both overloads supported
+      return (baseFactory as any)(stringsOrConfig, ...exprs)
     }) as RuntimeTagFactory
   }
   return baseFactory
