@@ -363,6 +363,23 @@ export function compileDesignTokens(tokens: DesignTokens, prefix = ""): string {
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Theme Persistence (localStorage + system preference)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { ThemeValue, UseThemeReturn, ThemeInitScriptProps } from './types.persistence'
+export { useTheme } from './useTheme'
+export { ThemeInitScript } from './ThemeInitScript'
+export {
+  getSystemPreference,
+  getEffectiveTheme,
+  getStoredTheme,
+  saveTheme,
+  applyThemeToElement,
+  getInitializationScript,
+  subscribeToSystemPreferenceChanges,
+} from './persistence'
+
 // Re-export schemas
 export {
   type LiveTokenUpdateInput,
