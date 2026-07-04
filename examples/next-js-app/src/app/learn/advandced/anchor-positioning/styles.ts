@@ -27,6 +27,31 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { supported: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700", none: "bg-red-100 text-red-700" } }, defaultVariants: { status: "supported" } })
-export const AnchorDemo = tw.div({ base: "relative min-h-[120px] flex items-center justify-center bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] rounded-lg border border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)]" })
-export const AnchorTarget = tw.button({ base: "px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white cursor-default" })
-export const AnchorPopup = tw.div({ base: "absolute z-10 px-3 py-2 rounded-lg text-xs bg-[color-mix(in_srgb,var(--foreground)_90%,transparent)] text-[var(--background)] shadow-lg whitespace-nowrap pointer-events-none" })
+export const BadgeRow = tw.div({ base: "flex gap-2 flex-wrap my-4" })
+
+// Anchor Positioning specific components
+// ✅ FIX: AnchorPopup menggunakan tw() dengan variants, NOT style={{}}
+export const AnchorPopup = tw.div({
+    base: "fixed z-50 px-2 py-1 rounded-md text-xs font-medium bg-gray-900 text-white whitespace-nowrap pointer-events-none",
+    variants: {
+        position: {
+            top: "bottom-[calc(100%+8px)] left-[50%] translate-x-[-50%]",
+            bottom: "top-[calc(100%+8px)] left-[50%] translate-x-[-50%]",
+            left: "right-[calc(100%+8px)] top-[50%] translate-y-[-50%]",
+            right: "left-[calc(100%+8px)] top-[50%] translate-y-[-50%]"
+        }
+    },
+    defaultVariants: { position: "top" }
+})
+
+export const AnchorTarget = tw.button({
+    base: "px-3 py-1.5 rounded-lg text-sm font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity cursor-pointer"
+})
+
+export const AnchorDemoWrapper = tw.div({
+    base: "relative"
+})
+
+export const AnchorDemo = tw.div({
+    base: "relative min-h-[200px] flex items-center justify-center bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] rounded-lg border border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)]"
+})
