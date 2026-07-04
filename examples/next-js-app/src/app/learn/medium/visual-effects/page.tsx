@@ -62,7 +62,7 @@ function FilterPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎨 Filter Playground</PlaygroundWrap.label>
         <ChipRow>
-          {filters.map(f => <Chip key={f} active={filterMode === f ? "true" : "false"} onClick={() => setFilterMode(f)}>{f}</Chip>)}
+          {filters.map(f => <Chip key={f} active={filterMode === f} onClick={() => setFilterMode(f)}>{f}</Chip>)}
         </ChipRow>
       </PlaygroundWrap.controls>
       <PlaygroundWrap.canvas>
@@ -590,7 +590,7 @@ const FloatingIcon = tw.div({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>
