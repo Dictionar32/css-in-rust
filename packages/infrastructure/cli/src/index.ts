@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import { buildMainProgram } from "./commands/program"
 import { runCliMain } from "./utils/runtime"
 
+export { buildMainProgram } from "./commands/program"
 export { runScanCli } from "./scan"
 export { parseCliInput as parseCliArgs } from "./utils/args"
 export { ensureFlag } from "./utils/args"

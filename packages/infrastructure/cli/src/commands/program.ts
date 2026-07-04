@@ -13,6 +13,7 @@ import { createCommand } from "./create"
 import { dashboardCommand } from "./dashboard"
 import { deployCommand } from "./deploy"
 import { runDoctorCli } from "./doctor"
+import { figmaCommand } from "./figma"
 import { miscCommands } from "./misc"
 import { pluginCommand } from "./plugin"
 import { preflightCommand } from "./preflight"
@@ -272,15 +273,15 @@ export function buildMainProgram(context: CommandContext): Command {
     })
 
   const registry = program.command("registry").description("Registry server utilities")
-  ;["serve", "list", "info", "publish", "install", "versions"].forEach((subcommand) => {
-    registry
-      .command(`${subcommand} [args...]`)
-      .description(`Registry ${subcommand}`)
-      .allowUnknownOption(true)
-      .action(async (args: string[] | undefined) => {
-        await registryCommand.run(contextArgs([subcommand, ...toVariadic(args)], context), context)
-      })
-  })
+    ;["serve", "list", "info", "publish", "install", "versions"].forEach((subcommand) => {
+      registry
+        .command(`${subcommand} [args...]`)
+        .description(`Registry ${subcommand}`)
+        .allowUnknownOption(true)
+        .action(async (args: string[] | undefined) => {
+          await registryCommand.run(contextArgs([subcommand, ...toVariadic(args)], context), context)
+        })
+    })
 
   program
     .command("install [args...]")
@@ -305,29 +306,40 @@ export function buildMainProgram(context: CommandContext): Command {
     })
 
   const sync = program.command("sync").description("Design token sync commands")
-  ;["init", "pull", "push", "diff"].forEach((subcommand) => {
-    sync
-      .command(`${subcommand} [args...]`)
-      .description(`Sync ${subcommand}`)
-      .allowUnknownOption(true)
-      .action(async (args: string[] | undefined) => {
-        await syncCommand.run(contextArgs([subcommand, ...toVariadic(args)], context), context)
-      })
-  })
+    ;["init", "pull", "push", "diff"].forEach((subcommand) => {
+      sync
+        .command(`${subcommand} [args...]`)
+        .description(`Sync ${subcommand}`)
+        .allowUnknownOption(true)
+        .action(async (args: string[] | undefined) => {
+          await syncCommand.run(contextArgs([subcommand, ...toVariadic(args)], context), context)
+        })
+    })
 
   const figma = sync.command("figma").description("Figma sync helpers")
-  ;["pull", "push", "diff", "modes"].forEach((subcommand) => {
-    figma
-      .command(`${subcommand} [args...]`)
-      .description(`Figma ${subcommand}`)
-      .allowUnknownOption(true)
-      .action(async (args: string[] | undefined) => {
-        await syncCommand.run(
-          contextArgs(["figma", subcommand, ...toVariadic(args)], context),
-          context
-        )
-      })
-  })
+    ;["pull", "push", "diff", "modes"].forEach((subcommand) => {
+      figma
+        .command(`${subcommand} [args...]`)
+        .description(`Figma ${subcommand}`)
+        .allowUnknownOption(true)
+        .action(async (args: string[] | undefined) => {
+          await syncCommand.run(
+            contextArgs(["figma", subcommand, ...toVariadic(args)], context),
+            context
+          )
+        })
+    })
+
+  const figmaTopLevel = program.command("figma").description("Figma design token sync")
+    ;["pull", "push", "diff"].forEach((subcommand) => {
+      figmaTopLevel
+        .command(`${subcommand} [args...]`)
+        .description(`Figma ${subcommand}`)
+        .allowUnknownOption(true)
+        .action(async (args: string[] | undefined) => {
+          await figmaCommand.run(contextArgs([subcommand, ...toVariadic(args)], context), context)
+        })
+    })
 
   program
     .command("test")
