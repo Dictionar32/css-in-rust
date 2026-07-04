@@ -61,9 +61,9 @@ function ContainerQueryPlayground() {
           <WidthValue>{width}px</WidthValue>
         </ControlsRow>
         <ChipRow>
-          <Chip active={!isWide ? "true" : "false"} onClick={() => setWidth(300)}>{"< 400px"}</Chip>
-          <Chip active={isWide && !isVeryWide ? "true" : "false"} onClick={() => setWidth(480)}>400–559px</Chip>
-          <Chip active={isVeryWide ? "true" : "false"} onClick={() => setWidth(600)}>{"≥ 560px"}</Chip>
+          <Chip active={!isWide} onClick={() => setWidth(300)}>{"< 400px"}</Chip>
+          <Chip active={isWide && !isVeryWide} onClick={() => setWidth(480)}>400–559px</Chip>
+          <Chip active={isVeryWide} onClick={() => setWidth(600)}>{"≥ 560px"}</Chip>
         </ChipRow>
       </PlaygroundWrap.controls>
       <PlaygroundWrap.canvas>
@@ -557,7 +557,7 @@ function ProductCard({ featured = false }) {
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

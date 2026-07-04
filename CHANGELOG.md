@@ -11,6 +11,40 @@ dan project ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 All Wave 1-3 features are published to npm and integrated in production (next-js-app example).
 
+#### Wave 5.4: Boolean/Number/String Variant Type Safety (v5.0.18+ ✅ JULY 4, 2026)
+
+- **Fixed: Variant Type Enforcement in `defaultVariants` and Props** ✅
+  - **Problem:** TypeScript now correctly enforces type matching between variant keys and `defaultVariants` values
+  - **Impact:** 20 `styles.ts` files + 3+ `page.tsx` files in example app had string `"false"` in boolean variant defaults, or passed string `"true"`/`"false"` to boolean props
+  - **What changed:** Example code updated to match correct types:
+    ```typescript
+    // Before (now errors)
+    defaultVariants: { active: "false" }           // ❌ String
+    <Chip active={isOpen ? "true" : "false"} />    // ❌ Strings
+    
+    // After (correct)
+    defaultVariants: { active: false }              // ✅ Boolean
+    <Chip active={isOpen} />                        // ✅ Boolean
+    ```
+  - **Type Safety Matrix:**
+    ```
+    Variant Keys              | Type   | defaultVariants | Usage
+    { true: "...", false: "" }| bool   | active: false   | <C active={bool} />
+    { 0: "...", 1: "..." }    | num    | level: 1        | <C level={num} />
+    { "x": "...", "y": "" }   | str    | mode: "x"       | <C mode="string" />
+    ```
+  - **Steering Guide:** New `.kiro/steering/boolean-variants.md` documents:
+    - Type matching rules (boolean, number, string)
+    - Common mistakes and fixes
+    - Migration patterns
+    - Pre-shipping checklist
+  - **Affected files fixed:**
+    - 20 styles.ts: Changed `"false"` → `false` in defaultVariants
+    - 3+ page.tsx: Changed string ternaries to boolean expressions
+    - Specific files: All `learn/*/styles.ts` + css-functions-future, container-style-queries, popover-api
+  - **Validation:** `examples/next-js-app tsc --noEmit` → 0 errors ✅
+  - **Reference:** `known-issues.md` (2026-07-04 boolean variants entry), `.kiro/steering/boolean-variants.md` ⭐ (NEW)
+
 #### Wave 5.3: TypeScript Props Type Inference Fix (v5.0.18+ ✅ JULY 4, 2026)
 
 - **Fixed: `RuntimeProps` Type Now Supports All HTML Attributes (ARIA, data-*, event handlers, etc.)** ✅

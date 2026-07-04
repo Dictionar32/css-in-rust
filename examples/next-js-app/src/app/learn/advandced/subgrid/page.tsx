@@ -50,8 +50,8 @@ function SubgridPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>📐 Subgrid Playground</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={!useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(false)}>Tanpa Subgrid</Chip>
-          <Chip active={useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(true)}>Dengan Subgrid</Chip>
+          <Chip active={!useSubgrid} onClick={() => setUseSubgrid(false)}>Tanpa Subgrid</Chip>
+          <Chip active={useSubgrid} onClick={() => setUseSubgrid(true)}>Dengan Subgrid</Chip>
         </ChipRow>
         <HintText>
           Perhatikan alignment header, body, dan footer antar card
@@ -497,7 +497,7 @@ function ProductList() {
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

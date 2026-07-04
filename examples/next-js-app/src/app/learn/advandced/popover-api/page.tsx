@@ -60,7 +60,7 @@ function PopoverPlayground() {
         <PlaygroundWrap.label>💬 Popover API Playground</PlaygroundWrap.label>
         <ChipRow>
           {types.map(t => (
-            <Chip key={t} active={type === t ? "true" : "false"} onClick={() => setType(t)}>
+            <Chip key={t} active={type === t} onClick={() => setType(t)}>
               popover={t === "backdrop" ? "auto + backdrop" : `"${t}"`}
             </Chip>
           ))}
@@ -515,7 +515,7 @@ export function DropdownMenu() {
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

@@ -220,7 +220,7 @@ function ColsPlayground() {
                 <PlaygroundWrap.label>🎛 grid-template-columns — pola kolom</PlaygroundWrap.label>
                 <ChipRow>
                     {(["3-equal", "1-2-1", "sidebar", "auto", "minmax", "dense-fill"] as ColsMode[]).map(v => (
-                        <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+                        <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[mode]}</p>
@@ -255,7 +255,7 @@ function FrPlayground() {
                 <PlaygroundWrap.label>🎛 fr unit — fraction of available space</PlaygroundWrap.label>
                 <ChipRow>
                     {presets.map(v => (
-                        <Chip key={v} active={cols === v ? "true" : "false"} onClick={() => setCols(v)}>{v}</Chip>
+                        <Chip key={v} active={cols === v} onClick={() => setCols(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
@@ -304,7 +304,7 @@ function RepeatPlayground() {
                 <PlaygroundWrap.label>🎛 repeat() — auto-fill vs auto-fit</PlaygroundWrap.label>
                 <ChipRow>
                     {(["repeat-3", "auto-fill", "auto-fit", "auto-fill-min", "auto-fit-min"] as RepeatMode[]).map(v => (
-                        <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+                        <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[mode]}</p>
@@ -340,7 +340,7 @@ function PlacementPlayground() {
                 <PlaygroundWrap.label>🎛 Line-based placement — grid-column & grid-row</PlaygroundWrap.label>
                 <ChipRow>
                     {(["normal", "col-span", "row-span", "both-span", "specific-line"] as PlacementMode[]).map(v => (
-                        <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+                        <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[mode]}</p>
@@ -419,7 +419,7 @@ function TemplateAreasPlayground() {
                 <PlaygroundWrap.label>🎛 grid-template-areas — layout deklaratif dengan nama area</PlaygroundWrap.label>
                 <ChipRow>
                     {(["page-layout", "dashboard", "magazine"] as AreaMode[]).map(v => (
-                        <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+                        <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
             </PlaygroundWrap.controls>
@@ -452,8 +452,8 @@ function DensePlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎛 grid-auto-flow: dense — isi lubang di grid</PlaygroundWrap.label>
                 <ChipRow>
-                    <Chip active={dense === "normal" ? "true" : "false"} onClick={() => setDense("normal")}>normal (default)</Chip>
-                    <Chip active={dense === "dense" ? "true" : "false"} onClick={() => setDense("dense")}>dense</Chip>
+                    <Chip active={dense === "normal"} onClick={() => setDense("normal")}>normal (default)</Chip>
+                    <Chip active={dense === "dense"} onClick={() => setDense("dense")}>dense</Chip>
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
                     {dense === "normal"
@@ -522,12 +522,12 @@ function AlignmentPlayground() {
                 <div className="space-y-2">
                     <ChipRow>
                         {(["justify-items", "align-items", "place-items", "justify-self", "align-self"] as AlignGridMode[]).map(v => (
-                            <Chip key={v} active={prop === v ? "true" : "false"} onClick={() => setProp(v)}>{v}</Chip>
+                            <Chip key={v} active={prop === v} onClick={() => setProp(v)}>{v}</Chip>
                         ))}
                     </ChipRow>
                     <ChipRow>
                         {(["start", "end", "center", "stretch"] as AlignValue[]).map(v => (
-                            <Chip key={v} active={value === v ? "true" : "false"} onClick={() => setValue(v)}>{v}</Chip>
+                            <Chip key={v} active={value === v} onClick={() => setValue(v)}>{v}</Chip>
                         ))}
                     </ChipRow>
                 </div>
@@ -1689,7 +1689,7 @@ const GridItem = tw.article({
                     <TocLabel>On this page</TocLabel>
                     {TOC.map(item => (
                         <TocItem key={item.id} href={`#${item.id}`}
-                            active={activeSection === item.id ? "true" : "false"}
+                            active={activeSection === item.id}
                             onClick={() => setActiveSection(item.id)}>
                             {item.label}
                         </TocItem>

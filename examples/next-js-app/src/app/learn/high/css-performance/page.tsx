@@ -60,7 +60,7 @@ function PipelinePlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Rendering Pipeline — klik fase untuk detail</PlaygroundWrap.label>
         <ChipRow>
-          {phases.map(p => <Chip key={p} active={active === p ? "true" : "false"} onClick={() => setActive(p)}>{p}</Chip>)}
+          {phases.map(p => <Chip key={p} active={active === p} onClick={() => setActive(p)}>{p}</Chip>)}
         </ChipRow>
       </PlaygroundWrap.controls>
       <PlaygroundWrap.canvas>
@@ -539,7 +539,7 @@ const Thumbnail = tw.img({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

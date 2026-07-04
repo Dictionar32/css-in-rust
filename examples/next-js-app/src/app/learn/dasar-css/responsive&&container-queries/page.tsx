@@ -206,9 +206,9 @@ function ViewportPlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎛 Simulasi breakpoint — lihat layout berubah</PlaygroundWrap.label>
                 <ChipRow>
-                    <Chip active={vp === "mobile" ? "true" : "false"} onClick={() => setVp("mobile")}>📱 mobile (320px)</Chip>
-                    <Chip active={vp === "tablet" ? "true" : "false"} onClick={() => setVp("tablet")}>📟 tablet (640px)</Chip>
-                    <Chip active={vp === "desktop" ? "true" : "false"} onClick={() => setVp("desktop")}>🖥 desktop (full)</Chip>
+                    <Chip active={vp === "mobile"} onClick={() => setVp("mobile")}>📱 mobile (320px)</Chip>
+                    <Chip active={vp === "tablet"} onClick={() => setVp("tablet")}>📟 tablet (640px)</Chip>
+                    <Chip active={vp === "desktop"} onClick={() => setVp("desktop")}>🖥 desktop (full)</Chip>
                 </ChipRow>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
@@ -256,7 +256,7 @@ function UserPrefPlayground() {
                 <PlaygroundWrap.label>🎛 User Preference Queries — simulasi preferensi sistem</PlaygroundWrap.label>
                 <ChipRow>
                     {(["default", "dark", "reduced-motion", "high-contrast"] as PrefMode[]).map(v => (
-                        <Chip key={v} active={pref === v ? "true" : "false"} onClick={() => setPref(v)}>{v}</Chip>
+                        <Chip key={v} active={pref === v} onClick={() => setPref(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
@@ -309,9 +309,9 @@ function ContainerQueryPlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎛 Container Query — layout berubah berdasarkan ukuran container, bukan viewport</PlaygroundWrap.label>
                 <ChipRow>
-                    <Chip active={width === "sm" ? "true" : "false"} onClick={() => setWidth("sm")}>container 240px</Chip>
-                    <Chip active={width === "md" ? "true" : "false"} onClick={() => setWidth("md")}>container 400px</Chip>
-                    <Chip active={width === "lg" ? "true" : "false"} onClick={() => setWidth("lg")}>container full</Chip>
+                    <Chip active={width === "sm"} onClick={() => setWidth("sm")}>container 240px</Chip>
+                    <Chip active={width === "md"} onClick={() => setWidth("md")}>container 400px</Chip>
+                    <Chip active={width === "lg"} onClick={() => setWidth("lg")}>container full</Chip>
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
                     Komponen yang sama berperilaku berbeda tergantung ukuran container-nya — bukan viewport.
@@ -1368,7 +1368,7 @@ const AnimatedButton = tw.button({
                     <TocLabel>On this page</TocLabel>
                     {TOC.map(item => (
                         <TocItem key={item.id} href={`#${item.id}`}
-                            active={activeSection === item.id ? "true" : "false"}
+                            active={activeSection === item.id}
                             onClick={() => setActiveSection(item.id)}>
                             {item.label}
                         </TocItem>

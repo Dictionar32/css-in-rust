@@ -64,7 +64,7 @@ function ViewTransitionPlayground() {
         <PlaygroundWrap.label>🎬 View Transition Playground</PlaygroundWrap.label>
         <ChipRow>
           {modes.map(m => (
-            <Chip key={m} active={mode === m ? "true" : "false"} onClick={() => setMode(m)}>
+            <Chip key={m} active={mode === m} onClick={() => setMode(m)}>
               {m}
             </Chip>
           ))}
@@ -559,7 +559,7 @@ function ProductCard({ product }: { product: { id: string; image: string; title:
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

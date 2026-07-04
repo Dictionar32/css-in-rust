@@ -535,7 +535,7 @@ function PositionBasicsPlayground() {
         <PlaygroundWrap.label>🎛 5 Nilai position — klik untuk bandingkan</PlaygroundWrap.label>
         <ChipRow>
           {(["static", "relative", "absolute", "fixed", "sticky"] as PosType[]).map(p => (
-            <Chip key={p} active={active === p ? "true" : "false"} onClick={() => setActive(p)}>
+            <Chip key={p} active={active === p} onClick={() => setActive(p)}>
               position: {p}
             </Chip>
           ))}
@@ -571,10 +571,10 @@ function ContainingBlockPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Containing Block — siapa "acuan" untuk absolute child?</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={parentPos === "static" ? "true" : "false"} onClick={() => setParentPos("static")}>
+          <Chip active={parentPos === "static"} onClick={() => setParentPos("static")}>
             parent: position static (default)
           </Chip>
-          <Chip active={parentPos === "relative" ? "true" : "false"} onClick={() => setParentPos("relative")}>
+          <Chip active={parentPos === "relative"} onClick={() => setParentPos("relative")}>
             parent: position relative
           </Chip>
         </ChipRow>
@@ -624,9 +624,9 @@ function InsetPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 inset — shorthand modern untuk top/right/bottom/left</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={mode === "full" ? "true" : "false"} onClick={() => setMode("full")}>inset-0</Chip>
-          <Chip active={mode === "partial" ? "true" : "false"} onClick={() => setMode("partial")}>inset-4</Chip>
-          <Chip active={mode === "mixed" ? "true" : "false"} onClick={() => setMode("mixed")}>individual sides</Chip>
+          <Chip active={mode === "full"} onClick={() => setMode("full")}>inset-0</Chip>
+          <Chip active={mode === "partial"} onClick={() => setMode("partial")}>inset-4</Chip>
+          <Chip active={mode === "mixed"} onClick={() => setMode("mixed")}>individual sides</Chip>
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
       </PlaygroundWrap.controls>
@@ -702,7 +702,7 @@ function ZIndexPlayground() {
               <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">{label}</p>
               <ChipRow>
                 {(["0", "10", "20", "30"] as ZMode[]).map(z => (
-                  <Chip key={z} active={val === z ? "true" : "false"} onClick={() => set(z)}>z:{z}</Chip>
+                  <Chip key={z} active={val === z} onClick={() => set(z)}>z:{z}</Chip>
                 ))}
               </ChipRow>
             </div>
@@ -739,8 +739,8 @@ function StackingTrapPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Jebakan stacking context — opacity {"<"} 1 bikin z-index "terkunci"</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={opacity === "full" ? "true" : "false"} onClick={() => setOpacity("full")}>parent: opacity 1 (normal)</Chip>
-          <Chip active={opacity === "reduced" ? "true" : "false"} onClick={() => setOpacity("reduced")}>parent: opacity 0.9</Chip>
+          <Chip active={opacity === "full"} onClick={() => setOpacity("full")}>parent: opacity 1 (normal)</Chip>
+          <Chip active={opacity === "reduced"} onClick={() => setOpacity("reduced")}>parent: opacity 0.9</Chip>
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
           {opacity === "full"
@@ -781,7 +781,7 @@ function ModalPatternPlayground() {
         <PlaygroundWrap.label>🎛 Pattern: Modal/Overlay — kombinasi fixed + inset-0 + z-index</PlaygroundWrap.label>
         <ChipRow>
           <Chip active={show ? "false" : "true"} onClick={() => setShow(true)}>Buka modal</Chip>
-          <Chip active={show ? "true" : "false"} onClick={() => setShow(false)}>Tutup modal</Chip>
+          <Chip active={show} onClick={() => setShow(false)}>Tutup modal</Chip>
         </ChipRow>
       </PlaygroundWrap.controls>
 
@@ -844,7 +844,7 @@ function AnchorPositioningPlayground() {
         <PlaygroundWrap.label>🎛 Ilustrasi CSS Anchor Positioning (fitur baru, dukungan browser terbatas)</PlaygroundWrap.label>
         <ChipRow>
           <Chip active={show ? "false" : "true"} onClick={() => setShow(true)}>Tampilkan tooltip</Chip>
-          <Chip active={show ? "true" : "false"} onClick={() => setShow(false)}>Sembunyikan</Chip>
+          <Chip active={show} onClick={() => setShow(false)}>Sembunyikan</Chip>
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
           Demo ini disimulasikan dengan <IC>absolute</IC> biasa untuk ilustrasi visual.
@@ -899,7 +899,7 @@ function StickyOverflowTrapPlayground() {
         <PlaygroundWrap.label>🎛 Jebakan sticky — overflow di ancestor yang salah</PlaygroundWrap.label>
         <ChipRow>
           {(["visible", "hidden", "auto", "scroll"] as StickyTrapOverflow[]).map(v => (
-            <Chip key={v} active={overflow === v ? "true" : "false"} onClick={() => setOverflow(v)}>
+            <Chip key={v} active={overflow === v} onClick={() => setOverflow(v)}>
               ancestor: overflow-{v}
             </Chip>
           ))}
@@ -963,7 +963,7 @@ function IsolationStackingPlayground() {
         <PlaygroundWrap.label>🎛 Semua properti yang membuat Stacking Context baru</PlaygroundWrap.label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
           {STACKING_TRIGGERS.map((t, i) => (
-            <Chip key={t.trigger} active={selected === i ? "true" : "false"} onClick={() => setSelected(i)}>
+            <Chip key={t.trigger} active={selected === i} onClick={() => setSelected(i)}>
               {t.trigger}
             </Chip>
           ))}
@@ -1025,7 +1025,7 @@ function OffsetPathPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 CSS Motion Path — gerakkan elemen mengikuti path SVG</PlaygroundWrap.label>
         <div className="flex gap-3 items-center">
-          <Chip active={playing ? "true" : "false"} onClick={() => setPlaying(p => !p)}>
+          <Chip active={playing} onClick={() => setPlaying(p => !p)}>
             {playing ? "⏸ Pause" : "▶ Play"}
           </Chip>
           <input
@@ -1929,7 +1929,7 @@ const Dropdown = tw.div({
             <TocItem
               key={item.id}
               href={`#${item.id}`}
-              active={activeSection === item.id ? "true" : "false"}
+              active={activeSection === item.id}
               onClick={() => setActiveSection(item.id)}
             >
               {item.label}

@@ -538,6 +538,116 @@ const [activeTab, setActiveTab] = useState(0)
 </Tabs>
 ```
 
+## Boolean, Number & String Variants — Type Safety
+
+The library now fully supports **boolean**, **number**, and **string literal variants** with complete TypeScript type inference:
+
+### ✅ Boolean Variants (Recommended for Toggle States)
+
+```typescript
+const Button = tw.button({
+  variants: {
+    disabled: {
+      true: "opacity-50 cursor-not-allowed",
+      false: "opacity-100 cursor-pointer"
+    }
+  },
+  defaultVariants: { disabled: false }  // ✅ Boolean false, NOT "false"
+})
+
+// Usage — Type-safe!
+<Button disabled={true} />     // ✅ Correct
+<Button disabled={false} />    // ✅ Correct
+<Button disabled={isLoading} /> // ✅ Correct
+<Button disabled="true" />      // ❌ Type Error (caught at compile time)
+```
+
+### ✅ Number Variants (For Priority, Index, Severity)
+
+```typescript
+const Alert = tw.div({
+  variants: {
+    severity: {
+      0: "bg-blue-100 text-blue-900",    // Info
+      1: "bg-yellow-100 text-yellow-900", // Warning
+      2: "bg-red-100 text-red-900"        // Error
+    }
+  },
+  defaultVariants: { severity: 0 }  // ✅ Number, not string
+})
+
+// Usage
+<Alert severity={0} />     // ✅ Info
+<Alert severity={1} />     // ✅ Warning
+<Alert severity={2} />     // ✅ Error
+<Alert severity="1" />     // ❌ Type Error
+```
+
+### ✅ String Variants (For Named States)
+
+```typescript
+const Badge = tw.span({
+  variants: {
+    status: {
+      "success": "bg-green-100 text-green-900",
+      "pending": "bg-yellow-100 text-yellow-900",
+      "error": "bg-red-100 text-red-900"
+    }
+  },
+  defaultVariants: { status: "pending" }  // ✅ String literal
+})
+
+// Usage
+<Badge status="success" />   // ✅ Correct
+<Badge status="pending" />   // ✅ Correct
+<Badge status="error" />     // ✅ Correct
+<Badge status={true} />      // ❌ Type Error
+```
+
+### ❌ Common Mistakes to Avoid
+
+```typescript
+// WRONG — String "true"/"false" for boolean variants
+const Button = tw.button({
+  variants: {
+    active: { true: "...", false: "..." }
+  },
+  defaultVariants: { active: "false" }  // ❌ ERROR: Should be boolean false
+})
+
+// WRONG — Passing string to boolean prop
+<Button active="true" />  // ❌ ERROR: Should be boolean true
+<Button active={isActive ? "true" : "false"} />  // ❌ ERROR: Strings!
+
+// CORRECT
+const Button = tw.button({
+  variants: {
+    active: { true: "...", false: "..." }
+  },
+  defaultVariants: { active: false }  // ✅ Boolean false
+})
+
+<Button active={true} />       // ✅ Correct
+<Button active={false} />      // ✅ Correct
+<Button active={isActive} />   // ✅ Correct
+```
+
+### Type Inference Table
+
+| Variant Keys | Type | defaultVariants | Usage |
+|---|---|---|---|
+| `{ true: "...", false: "..." }` | Boolean | `active: false` | `<Comp active={true} />` |
+| `{ 0: "...", 1: "...", 2: "..." }` | Number | `level: 1` | `<Comp level={2} />` |
+| `{ "small": "...", "large": "..." }` | String | `size: "small"` | `<Comp size="large" />` |
+| `{ primary: "...", secondary: "..." }` | String | `variant: "primary"` | `<Comp variant="secondary" />` |
+
+### Why Type Safety Matters Here
+
+1. **Compile-time errors**: Catch boolean/string mismatches before runtime
+2. **IDE autocomplete**: Get correct suggestions for variant values
+3. **No runtime bugs**: TypeScript prevents invalid prop combinations
+4. **Better refactoring**: Change variant types safely with full validation
+
 ## Common Patterns
 
 ### 1. Page Layout — Object Config with Sub-Components
@@ -742,7 +852,9 @@ const NavLink = tw.a({
 ### ✅ DO — Priority Order
 
 1. **Use object-config syntax for 90% of components** — Best for variants, states, subs, and ARIA
-2. **Start with `@semantic` + `@aria`** — Accessibility first, semantics second
+2. **Match defaultVariants type to variant keys** — Boolean keys need boolean defaults, number keys need number, string needs string
+3. **Use semantic boolean variants for toggle states** — `active: { true: "...", false: "..." }` is clearer than string variants
+4. **Start with `@semantic` + `@aria`** — Accessibility first, semantics second
 3. **Use sub-components for related elements** — Better organization and type safety
 4. **Declare sub-component variants** — Enable prop control on nested elements
 5. **Map states to ARIA with `@state`** — Automatically bind component state to accessibility attributes
@@ -756,8 +868,27 @@ const NavLink = tw.a({
 
 ### ❌ DON'T — Avoid Anti-Patterns
 
-1. **NEVER use inline `className=`** — Kills reusability, violates single-responsibility principle
-2. **Don't use template literals for complex components** — You lose type safety and variant support
+1. **NEVER use string "true"/"false" for boolean variants** — Use boolean `true`/`false`
+   ```typescript
+   // ❌ WRONG
+   defaultVariants: { active: "false" }  // String!
+   
+   // ✅ CORRECT
+   defaultVariants: { active: false }  // Boolean
+   ```
+
+2. **NEVER pass string values to boolean props** — Use boolean expressions
+   ```typescript
+   // ❌ WRONG
+   <Button active="true" />
+   <Button active={isActive ? "true" : "false"} />
+   
+   // ✅ CORRECT
+   <Button active={true} />
+   <Button active={isActive} />
+   ```
+
+3. **Don't mix variant types** — Use boolean for toggles, string for named states, number for levels
 3. **Don't hardcode ARIA attributes in JSX** — Declare in component config so they're consistent
 4. **Don't forget to bind states to ARIA** — Use `@state` mapping so props automatically update aria-*
 5. **Don't repeat classes across components** — Extract to a styled component immediately

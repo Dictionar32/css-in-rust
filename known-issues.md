@@ -5,6 +5,69 @@ Append-only log of diagnosed issues in this repo, newest first. Format per entry
 
 ---
 
+## 2026-07-04 — Boolean/Number/String variants in `defaultVariants` must match variant key types (TypeScript enforcement)
+
+- **Symptom:** TypeScript TS2322 errors when using boolean-keyed variants with string values in `defaultVariants` or when passing string `"true"`/`"false"` values to boolean variant props:
+  ```tsx
+  const Button = tw.button({
+    variants: { active: { true: "...", false: "..." } },
+    defaultVariants: { active: "false" }  // ❌ TS2322: Type 'string' not assignable to 'boolean'
+  })
+  
+  <Button active={isOpen ? "true" : "false"} />  // ❌ TS2322: Type 'string' not assignable to 'boolean'
+  ```
+  Similar errors with number variants using string keys in `defaultVariants` or JSX.
+
+- **Where:** Type system validates variant keys against `defaultVariants` values in `packages/domain/core/src/types.ts` (`InferDefaultVariantsType` and `InferVariantProps`); example app had 20 `styles.ts` files + 3+ `page.tsx` files with this pattern.
+
+- **Root cause:** The enhanced TypeScript type system (added in earlier fix) now correctly infers boolean literal types from variant keys (`{ true: "...", false: "..." }` → `active: boolean`), but the example app code used inconsistent types:
+  - `defaultVariants: { active: "false" }` — string literal instead of boolean
+  - `<Component active="true" />` — string instead of boolean
+  - `<Component active={condition ? "true" : "false"} />` — ternary producing strings
+  
+  This worked before because TypeScript was less strict about variant types. Now it correctly catches the mismatch.
+
+- **Validation:** The errors are correct and intentional — they indicate genuine type mismatches that could cause runtime behavior issues. Example:
+  ```typescript
+  // If variant key is true/false but default is string "false":
+  // typeof defaultVariants.active === "string"  // true!
+  // But variant keys expect boolean — type error at runtime possible
+  ```
+
+- **Fix:** Updated all affected example app files to use correct types:
+  1. **20 `styles.ts` files**: Changed `defaultVariants: { active: "false" }` → `defaultVariants: { active: false }`
+  2. **3+ `page.tsx` files**: Changed `<Chip active="true" />` → `<Chip active={true} />` and simplified ternaries:
+     - Before: `<Chip active={isOpen ? "true" : "false"} />`
+     - After: `<Chip active={isOpen} />`
+  
+  Fixed files:
+  - `examples/next-js-app/src/app/learn/mentor/styles.ts`
+  - `examples/next-js-app/src/app/learn/medium/*.styles.ts` (9 files)
+  - `examples/next-js-app/src/app/learn/advandced/*.styles.ts` (4 files)
+  - `examples/next-js-app/src/app/learn/high/*.styles.ts` (6 files)
+  - `examples/next-js-app/src/app/learn/advandced/css-functions-future/{styles,page}.tsx`
+  - `examples/next-js-app/src/app/learn/advandced/container-style-queries/{styles,page}.tsx`
+  - `examples/next-js-app/src/app/learn/advandced/popover-api/{styles,page}.tsx`
+
+- **Type Safety Matrix:**
+  ```
+  Variant Keys              | Type         | defaultVariants | Usage
+  { true: "...", false: "" }| boolean      | active: false   | <C active={bool} />
+  { 0: "...", 1: "..." }    | number       | level: 1        | <C level={num} />
+  { "x": "...", "y": "" }   | string       | mode: "x"       | <C mode="string" />
+  ```
+
+- **Related documentation:** New steering guide `.kiro/steering/boolean-variants.md` documents:
+  - Type matching rules (boolean, number, string)
+  - Common mistakes and how to fix them
+  - Migration patterns
+  - Real-world component examples
+  - Pre-shipping checklist
+
+- **Status:** Fixed. All example app files now pass `npx tsc --noEmit` with 0 errors. This is not a bug in the library — it's intentional type enforcement that was missing before. The fix aligns example code with the library's type system design.
+
+---
+
 ## 2026-07-04 — `RuntimeProps` type did not support native HTML attributes (ARIA, `role`, etc.) on `tw.*` styled components
 
 - **Symptom:** TypeScript error when passing standard HTML attributes like `role`, `aria-label`, `aria-checked`, `aria-selected`, etc. to `tw.*` components:

@@ -49,7 +49,7 @@ function AnchorPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>⚓ Anchor Positioning Playground</PlaygroundWrap.label>
         <ChipRow>
-          {positions.map(p => <Chip key={p} active={pos === p ? "true" : "false"} onClick={() => setPos(p)}>{p}</Chip>)}
+          {positions.map(p => <Chip key={p} active={pos === p} onClick={() => setPos(p)}>{p}</Chip>)}
         </ChipRow>
         <P>Simulasi tooltip mengikuti anchor element</P>
       </PlaygroundWrap.controls>
@@ -508,7 +508,7 @@ function App() {
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

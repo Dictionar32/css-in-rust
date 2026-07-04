@@ -366,7 +366,7 @@ function DirectionPlayground() {
                 <PlaygroundWrap.label>🎛 flex-direction — arah main axis</PlaygroundWrap.label>
                 <ChipRow>
                     {(["row", "row-reverse", "column", "column-reverse"] as DirType[]).map(v => (
-                        <Chip key={v} active={dir === v ? "true" : "false"} onClick={() => setDir(v)}>{v}</Chip>
+                        <Chip key={v} active={dir === v} onClick={() => setDir(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[dir]}</p>
@@ -400,7 +400,7 @@ function WrapPlayground() {
                 <PlaygroundWrap.label>🎛 flex-wrap — boleh multi-baris atau tidak</PlaygroundWrap.label>
                 <ChipRow>
                     {(["nowrap", "wrap", "wrap-reverse"] as WrapType[]).map(v => (
-                        <Chip key={v} active={wrap === v ? "true" : "false"} onClick={() => setWrap(v)}>{v}</Chip>
+                        <Chip key={v} active={wrap === v} onClick={() => setWrap(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[wrap]}</p>
@@ -438,7 +438,7 @@ function JustifyPlayground() {
                 <PlaygroundWrap.label>🎛 justify-content — distribusi ruang di main axis</PlaygroundWrap.label>
                 <ChipRow>
                     {(["flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly", "stretch"] as JustifyType[]).map(v => (
-                        <Chip key={v} active={justify === v ? "true" : "false"} onClick={() => setJustify(v)}>{v}</Chip>
+                        <Chip key={v} active={justify === v} onClick={() => setJustify(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[justify]}</p>
@@ -474,7 +474,7 @@ function AlignItemsPlayground() {
                 <PlaygroundWrap.label>🎛 align-items — posisi di cross axis (semua items)</PlaygroundWrap.label>
                 <ChipRow>
                     {(["flex-start", "flex-end", "center", "stretch", "baseline"] as AlignItemsType[]).map(v => (
-                        <Chip key={v} active={align === v ? "true" : "false"} onClick={() => setAlign(v)}>{v}</Chip>
+                        <Chip key={v} active={align === v} onClick={() => setAlign(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[align]}</p>
@@ -511,7 +511,7 @@ function AlignSelfPlayground() {
                 <PlaygroundWrap.label>🎛 align-self — override align-items untuk satu item saja (Box merah)</PlaygroundWrap.label>
                 <ChipRow>
                     {(["auto", "flex-start", "flex-end", "center", "stretch", "baseline"] as AlignSelfType[]).map(v => (
-                        <Chip key={v} active={self === v ? "true" : "false"} onClick={() => setSelf(v)}>{v}</Chip>
+                        <Chip key={v} active={self === v} onClick={() => setSelf(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[self]}</p>
@@ -549,7 +549,7 @@ function AlignContentPlayground() {
                 <PlaygroundWrap.label>🎛 align-content — distribusi baris di cross axis (hanya aktif saat flex-wrap: wrap)</PlaygroundWrap.label>
                 <ChipRow>
                     {(["flex-start", "flex-end", "center", "space-between", "space-around", "space-evenly", "stretch"] as AlignContentType[]).map(v => (
-                        <Chip key={v} active={content === v ? "true" : "false"} onClick={() => setContent(v)}>{v}</Chip>
+                        <Chip key={v} active={content === v} onClick={() => setContent(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[content]}</p>
@@ -579,8 +579,8 @@ function GrowShrinkPlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎛 flex-grow & flex-shrink — bagaimana free space dibagi</PlaygroundWrap.label>
                 <ChipRow>
-                    <Chip active={mode === "grow" ? "true" : "false"} onClick={() => setMode("grow")}>flex-grow (positive free space)</Chip>
-                    <Chip active={mode === "shrink" ? "true" : "false"} onClick={() => setMode("shrink")}>flex-shrink (negative free space)</Chip>
+                    <Chip active={mode === "grow"} onClick={() => setMode("grow")}>flex-grow (positive free space)</Chip>
+                    <Chip active={mode === "shrink"} onClick={() => setMode("shrink")}>flex-shrink (negative free space)</Chip>
                 </ChipRow>
                 <div className="grid grid-cols-3 gap-4">
                     {[
@@ -650,7 +650,7 @@ function BasisPlayground() {
                 <PlaygroundWrap.label>🎛 flex-basis — ukuran awal sebelum grow/shrink bekerja</PlaygroundWrap.label>
                 <ChipRow>
                     {(["auto", "0", "content", "100px", "33%", "50%"] as BasisMode[]).map(v => (
-                        <Chip key={v} active={basis === v ? "true" : "false"} onClick={() => setBasis(v)}>{v}</Chip>
+                        <Chip key={v} active={basis === v} onClick={() => setBasis(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[basis]}</p>
@@ -681,7 +681,7 @@ function OrderPlayground() {
                 <PlaygroundWrap.label>🎛 order — ubah urutan visual tanpa ubah DOM (ubah order item B/biru)</PlaygroundWrap.label>
                 <ChipRow>
                     {(["-1", "0", "1", "2", "3", "last"] as const).map(v => (
-                        <Chip key={v} active={orderB === v ? "true" : "false"} onClick={() => setOrderB(v)}>order: {v}</Chip>
+                        <Chip key={v} active={orderB === v} onClick={() => setOrderB(v)}>order: {v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
@@ -723,7 +723,7 @@ function GapPlayground() {
                 <PlaygroundWrap.label>🎛 gap — jarak antar flex items (pengganti margin)</PlaygroundWrap.label>
                 <ChipRow>
                     {(["0", "2", "4", "6", "8", "asymmetric"] as GapMode[]).map(v => (
-                        <Chip key={v} active={gap === v ? "true" : "false"} onClick={() => setGap(v)}>{v}</Chip>
+                        <Chip key={v} active={gap === v} onClick={() => setGap(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{gapDesc[gap]}</p>
@@ -1696,7 +1696,7 @@ const CardGrid = tw.div({
                         <TocItem
                             key={item.id}
                             href={`#${item.id}`}
-                            active={activeSection === item.id ? "true" : "false"}
+                            active={activeSection === item.id}
                             onClick={() => setActiveSection(item.id)}
                         >
                             {item.label}

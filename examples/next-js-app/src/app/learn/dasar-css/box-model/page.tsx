@@ -1130,7 +1130,7 @@ function BoxSizingPlayground() {
           <ControlGroup.label>padding</ControlGroup.label>
           <ChipRow>
             {(["none", "md", "lg"] as PaddingLevel[]).map(v => (
-              <Chip key={v} active={padding === v ? "true" : "false"} onClick={() => setPadding(v)}>
+              <Chip key={v} active={padding === v} onClick={() => setPadding(v)}>
                 {PADDING_LEVEL_MAP[v]}
               </Chip>
             ))}
@@ -1195,7 +1195,7 @@ function OutlineBorderPlayground() {
         <PlaygroundWrap.label>🎛 outline vs border</PlaygroundWrap.label>
         <ChipRow>
           {(["border", "outline", "border+m", "outline+m"] as OutlineBorderType[]).map(v => (
-            <Chip key={v} active={type === v ? "true" : "false"} onClick={() => setType(v)}>{v}</Chip>
+            <Chip key={v} active={type === v} onClick={() => setType(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>
@@ -1243,7 +1243,7 @@ function MarginCollapsePlayground() {
             <ControlGroup.label>margin-top/bottom</ControlGroup.label>
             <ChipRow>
               {(["2", "4", "8", "12"] as CollapseMargin[]).map(v => (
-                <Chip key={v} active={margin === v ? "true" : "false"} onClick={() => setMargin(v)}>
+                <Chip key={v} active={margin === v} onClick={() => setMargin(v)}>
                   {SPACING_PX[v]}
                 </Chip>
               ))}
@@ -1252,8 +1252,8 @@ function MarginCollapsePlayground() {
           <ControlGroup>
             <ControlGroup.label>mode</ControlGroup.label>
             <ChipRow>
-              <Chip active={showCollapse ? "true" : "false"} onClick={() => setShowCollapse(true)}>collapse (block)</Chip>
-              <Chip active={!showCollapse ? "true" : "false"} onClick={() => setShowCollapse(false)}>no collapse (flex)</Chip>
+              <Chip active={showCollapse} onClick={() => setShowCollapse(true)}>collapse (block)</Chip>
+              <Chip active={!showCollapse} onClick={() => setShowCollapse(false)}>no collapse (flex)</Chip>
             </ChipRow>
           </ControlGroup>
         </ControlsRow>
@@ -1316,7 +1316,7 @@ function OverflowPlayground() {
         <PlaygroundWrap.label>🎛 overflow — apa yang terjadi kalau konten melebihi box</PlaygroundWrap.label>
         <ChipRow>
           {(["visible", "hidden", "scroll", "auto", "clip"] as OverflowValue[]).map(v => (
-            <Chip key={v} active={overflow === v ? "true" : "false"} onClick={() => setOverflow(v)}>{v}</Chip>
+            <Chip key={v} active={overflow === v} onClick={() => setOverflow(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>
@@ -1370,7 +1370,7 @@ function WidthPlayground() {
         <PlaygroundWrap.label>🎛 width / min-width / max-width / intrinsic sizing</PlaygroundWrap.label>
         <ChipRow>
           {(["width", "minWidth", "maxWidth", "minContent", "maxContent", "fitContent"] as WidthType[]).map(v => (
-            <Chip key={v} active={type === v ? "true" : "false"} onClick={() => setType(v)}>
+            <Chip key={v} active={type === v} onClick={() => setType(v)}>
               {v === "width" ? "width" : v === "minWidth" ? "min-w" : v === "maxWidth" ? "max-w" : v === "minContent" ? "min-content" : v === "maxContent" ? "max-content" : "fit-content"}
             </Chip>
           ))}
@@ -1416,7 +1416,7 @@ function NegativeMarginPlayground() {
         <PlaygroundWrap.label>🎛 Negative margin — tarik elemen ke arah sebaliknya</PlaygroundWrap.label>
         <ChipRow>
           {(["0", "-2", "-4", "-8", "-12"] as NegMarginVal[]).map(v => (
-            <Chip key={v} active={neg === v ? "true" : "false"} onClick={() => setNeg(v)}>
+            <Chip key={v} active={neg === v} onClick={() => setNeg(v)}>
               margin-top: {v === "0" ? "0" : v + " (" + Math.abs(parseInt(v)) * 4 + "px)"}
             </Chip>
           ))}
@@ -1465,7 +1465,7 @@ function CalcPlayground() {
         <PlaygroundWrap.label>🎛 calc() — kombinasi unit berbeda dalam satu nilai</PlaygroundWrap.label>
         <ChipRow>
           {(["full", "minus", "minus2", "half", "third"] as CalcMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[mode]}</DescText>
@@ -1524,7 +1524,7 @@ function AspectRatioPlayground() {
         <PlaygroundWrap.label>🎛 aspect-ratio — jaga proporsi tanpa height eksplisit</PlaygroundWrap.label>
         <ChipRow>
           {(["square", "video", "4-3", "21-9", "9-16"] as AspectMode[]).map(v => (
-            <Chip key={v} active={ratio === v ? "true" : "false"} onClick={() => setRatio(v)}>{ratioLabel[v]}</Chip>
+            <Chip key={v} active={ratio === v} onClick={() => setRatio(v)}>{ratioLabel[v]}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -1556,8 +1556,8 @@ function LogicalPropsPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Logical Properties — padding-inline-start vs padding-left</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={dir === "ltr" ? "true" : "false"} onClick={() => setDir("ltr")}>ltr (kiri ke kanan)</Chip>
-          <Chip active={dir === "rtl" ? "true" : "false"} onClick={() => setDir("rtl")}>rtl (kanan ke kiri)</Chip>
+          <Chip active={dir === "ltr"} onClick={() => setDir("ltr")}>ltr (kiri ke kanan)</Chip>
+          <Chip active={dir === "rtl"} onClick={() => setDir("rtl")}>rtl (kanan ke kiri)</Chip>
         </ChipRow>
         <DescText>
           <IC>ps-4</IC> (padding-inline-start) otomatis mengikuti arah teks — di RTL dia jadi padding kanan, bukan kiri.
@@ -1596,8 +1596,8 @@ function BoxDecorationPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 box-decoration-break — styling elemen inline yang wrap ke baris baru</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={mode === "slice" ? "true" : "false"} onClick={() => setMode("slice")}>slice (default)</Chip>
-          <Chip active={mode === "clone" ? "true" : "false"} onClick={() => setMode("clone")}>clone</Chip>
+          <Chip active={mode === "slice"} onClick={() => setMode("slice")}>slice (default)</Chip>
+          <Chip active={mode === "clone"} onClick={() => setMode("clone")}>clone</Chip>
         </ChipRow>
         <DescText>
           {mode === "slice"
@@ -1635,8 +1635,8 @@ function MinWidthFlexPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 min-width: 0 — kenapa teks panjang bikin flex item overflow</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={fix === "broken" ? "true" : "false"} onClick={() => setFix("broken")}>❌ tanpa min-w-0</Chip>
-          <Chip active={fix === "ok" ? "true" : "false"} onClick={() => setFix("ok")}>✅ dengan min-w-0 + truncate</Chip>
+          <Chip active={fix === "broken"} onClick={() => setFix("broken")}>❌ tanpa min-w-0</Chip>
+          <Chip active={fix === "ok"} onClick={() => setFix("ok")}>✅ dengan min-w-0 + truncate</Chip>
         </ChipRow>
         <DescText>
           {fix === "broken"
@@ -1689,7 +1689,7 @@ function WritingModePlayground() {
         <PlaygroundWrap.label>🎛 writing-mode — block & inline axis bisa diputar</PlaygroundWrap.label>
         <ChipRow>
           {(["horizontal", "vertical", "verticalLr"] as WritingMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>
               {v === "horizontal" ? "horizontal-tb (default)" : v === "vertical" ? "vertical-rl" : "vertical-lr"}
             </Chip>
           ))}
@@ -1727,7 +1727,7 @@ function ResizePlayground() {
         <PlaygroundWrap.label>🎛 resize — biarkan user resize elemen manual (drag pojok kanan bawah)</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "both", "horizontal", "vertical"] as ResizeMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -1755,8 +1755,8 @@ function TableBoxPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 border-collapse — box model tabel berbeda dari elemen biasa</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={mode === "collapse" ? "true" : "false"} onClick={() => setMode("collapse")}>border-collapse</Chip>
-          <Chip active={mode === "separate" ? "true" : "false"} onClick={() => setMode("separate")}>border-separate</Chip>
+          <Chip active={mode === "collapse"} onClick={() => setMode("collapse")}>border-collapse</Chip>
+          <Chip active={mode === "separate"} onClick={() => setMode("separate")}>border-separate</Chip>
         </ChipRow>
         <DescText>
           {mode === "collapse"
@@ -1814,7 +1814,7 @@ function ContainPlayground() {
         <PlaygroundWrap.label>🎛 contain — CSS Containment untuk optimasi performa rendering</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "layout", "paint", "content", "strict"] as ContainMode[]).map(v => (
-            <Chip key={v} active={contain === v ? "true" : "false"} onClick={() => setContain(v)}>{v}</Chip>
+            <Chip key={v} active={contain === v} onClick={() => setContain(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[contain]}</DescText>
@@ -1848,8 +1848,8 @@ function ScrollbarGutterPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 scrollbar-gutter — cegah layout shift saat scrollbar muncul/hilang</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={gutter === "auto" ? "true" : "false"} onClick={() => setGutter("auto")}>auto (default)</Chip>
-          <Chip active={gutter === "stable" ? "true" : "false"} onClick={() => setGutter("stable")}>stable</Chip>
+          <Chip active={gutter === "auto"} onClick={() => setGutter("auto")}>auto (default)</Chip>
+          <Chip active={gutter === "stable"} onClick={() => setGutter("stable")}>stable</Chip>
         </ChipRow>
         <DescText>
           {gutter === "auto"
@@ -1911,7 +1911,7 @@ function BorderRadiusPlayground() {
         <PlaygroundWrap.label>🎛 border-radius — dari kotak ke lingkaran ke blob</PlaygroundWrap.label>
         <ChipRow>
           {radii.map(v => (
-            <Chip key={v} active={radius === v ? "true" : "false"} onClick={() => setRadius(v)}>{v}</Chip>
+            <Chip key={v} active={radius === v} onClick={() => setRadius(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[radius]}</DescText>
@@ -1964,7 +1964,7 @@ function BorderStylePlayground() {
         <PlaygroundWrap.label>🎛 border-style — semua 10 nilai</PlaygroundWrap.label>
         <ChipRow>
           {styles.map(v => (
-            <Chip key={v} active={style === v ? "true" : "false"} onClick={() => setStyle(v)}>{v}</Chip>
+            <Chip key={v} active={style === v} onClick={() => setStyle(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[style]}</DescText>
@@ -2001,7 +2001,7 @@ function ClampPlayground() {
         <PlaygroundWrap.label>🎛 clamp(MIN, PREFERRED, MAX) — fluid sizing dalam satu fungsi</PlaygroundWrap.label>
         <ChipRow>
           {(["fixed", "min-w", "clamp", "clamp2"] as ClampMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[mode]}</DescText>
@@ -2049,7 +2049,7 @@ function VisibilityPlayground() {
         <PlaygroundWrap.label>🎛 visibility vs display:none vs opacity:0</PlaygroundWrap.label>
         <ChipRow>
           {(["visible", "display-none", "visibility-hid", "opacity-0"] as VisMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>
               {v}
             </Chip>
           ))}
@@ -2105,7 +2105,7 @@ function MarginAutoPlayground() {
         <PlaygroundWrap.label>🎛 margin: auto — cara kerja centering klasik</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "center", "left", "right", "flex-center"] as AutoMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <DescText>{descriptions[mode]}</DescText>
@@ -2167,7 +2167,7 @@ function BoxShadowPlayground() {
           <ControlGroup.label>Pilih shadow type</ControlGroup.label>
           <ChipRow>
             {(["none", "box-sm", "box-md", "box-lg", "box-xl", "box-inset", "drop-sm", "drop-lg"] as ShadowMode[]).map(v => (
-              <Chip key={v} active={shadow === v ? "true" : "false"} onClick={() => setShadow(v)}>{v}</Chip>
+              <Chip key={v} active={shadow === v} onClick={() => setShadow(v)}>{v}</Chip>
             ))}
           </ChipRow>
           <DescText>{shadowDescriptions[shadow]}</DescText>
@@ -2175,8 +2175,8 @@ function BoxShadowPlayground() {
         <ControlGroup>
           <ControlGroup.label>Shape test (lihat perbedaan pada icon/clip-path)</ControlGroup.label>
           <ChipRow>
-            <Chip active={shape === "box-shadow" ? "true" : "false"} onClick={() => setShape("box-shadow")}>box-shadow</Chip>
-            <Chip active={shape === "drop-shadow" ? "true" : "false"} onClick={() => setShape("drop-shadow")}>drop-shadow</Chip>
+            <Chip active={shape === "box-shadow"} onClick={() => setShape("box-shadow")}>box-shadow</Chip>
+            <Chip active={shape === "drop-shadow"} onClick={() => setShape("drop-shadow")}>drop-shadow</Chip>
           </ChipRow>
           <DescText>
             {shape === "box-shadow"
@@ -3780,7 +3780,7 @@ const ScrollArea = tw.div({
               key={item.id}
               href={`#${item.id}`}
               depth={item.depth}
-              active={activeSection === item.id ? "true" : "false"}
+              active={activeSection === item.id}
               onClick={() => setActiveSection(item.id)}
             >
               {item.label}

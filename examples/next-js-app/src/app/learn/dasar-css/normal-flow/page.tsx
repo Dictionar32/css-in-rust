@@ -512,7 +512,7 @@ function PositionPlayground() {
         <PlaygroundWrap.label>🎛 position — static / relative / absolute</PlaygroundWrap.label>
         <ChipRow>
           {(["static", "relative", "absolute"] as PositionMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
@@ -663,7 +663,7 @@ function DisplayPlayground() {
         <PlaygroundWrap.label>🎛 display playground</PlaygroundWrap.label>
         <ChipRow>
           {(["block", "inline", "inline-block", "none"] as DisplayType[]).map(v => (
-            <Chip key={v} active={type === v ? "true" : "false"} onClick={() => setType(v)}>{v}</Chip>
+            <Chip key={v} active={type === v} onClick={() => setType(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[type]}</p>
@@ -697,7 +697,7 @@ function VerticalAlignPlayground() {
         <PlaygroundWrap.label>🎛 vertical-align — hanya berlaku untuk inline/inline-block</PlaygroundWrap.label>
         <ChipRow>
           {(["baseline", "top", "middle", "bottom", "text-top", "text-bottom"] as VAlign[]).map(v => (
-            <Chip key={v} active={valign === v ? "true" : "false"} onClick={() => setValign(v)}>{v}</Chip>
+            <Chip key={v} active={valign === v} onClick={() => setValign(v)}>{v}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -739,7 +739,7 @@ function WhitespacePlayground() {
         <PlaygroundWrap.label>🎛 white-space — Normal Flow juga mengatur collapsing whitespace di teks</PlaygroundWrap.label>
         <ChipRow>
           {(["normal", "pre", "pre-wrap", "nowrap"] as WsMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>{v}</Chip>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{descriptions[mode]}</p>
@@ -773,15 +773,15 @@ function FloatPlayground() {
             <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">float</p>
             <ChipRow>
               {(["none", "left", "right"] as FloatType[]).map(v => (
-                <Chip key={v} active={float === v ? "true" : "false"} onClick={() => setFloat(v)}>{v}</Chip>
+                <Chip key={v} active={float === v} onClick={() => setFloat(v)}>{v}</Chip>
               ))}
             </ChipRow>
           </div>
           <div className="space-y-1.5">
             <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">clearfix di bawah</p>
             <ChipRow>
-              <Chip active={clear === "none" ? "true" : "false"} onClick={() => setClear("none")}>tanpa clear</Chip>
-              <Chip active={clear === "both" ? "true" : "false"} onClick={() => setClear("both")}>clear-both</Chip>
+              <Chip active={clear === "none"} onClick={() => setClear("none")}>tanpa clear</Chip>
+              <Chip active={clear === "both"} onClick={() => setClear("both")}>clear-both</Chip>
             </ChipRow>
           </div>
         </div>
@@ -827,7 +827,7 @@ function BfcPlayground() {
         <PlaygroundWrap.label>🎛 Block Formatting Context — kenapa parent "tidak tahu" tinggi float child-nya</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "flowRoot", "overflow", "flex"] as BfcMode[]).map(v => (
-            <Chip key={v} active={mode === v ? "true" : "false"} onClick={() => setMode(v)}>
+            <Chip key={v} active={mode === v} onClick={() => setMode(v)}>
               {v === "none" ? "tanpa BFC" : v === "flowRoot" ? "flow-root" : v === "overflow" ? "overflow-hidden" : "display: flex"}
             </Chip>
           ))}
@@ -875,7 +875,7 @@ function IfcPlayground() {
         <PlaygroundWrap.label>🎛 Inline Formatting Context — line-box dan baseline alignment</PlaygroundWrap.label>
         <ChipRow>
           {(["tight", "normal", "relaxed", "loose"] as LineHeight[]).map(v => (
-            <Chip key={v} active={lh === v ? "true" : "false"} onClick={() => setLh(v)}>{v}</Chip>
+            <Chip key={v} active={lh === v} onClick={() => setLh(v)}>{v}</Chip>
           ))}
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
@@ -920,7 +920,7 @@ function InlineGapPlayground() {
         <PlaygroundWrap.label>🎛 Gap misterius ~4px antar inline-block — kenapa dan cara fix</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "fontZero", "flexFix"] as GapFix[]).map(v => (
-            <Chip key={v} active={fix === v ? "true" : "false"} onClick={() => setFix(v)}>
+            <Chip key={v} active={fix === v} onClick={() => setFix(v)}>
               {v === "none" ? "default (ada gap)" : v === "fontZero" ? "font-size: 0" : "display: flex"}
             </Chip>
           ))}
@@ -959,8 +959,8 @@ function DirectionPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 direction: rtl — Normal Flow berubah arah untuk bahasa Arab/Ibrani</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={dir === "ltr" ? "true" : "false"} onClick={() => setDir("ltr")}>ltr (default)</Chip>
-          <Chip active={dir === "rtl" ? "true" : "false"} onClick={() => setDir("rtl")}>rtl</Chip>
+          <Chip active={dir === "ltr"} onClick={() => setDir("ltr")}>ltr (default)</Chip>
+          <Chip active={dir === "rtl"} onClick={() => setDir("rtl")}>rtl</Chip>
         </ChipRow>
       </PlaygroundWrap.controls>
 
@@ -1028,10 +1028,10 @@ function WritingModeAxisPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 writing-mode — block & inline axis bisa diputar 90°</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={mode === "horizontal" ? "true" : "false"} onClick={() => setMode("horizontal")}>
+          <Chip active={mode === "horizontal"} onClick={() => setMode("horizontal")}>
             horizontal-tb (default)
           </Chip>
-          <Chip active={mode === "vertical" ? "true" : "false"} onClick={() => setMode("vertical")}>
+          <Chip active={mode === "vertical"} onClick={() => setMode("vertical")}>
             vertical-rl
           </Chip>
         </ChipRow>
@@ -1121,7 +1121,7 @@ function ListMarkersPlayground() {
             <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">list-style-type</p>
             <ChipRow>
               {(["disc", "decimal", "square", "none"] as ListStyle[]).map(v => (
-                <Chip key={v} active={style === v ? "true" : "false"} onClick={() => setStyle(v)}>{v}</Chip>
+                <Chip key={v} active={style === v} onClick={() => setStyle(v)}>{v}</Chip>
               ))}
             </ChipRow>
           </div>
@@ -1129,7 +1129,7 @@ function ListMarkersPlayground() {
             <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] font-semibold uppercase tracking-wider">list-style-position</p>
             <ChipRow>
               {(["inside", "outside"] as ListPosition[]).map(v => (
-                <Chip key={v} active={position === v ? "true" : "false"} onClick={() => setPosition(v)}>{v}</Chip>
+                <Chip key={v} active={position === v} onClick={() => setPosition(v)}>{v}</Chip>
               ))}
             </ChipRow>
           </div>
@@ -1170,11 +1170,11 @@ function TextIndentPlayground() {
         <PlaygroundWrap.label>🎛 text-indent — indentasi baris pertama paragraf (gaya buku cetak)</PlaygroundWrap.label>
         <ChipRow>
           {(["none", "sm", "lg"] as IndentSize[]).map(v => (
-            <Chip key={v} active={indent === v && !showDropCap ? "true" : "false"} onClick={() => { setIndent(v); setShowDropCap(false) }}>
+            <Chip key={v} active={indent === v && !showDropCap} onClick={() => { setIndent(v); setShowDropCap(false) }}>
               {v === "none" ? "tanpa indent" : v === "sm" ? "indent 16px" : "indent 32px"}
             </Chip>
           ))}
-          <Chip active={showDropCap ? "true" : "false"} onClick={() => setShowDropCap(true)}>drop cap (initial-letter)</Chip>
+          <Chip active={showDropCap} onClick={() => setShowDropCap(true)}>drop cap (initial-letter)</Chip>
         </ChipRow>
       </PlaygroundWrap.controls>
 
@@ -1223,8 +1223,8 @@ function DisplayContentsPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 display: contents — wrapper "menghilang" dari box tree</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={mode === "block" ? "true" : "false"} onClick={() => setMode("block")}>display: block (normal)</Chip>
-          <Chip active={mode === "contents" ? "true" : "false"} onClick={() => setMode("contents")}>display: contents</Chip>
+          <Chip active={mode === "block"} onClick={() => setMode("block")}>display: block (normal)</Chip>
+          <Chip active={mode === "contents"} onClick={() => setMode("contents")}>display: contents</Chip>
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
           {mode === "block"
@@ -1279,7 +1279,7 @@ function LineHeightStrutPlayground() {
         <PlaygroundWrap.label>🎛 Strut — invisible zero-width inline box yang set tinggi minimum line box</PlaygroundWrap.label>
         <ChipRow>
           {(["1", "1.5", "2"] as StrutLH[]).map(v => (
-            <Chip key={v} active={lh === v ? "true" : "false"} onClick={() => setLh(v)}>leading: {v}</Chip>
+            <Chip key={v} active={lh === v} onClick={() => setLh(v)}>leading: {v}</Chip>
           ))}
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[lh]}</p>
@@ -2304,7 +2304,7 @@ const ArticleBody = tw.div({
             <TocItem
               key={item.id}
               href={`#${item.id}`}
-              active={activeSection === item.id ? "true" : "false"}
+              active={activeSection === item.id}
               onClick={() => setActiveSection(item.id)}
             >
               {item.label}
