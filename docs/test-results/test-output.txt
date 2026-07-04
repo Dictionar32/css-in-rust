@@ -1,0 +1,146 @@
+
+✅ Known Issues Validation Test Suite loaded
+Run with: npm run test:all or node --test tests/known-issues-validation.test.mjs
+
+⚠️  dist/index.mjs not found - run npm run build first
+⚠️  dist/index.mjs not found - run npm run build first
+⚠️  dist/index.mjs not found - run npm run build first
+⚠️  dist/runtime.mjs not found - run npm run build first
+⚠️  dist/theme.mjs not found - run npm run build first
+▶ Known Issues Validation
+  ▶ Issue: onChange/onClick event handler type inference (2026-07-02)
+    ✔ types.ts should NOT have index signature [key: string]: unknown (1.244244ms)
+    ✖ TwStyledComponent should have Tag generic parameter (1.261063ms)
+    ✔ TwTagFactory should propagate concrete tag to TwTemplateFactory (1.774157ms)
+    ✖ TwStyledComponent call signature should use React.ComponentPropsWithoutRef<Tag> (0.693258ms)
+  ✖ Issue: onChange/onClick event handler type inference (2026-07-02) (6.492444ms)
+  ▶ Issue: Sub-component 'a:link' href type + runtime props drop (2026-06-30)
+    ✔ types.ts should have InferSubTagsFromConfig helper type (0.527642ms)
+    ✔ TwSubComponentAccessor should be generic over Tag (0.489839ms)
+    ✔ createComponent.ts should spread ...rest props in createElement (0.611283ms)
+    ✖ SubComponent should destructure children, className, and ...rest (0.381224ms)
+  ✖ Issue: Sub-component 'a:link' href type + runtime props drop (2026-06-30) (2.580622ms)
+  ▶ Issue: dist/index.mjs 'use client' taint + Turbopack fs resolution (2026-06-28)
+    ✔ dist/index.mjs should NOT have 'use client' directive (0.391397ms)
+    ✔ dist/index.mjs should NOT import node:fs or node:module (0.309757ms)
+    ✔ dist/index.mjs should NOT export liveToken functions (0.269392ms)
+    ✔ dist/runtime.mjs should have 'use client' directive (0.218952ms)
+    ✔ dist/theme.mjs should NOT have 'use client' directive (0.193026ms)
+    ✔ tsup.config.ts should have esbuildPlugins with native redirect for index entry (0.234321ms)
+    ✔ packages/domain/theme/src/index.server.ts should exist (0.120913ms)
+  ✔ Issue: dist/index.mjs 'use client' taint + Turbopack fs resolution (2026-06-28) (2.209226ms)
+  ▶ Issue: preserveDirectives() never injects 'use client' (2026-06-27)
+    ✔ preserveDirectives function should handle both ESM and CJS metafiles (0.31434ms)
+  ✔ Issue: preserveDirectives() never injects 'use client' (2026-06-27) (0.42918ms)
+  ▶ Issue: Polymorphic 'as' prop type narrowing (2026-07-02)
+    ✔ StyledComponentProps should have 'as' prop (0.26562ms)
+    ✔ known-issues.md should document 'as' polymorphism as design decision (0.240617ms)
+  ✔ Issue: Polymorphic 'as' prop type narrowing (2026-07-02) (0.674882ms)
+  ▶ Issue: Route CSS splitting and manifest generation (2026-06-27)
+    ✔ packages/domain/compiler/src/routeGraph.ts should exist (0.185899ms)
+    ✔ routeGraph.ts should export buildRouteClassBuckets (0.171114ms)
+    ✔ withTailwindStyled should use buildRouteClassBuckets (0.281264ms)
+    ✔ stripJsonComments should handle string literals correctly (0.178013ms)
+    ✖ mangled Routecssmanifestplugin .ts file should NOT exist (0.255331ms)
+    ✔ getAllRoutes function should be removed from compiler/index.ts (0.231778ms)
+  ✖ Issue: Route CSS splitting and manifest generation (2026-06-27) (1.617012ms)
+  ▶ Issue: Turbopack webpack() callback never runs (2026-06-27)
+    ✔ withTailwindStyled should have config-eval-time IIFE for CSS generation (0.368939ms)
+    ✔ StaticCssWebpackPlugin should exist with status comment (0.126188ms)
+  ✔ Issue: Turbopack webpack() callback never runs (2026-06-27) (0.634754ms)
+  ▶ General validation checks
+    ✔ known-issues.md should follow append-only format (0.397854ms)
+    ✔ all fixed issues should have 'Status: Fixed' or 'Status: Design decision' (0.359976ms)
+    ✔ core createComponent should have .extend() method (0.745999ms)
+    ✔ packages should not have duplicate package.json exports (0.291095ms)
+  ✔ General validation checks (2.009073ms)
+  ▶ Integration validation
+    ✔ example app should have ThemeProvider with useEffect pattern (0.182803ms)
+    ✔ example app should NOT use suppressHydrationWarning (0.14196ms)
+  ✔ Integration validation (0.459459ms)
+✖ Known Issues Validation (18.657677ms)
+ℹ tests 32
+ℹ suites 10
+ℹ pass 28
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 126.044189
+
+✖ failing tests:
+
+test at tests/known-issues-validation.test.mjs:38:9
+✖ TwStyledComponent should have Tag generic parameter (1.261063ms)
+  AssertionError [ERR_ASSERTION]: TwStyledComponent should have Tag extends HtmlTagName parameter
+      at TestContext.<anonymous> (file:///home/annas-zen/Documents/css-in-rust/tests/known-issues-validation.test.mjs:47:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1869:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1869:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/known-issues-validation.test.mjs:66:9
+✖ TwStyledComponent call signature should use React.ComponentPropsWithoutRef<Tag> (0.693258ms)
+  AssertionError [ERR_ASSERTION]: TwStyledComponent call signature should exist
+      at TestContext.<anonymous> (file:///home/annas-zen/Documents/css-in-rust/tests/known-issues-validation.test.mjs:72:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/known-issues-validation.test.mjs:122:9
+✖ SubComponent should destructure children, className, and ...rest (0.381224ms)
+  AssertionError [ERR_ASSERTION]: SubComponent should destructure { children, className, ...rest }
+      at TestContext.<anonymous> (file:///home/annas-zen/Documents/css-in-rust/tests/known-issues-validation.test.mjs:130:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/known-issues-validation.test.mjs:336:9
+✖ mangled Routecssmanifestplugin .ts file should NOT exist (0.255331ms)
+  AssertionError [ERR_ASSERTION]: Mangled 'Routecssmanifestplugin .ts' (with space) should NOT exist
+      at TestContext.<anonymous> (file:///home/annas-zen/Documents/css-in-rust/tests/known-issues-validation.test.mjs:338:20)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

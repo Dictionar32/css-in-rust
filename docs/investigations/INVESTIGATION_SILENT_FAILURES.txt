@@ -1,0 +1,39 @@
+## Silent Command Outputs - Investigation
+
+Date: July 4, 2026
+
+### Issue
+Commands like `tail`, `wc -l`, and redirects to files are outputting nothing, even though they execute (Exit Code 0).
+
+### Symptoms
+- `tail -30 /file.mjs` returns no output
+- `wc -l /file.mjs` returns no output  
+- `head -50 /file.mjs` returns no output
+- But commands like `ls -lah` work fine
+- All exit codes are 0 (success)
+
+### Findings
+- index.mjs file definitely exists (verified via list_directory)
+- Package exports are configured correctly in package.json
+- Pointing to dist/index.mjs as the module entry
+
+### Hypothesis
+The file might be very large or formatted in a way that's causing terminal output issues. The tool output capture might be failing silently on large file operations.
+
+### Next Steps
+1. Check if the export is present by directly examining the source (tsup.config.ts)
+2. Look at the tw.mjs entry to see if that works
+3. Verify the bundle was created properly during build
+4. Check if there's an issue with ES module exports in the generated code
+
+### Commands to Try
+- `head -c 1000 /file.mjs` (limit output size)
+- `grep "export" /file.mjs | head -5`
+- Check root dist folder exists
+
+### Root Cause
+Need to determine if:
+1. The file is corrupted
+2. The file is missing export statements  
+3. The terminal output is getting truncated
+4. The bundle process didn't complete properly

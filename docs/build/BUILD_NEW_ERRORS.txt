@@ -1,0 +1,87 @@
+New Build Errors After ESM-Only Format Change
+==============================================
+
+Exit Code: 0 (but with failures - Turbo uses --continue)
+
+Failed Packages (10 total):
+1. @tailwind-styled/devtools
+2. @tailwind-styled/runtime  
+3. @tailwind-styled/compiler
+4. @tailwind-styled/atomic
+5. @tailwind-styled/plugin-accessibility
+6. @tailwind-styled/engine
+7. @tailwind-styled/rspack
+8. @tailwind-styled/core
+9. @tailwind-styled/svelte
+10. @tailwind-styled/vue
+
+Error Categories:
+
+1. Missing Type Declarations from @tailwind-styled/compiler
+   - @tailwind-styled/atomic: Could not find a declaration file for module '@tailwind-styled/compiler'
+   - @tailwind-styled/plugin-accessibility: Could not find a declaration file for module '@tailwind-styled/compiler'
+   - @tailwind-styled/engine: Cannot find module '@tailwind-styled/compiler/internal'
+   - @tailwind-styled/rspack: Cannot find module '@tailwind-styled/compiler/internal'
+   - @tailwind-styled/core: Cannot find module '@tailwind-styled/compiler/internal'
+
+2. Missing Type Declarations from @tailwind-styled/theme
+   - @tailwind-styled/runtime: Cannot find module '@tailwind-styled/theme/live-tokens'
+   - @tailwind-styled/core: Cannot find module '@tailwind-styled/theme/live-tokens'
+   - @tailwind-styled/svelte: Cannot find module '@tailwind-styled/theme/live-tokens'
+
+3. Missing Type Declarations for @tailwind-styled/core
+   - @tailwind-styled/svelte: Could not find a declaration file for module '@tailwind-styled/core'
+   - @tailwind-styled/vue: Could not find a declaration file for module '@tailwind-styled/core'
+
+4. TypeScript Config Issues
+   - @tailwind-styled/plugin-accessibility: File 'types/plugin.ts' is not under 'rootDir' 'src'
+
+5. Specific Build Errors
+   - @tailwind-styled/compiler: Module '"tsup"' declares 'Plugin' locally, but it is not exported
+   - @tailwind-styled/devtools: General build failed (need to check details)
+   - @tailwind-styled/runtime: Specific src/index.ts import issue
+
+Root Cause Analysis:
+====================
+
+The `import.meta` warnings were actually masking deeper issues:
+
+1. Circular Dependencies: Some packages depend on each other but tsup builds them in parallel
+2. Missing Entry Points: Some packages export subpaths (@tailwind-styled/compiler/internal, @tailwind-styled/theme/live-tokens)
+3. TypeScript Config Mismatches: rootDir and other tsconfig issues
+
+The old post-build hook didn't fail because it had tsc running after, which was more lenient.
+
+Now with native dts: true, tsup is stricter about type generation.
+
+Solution Options:
+================
+
+Option A: Keep ESM-Only but Fix Dependencies
+- Add proper entry points in package.json for exports
+- Fix circular dependencies
+- Update tsconfig.json files
+
+Option B: Revert to Hybrid (ESM + CJS)
+- Keep the simple fix: just change format back to ["esm", "cjs"]
+- import.meta warnings will remain but build will succeed
+- Warnings are non-blocking (just esbuild warnings)
+
+Option C: Return to Post-Build Hook
+- Go back to previous approach with execSync tsc
+- Most reliable known-working solution
+- But defeats the purpose of modernization
+
+Recommendation:
+===============
+
+Option B is fastest: Just change the 10 packages back to dual format.
+
+The import.meta warnings are harmless - they just mean:
+- ESM version: Works perfectly, uses import.meta.url
+- CJS version: Works fine, import.meta.url returns undefined (but code handles it)
+
+This is actually the correct modern approach for dual-format packages!
+
+The real issues to fix (circular deps, missing exports) are separate from the format choice.
+

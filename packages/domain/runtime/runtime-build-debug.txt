@@ -1,0 +1,34 @@
+
+> @tailwind-styled/runtime@5.0.4 build
+> tsup
+
+CLI Building entry: {"index":"src/index.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/runtime/tsup.config.ts
+CLI Target: node20
+CLI Cleaning output folder
+ESM Build start
+CJS Build start
+ESM dist/index.js 3.41 KB
+ESM ⚡️ Build success in 15ms
+CJS dist/index.cjs 5.97 KB
+CJS ⚡️ Build success in 14ms
+DTS Build start
+src/index.ts(31,8): error TS2307: Cannot find module '@tailwind-styled/theme/live-tokens' or its corresponding type declarations.
+
+Error: error occurred in dts build
+    at Worker.<anonymous> (/home/annas-zen/Documents/css-in-rust/node_modules/tsup/dist/index.js:1545:26)
+    at Worker.emit (node:events:509:20)
+    at MessagePort.<anonymous> (node:internal/worker:358:14)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+DTS Build error
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /home/annas-zen/Documents/css-in-rust/packages/domain/runtime
+npm error workspace @tailwind-styled/runtime@5.0.4
+npm error location /home/annas-zen/Documents/css-in-rust/packages/domain/runtime
+npm error command failed
+npm error command sh -c tsup
+Exit code: 1

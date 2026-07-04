@@ -1,0 +1,285 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║           INLINE STYLES VIOLATIONS — FIX CHECKLIST & TRACKING             ║
+║                         Last Updated: July 3, 2026                        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+PROGRESS SUMMARY
+════════════════════════════════════════════════════════════════════════════
+
+  Analysis:          [✅] COMPLETED
+  TIER 1 Priority:   [⏳] PENDING (50 violations)
+  TIER 2 Priority:   [⏳] PENDING (29 violations)
+  TIER 3 Priority:   [⏳] PENDING (4 violations)
+  Verification:      [⏳] PENDING
+  Pre-commit Hook:   [⏳] PENDING
+
+  Total Progress:    0% (0 of 82 violations fixed)
+
+
+TIER 1 FIXES (CRITICAL — 50 violations)
+════════════════════════════════════════════════════════════════════════════
+
+[⏳] 1. css-functions-future/page.tsx
+   ├─ Violations:      38 (31 className + 7 style)
+   ├─ Estimated Time:  30 minutes
+   ├─ Status:          NOT STARTED
+   │
+   └─ Sub-tasks:
+      [ ] Extract Accordion component
+          ├─ Extract button with className (line 111)
+          ├─ Extract content div (line 121)
+          ├─ Extract animation span (line 114)
+          └─ Move to styles.ts
+      
+      [ ] Extract Feature Cards Grid
+          ├─ Extract CardHeader component (16+ cards)
+          ├─ Extract icon + tag layout
+          ├─ Extract text descriptions
+          └─ Move to styles.ts
+      
+      [ ] Extract Textarea Demo
+          ├─ Extract textarea className (line 286)
+          ├─ Extract demo box styling (line 282)
+          └─ Move to styles.ts
+      
+      [ ] Test & Verify
+          ├─ Run TypeScript check
+          ├─ Verify rendering
+          ├─ Check no regressions
+          └─ Git commit
+
+---
+
+[⏳] 2. container-style-queries/page.tsx
+   ├─ Violations:      12 (4 className + 8 style)
+   ├─ Estimated Time:  20 minutes
+   ├─ Status:          NOT STARTED
+   │
+   └─ Sub-tasks:
+      [ ] Extract Playground Controls
+          ├─ P override className (line 52, 98)
+          ├─ Input className (line 59)
+          └─ Create ControlsRow component
+      
+      [ ] Extract Demo Box Layouts
+          ├─ Width calculation style (line 70)
+          ├─ Flexbox styles (line 74, 82)
+          ├─ Font styling (line 95)
+          ├─ Table cell styling (lines 152, 157, 162, 167)
+          └─ containerType style (line 522)
+      
+      [ ] Verify Grid Demo
+          ├─ Ensure demo still works
+          ├─ Check width calculations
+          └─ Validate responsive behavior
+      
+      [ ] Test & Verify
+          ├─ Run TypeScript check
+          ├─ Verify rendering
+          ├─ Check no regressions
+          └─ Git commit
+
+   Time elapsed:  _____
+   Status:        ⏳ READY TO START
+
+
+TIER 2 FIXES (HIGH — 29 violations)
+════════════════════════════════════════════════════════════════════════════
+
+[⏳] 3. view-transitions-advanced/page.tsx
+   ├─ Violations:      15 (13 className + 2 style)
+   ├─ Estimated Time:  25 minutes
+   ├─ Status:          NOT STARTED
+   │
+   └─ Sub-tasks:
+      [ ] Extract Page Cards
+          ├─ Page A card layout (lines 92-100)
+          ├─ Page B card layout (lines 102-108)
+          ├─ Extract heading classNames (lines 96, 106)
+          ├─ Extract paragraph styles (lines 97, 107)
+          └─ Create PageCard component
+      
+      [ ] Extract Navigation Button
+          ├─ Button conditional className (lines 81, 84)
+          ├─ Create NavButton with active variant
+          └─ Replace ternaries with variants
+      
+      [ ] Extract Layout Container
+          ├─ Div flex layout (line 80)
+          ├─ Canvas box divs (lines 92, 102)
+          └─ Move to styles.ts
+      
+      [ ] Handle Transition Props
+          ├─ TransitionBox style (line 90)
+          ├─ View transition name style (line 531)
+          └─ Create TransitionComponent with props
+
+---
+
+[⏳] 4. subgrid/page.tsx
+   ├─ Violations:      14 (10 className + 4 style)
+   ├─ Estimated Time:  20 minutes
+   ├─ Status:          NOT STARTED
+   │
+   └─ Sub-tasks:
+      [ ] Extract Grid Demo
+          ├─ Main grid style (line 62)
+          ├─ Conditional grid style (line 72)
+          ├─ Create GridDemo component
+          └─ Move calculations to variants
+      
+      [ ] Extract Grid Cells
+          ├─ Cell className (lines 87, 90, 93)
+          ├─ Cell styling for header/body/footer
+          ├─ Create GridCell component
+          └─ Move to styles.ts
+      
+      [ ] Extract SubgridDemo
+          ├─ Style prop (line 184)
+          ├─ GridCell with styles (line 185)
+          ├─ Create SubgridWrapper component
+          └─ Use variants for grid props
+      
+      [ ] Verify Grid Behavior
+          ├─ Ensure subgrid still works
+          ├─ Check cell layout
+          └─ Validate responsive design
+
+   Time elapsed:  _____
+   Status:        ⏳ READY AFTER TIER 1
+
+
+TIER 3 FIXES (MEDIUM — 4 violations)
+════════════════════════════════════════════════════════════════════════════
+
+[⏳] 5. popover-api/page.tsx
+   ├─ Violations:      4 (4 className + 0 style)
+   ├─ Estimated Time:  10 minutes
+   ├─ Status:          NOT STARTED
+   │
+   └─ Sub-tasks:
+      [ ] Extract Badge Container
+          ├─ Description text className (line 67)
+          ├─ Badge row div className (line 133)
+          └─ Create BadgeContainer component
+      
+      [ ] Extract Code Tag
+          ├─ Code className (line 91)
+          └─ Create StyledCode component
+      
+      [ ] Extract Button Styling
+          ├─ DemoBtn className (line 93)
+          └─ Ensure consistency
+
+   Time elapsed:  _____
+   Status:        ⏳ READY AFTER TIER 2
+
+
+VERIFICATION & CLEANUP
+════════════════════════════════════════════════════════════════════════════
+
+[⏳] Final Verification (30 minutes)
+   │
+   ├─ [ ] TypeScript Check
+   │      ├─ npx tsc --noEmit
+   │      ├─ Resolve any type errors
+   │      └─ Verify no regressions
+   │
+   ├─ [ ] No Inline Styles Check
+   │      ├─ grep -r 'className=' advandced/*/page.tsx
+   │      ├─ grep -r 'style=' advandced/*/page.tsx
+   │      └─ Verify 0 violations
+   │
+   ├─ [ ] Visual Testing
+   │      ├─ Test each page in browser
+   │      ├─ Verify layout unchanged
+   │      ├─ Check interactive features
+   │      └─ Ensure no regressions
+   │
+   ├─ [ ] Performance Check
+   │      ├─ Verify bundle size unchanged
+   │      ├─ Check build time
+   │      └─ Validate CSS extraction
+   │
+   └─ [ ] Git Operations
+          ├─ Stage all changes
+          ├─ Create meaningful commits
+          └─ Push to branch
+
+
+REFERENCE IMPLEMENTATION
+════════════════════════════════════════════════════════════════════════════
+
+✅ EXEMPLARY PATTERN:
+   └─ anchor-positioning/page.tsx
+      ├─ 0 violations
+      ├─ All components use tw()
+      ├─ Variants for all conditional styles
+      └─ Use as template for other fixes
+
+
+ESTIMATED TOTAL TIME
+════════════════════════════════════════════════════════════════════════════
+
+   TIER 1: css-functions-future          30 min  ⏳
+   TIER 1: container-style-queries       20 min  ⏳
+           Subtotal:                      50 min
+
+   TIER 2: view-transitions-advanced     25 min  ⏳
+   TIER 2: subgrid                       20 min  ⏳
+           Subtotal:                      45 min
+
+   TIER 3: popover-api                   10 min  ⏳
+           Subtotal:                      10 min
+
+   VERIFICATION & CLEANUP:               30 min  ⏳
+           ──────────────
+           TOTAL:                        135 min ≈ 2.5 hours
+
+
+DAILY LOG
+════════════════════════════════════════════════════════════════════════════
+
+Date: ________________
+Task: ________________
+Time Spent: ________________
+Status: [  ] Started  [  ] In Progress  [  ] Completed
+Notes: 
+_________________________________________________________________
+_________________________________________________________________
+
+
+Date: ________________
+Task: ________________
+Time Spent: ________________
+Status: [  ] Started  [  ] In Progress  [  ] Completed
+Notes: 
+_________________________________________________________________
+_________________________________________________________________
+
+
+Date: ________________
+Task: ________________
+Time Spent: ________________
+Status: [  ] Started  [  ] In Progress  [  ] Completed
+Notes: 
+_________________________________________________________________
+_________________________________________________________________
+
+
+SIGN-OFF
+════════════════════════════════════════════════════════════════════════════
+
+All violations fixed:        [  ] YES  [  ] NO
+All tests passing:           [  ] YES  [  ] NO
+Code reviewed:               [  ] YES  [  ] NO
+Ready for merge:             [  ] YES  [  ] NO
+
+Signed by: ____________________      Date: ______________
+
+
+════════════════════════════════════════════════════════════════════════════
+For detailed analysis, see: VIOLATIONS_ANALYSIS_COMPLETE.md
+For quick reference, see: VIOLATIONS_QUICK_REFERENCE.txt
+For detailed breakdown, see: INLINE_STYLES_VIOLATIONS_REPORT.txt
+════════════════════════════════════════════════════════════════════════════

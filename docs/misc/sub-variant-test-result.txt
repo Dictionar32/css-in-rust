@@ -1,0 +1,16 @@
+=== Test Sub-Component dengan Nested Variants ===
+
+✅ Card component created
+   Card type: object
+   Card.displayName: tw.div
+
+Footer sub-component:
+   Card.footer type: object
+   Card.footer.displayName: tw.div
+
+❌ ERROR: Card is not a function
+TypeError: Card is not a function
+    at file:///home/annas-zen/Documents/css-in-rust/test-sub-variant-fixed.mjs:34:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:447:25)
+    at async node:internal/modules/esm/loader:646:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)

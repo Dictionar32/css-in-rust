@@ -1,0 +1,100 @@
+create-tailwind-styled:build: [37m      511 │ ...ortMetaUrl: typeof import.meta !== "undefined" && [32mimport.meta[37m.url
+create-tailwind-styled:build:           ╵                                                      [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/createApp.ts:512:8:
+create-tailwind-styled:build: [37m      512 │       ? [32mimport.meta[37m.url
+create-tailwind-styled:build:           ╵         [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/index.ts:15:19:
+create-tailwind-styled:build: [37m      15 │     importMetaUrl: [32mimport.meta[37m.url,
+create-tailwind-styled:build:          ╵                    [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/index.ts:21:36:
+create-tailwind-styled:build: [37m      21 │ const __currentFile = fileURLToPath([32mimport.meta[37m.url)
+create-tailwind-styled:build:          ╵                                     [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/preflight.ts:441:28:
+create-tailwind-styled:build: [37m      441 │   const currentUrl = typeof [32mimport.meta[37m !== "undefined" && import...
+create-tailwind-styled:build:           ╵                             [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/preflight.ts:441:59:
+create-tailwind-styled:build: [37m      441 │ ...urrentUrl = typeof import.meta !== "undefined" && [32mimport.meta[37m.url
+create-tailwind-styled:build:           ╵                                                      [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+create-tailwind-styled:build: 
+create-tailwind-styled:build:     src/preflight.ts:442:6:
+create-tailwind-styled:build: [37m      442 │     ? [32mimport.meta[37m.url
+create-tailwind-styled:build:           ╵       [32m~~~~~~~~~~~[0m
+create-tailwind-styled:build: 
+create-tailwind-styled:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: 
+create-tailwind-styled:build: CJS dist/index.cjs 200.30 KB
+create-tailwind-styled:build: CJS ⚡️ Build success in 104ms
+create-tailwind-styled:build: ESM dist/createApp-5NIEQLOD.js 11.78 KB
+create-tailwind-styled:build: ESM dist/chunk-ZHQGOJUU.js     12.57 KB
+create-tailwind-styled:build: ESM dist/index.js              166.79 KB
+create-tailwind-styled:build: ESM ⚡️ Build success in 104ms
+create-tailwind-styled:build: DTS Build start
+create-tailwind-styled:build: DTS ⚡️ Build success in 3254ms
+create-tailwind-styled:build: DTS dist/index.d.ts  2.20 KB
+create-tailwind-styled:build: DTS dist/index.d.cts 2.20 KB
+ ERROR  @tailwind-styled/devtools#build: command (/home/annas-zen/Documents/css-in-rust/packages/infrastructure/devtools) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/runtime#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/runtime) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/compiler#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/compiler) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/atomic#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/atomic) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/plugin-accessibility#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/plugin-accessibility) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/engine#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/engine) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/rspack#build: command (/home/annas-zen/Documents/css-in-rust/packages/presentation/rspack) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/core#build: command (/home/annas-zen/Documents/css-in-rust/packages/domain/core) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/svelte#build: command (/home/annas-zen/Documents/css-in-rust/packages/presentation/svelte) /usr/bin/npm run build exited (1)
+ ERROR  @tailwind-styled/vue#build: command (/home/annas-zen/Documents/css-in-rust/packages/presentation/vue) /usr/bin/npm run build exited (1)
+
+ Tasks:    19 successful, 29 total
+Cached:    19 cached, 29 total
+  Time:    16.572s 
+Failed:    @tailwind-styled/atomic#build, @tailwind-styled/compiler#build, @tailwind-styled/core#build, @tailwind-styled/devtools#build, @tailwind-styled/engine#build, @tailwind-styled/plugin-accessibility#build, @tailwind-styled/rspack#build, @tailwind-styled/runtime#build, @tailwind-styled/svelte#build, @tailwind-styled/vue#build
+
+ ERROR  run failed: command  exited (1)

@@ -1,0 +1,106 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║          INLINE STYLES & CLASSNAME VIOLATIONS — QUICK SUMMARY              ║
+║                  folder: advandced/  |  Date: July 3, 2026                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─ TOTAL VIOLATIONS ─────────────────────────────────────────────────────────┐
+│                                                                             │
+│  className= violations:        62 ❌                                        │
+│  style={{}} violations:        20 ❌                                        │
+│  ─────────────────────────────────                                        │
+│  TOTAL:                         82 🔴 CRITICAL                              │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ VIOLATIONS BY FILE ──────────────────────────────────────────────────────┐
+│                                                                             │
+│  📄 anchor-positioning/page.tsx             1 style  ✅ CLEAN              │
+│  📄 container-style-queries/page.tsx        12 total 🔴 4 className, 8 st  │
+│  📄 css-functions-future/page.tsx           38 total �� 31 className, 7 st │
+│  📄 popover-api/page.tsx                    4 total  🟡 4 className        │
+│  📄 subgrid/page.tsx                        14 total 🔴 10 className, 4 st │
+│  📄 view-transitions-advanced/page.tsx      15 total 🔴 13 className, 2 st │
+│                                                                             │
+│  Total:  6 files with violations / 7 files total                           │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ SEVERITY RANKING ────────────────────────────────────────────────────────┐
+│                                                                             │
+│  🔴 TIER 1 — CRITICAL (Immediate Fix)                                      │
+│     ├─ css-functions-future/page.tsx      38 violations                   │
+│     └─ container-style-queries/page.tsx   12 violations                   │
+│                                                                             │
+│  🔴 TIER 2 — HIGH (Fix Soon)                                               │
+│     ├─ view-transitions-advanced/page.tsx 15 violations                   │
+│     └─ subgrid/page.tsx                   14 violations                   │
+│                                                                             │
+│  🟡 TIER 3 — MEDIUM (Fix Later)                                            │
+│     └─ popover-api/page.tsx                4 violations                   │
+│                                                                             │
+│  ✅ TIER 4 — CLEAN                                                         │
+│     └─ anchor-positioning/page.tsx         0 violations (1 acceptable)    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ VIOLATION PATTERNS ──────────────────────────────────────────────────────┐
+│                                                                             │
+│  Pattern 1: Badge/Support rows                          (5+ occurrences)   │
+│             <div className="flex gap-2 flex-wrap my-4">                   │
+│                                                                             │
+│  Pattern 2: Feature cards with headers                  (16+ occurrences)  │
+│             <div className="flex items-center gap-2 mb-2">               │
+│                                                                             │
+│  Pattern 3: Playground demo boxes                       (12+ occurrences)  │
+│             <div style={{ width: `${w}px`, ... }}>                       │
+│                                                                             │
+│  Pattern 4: Conditional className                       (3+ occurrences)   │
+│             className={isActive ? "opacity-50" : ""}                      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ STEERING RULES VIOLATED ────────────────────────────────────────────────┐
+│                                                                             │
+│  ✅ .kiro/steering/no-inline-styles.md                                     │
+│     → "JANGAN PERNAH GUNAKAN style={{}}" — 20 violations                  │
+│     → "JANGAN PERNAH GUNAKAN className=\"\"" — 62 violations              │
+│                                                                             │
+│  ✅ .kiro/steering/tailwind-styled-v4-guidelines.md                        │
+│     → "HANYA GUNAKAN tw() ONLY" — Not followed in 5 files                 │
+│                                                                             │
+│  ✅ .kiro/steering/build-time-magic.md                                     │
+│     → Missing Rust engine optimizations (82 violations don't benefit)      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ ESTIMATED REMEDIATION TIME ──────────────────────────────────────────────┐
+│                                                                             │
+│  Code extraction:               115 minutes                                │
+│  Testing & verification:         30 minutes                                │
+│  ──────────────────────────────────────────                               │
+│  TOTAL EFFORT:                   ~2.5 hours                                │
+│                                                                             │
+│  Per file:                                                                │
+│   • css-functions-future:        30 min (38 violations)                    │
+│   • container-style-queries:     20 min (12 violations)                    │
+│   • view-transitions-advanced:   25 min (15 violations)                    │
+│   • subgrid:                     20 min (14 violations)                    │
+│   • popover-api:                 10 min (4 violations)                     │
+│   • Verification:                30 min                                    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ RECOMMENDED ACTION ITEMS ────────────────────────────────────────────────┐
+│                                                                             │
+│  [✅] DONE: Analyze violations                   (COMPLETED)              │
+│  [⏳] TODO: Extract css-functions-future        (PRIORITY 1)            │
+│  [⏳] TODO: Extract container-style-queries     (PRIORITY 1)            │
+│  [⏳] TODO: Extract view-transitions-advanced   (PRIORITY 2)            │
+│  [⏳] TODO: Extract subgrid                     (PRIORITY 2)            │
+│  [⏳] TODO: Extract popover-api                 (PRIORITY 3)            │
+│  [⏳] TODO: Verify all files error-free        (AFTER FIXES)            │
+│  [⏳] TODO: Setup pre-commit hook validation    (FINAL)                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+For detailed analysis, see: README_VIOLATIONS_ANALYSIS.md

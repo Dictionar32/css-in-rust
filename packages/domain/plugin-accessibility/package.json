@@ -1,0 +1,39 @@
+{
+    "name": "@tailwind-styled/plugin-accessibility",
+    "version": "5.0.4",
+    "description": "Build-time ARIA injection plugin untuk tailwind-styled-v4",
+    "license": "MIT",
+    "type": "module",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist",
+        "types",
+        "README.md"
+    ],
+    "dependencies": {
+        "@tailwind-styled/compiler": "^5.0.4",
+        "@tailwind-styled/plugin-api": "^5.0.4"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "typescript": "^6",
+        "tsup": "^8"
+    },
+    "scripts": {
+        "build": "tsup --config tsup.config.ts",
+        "check": "tsc --noEmit",
+        "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+        "test": "node --test tests/*.test.mjs"
+    },
+    "engines": {
+        "node": ">=20"
+    }
+}

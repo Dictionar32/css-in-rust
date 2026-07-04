@@ -1,0 +1,209 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║   INLINE STYLES & CLASSNAME VIOLATIONS — QUICK REFERENCE                  ║
+║                   folder: advandced/  |  July 3, 2026                     ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📊 TOTAL VIOLATIONS                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   className= violations:        62 ❌
+   style={{}} violations:        20 ❌
+   ─────────────────────────────────
+   TOTAL:                        82 🔴 CRITICAL
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📁 VIOLATIONS BY FILE                                                    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1️⃣ css-functions-future/page.tsx
+   └─ 38 violations  🔴 CRITICAL
+      ├─ className:  31 violations
+      ├─ style:      7 violations
+      └─ Status:     Massive inline styling in feature cards + accordion
+
+2️⃣ container-style-queries/page.tsx
+   └─ 12 violations  🔴 CRITICAL
+      ├─ className:  4 violations
+      ├─ style:      8 violations
+      └─ Status:     Playground demo with inline calculations
+
+3️⃣ view-transitions-advanced/page.tsx
+   └─ 15 violations  🔴 HIGH
+      ├─ className:  13 violations (conditional + demo pages)
+      ├─ style:      2 violations
+      └─ Status:     Transition demo pages, demo props
+
+4️⃣ subgrid/page.tsx
+   └─ 14 violations  🔴 HIGH
+      ├─ className:  10 violations
+      ├─ style:      4 violations
+      └─ Status:     Grid demo visualization
+
+5️⃣ popover-api/page.tsx
+   └─ 4 violations   🟡 MEDIUM
+      ├─ className:  4 violations
+      ├─ style:      0 violations ✅
+      └─ Status:     Minor badge + code styling
+
+6️⃣ anchor-positioning/page.tsx
+   └─ 0 violations   ✅ CLEAN
+      ├─ className:  0 violations ✅
+      ├─ style:      1 violation (acceptable - CSS var dynamic)
+      └─ Status:     EXEMPLARY - Follow this pattern!
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎯 FIX PRIORITY ROADMAP                                                  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+TIER 1: FIX IMMEDIATELY (50 violations)
+───────────────────────────────────────
+  [1] css-functions-future/page.tsx        (38 violations → 30 min)
+      └─ Extract: accordion, feature cards, textarea demo
+  
+  [2] container-style-queries/page.tsx     (12 violations → 20 min)
+      └─ Extract: playground, demo card layout
+
+TIER 2: FIX SOON (29 violations)
+────────────────────────────────
+  [3] view-transitions-advanced/page.tsx   (15 violations → 25 min)
+      └─ Extract: page cards, nav buttons, transition props
+  
+  [4] subgrid/page.tsx                     (14 violations → 20 min)
+      └─ Extract: grid demo, cell layout
+
+TIER 3: FIX LAST (4 violations)
+────────────────────────────────
+  [5] popover-api/page.tsx                 (4 violations → 10 min)
+      └─ Extract: badge row, code styling
+
+TIER 4: EXEMPLARY ✅
+─────────────────────
+  [6] anchor-positioning/page.tsx          (0 violations)
+      └─ Use as reference pattern
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔄 VIOLATION PATTERNS TO EXTRACT                                         ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+PATTERN A: Badge/Support rows (5+ occurrences)
+───────────────────────────────
+  WRONG:  <div className="flex gap-2 flex-wrap my-4">
+  RIGHT:  <BadgeContainer><Badge>...</Badge></BadgeContainer>
+
+PATTERN B: Feature card headers (16+ occurrences)
+──────────────────────────────────
+  WRONG:  <div className="flex items-center gap-2 mb-2">
+  RIGHT:  <CardHeader><Icon /><Tag /></CardHeader>
+
+PATTERN C: Playground demo boxes (12+ occurrences)
+──────────────────────────────
+  WRONG:  <div style={{ width: `${w}px`, transition: "..." }}>
+  RIGHT:  <DemoBox width={width}>Content</DemoBox>
+
+PATTERN D: Conditional className (3+ occurrences)
+────────────────────────────────
+  WRONG:  className={isActive ? "opacity-50" : ""}
+  RIGHT:  <Button active={isActive}>Label</Button>
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ⏱️  ESTIMATED TIME TO FIX                                                ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   TIER 1 (Critical):
+      css-functions-future     30 min (38 violations)
+      container-style-queries  20 min (12 violations)
+                               ─────────
+                               50 min
+
+   TIER 2 (High):
+      view-transitions-advanced 25 min (15 violations)
+      subgrid                   20 min (14 violations)
+                               ─────────
+                               45 min
+
+   TIER 3 (Medium):
+      popover-api               10 min (4 violations)
+                               ─────────
+                               10 min
+
+   Verification & Testing:     30 min
+                               ─────────────
+   TOTAL EFFORT:              ~2.5 hours
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ⚠️  STEERING RULES VIOLATED                                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   ✅ .kiro/steering/no-inline-styles.md
+      → "JANGAN PERNAH GUNAKAN style={{}}"      20 violations
+      → "JANGAN PERNAH GUNAKAN className=\"\"" 62 violations
+
+   ✅ .kiro/steering/tailwind-styled-v4-guidelines.md
+      → "HANYA GUNAKAN tw() ONLY"                Not followed in 5 files
+
+   ✅ .kiro/steering/build-time-magic.md
+      → Missing Rust engine optimizations         82 violations don't benefit
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📋 ACTION ITEMS                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   [✅] Step 1: Analyze violations              COMPLETED
+        └─ Generated 2 detailed reports
+
+   [⏳] Step 2: Extract css-functions-future    NEXT (PRIORITY 1)
+        └─ 38 violations → styled components
+
+   [⏳] Step 3: Extract container-style-queries NEXT (PRIORITY 1)
+        └─ 12 violations → styled components
+
+   [⏳] Step 4: Extract remaining files          AFTER TIER 1
+        └─ view-transitions, subgrid, popover-api
+
+   [⏳] Step 5: Verify all files                FINAL CHECK
+        └─ Run diagnostics, ensure zero violations
+
+   [⏳] Step 6: Setup pre-commit hook            ENFORCEMENT
+        └─ Prevent future violations
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📚 REFERENCE DOCUMENTS                                                   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   📄 INLINE_STYLES_VIOLATIONS_REPORT.txt
+      └─ Detailed analysis with line numbers and full context
+
+   📄 examples/next-js-app/src/app/learn/advandced/STYLING_GUIDE.md
+      └─ Best practices and pattern examples
+
+   📄 .kiro/steering/no-inline-styles.md
+      └─ Enforcement guidelines
+
+   📄 .kiro/steering/tailwind-styled-v4-guidelines.md
+      └─ tw() API patterns and usage
+
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🚀 READY TO START FIXING?                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+   Next command:
+   └─ "Mulai perbaiki css-functions-future/page.tsx — 38 violations"
+
+   Files ready for extraction:
+   └─ All 6 pages in advandced/ folder
+
+
+════════════════════════════════════════════════════════════════════════════
+Generated: July 3, 2026
+Analysis tool: grep + manual verification
+Total analysis time: Complete ✅
+════════════════════════════════════════════════════════════════════════════

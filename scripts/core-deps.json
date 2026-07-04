@@ -1,0 +1,1464 @@
+• turbo 2.9.6
+{
+  "id": "3FypImFA4565WvyCrxkNdvwplJm",
+  "version": "1",
+  "turboVersion": "2.9.6",
+  "monorepo": true,
+  "globalCacheInputs": {
+    "rootKey": "I can’t see ya, but I know you’re here",
+    "files": {},
+    "hashOfExternalDependencies": "9c5b380ac9b557f9",
+    "hashOfInternalDependencies": "",
+    "environmentVariables": {
+      "specified": {
+        "env": [],
+        "passThroughEnv": null
+      },
+      "configured": [],
+      "inferred": [],
+      "passthrough": null
+    },
+    "engines": {
+      "node": ">=20"
+    }
+  },
+  "packages": [
+    "@tailwind-styled/core"
+  ],
+  "envMode": "strict",
+  "frameworkInference": true,
+  "tasks": [
+    {
+      "taskId": "@tailwind-styled/analyzer#build",
+      "task": "build",
+      "package": "@tailwind-styled/analyzer",
+      "hash": "6642563a0df54103",
+      "inputs": {
+        "README.md": "ce4f49b7c48fdb8693dfbdc4dc25c00612dd0afa",
+        "package.json": "095ee0d364738f7b2d6f3d0a759984698e01fab0",
+        "src/analyzeWorkspace.ts": "cccaeb419dd1c25d28a729f94d747030388063c2",
+        "src/binding.ts": "0a3c116fd81a68e69c738c5f4f48cf82fcc048a6",
+        "src/classToCss.ts": "91a14284c3804871bb75d525d951dca535349051",
+        "src/index.ts": "6dcda243aa43cf59fcf8d6d0b2e196150fb4ca32",
+        "src/schemas.ts": "535f437ba66603215f4bd63fa4f7910493cbc106",
+        "src/semantic.ts": "eb201c674309367b603a123fbe723de60a231afb",
+        "src/types.ts": "7c566056db12c9ea3f774598901190fb7539559d",
+        "src/utils.ts": "63a7b7a467cf33feb429e41a73c515322ad44b32",
+        "tests/classToCss.test.mjs": "2971030a9bf2beda76b5749b7af08e70c9d211a7",
+        "tsconfig.json": "e5c1da58468b20532e3f4cdc06764aa45813c1e3",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "b3d7952ddc8993a0",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 4055,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/analyzer/.turbo/turbo-build.log",
+      "directory": "packages/domain/analyzer",
+      "dependencies": [
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/animate#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/engine#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/animate#build",
+      "task": "build",
+      "package": "@tailwind-styled/animate",
+      "hash": "a7fb634c0de13bf9",
+      "inputs": {
+        "README.md": "69142a823a08ac497f2920c07fcd9a2897655423",
+        "package.json": "a499e93753c3480bba2b1daf60c7119c6eba8ee5",
+        "src/binding.ts": "826a6c54e19bdaee42660b4391571f106acb954d",
+        "src/index.ts": "e9bf65d06e1520925c65e070f6d1f7d1b49e4d36",
+        "src/preset.ts": "1cb65aab675ccf7dec8aefb050c43f052c3df4b9",
+        "src/registry.ts": "c012d1ccab7d45f7a062040fc21e191a452f8bee",
+        "src/types.ts": "eb3437f182373c531220fa73f52b48fcefe391b6",
+        "tests/index.test.mjs": "7f263af30345d03efbfa2f7532000ff263417fe5",
+        "tsconfig.json": "c15fecd699660fd739a066ce9cf2bff58040e210",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "b3d7952ddc8993a0",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 4544,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "c10559842953cadc6d18eb4ff1c9abc26e471d37160a1828c2aed0c0885313c7"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/animate/.turbo/turbo-build.log",
+      "directory": "packages/domain/animate",
+      "dependencies": [
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/compiler#build",
+      "task": "build",
+      "package": "@tailwind-styled/compiler",
+      "hash": "71152a7fec8144b5",
+      "inputs": {
+        "EXPORT_ORGANIZATION.md": "16c72536b07da7229bd42675936b251b72ba7026",
+        "README.md": "9b66b6691757a82307d443bd2c9ef6283a13161f",
+        "build-error.log": "b24b8355a551458a7b0e2d5ccc6ddfe441e221a7",
+        "package.json": "049e3ba025eeaff9a9eebb25f3002a7d2de53a4a",
+        "src/__tests__/RedisManager.test.ts": "936c96f46bf80b2d79d1ac4bd6f830225b39e243",
+        "src/__tests__/nativeBridge.test.ts": "966a244bd9312f0bc03438d4b8a6802f6deca0a7",
+        "src/__tests__/nativeBridgeWrappers.test.ts": "67460c91bd5727adf336d0d7861535191f06e503",
+        "src/__tests__/redisCacheOperations.test.ts": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        "src/__tests__/redisConfigParser.test.ts": "761c4e45fcc543db205eed15712ac4e8db987995",
+        "src/analyzer/analyzerNative.ts": "215cd7c575db79217513144eb67a3028dcedc818",
+        "src/analyzer/index.ts": "7e50fa30f4cdfc97017502fb02ba2ba69592e2bb",
+        "src/analyzer/scannerNative.ts": "74f859fc8b399029332ebee60c33c8d364cbc573",
+        "src/analyzer/themeResolutionNative.ts": "70070864dee8900b8b36712f61073f10f7f8eac4",
+        "src/analyzerNative.ts": "3b7abf0cfbb4152eaa56d2aea90d3ec96950a9cb",
+        "src/cache/cacheNative.ts": "e217c62fd67dfa684de2d807a36224d11d9d28cc",
+        "src/cache/index.ts": "242d75ba8e3c817a3d73f58c219de0a63a488ef0",
+        "src/cacheNative.ts": "d7bb507dc4438fd9497b94ccd7eac532b6a5c8d3",
+        "src/compilationNative.ts": "19c857a28ffa685bc3d2ae743a63fd1a5bbfccbc",
+        "src/compiler/compilationNative.ts": "1bf5fdb7be2414f5972d08e472c58457918b16fc",
+        "src/compiler/cssCompilationNative.ts": "6aeab9157df0eef3c99cf8c93ada2752bd44146b",
+        "src/compiler/cssGeneratorNative.ts": "1616323001120193015d81cf40b5b784e236a053",
+        "src/compiler/idRegistryNative.ts": "84fd2e077c78555cfaa14748cb63c7a84445e718",
+        "src/compiler/index.ts": "40d359d0fb3b480b3505475a5fab2e44f87b2c91",
+        "src/compiler/streamingNative.ts": "72172430db3fa1b436ab3f5b5c761dfa06038eca",
+        "src/compiler/tailwindEngine.ts": "5a47c551da46a8e9f1462fe75176ac54d846ff71",
+        "src/config/FeaturesConfig.ts": "2f200c2845ddf3eb435f2622fb07288924e38b11",
+        "src/config/README.md": "770c77ed53a3e914bb3842ff5c9ce99e44ab4fa0",
+        "src/config/__tests__/FeaturesConfig.test.mjs": "95530ff6fd2c5f7169beae12bf5ac5ca54e75316",
+        "src/config/index.ts": "669c17cd09d004c6287428b5980e95ba1621a50d",
+        "src/cssCompilationNative.ts": "5438d95deaaec0d236d59ea25313bbc22338b4a3",
+        "src/cssGeneratorNative.ts": "a2f869c68f6054a67beab589e45e369eca4687ba",
+        "src/errors/ERROR_HANDLING_GUIDE.md": "0f6c00b80a9a0ea8a5c1e87043dd9d49b72dce2d",
+        "src/errors/fallbacks.ts": "012286292ccf4e73009311dd06b6ed03d7d49f42",
+        "src/errors/index.test.ts": "fc5ecd981286a70d71b373a380d2a5b45b0730b3",
+        "src/errors/index.ts": "ceb78a8dd75b38140fd9c4148044e0caedcad40e",
+        "src/errors/logger.ts": "f9f99909ab75e3583dd4186ed232e417ce59b69b",
+        "src/errors/recovery.ts": "f69ba732b1629d0cfd5000c4a1be535a2edfe7e2",
+        "src/idRegistryNative.ts": "5221178161f23ef497832326d06355c304233d15",
+        "src/index.ts": "a815028b989a9dce60244cf0ec6f7690e5b10ea1",
+        "src/internal.ts": "5ba12e2cae348cd2333d0edbc81e444aef4d9dc9",
+        "src/managers/AnalysisManager.ts": "799e1185c42b884cfd88612a03558bf19f4fbd0e",
+        "src/managers/AtomicCssManager.ts": "4d25682944882e7102693024da8daf5fa783e07b",
+        "src/managers/BaseManager.ts": "7314f328d2b73d77d385c60f328798e02c595943",
+        "src/managers/IDRegistryManager.ts": "266ec29310143f6a3e7f82d557c1adc9e295d18e",
+        "src/managers/IncrementalManager.ts": "1803cd53db21593b870e529f4c5c468fba2443c7",
+        "src/managers/OptimizationManager.ts": "99c2393a1a0c1c3bf241d7afd1698059fe5fb9bd",
+        "src/managers/RedisManager.test.ts": "e048a847c516f9a03ff33209fa1ee4918da8bc99",
+        "src/managers/RedisManager.ts": "60ced3f9b6a7a6ce5eaab53e2ce0785da041a800",
+        "src/managers/ThemeManager.ts": "1f2c8b47399eae1ad4ac1bc3c5837b09bbf59aa5",
+        "src/managers/WatchManager.ts": "1f80c3d9387cd2eb19e32aa99cdbb9a363005f29",
+        "src/managers/__tests__/IDRegistryManager.test.ts": "09f3edcdb160e2427056204a76b59ef43d7c75b8",
+        "src/managers/__tests__/WatchIntegration.test.ts": "a9a361dc3bbb3aa504a5f7ca21f4cd5c262192c1",
+        "src/managers/__tests__/WatchManager.test.ts": "aed2a4b5cf6409deee10b797606d09809f12c72c",
+        "src/managers/index.ts": "3fe967dd6c1029bcd72fa428beb9365b1d850f14",
+        "src/nativeBridge.ts": "6d2c8b75bd8a6cba9fa67ea94cb81189025c4dd9",
+        "src/nativeBridgeWrappers.ts": "9df85a94ddc8e7c3a213457b05be9b6c18fb4557",
+        "src/parser/index.ts": "e05a088bf46a444c0a88f107870b340f8dc46e50",
+        "src/redis/index.ts": "5b5e7212fcc7c6890dad4ccdd1483119ccd48d2d",
+        "src/redis/redisNative.ts": "e5ac84b2ce5105a3a106c16a1896e6cabae52f66",
+        "src/routeGraph.ts": "bb53dd5fc375c1f97eeb735d20854fee7747105d",
+        "src/scannerNative.ts": "6d567cb7b147ae0bf0c7ba8e67cb0353cdfdd65f",
+        "src/semanticComponentAnalyzer.ts": "77c884144c4e82b3e652f3ca8f37fcfabaedf039",
+        "src/streamingNative.ts": "9e3b9247fd88394e903d44838fd335818e5e55ae",
+        "src/tailwindEngine.ts": "1b2f8535660c89d4f8bd781d4c35be8c10395662",
+        "src/themeResolutionNative.ts": "cdfe1b6f45f8d5a26e91754a0cc4af34dc32fa66",
+        "src/typeGenerationPlugin.ts": "819eb939d8e85207aafa4fee51fc2499fc2f26c8",
+        "src/typeGeneratorFromMetadata.ts": "1498bc7c590725fe70adb9bad757775075d9936b",
+        "src/types/analysis.ts": "f792f7cd7c6e5914551265bb0d0f326588944987",
+        "src/types/id-registry.ts": "f6357e79904f3eba8fa2da0dc4629b5e93b937d3",
+        "src/types/incremental.ts": "b443d0c22c61a389db2a9dd95970ff97717d056d",
+        "src/types/index.ts": "e17102776eb4fb3be3ac0182099405cdc768bd75",
+        "src/types/native-operations.ts": "5dcdc881ef7c4f2256b0ecad3e3a6076299c2f03",
+        "src/types/optimization.ts": "6634d0e29937f835d899d0d72a259e59bbef4429",
+        "src/types/redis.ts": "3f244c42cc59d135212818d9660322a1d58b4c7e",
+        "src/types/theme.ts": "f22b043bb6f3a12147b4d26fcbf030b3effa2e70",
+        "src/types/watch.ts": "961a6685ed6720987afaac34197849f81a60f2d9",
+        "src/utils/CACHE_KEY_STRATEGY.md": "49dc489564f3a5a183dcd3cd9e7c0ab94630796e",
+        "src/utils/cacheKeyGenerator.test.mjs": "d694b09c8ac7bbf03155e6c371a83ab41b1315c3",
+        "src/utils/cacheKeyGenerator.test.ts": "2b2cdb864974b6700103c32472eec50b8e3588fa",
+        "src/utils/cacheKeyGenerator.ts": "3d0a00c9ec40bea842825d192f787aed143becdd",
+        "src/utils/logger.ts": "0326d179c1f7ceb5dbd6c9b630f0dc733ebe5843",
+        "src/utils/redisConfigParser.ts": "587fc6927a36ec4fd40f5f2d32405587c51c3604",
+        "src/watch/index.ts": "3da8dc6a2072b13b408453c3fef2dc47bb131204",
+        "src/watch/watchSystemNative.ts": "a761942cce8ddf20634666f1faa62eb44736c595",
+        "src/watchSystemNative.ts": "9020171c9742f5a8a9a1d68348906863b2969c59",
+        "tests/cssCompilation.test.mjs": "cbd060d4970a3434f617cab87754106234f999e2",
+        "tests/debug_test.mjs": "9e3956698b5591ab96771176e2e94cae243ccfee",
+        "tests/dse.test.mjs": "b7f0104addd6a3937582c340352d36fdec838cad",
+        "tests/errorHandling.test.mjs": "f3f58e2b0a1f16bd8993fe96a34c28982b4d8ac9",
+        "tests/exports.test.mjs": "001a99a7a51dc6529e701e1c97040cf6d0175198",
+        "tests/extractAllClasses.test.mjs": "9434f69947d88fdb0901b6a7ff2f58d163b10cf8",
+        "tests/fallback.test.mjs": "5c0fbd669b151956e6201e2a9d066fc1e8e6aa30",
+        "tests/idRegistry.test.mjs": "b7b85e527fa5894a96b8ec75467839f04e6e4fb8",
+        "tests/incrementalEngine.test.mjs": "75aa4cda629a8e5626de16250330263326bff77d",
+        "tests/managers.test.mjs": "553c7a6aef55a8c0a1c00aa9974fd3588131a991",
+        "tests/redisManager.test.mjs": "296bf1c434be92b5314c48c61743be660796ffb0",
+        "tests/require-native.cjs": "8efdc24b186465c1df61bddae73326938f935bf5",
+        "tests/rscAnalyzer.test.mjs": "028aac7db9d95ebab7aacdd64368dc0200697017",
+        "tests/semantic-analyzer.test.mjs": "0c9bffe69198cccd4ec76c616e85092a813bf5cc",
+        "tests/simple-test.mjs": "02bec0dde51ccc20017e0df934670126b2722ebe",
+        "tests/transformSource.test.mjs": "d1934c9c6191e68aa2d0e6929e9fd0b4c65d22bb",
+        "tests/type-generator.test.mjs": "0ba231be56a1d8d32e2b303def54579295b08953",
+        "tests/variants.test.mjs": "708e160fb87e2023ef3de38c630887d770fc7961",
+        "tsconfig.dts.json": "a8413d12d50b7ef1ee72c26c4b30b6534d23e3a6",
+        "tsconfig.json": "bd6792f811c0572281af2e35e91d0c721ef7a554",
+        "tsup.config.ts": "b51ea18283b7772600a565d443e344074d6c9723"
+      },
+      "hashOfExternalDependencies": "97b6364adb23b2b0",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 9315,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/compiler/.turbo/turbo-build.log",
+      "directory": "packages/domain/compiler",
+      "dependencies": [
+        "@tailwind-styled/plugin-api#build",
+        "@tailwind-styled/plugin-api#build",
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/syntax#build",
+        "@tailwind-styled/syntax#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/vite#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "@tailwind-styled/plugin-api#build",
+          "@tailwind-styled/shared#build",
+          "@tailwind-styled/syntax#build",
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/core#build",
+      "task": "build",
+      "package": "@tailwind-styled/core",
+      "hash": "3485f4937d68dfba",
+      "inputs": {
+        "CHANGELOG.md": "4e65ef10894d5d6f1619fb3344187bc9339473a2",
+        "LICENSE": "df278d3720ce04a05309f4571f6ac751095ec674",
+        "README.md": "cac4b1e45f1e5f95762f34aea001ef1d09a391fc",
+        "core-build-debug.txt": "f453346deab17f61f666b7caefe42405a4478b35",
+        "core-build-full.txt": "a35c57aab446739844ba42343fa4c2bc46b213a9",
+        "core-build-retry.txt": "b7d75d4b2e1017a5f45cbc3a82a984040cab2a9c",
+        "package.json": "65a3de7362ca5876bde0a6073e7712613e1cc751",
+        "src/__tests__/bug-condition-exploration.test.mjs": "a6684e45a14d2f25b192b64a4f019f3166508475",
+        "src/animate.ts": "ffa90a0d2aad49525e5b30ab0a990c505aaf1822",
+        "src/compatibility.ts": "dc5593cd48d5bb596cdd3c90c454d497b93f24bd",
+        "src/compiler.ts": "5dbecd81ff6fda3393188eeabe7b8fbbcb498901",
+        "src/containerQuery.ts": "e26c1de2cf884ec2499105fbe6736facd483aef9",
+        "src/createComponent.ts": "bab25db8697d8a39b6afdc87e5cbe187b5a1ffbc",
+        "src/css.ts": "d39568ae0fc61724f627006dd47b0a5591118d4b",
+        "src/cv.ts": "a4957eec5ab0bea8f3a8e9592e98abe86630c7d9",
+        "src/cx.ts": "ffbbaca353470931fc4b888516708005fce728e6",
+        "src/devtools.ts": "4c37994dccedd5bda9baed0109b4f49c12921603",
+        "src/index.browser.ts": "c5118c8f0975b3aa1445a5ce76a9eecfef0424b9",
+        "src/index.ts": "9d09d553b5f493e5759b0232fec66047224f31da",
+        "src/liveTokenEngine.ts": "6ac3c891c55e80f9672dffc5a6f49cbea5a78f40",
+        "src/merge.ts": "4e3aa8bd19d03e96a8d6aae831ba91944304b51a",
+        "src/mergeFallback.ts": "a565842e282462ff4e1ca8f4d2720380c841b599",
+        "src/native.browser.ts": "53fd0ec78c8087eeee21341e950b86bbee6e65f5",
+        "src/native.ts": "294ef26a77d807209a4a54cdabaa3413393bcdf9",
+        "src/next.ts": "6b7dda33f2672b5096278b9eb016d5bb9160fb13",
+        "src/parseTemplateFallback.ts": "2fa1f1df691c132d7c4d74fcded181b49ed5b13b",
+        "src/plugins.ts": "36d285d2e3431efb5e29d30bbf69db323b357496",
+        "src/preset.ts": "8ace0e1f4e0147fa9a9b9501b879d9d66ee4f4f5",
+        "src/registry.ts": "5649c09a673c0dc4b6db76c7ff6f216da7edc72f",
+        "src/stateEngine.ts": "3fde4d927ae4e9f5e5c9adcb6adebfa0f553e557",
+        "src/styled.ts": "2bbb1cc379af33109437fabf99b9d9e5f93891fd",
+        "src/styledSystem.ts": "44255f7c0d69452a71c6096aed2ee4dfa3acb8b6",
+        "src/theme.ts": "b13783fc3ef51f7388c7c7d60a43593362606877",
+        "src/themeReader.ts": "ce5b62f9f12fc949b70cd8dbc11045397a50fccc",
+        "src/twProxy.ts": "7f452e7b8790df655c9c01467f63f74e418d6d0d",
+        "src/twTheme.ts": "81fa702dd0db6abb09e36e298280e116c092e9fc",
+        "src/types.ts": "1fe27bcc303814b611cb2df0013d8f94a736b41f",
+        "src/vite.ts": "73d7821aa4e388a608c5a4f4ea710b7c0f9c4bfb",
+        "test-data-attr.ts": "eab808fa1934b8dad6b64db53f2003599f10364e",
+        "tests/compatibility.test.mjs": "5fa88f05e9e3e87b6961749148aedea83877d396",
+        "tests/createComponent.test.mjs": "0c47667c32a54d625eee002549bb90638494e654",
+        "tests/cv.test.mjs": "aa10d98a1c35abc9aa268e47e9fa12ac140a4f04",
+        "tests/event-type-inference.test.ts": "9ce79186625c304890c00ae5c203f0a08542dd41",
+        "tests/preservation.test.ts": "2e4fa7cbc5560568bc54894019ad02ee3856c332",
+        "tests/subcomponent-types.test.ts": "aa6ff9ab6a25fcabbfc44a5b0bd761dcf0aac829",
+        "tmp/test-browser-e2e.cjs": "942ba74ebac1a9c3f9eb59e1bf95e02a79151285",
+        "tsconfig.json": "fb925c85e73a64fcc6683b63d52854e121ec3e8b",
+        "tsconfig.typecheck.json": "1a67818fada5949e291500f75bf56a07fbf84486",
+        "tsup.config.ts": "5733bd72b5fc73c1bb173a15b25e370bb8759988"
+      },
+      "hashOfExternalDependencies": "3d444f61560eba41",
+      "cache": {
+        "local": false,
+        "remote": false,
+        "status": "MISS",
+        "timeSaved": 0
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/core/.turbo/turbo-build.log",
+      "directory": "packages/domain/core",
+      "dependencies": [
+        "@tailwind-styled/animate#build",
+        "@tailwind-styled/animate#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/plugin#build",
+        "@tailwind-styled/plugin#build",
+        "@tailwind-styled/preset#build",
+        "@tailwind-styled/preset#build",
+        "@tailwind-styled/runtime-css#build",
+        "@tailwind-styled/runtime-css#build",
+        "@tailwind-styled/theme#build",
+        "@tailwind-styled/theme#build",
+        "@tailwind-styled/vite#build",
+        "@tailwind-styled/vite#build"
+      ],
+      "dependents": [],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "@tailwind-styled/animate#build",
+          "@tailwind-styled/compiler#build",
+          "@tailwind-styled/devtools#build",
+          "@tailwind-styled/next#build",
+          "@tailwind-styled/plugin#build",
+          "@tailwind-styled/preset#build",
+          "@tailwind-styled/runtime-css#build",
+          "@tailwind-styled/theme#build",
+          "@tailwind-styled/vite#build",
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/devtools#build",
+      "task": "build",
+      "package": "@tailwind-styled/devtools",
+      "hash": "c81e9f88faaedffb",
+      "inputs": {
+        "package.json": "8fca97bcd86be1c205972b31191e28955a6a9a2e",
+        "src/classInspector.ts": "2e9537bbb0107d18f5ab48c71396c8fc5f386966",
+        "src/global.d.ts": "e27bad0a173bcc8f8e9e716e496d058bfd70030c",
+        "src/index.tsx": "17a175bce9aef7dbbf64f450be2b4fe322e1766c",
+        "tests/index.test.mjs": "56a9b88a8e3af678be74901f49aa3b5f970805ff",
+        "tsconfig.json": "4dda9218c3a9a1e049c06e7b0a43575fcb8bfc83",
+        "tsup.config.ts": "293a8ed0c29912956d0db7f214f01fc11147eabb"
+      },
+      "hashOfExternalDependencies": "f9009ea8d8d86b75",
+      "cache": {
+        "local": false,
+        "remote": false,
+        "status": "MISS",
+        "timeSaved": 0
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/infrastructure/devtools/.turbo/turbo-build.log",
+      "directory": "packages/infrastructure/devtools",
+      "dependencies": [
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "@tailwind-styled/compiler#build",
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/engine#build",
+      "task": "build",
+      "package": "@tailwind-styled/engine",
+      "hash": "c7a269a08d42af2c",
+      "inputs": {
+        "README.md": "117aa8d7fd68b91675a6ee2c488222dcb4aae795",
+        "package.json": "99b7863306d41044adc2189fc500cafc29e69229",
+        "src/bundleAnalyzer.ts": "138d3a286a9265beb4dca0b0a26768d5782ad83e",
+        "src/cssToIr.ts": "ad1d0866b8809bdd03656a6942a0d276d985a779",
+        "src/impactTracker.ts": "fe08f786b52ec6c3abb7d9d4a9d394afa85353a2",
+        "src/incremental.ts": "8cc2c0011d37041367de8b5e17ad67ad500b59fb",
+        "src/index.ts": "19ccf0e06e7fc15624726b26e82d8670cfa85d40",
+        "src/internal.ts": "160dae1b188c17d3c501bee30696aa94f0726e3b",
+        "src/ir.ts": "446fa8950f01bcfa111d1b697db939d65d8e2a0f",
+        "src/metrics.ts": "eaf70f143989bf4119eada573d60d79a40564d18",
+        "src/metricsWriter.ts": "6bf2aca8931c3cd2e68e8b0c9add60c600c3b6f8",
+        "src/native-bridge.ts": "ad0949073473194576ac856bd66abfae6f6c64bc",
+        "src/plugin-api.ts": "fec8ce83a15e6751773d2e55ba58abaf61021990",
+        "src/resolver.ts": "ec9a82442ab7c6446f658b1628c45c7e2c1f4873",
+        "src/reverseLookup.ts": "97b3e3a5bb8dd362c941ad44637a1b5986190a69",
+        "src/schema.ts": "50172621758652b2b17581448255c16fb0184287",
+        "src/schemas.ts": "97d6077035f4ab8d070a18f0a6494635d7350d7a",
+        "src/trace.ts": "ce3a2159a21786875292bd48d190903a934a6b5c",
+        "src/types.ts": "b69d7d2f0c0a6f074b7337ee9189129713d34ce1",
+        "src/watch-native.ts": "72469e79a751b3e95e5779503ac0248ed01c9f4a",
+        "src/watch.ts": "66349e3984bd463c4ccb65c0d84c13306cf4443a",
+        "tests/facade.test.mjs": "5818af2a7d2900bb74b40d59e8747a77671e28c4",
+        "tsconfig.json": "e5c1da58468b20532e3f4cdc06764aa45813c1e3",
+        "tsup.config.ts": "36baaf4f89d3700395bacb955a52823c7d5d1226"
+      },
+      "hashOfExternalDependencies": "93c4cd2228237f9a",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 4805,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/engine/.turbo/turbo-build.log",
+      "directory": "packages/domain/engine",
+      "dependencies": [
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/vite#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "@tailwind-styled/analyzer#build",
+          "@tailwind-styled/compiler#build",
+          "@tailwind-styled/scanner#build",
+          "@tailwind-styled/shared#build",
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/next#build",
+      "task": "build",
+      "package": "@tailwind-styled/next",
+      "hash": "48eb90996fdebec2",
+      "inputs": {
+        "README.md": "f792ee447078a90868319e8bc82d22757e09bc06",
+        "package.json": "cadd2424350eb1c3587b9b38c6bfbab570801010",
+        "src/Routecssmanifestplugin .ts": "2dbf5500f9783d6b92c118bfa6fdd039b1208360",
+        "src/incrementalOrchestrator.ts": "e45fc20d3a1876835b4a3e09d0a8a55d6230a3f3",
+        "src/index.ts": "85b8263248fda4d062ff2f457cdda5f409aa6043",
+        "src/routeCssMiddleware.ts": "ba0c9e1c7e4feb081b85a326f7603e92366f2dab",
+        "src/schema.ts": "b8cb55a230fe7b193b2953138982793d37e65f96",
+        "src/schemas.ts": "edcca72a1c7f141ce0b278c624ac7feef3228729",
+        "src/staticCssWebpackPlugin.ts": "5896ceb0993aaba846d23ce154fd01b30baec9d6",
+        "src/turbopackLoader.ts": "5929a4d13afd64dbcd35bd1e9de8b7e7ac67d869",
+        "src/upstream-modules.d.ts": "5e20d9881ed4b7ea37c26bb2d0e4c51ef31a059c",
+        "src/webpackLoader.ts": "fb0c0c8ad66a48cbe041698a579443f4e46a1fa3",
+        "src/withTailwindStyled.ts": "c5423f4e815731ba0f1cd1f20f842bc6224c5530",
+        "tests/turbopackLoader.test.mjs": "3b36c6cf9cd7341075b2183f29f9e4d629ea77fe",
+        "tests/withTailwindStyled.test.mjs": "986eddaae5dc9388440cbb1ce205a13bdf703a49",
+        "tsconfig.json": "030e45929c02bedc6655bee9c6b1e35f3a862af8",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "5994c7d2b4dc7721",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 4002,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "7fd767451272df89b8d6b51c59998aba9b3df20816be59b4291dc3ee2b5c32bf"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/presentation/next/.turbo/turbo-build.log",
+      "directory": "packages/presentation/next",
+      "dependencies": [
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/plugin#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "nextjs",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/plugin#build",
+      "task": "build",
+      "package": "@tailwind-styled/plugin",
+      "hash": "d9a2aeb685a2c46b",
+      "inputs": {
+        "README.md": "3c768fe3d9ac6934bd02c010b88c3582ff22f942",
+        "package.json": "9740bbdd585e730632255c21ef4a13162692f350",
+        "src/hooks.ts": "8751e83e9041f03595cea71d5347c58af72d7995",
+        "src/index.ts": "a86f4b81f6edb7a5d906ba7915c1537658043b48",
+        "src/internal.ts": "5effe165567c6ff78798f36610728b9f78abcd7e",
+        "src/plugins.ts": "18493fd409ef2ad3d5c3f193b2151f3c64d10ef2",
+        "src/presets.ts": "835b76de4e7423ec38dcb0dae132e3e25025dd4d",
+        "tests/index.test.mjs": "f270389618bd41c1adecfd47a785ed704b20e91b",
+        "tsconfig.json": "d653a611e791f5159cf34378f12299bd839ae2d2",
+        "tsup.config.ts": "20d9e36d3b4195057554ffba6cdff84b4e12340b"
+      },
+      "hashOfExternalDependencies": "b3d7952ddc8993a0",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 5126,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "7fd767451272df89b8d6b51c59998aba9b3df20816be59b4291dc3ee2b5c32bf"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/plugin/.turbo/turbo-build.log",
+      "directory": "packages/domain/plugin",
+      "dependencies": [
+        "@tailwind-styled/plugin-api#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/next#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/plugin-api#build",
+      "task": "build",
+      "package": "@tailwind-styled/plugin-api",
+      "hash": "eba7fa5a97149ff7",
+      "inputs": {
+        "package.json": "3f06cbfbc7e63575dfd41762a39741f8a4ea4ab6",
+        "src/index.ts": "d1fc23a99b81d35f21a6b1fdea5f1b23a16bc8db",
+        "src/schema.ts": "f0116e0246ade522def6ba62e9dc273e96db114b",
+        "src/schemas.ts": "22aa6f11a79fd756faf7b036231e1deb27d233de",
+        "tests/index.test.mjs": "65a4f5c8c182ee0b4350011244c48c4fc0be763c",
+        "tsconfig.json": "f0e747aca742db588150006fc1eebcdd044155e8",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "5df9459dcb069fca",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 3694,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/plugin-api/.turbo/turbo-build.log",
+      "directory": "packages/domain/plugin-api",
+      "dependencies": [
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/plugin#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/preset#build",
+      "task": "build",
+      "package": "@tailwind-styled/preset",
+      "hash": "98e5afc7c24c193d",
+      "inputs": {
+        "README.md": "b290ef272312b708a6f0b44c5eaf31a7baf2c21d",
+        "package.json": "0a1ea6dc7d0c0ebaa66d169c3cc773fbb3ff3f7c",
+        "src/defaultPreset.ts": "31c34e9896c78ce79817bbd4b3cedb09b41bc168",
+        "src/index.ts": "89d36d57e5792a1d9f048d9da50d2c729ee48808",
+        "src/presetExtension.ts": "bf5b6362a0826c8941b9218c56f4dcd07819db3c",
+        "tests/defaultPreset.test.mjs": "87bab7e68be9dd288ecc49ffe86b07e00ab6b42e",
+        "tsconfig.json": "907a963cf23a875704c7e15143c2857c0aa1fa57",
+        "tsup.config.ts": "d11fdb219783b33bb7af990fc402901bc0dc2a57"
+      },
+      "hashOfExternalDependencies": "23cdc5639c032e55",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 6278,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "c6cd17829d78ca09d51b3ad86a4303224a1429abb1685fc5770a19e51fa4f700"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/preset/.turbo/turbo-build.log",
+      "directory": "packages/domain/preset",
+      "dependencies": [],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/runtime-css#build",
+      "task": "build",
+      "package": "@tailwind-styled/runtime-css",
+      "hash": "34eed2fcfeda21fc",
+      "inputs": {
+        "package.json": "ed59e2f8c11f8b64cc402624e4cf638c8185c31d",
+        "runtime-css-build.txt": "78624cdd82007a882bf78fea0294c00acb80b34d",
+        "src/CssInjector.tsx": "83ada57deac62793c6e19b98e19fa310b5ea45c7",
+        "src/batchedInjector.ts": "f354d2ac7d1c7cb89baaf0fa541e1c0f77140db6",
+        "src/index.ts": "7d19da9617f222074d3129f915726f385d09b9ee",
+        "tests/batchedInjector.test.mjs": "cc74723ac3b851802201785731066f03b99a11c1",
+        "tsconfig.json": "bfe1db5cdbc5b4ed9e5639bfef670025e3f81124",
+        "tsup.config.ts": "a56ac4bacdffbec2d7205f75f70abcfb5f232f39"
+      },
+      "hashOfExternalDependencies": "f9009ea8d8d86b75",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 3348,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "caaa16df87a27f83e38e1123e914631c4501c1cb64761b7c488ccf05549fd1c7"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/runtime-css/.turbo/turbo-build.log",
+      "directory": "packages/domain/runtime-css",
+      "dependencies": [],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/scanner#build",
+      "task": "build",
+      "package": "@tailwind-styled/scanner",
+      "hash": "f603009f7b70585a",
+      "inputs": {
+        "package.json": "13c317c431e2babda1a90bb9db3f4b0d33789295",
+        "src/ast-native.ts": "69462be85123c123e84a6c5be24696ec3c5838a6",
+        "src/cache-native.ts": "f3d28133e7a06331a7dc97379040640a34d6e0f5",
+        "src/cache.ts": "769d91ea0e9d5f4ffd71a3580ead088412086fc2",
+        "src/in-memory-cache.ts": "1583a362feb42856ddb6cf8aeb75e112f84d21e5",
+        "src/index.ts": "277739eb3351daa43dd4290da251a01c3c03c9bd",
+        "src/native-bridge.ts": "99fba0a5df27afcea9c4aca934a00503bf4c4a71",
+        "src/oxc-bridge.ts": "d4dd58085dceb4e176d6f3aca4fa02d095d2ef87",
+        "src/parallel-scanner.ts": "d523bb0091fe0c2e7ee6fcd74e29bd63ad84f0b3",
+        "src/schemas.ts": "13b568b5d3c756b19959d1b95198f140dcd0e2e0",
+        "src/types.ts": "e099e4ea1e739be08d2ffcdf37830f8cb5e46575",
+        "src/watcher.ts": "844719974c0db553b0682f42359611b9b80a99fa",
+        "src/worker.ts": "50dc9661255140ce06aaba78c272ae3dda87aabf",
+        "tests/index.test.mjs": "dfe4ae50ac2f4f660071bcfe4fa8327b0f5f6b53",
+        "tests/parallel-scanner.test.mjs": "fc2501c4b0e0a9fa62e4fa671bf3c82e22b21b1d",
+        "tsconfig.json": "e5c1da58468b20532e3f4cdc06764aa45813c1e3",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "b3d7952ddc8993a0",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 3689,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/scanner/.turbo/turbo-build.log",
+      "directory": "packages/domain/scanner",
+      "dependencies": [
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/syntax#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/vite#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/shared#build",
+      "task": "build",
+      "package": "@tailwind-styled/shared",
+      "hash": "9736642cc52ea5dc",
+      "inputs": {
+        "README.md": "9f1604da3d9969355c6a6abeca8e983d3cdcfb73",
+        "package.json": "c30f69f5c3125093a62bc527efe1ac86e3534ab1",
+        "scripts/fix-require.js": "cf655dee279f815d478fd7661de181c26ef1b0a4",
+        "src/asyncWrapper.ts": "646dfb374a851012b5aaac4c3ec3f4e699cfab32",
+        "src/cache.ts": "04ff3bb3498649714ecf49ccbc0e1c188d3903cb",
+        "src/codegen.ts": "387d7ddda4cac4ebda43b9363c3925886e783f59",
+        "src/compatibility.ts": "28b5c47d9ded3aaab47a7a2a2f501339d29b220b",
+        "src/configSchemas.ts": "65083030fa4f1e6a4f3a31c3d4ae22bda9c21c09",
+        "src/error-codes.ts": "f5d995ed1e49c334736e47d080f5cec0976c50a6",
+        "src/errorWrapper.ts": "534f68035f4fd5fd81e186fed3c9183aab2c522d",
+        "src/errors.ts": "e0290c3f99ac62cc85523cc85df149e7ee7b7579",
+        "src/esmHelpers.ts": "a141d8176cb10a1f9f77329b5204942d70eba783",
+        "src/generated/README.md": "dbd8a2c37a0805bbcceecb25947792dcc518d96f",
+        "src/generated/index.ts": "ff5d3f8d66ba3f52464e3acd37924aff0332ebcb",
+        "src/generated/native.d.ts": "924d06c563962543916c74157ba159bf39350026",
+        "src/global.d.ts": "f60084ca8f61e17f4042c72ccaed5f88eebccb07",
+        "src/hash.ts": "582eec493c31966481aaca1e49e40dd5b0b4a670",
+        "src/index.ts": "d96ccce2dd4acadb5a8429a716324ba4ba7da954",
+        "src/lazyAsync.example.ts": "dcab5cdd0339ca5c7a1a4cfcf8efdc020645ff5d",
+        "src/lazyAsync.ts": "28c0047d8640b195acd8710316ea742ae7a54898",
+        "src/logger.ts": "4688a4757934fb15f165704add235e2039892570",
+        "src/native-resolution.ts": "cc959c67a05020c274384027d1f2a556bba325a3",
+        "src/native-schemas.ts": "823ef484af546142175fad660a37fd3623ca42cc",
+        "src/nativeBinding.ts": "f4481100af8ab8bc334fa90e60d78d0b5d0b06c2",
+        "src/observability.ts": "b080037d29d1975e89a2661cfc6646ce36e6d457",
+        "src/schemas.ts": "c6ab37e902b1c0826fc253dd4e8a1de5ee37cf4c",
+        "src/staticStateExtractor.ts": "9881d8a05b813811662b9a2d39b8db67eb0cb320",
+        "src/telemetry.ts": "17d02ff1b8a055873b670ad8b732c6fa0b4cd574",
+        "src/telemetry/collector.ts": "8b070d28bc8366bfc1be52fed742ff028106d1c7",
+        "src/telemetry/exporters/console.ts": "5b83da230f56e917251b3481fa7543a21f16e40f",
+        "src/telemetry/exporters/json.ts": "2d17035a77cdaeb247b4c8ac92f4fd95ab3da040",
+        "src/telemetry/exporters/prometheus.ts": "98e04bc2dd35b15e4a907ced23ec22afdf1b1f8c",
+        "src/telemetry/index.ts": "313471d6d9e59b1ed97531804ef381652f105cc6",
+        "src/telemetry/metrics.ts": "082a0b38b6a33f8707a139f9eab9e15d164a56bf",
+        "src/timing.ts": "92f75384cef1bfec1889979c2bf42c8a1e215357",
+        "src/trace.ts": "f4e56ad02692d43577d01e9e27d34c62aaef47b3",
+        "src/version.ts": "b66201a9c0df8ec31d8905835310bcd1c6f1d487",
+        "src/workerResolver.ts": "5ca47ae36477b386160bfc90b9dbae4f2594c3ef",
+        "tests/cache.test.mjs": "528da9a54c1bfae23455d79c4592fedf62ac19ba",
+        "tests/codegen.test.mjs": "e702c8c8a11a1d43b54a2a87f2cc884de6ad30c5",
+        "tests/configSchemas.test.mjs": "3d3e298e05ccb81be3993d55058e1501f7bcadcb",
+        "tests/errors.test.mjs": "a109ea1275c4af8de411e494efb4d288a3cc4039",
+        "tests/hash.test.mjs": "3de7f132637edcc08515a41e045dc69535cf21dc",
+        "tests/native-resolution.test.mjs": "333f7847daaaa9097a1b5cfaf3d87c98ae1b48f6",
+        "tests/native-schemas.test.mjs": "f9a39a1a63e7e8e680827dea92fef768d78bd7e7",
+        "tests/nativeBinding.test.mjs": "1d227c875f8ffba9bed8f05d8696155b25b99acb",
+        "tests/telemetry.test.mjs": "cb40bebb0ced21fae35effe9f1efab0b76d43512",
+        "tests/workerResolver.test.mjs": "6f103316cbc53d490891bae29fec6baecd14913e",
+        "tsconfig.dts.json": "a8413d12d50b7ef1ee72c26c4b30b6534d23e3a6",
+        "tsconfig.json": "ec5d639579a54ad9f4db8781e319f33ba09c137f",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "9c35f03e43a5ca5d",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 2885,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "c10559842953cadc6d18eb4ff1c9abc26e471d37160a1828c2aed0c0885313c7"
+      },
+      "command": "tsup --config tsup.config.ts && node scripts/fix-require.js",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/shared/.turbo/turbo-build.log",
+      "directory": "packages/domain/shared",
+      "dependencies": [],
+      "dependents": [
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/animate#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/plugin-api#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/theme#build",
+        "@tailwind-styled/theme#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/syntax#build",
+      "task": "build",
+      "package": "@tailwind-styled/syntax",
+      "hash": "b8e538f768e5c2f0",
+      "inputs": {
+        "package.json": "f7515c3f26d40e5306185f4ebeeec3c3008d090e",
+        "src/index.ts": "775ddb384fc39fdaa78555579756879aca757446",
+        "tests/index.test.mjs": "2f08ee8f4af5a82eec279b9e2e0cb389ce6a3191",
+        "tsconfig.json": "c0f384914be477e1cd5d9b4189acfb1d68e5e471",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "dd7c67cf9a45c40d",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 2611,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5c5452aaaf4b38d0c06a4c372d3934914789f45e9af1f0ff91ac92d11d2a60d9"
+      },
+      "command": "tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/syntax/.turbo/turbo-build.log",
+      "directory": "packages/domain/syntax",
+      "dependencies": [],
+      "dependents": [
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/scanner#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/theme#build",
+      "task": "build",
+      "package": "@tailwind-styled/theme",
+      "hash": "81bcdfc5d2af182f",
+      "inputs": {
+        "CHANGES_DIFF.md": "47da98fc4887d365c8a4405858bdb4614a936af0",
+        "FIX_SUMMARY.md": "cf94312e2533e935dc0653d78194545d2b88dc7e",
+        "README.md": "ec76f0812cfb8eeb37d8d814374caae7dfc1ddf3",
+        "package.json": "e75da0cb57aad1abe84316c23e85a8f084322be4",
+        "src/ThemeInitScript.tsx": "70804130b5545d32f99ef95d3586cb76a69e4c4b",
+        "src/index.server.ts": "41bf7111858ef9ae7c5253b089e88ad770d45176",
+        "src/index.ts": "30eec655dd4221ad5d7b209617f8ef9d9049bb05",
+        "src/liveTokenEngine.ts": "15368d15e1d645433b07675cb67217594f4b07e3",
+        "src/liveTokens.ts": "ac0b156b29163cd3798aa6b43d3f3692bb0894ef",
+        "src/native-bridge.ts": "9528d675d9a9850ec3f44d2d511496e821646f82",
+        "src/persistence.ts": "d62b0599e800d7005bfa9ceb685c77e24a63bf35",
+        "src/schema.ts": "37e2697b8aa93169ee72cd7e537921dfd8f3fe23",
+        "src/schemas.ts": "dc5ecaf2bb357e926fd85425164cca7e2a916dfb",
+        "src/types.persistence.ts": "f305e8b7a71e3df1e4f4123106bbd6c6df52fade",
+        "src/useTheme.ts": "d9d74f42f8bfb9cb08fb623aabbf3346ccea8188",
+        "test/fixture.package.json": "688324693067810ee2ac96a5c6c373f5e90131a7",
+        "test/tsconfig.json": "b2b14594c8fe047156a0f3c52afce944647ec1a7",
+        "tests/liveTokens.test.mjs": "40f8d29207d99686d387e6640ac4b0362ae6e7f0",
+        "theme-build-debug.txt": "474c183009ebc96d5681bfd41801533152395fba",
+        "tsconfig.json": "e5c1da58468b20532e3f4cdc06764aa45813c1e3",
+        "tsup.config.ts": "77a508bbd922343113acb3f9f6d5dabf571f9df6"
+      },
+      "hashOfExternalDependencies": "a54f1bdfc6ac443f",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 4621,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "2e653a5e84ba16f8a34c1e4b6d16a11f43bf6dcb388ba128f202461b8d292279"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/domain/theme/.turbo/turbo-build.log",
+      "directory": "packages/domain/theme",
+      "dependencies": [
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/shared#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "@tailwind-styled/shared#build",
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    },
+    {
+      "taskId": "@tailwind-styled/vite#build",
+      "task": "build",
+      "package": "@tailwind-styled/vite",
+      "hash": "c50db4fa94ee554f",
+      "inputs": {
+        "CHANGELOG.md": "d7cc7388182e75167a7be3dab7edf0f0e87a576b",
+        "LICENSE": "4f11dc39c8b24b3745890a1440a76d1c6dc7a52c",
+        "README.md": "6aa55e010f152d6204e05406e727c7b61bc2ea9d",
+        "package.json": "4fda22332ff8841bec9a26974230428909ec9e60",
+        "src/hmr-plugin.ts": "d3a1034f414aefc730a0339d5b9cbf2ee47abb22",
+        "src/index.ts": "7d181f3e044f9c51ac07a1f2e404ffc8c6c939c2",
+        "src/plugin.ts": "0b19d1150363a67631f07cedeb0376e6bb128a3c",
+        "src/schema.ts": "9ec97b27f313692e25ab85e5c79517ba9c04fd65",
+        "src/schemas.ts": "c942a008a778091c943aea370420a2133c64a83e",
+        "src/upstream-modules.d.ts": "3d8b9cdb98107fbc9b4655c2c6376b52cac4fbfb",
+        "tests/plugin.test.mjs": "7f253abdce06c250ecf6c588d1b46d12dbfb60d6",
+        "tsconfig.json": "91b16d5b04f62d6635fe42e6ea3a3de4abc0d2ed",
+        "tsup.config.ts": "a3b7570388739cc22d8aedc600966fe59d940026"
+      },
+      "hashOfExternalDependencies": "7067d48ba6a51d16",
+      "cache": {
+        "local": true,
+        "remote": false,
+        "status": "HIT",
+        "source": "LOCAL",
+        "timeSaved": 8416,
+        "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+        "dirtyHash": "5fa91df5a684c70be04983fa315d063e199e9648642fbd1278f797edab09d009"
+      },
+      "command": "tsup",
+      "cliArguments": [],
+      "outputs": [
+        "dist/**"
+      ],
+      "excludedOutputs": null,
+      "logFile": "packages/presentation/vite/.turbo/turbo-build.log",
+      "directory": "packages/presentation/vite",
+      "dependencies": [
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/engine#build",
+        "@tailwind-styled/scanner#build"
+      ],
+      "dependents": [
+        "@tailwind-styled/core#build",
+        "@tailwind-styled/core#build"
+      ],
+      "with": [],
+      "resolvedTaskDefinition": {
+        "outputs": [
+          "dist/**"
+        ],
+        "cache": true,
+        "dependsOn": [
+          "^build"
+        ],
+        "inputs": [],
+        "outputLogs": "full",
+        "persistent": false,
+        "interruptible": false,
+        "env": [],
+        "passThroughEnv": null,
+        "interactive": false
+      },
+      "expandedOutputs": [],
+      "framework": "vite",
+      "envMode": "strict",
+      "environmentVariables": {
+        "specified": {
+          "env": [],
+          "passThroughEnv": null
+        },
+        "configured": [],
+        "inferred": [],
+        "passthrough": null
+      }
+    }
+  ],
+  "user": "",
+  "scm": {
+    "type": "git",
+    "sha": "64abffeb61a335a09a41efd06b856ed414767d07",
+    "branch": "tailwnd-js-css"
+  }
+}
+

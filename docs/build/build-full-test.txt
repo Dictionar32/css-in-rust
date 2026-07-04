@@ -1,0 +1,771 @@
+
+> tailwind-styled-v4@5.1.23 build:fast
+> npm run build:packages && rm -rf dist && tsup --config tsup.config.ts && tsup --config tsup.dts.config.ts
+
+
+> tailwind-styled-v4@5.1.23 build:packages
+> turbo run build --continue
+
+
+   • Packages in scope: @tailwind-styled/analyzer, @tailwind-styled/animate, @tailwind-styled/atomic, @tailwind-styled/compiler, @tailwind-styled/core, @tailwind-styled/dashboard, @tailwind-styled/devtools, @tailwind-styled/engine, @tailwind-styled/next, @tailwind-styled/plugin, @tailwind-styled/plugin-accessibility, @tailwind-styled/plugin-api, @tailwind-styled/plugin-registry, @tailwind-styled/preset, @tailwind-styled/rspack, @tailwind-styled/runtime, @tailwind-styled/runtime-css, @tailwind-styled/scanner, @tailwind-styled/shared, @tailwind-styled/storybook-addon, @tailwind-styled/studio-desktop, @tailwind-styled/svelte, @tailwind-styled/syntax, @tailwind-styled/testing, @tailwind-styled/theme, @tailwind-styled/vite, @tailwind-styled/vue, create-tailwind-styled, tailwind-styled-vscode
+   • Running build in 29 packages
+   • Remote caching disabled
+
+@tailwind-styled/testing:build: cache miss, executing 44aa93196334dee4
+@tailwind-styled/shared:build: cache miss, executing 982c7f020e0b5c14
+@tailwind-styled/dashboard:build: cache miss, executing 8afb0911f2109436
+@tailwind-styled/syntax:build: cache miss, executing b8e538f768e5c2f0
+@tailwind-styled/runtime-css:build: cache miss, executing cea95690566b24de
+@tailwind-styled/plugin-registry:build: cache miss, executing f2eb029a0d2b0805
+@tailwind-styled/preset:build: cache miss, executing 98e5afc7c24c193d
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: > @tailwind-styled/shared@5.0.4 build
+@tailwind-styled/shared:build: > tsup --config tsup.config.ts && node scripts/fix-require.js
+@tailwind-styled/shared:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: > @tailwind-styled/syntax@5.0.4 build
+@tailwind-styled/syntax:build: > tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean
+@tailwind-styled/syntax:build: 
+@tailwind-styled/runtime-css:build: 
+@tailwind-styled/runtime-css:build: > @tailwind-styled/runtime-css@5.0.4 build
+@tailwind-styled/runtime-css:build: > tsup
+@tailwind-styled/runtime-css:build: 
+@tailwind-styled/preset:build: 
+@tailwind-styled/preset:build: > @tailwind-styled/preset@5.0.4 build
+@tailwind-styled/preset:build: > tsup
+@tailwind-styled/preset:build: 
+@tailwind-styled/plugin-registry:build: 
+@tailwind-styled/plugin-registry:build: > @tailwind-styled/plugin-registry@5.0.4 build
+@tailwind-styled/plugin-registry:build: > tsup src/index.ts src/cli.ts --format cjs,esm --dts --out-dir dist --clean --external typescript
+@tailwind-styled/plugin-registry:build: 
+@tailwind-styled/dashboard:build: 
+@tailwind-styled/dashboard:build: > @tailwind-styled/dashboard@5.0.4 build
+@tailwind-styled/dashboard:build: > tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean
+@tailwind-styled/dashboard:build: 
+@tailwind-styled/testing:build: 
+@tailwind-styled/testing:build: > @tailwind-styled/testing@5.0.4 build
+@tailwind-styled/testing:build: > tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --external typescript
+@tailwind-styled/testing:build: 
+@tailwind-styled/syntax:build: CLI Building entry: src/index.ts
+@tailwind-styled/syntax:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/syntax:build: CLI tsup v8.5.1
+@tailwind-styled/syntax:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/syntax/tsup.config.ts
+@tailwind-styled/syntax:build: CLI Target: node20
+@tailwind-styled/syntax:build: CLI Cleaning output folder
+@tailwind-styled/syntax:build: CJS Build start
+@tailwind-styled/syntax:build: ESM Build start
+@tailwind-styled/shared:build: CLI Building entry: {"index":"src/index.ts"}
+@tailwind-styled/shared:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/shared:build: CLI tsup v8.5.1
+@tailwind-styled/shared:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/shared/tsup.config.ts
+@tailwind-styled/shared:build: CLI Target: node20
+@tailwind-styled/runtime-css:build: CLI Building entry: {"index":"src/index.ts","client":"src/batchedInjector.ts","server":"src/CssInjector.tsx","batched":"src/batchedInjector.ts"}
+@tailwind-styled/shared:build: CLI Cleaning output folder
+@tailwind-styled/shared:build: ESM Build start
+@tailwind-styled/shared:build: CJS Build start
+@tailwind-styled/runtime-css:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/runtime-css:build: CLI tsup v8.5.1
+@tailwind-styled/runtime-css:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/runtime-css/tsup.config.ts
+@tailwind-styled/preset:build: CLI Building entry: {"index":"src/index.ts","default":"src/defaultPreset.ts"}
+@tailwind-styled/testing:build: CLI Building entry: src/index.ts
+@tailwind-styled/testing:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/preset:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/runtime-css:build: CLI Target: node20
+@tailwind-styled/preset:build: CLI tsup v8.5.1
+@tailwind-styled/preset:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/preset/tsup.config.ts
+@tailwind-styled/testing:build: CLI tsup v8.5.1
+@tailwind-styled/testing:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/testing/tsup.config.ts
+@tailwind-styled/dashboard:build: CLI Building entry: src/index.ts
+@tailwind-styled/dashboard:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/dashboard:build: CLI tsup v8.5.1
+@tailwind-styled/dashboard:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/tsup.config.ts
+@tailwind-styled/dashboard:build: CLI Building entry: src/index.ts
+@tailwind-styled/dashboard:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/dashboard:build: CLI tsup v8.5.1
+@tailwind-styled/dashboard:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/tsup.config.ts
+@tailwind-styled/dashboard:build: CLI Target: node20
+@tailwind-styled/dashboard:build: CLI Target: node20
+@tailwind-styled/preset:build: CLI Target: node20
+@tailwind-styled/dashboard:build: CLI Cleaning output folder
+@tailwind-styled/dashboard:build: CJS Build start
+@tailwind-styled/dashboard:build: ESM Build start
+@tailwind-styled/plugin-registry:build: CLI Building entry: src/cli.ts, src/index.ts
+@tailwind-styled/testing:build: CLI Target: node20
+@tailwind-styled/dashboard:build: CLI Cleaning output folder
+@tailwind-styled/dashboard:build: CJS Build start
+@tailwind-styled/dashboard:build: ESM Build start
+@tailwind-styled/plugin-registry:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/runtime-css:build: CLI Cleaning output folder
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:     src/index.ts:14:13:
+@tailwind-styled/syntax:build: [37m      14 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url) {
+@tailwind-styled/syntax:build:          ╵              [32m~~~~~~~~~~~[0m
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/plugin-registry:build: CLI tsup v8.5.1
+@tailwind-styled/plugin-registry:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/plugin-registry/tsup.config.ts
+@tailwind-styled/runtime-css:build: ESM Build start
+@tailwind-styled/testing:build: CLI Cleaning output folder
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:     src/index.ts:14:44:
+@tailwind-styled/syntax:build: [37m      14 │   if (typeof import.meta !== "undefined" && [32mimport.meta[37m.url) {
+@tailwind-styled/syntax:build:          ╵                                             [32m~~~~~~~~~~~[0m
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:     src/index.ts:15:38:
+@tailwind-styled/syntax:build: [37m      15 │     return path.dirname(fileURLToPath([32mimport.meta[37m.url))
+@tailwind-styled/syntax:build:          ╵                                       [32m~~~~~~~~~~~[0m
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/syntax:build: 
+@tailwind-styled/runtime-css:build: CJS Build start
+@tailwind-styled/testing:build: CJS Build start
+@tailwind-styled/plugin-registry:build: CLI Target: node20
+@tailwind-styled/testing:build: ESM Build start
+@tailwind-styled/syntax:build: CJS dist/index.cjs 6.13 KB
+@tailwind-styled/syntax:build: CJS ⚡️ Build success in 115ms
+@tailwind-styled/plugin-registry:build: CLI Cleaning output folder
+@tailwind-styled/plugin-registry:build: CJS Build start
+@tailwind-styled/plugin-registry:build: ESM Build start
+@tailwind-styled/syntax:build: ESM dist/index.js 4.00 KB
+@tailwind-styled/syntax:build: ESM ⚡️ Build success in 124ms
+@tailwind-styled/preset:build: CLI Cleaning output folder
+@tailwind-styled/testing:build: CJS dist/index.cjs 7.04 KB
+@tailwind-styled/testing:build: CJS ⚡️ Build success in 34ms
+@tailwind-styled/testing:build: ESM dist/index.js 5.47 KB
+@tailwind-styled/testing:build: ESM ⚡️ Build success in 39ms
+@tailwind-styled/preset:build: ESM Build start
+@tailwind-styled/preset:build: CJS Build start
+@tailwind-styled/runtime-css:build: ESM dist/index.js          363.00 B
+@tailwind-styled/runtime-css:build: ESM dist/client.js         273.00 B
+@tailwind-styled/runtime-css:build: ESM dist/server.js         115.00 B
+@tailwind-styled/runtime-css:build: ESM dist/chunk-KER5I5GG.js 3.03 KB
+@tailwind-styled/runtime-css:build: ESM dist/batched.js        273.00 B
+@tailwind-styled/runtime-css:build: ESM dist/chunk-GFXKF6ZX.js 2.38 KB
+@tailwind-styled/runtime-css:build: ESM ⚡️ Build success in 96ms
+@tailwind-styled/plugin-registry:build: CJS dist/cli.cjs   21.02 KB
+@tailwind-styled/plugin-registry:build: CJS dist/index.cjs 15.22 KB
+@tailwind-styled/plugin-registry:build: CJS ⚡️ Build success in 76ms
+@tailwind-styled/runtime-css:build: CJS dist/index.cjs   7.39 KB
+@tailwind-styled/runtime-css:build: CJS dist/client.cjs  3.60 KB
+@tailwind-styled/runtime-css:build: CJS dist/server.cjs  4.81 KB
+@tailwind-styled/runtime-css:build: CJS dist/batched.cjs 3.60 KB
+@tailwind-styled/runtime-css:build: CJS ⚡️ Build success in 105ms
+@tailwind-styled/plugin-registry:build: ESM dist/cli.js            7.01 KB
+@tailwind-styled/plugin-registry:build: ESM dist/index.js          185.00 B
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/esmHelpers.ts:45:6:
+@tailwind-styled/shared:build: [37m      45 │   if ([32mimport.meta[37m.url) {
+@tailwind-styled/shared:build:          ╵       [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/esmHelpers.ts:46:11:
+@tailwind-styled/shared:build: [37m      46 │     return [32mimport.meta[37m.url
+@tailwind-styled/shared:build:          ╵            [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/index.ts:196:7:
+@tailwind-styled/shared:build: [37m      196 │     : ([32mimport.meta[37m.url ?? "file://unknown")
+@tailwind-styled/shared:build:           ╵        [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/plugin-registry:build: ESM dist/chunk-OUFWWYWF.js 13.61 KB
+@tailwind-styled/plugin-registry:build: ESM ⚡️ Build success in 89ms
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/native-resolution.ts:24:13:
+@tailwind-styled/shared:build: [37m      24 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url && !im...
+@tailwind-styled/shared:build:          ╵              [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/native-resolution.ts:24:44:
+@tailwind-styled/shared:build: [37m      24 │ ...t.meta !== "undefined" && [32mimport.meta[37m.url && !import.meta.url.i...
+@tailwind-styled/shared:build:          ╵                              [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/native-resolution.ts:24:64:
+@tailwind-styled/shared:build: [37m      24 │ ...ned" && import.meta.url && ![32mimport.meta[37m.url.includes("unknown")) {
+@tailwind-styled/shared:build:          ╵                                [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:     src/native-resolution.ts:25:25:
+@tailwind-styled/shared:build: [37m      25 │     return createRequire([32mimport.meta[37m.url)
+@tailwind-styled/shared:build:          ╵                          [32m~~~~~~~~~~~[0m
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: 
+@tailwind-styled/shared:build: ESM dist/index.mjs 51.85 KB
+@tailwind-styled/shared:build: ESM ⚡️ Build success in 184ms
+@tailwind-styled/shared:build: CJS dist/index.js 58.60 KB
+@tailwind-styled/shared:build: CJS ⚡️ Build success in 184ms
+@tailwind-styled/dashboard:build: CJS dist/index.cjs     6.39 KB
+@tailwind-styled/dashboard:build: CJS dist/index.cjs.map 9.10 KB
+@tailwind-styled/dashboard:build: CJS ⚡️ Build success in 146ms
+@tailwind-styled/dashboard:build: ESM dist/index.js     4.86 KB
+@tailwind-styled/dashboard:build: ESM dist/index.js.map 8.86 KB
+@tailwind-styled/dashboard:build: ESM ⚡️ Build success in 146ms
+@tailwind-styled/dashboard:build: ESM dist/index.js     4.86 KB
+@tailwind-styled/dashboard:build: ESM dist/index.js.map 8.86 KB
+@tailwind-styled/dashboard:build: ESM ⚡️ Build success in 153ms
+@tailwind-styled/dashboard:build: CJS dist/index.cjs     6.39 KB
+@tailwind-styled/dashboard:build: CJS dist/index.cjs.map 9.10 KB
+@tailwind-styled/dashboard:build: CJS ⚡️ Build success in 153ms
+@tailwind-styled/preset:build: ESM dist/index.js          1.86 KB
+@tailwind-styled/preset:build: ESM dist/default.js        291.00 B
+@tailwind-styled/preset:build: ESM dist/chunk-3LPENBBU.js 10.81 KB
+@tailwind-styled/preset:build: ESM ⚡️ Build success in 72ms
+@tailwind-styled/preset:build: CJS dist/index.cjs   13.72 KB
+@tailwind-styled/preset:build: CJS dist/default.cjs 12.05 KB
+@tailwind-styled/preset:build: CJS ⚡️ Build success in 71ms
+@tailwind-styled/shared:build: DTS Build start
+@tailwind-styled/syntax:build: DTS Build start
+@tailwind-styled/runtime-css:build: DTS Build start
+@tailwind-styled/plugin-registry:build: DTS Build start
+@tailwind-styled/preset:build: DTS Build start
+@tailwind-styled/dashboard:build: DTS Build start
+@tailwind-styled/dashboard:build: DTS Build start
+@tailwind-styled/testing:build: DTS Build start
+@tailwind-styled/syntax:build: DTS ⚡️ Build success in 4116ms
+@tailwind-styled/syntax:build: DTS dist/index.d.cts 161.00 B
+@tailwind-styled/syntax:build: DTS dist/index.d.ts  161.00 B
+@tailwind-styled/testing:build: DTS ⚡️ Build success in 4915ms
+@tailwind-styled/testing:build: DTS dist/index.d.cts 5.83 KB
+@tailwind-styled/testing:build: DTS dist/index.d.ts  5.83 KB
+@tailwind-styled/shared:build: DTS ⚡️ Build success in 6051ms
+@tailwind-styled/shared:build: DTS dist/index.d.mts 32.27 KB
+@tailwind-styled/shared:build: DTS dist/index.d.ts  32.27 KB
+@tailwind-styled/shared:build: No changes in index.js
+@tailwind-styled/shared:build: Removed __require wrapper from index.mjs
+@tailwind-styled/shared:build: Replaced __require() calls in index.mjs
+@tailwind-styled/shared:build: Replaced __require.resolve() calls in index.mjs
+@tailwind-styled/shared:build: Replaced return __require patterns in index.mjs
+@tailwind-styled/shared:build: Saved index.mjs
+@tailwind-styled/shared:build: Done
+@tailwind-styled/storybook-addon:build: cache miss, executing 6164ea0a350ba427
+@tailwind-styled/scanner:build: cache miss, executing 21718c533880e662
+@tailwind-styled/theme:build: cache miss, executing 7d64c57072ae2c5d
+@tailwind-styled/plugin-api:build: cache miss, executing 4b337a03c6964433
+@tailwind-styled/preset:build: DTS ⚡️ Build success in 6281ms
+@tailwind-styled/preset:build: DTS dist/index.d.ts    2.54 KB
+@tailwind-styled/preset:build: DTS dist/default.d.ts  14.45 KB
+@tailwind-styled/preset:build: DTS dist/index.d.cts   2.54 KB
+@tailwind-styled/preset:build: DTS dist/default.d.cts 14.45 KB
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: > @tailwind-styled/theme@5.0.4 build
+@tailwind-styled/theme:build: > tsup
+@tailwind-styled/theme:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: > @tailwind-styled/scanner@5.0.4 build
+@tailwind-styled/scanner:build: > tsup
+@tailwind-styled/scanner:build: 
+@tailwind-styled/plugin-registry:build: DTS ⚡️ Build success in 6827ms
+@tailwind-styled/plugin-registry:build: DTS dist/cli.d.cts   20.00 B
+@tailwind-styled/plugin-registry:build: DTS dist/index.d.cts 2.52 KB
+@tailwind-styled/plugin-registry:build: DTS dist/cli.d.ts    20.00 B
+@tailwind-styled/plugin-registry:build: DTS dist/index.d.ts  2.52 KB
+@tailwind-styled/plugin-api:build: 
+@tailwind-styled/plugin-api:build: > @tailwind-styled/plugin-api@5.0.4 build
+@tailwind-styled/plugin-api:build: > tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean
+@tailwind-styled/plugin-api:build: 
+@tailwind-styled/storybook-addon:build: 
+@tailwind-styled/storybook-addon:build: > @tailwind-styled/storybook-addon@5.0.4 build
+@tailwind-styled/storybook-addon:build: > tsup src/index.ts --format cjs,esm --dts --out-dir dist --clean --external typescript
+@tailwind-styled/storybook-addon:build: 
+@tailwind-styled/runtime-css:build: DTS ⚡️ Build success in 7058ms
+@tailwind-styled/runtime-css:build: DTS dist/index.d.ts    198.00 B
+@tailwind-styled/runtime-css:build: DTS dist/client.d.ts   1.50 KB
+@tailwind-styled/runtime-css:build: DTS dist/server.d.ts   1.51 KB
+@tailwind-styled/runtime-css:build: DTS dist/batched.d.ts  123.00 B
+@tailwind-styled/runtime-css:build: DTS dist/index.d.cts   200.00 B
+@tailwind-styled/runtime-css:build: DTS dist/client.d.cts  1.50 KB
+@tailwind-styled/runtime-css:build: DTS dist/server.d.cts  1.51 KB
+@tailwind-styled/runtime-css:build: DTS dist/batched.d.cts 124.00 B
+@tailwind-styled/dashboard:build: DTS ⚡️ Build success in 7308ms
+@tailwind-styled/dashboard:build: DTS dist/index.d.cts 1.89 KB
+@tailwind-styled/dashboard:build: DTS dist/index.d.ts  1.89 KB
+@tailwind-styled/theme:build: CLI Building entry: {"index":"src/index.ts","liveTokens":"src/liveTokens.ts"}
+@tailwind-styled/theme:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/theme:build: CLI tsup v8.5.1
+@tailwind-styled/theme:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/theme/tsup.config.ts
+@tailwind-styled/theme:build: CLI Target: node20
+@tailwind-styled/theme:build: CLI Cleaning output folder
+@tailwind-styled/theme:build: ESM Build start
+@tailwind-styled/theme:build: CJS Build start
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:     src/native-bridge.ts:18:13:
+@tailwind-styled/theme:build: [37m      18 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url) {
+@tailwind-styled/theme:build:          ╵              [32m~~~~~~~~~~~[0m
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:     src/native-bridge.ts:18:44:
+@tailwind-styled/theme:build: [37m      18 │   if (typeof import.meta !== "undefined" && [32mimport.meta[37m.url) {
+@tailwind-styled/theme:build:          ╵                                             [32m~~~~~~~~~~~[0m
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:     src/native-bridge.ts:19:38:
+@tailwind-styled/theme:build: [37m      19 │     return path.dirname(fileURLToPath([32mimport.meta[37m.url))
+@tailwind-styled/theme:build:          ╵                                       [32m~~~~~~~~~~~[0m
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: 
+@tailwind-styled/theme:build: ESM dist/index.js          11.92 KB
+@tailwind-styled/theme:build: ESM dist/liveTokens.js     423.00 B
+@tailwind-styled/theme:build: ESM dist/chunk-VQQOAT5E.js 5.60 KB
+@tailwind-styled/theme:build: ESM ⚡️ Build success in 74ms
+@tailwind-styled/theme:build: CJS dist/index.cjs      20.50 KB
+@tailwind-styled/theme:build: CJS dist/liveTokens.cjs 7.64 KB
+@tailwind-styled/theme:build: CJS ⚡️ Build success in 75ms
+@tailwind-styled/plugin-api:build: CLI Building entry: src/index.ts
+@tailwind-styled/plugin-api:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/plugin-api:build: CLI tsup v8.5.1
+@tailwind-styled/plugin-api:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/plugin-api/tsup.config.ts
+@tailwind-styled/scanner:build: CLI Building entry: {"index":"src/index.ts"}
+@tailwind-styled/scanner:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/scanner:build: CLI tsup v8.5.1
+@tailwind-styled/scanner:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/scanner/tsup.config.ts
+@tailwind-styled/plugin-api:build: CLI Target: node20
+@tailwind-styled/plugin-api:build: CLI Cleaning output folder
+@tailwind-styled/plugin-api:build: CJS Build start
+@tailwind-styled/plugin-api:build: ESM Build start
+@tailwind-styled/scanner:build: CLI Target: node20
+@tailwind-styled/scanner:build: CLI Cleaning output folder
+@tailwind-styled/scanner:build: ESM Build start
+@tailwind-styled/scanner:build: CJS Build start
+@tailwind-styled/dashboard:build: DTS ⚡️ Build success in 7525ms
+@tailwind-styled/plugin-api:build: CJS dist/index.cjs 10.04 KB
+@tailwind-styled/plugin-api:build: CJS ⚡️ Build success in 48ms
+@tailwind-styled/dashboard:build: DTS dist/index.d.cts 1.89 KB
+@tailwind-styled/plugin-api:build: ESM dist/index.js 7.71 KB
+@tailwind-styled/plugin-api:build: ESM ⚡️ Build success in 45ms
+@tailwind-styled/dashboard:build: DTS dist/index.d.ts  1.89 KB
+@tailwind-styled/storybook-addon:build: CLI Building entry: src/index.ts
+@tailwind-styled/scanner:build: ESM dist/index.js 34.05 KB
+@tailwind-styled/scanner:build: ESM ⚡️ Build success in 56ms
+@tailwind-styled/storybook-addon:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/storybook-addon:build: CLI tsup v8.5.1
+@tailwind-styled/storybook-addon:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/tsup.config.ts
+@tailwind-styled/storybook-addon:build: CLI Building entry: src/index.ts
+@tailwind-styled/storybook-addon:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/storybook-addon:build: CLI tsup v8.5.1
+@tailwind-styled/storybook-addon:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/tsup.config.ts
+@tailwind-styled/storybook-addon:build: CLI Target: node20
+@tailwind-styled/storybook-addon:build: CLI Target: node20
+@tailwind-styled/storybook-addon:build: CLI Cleaning output folder
+@tailwind-styled/storybook-addon:build: CJS Build start
+@tailwind-styled/storybook-addon:build: ESM Build start
+@tailwind-styled/storybook-addon:build: CLI Cleaning output folder
+@tailwind-styled/storybook-addon:build: CJS Build start
+@tailwind-styled/storybook-addon:build: ESM Build start
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:46:13:
+@tailwind-styled/scanner:build: [37m      46 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url) {
+@tailwind-styled/scanner:build:          ╵              [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:46:44:
+@tailwind-styled/scanner:build: [37m      46 │   if (typeof import.meta !== "undefined" && [32mimport.meta[37m.url) {
+@tailwind-styled/scanner:build:          ╵                                             [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:47:38:
+@tailwind-styled/scanner:build: [37m      47 │     return path.dirname(fileURLToPath([32mimport.meta[37m.url))
+@tailwind-styled/scanner:build:          ╵                                       [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:187:15:
+@tailwind-styled/scanner:build: [37m      187 │     if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url) {
+@tailwind-styled/scanner:build:           ╵                [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:187:46:
+@tailwind-styled/scanner:build: [37m      187 │     if (typeof import.meta !== "undefined" && [32mimport.meta[37m.url) {
+@tailwind-styled/scanner:build:           ╵                                               [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/index.ts:188:40:
+@tailwind-styled/scanner:build: [37m      188 │       return path.dirname(fileURLToPath([32mimport.meta[37m.url))
+@tailwind-styled/scanner:build:           ╵                                         [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/native-bridge.ts:23:13:
+@tailwind-styled/scanner:build: [37m      23 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url) {
+@tailwind-styled/scanner:build:          ╵              [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/native-bridge.ts:23:44:
+@tailwind-styled/scanner:build: [37m      23 │   if (typeof import.meta !== "undefined" && [32mimport.meta[37m.url) {
+@tailwind-styled/scanner:build:          ╵                                             [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/native-bridge.ts:24:38:
+@tailwind-styled/scanner:build: [37m      24 │     return path.dirname(fileURLToPath([32mimport.meta[37m.url))
+@tailwind-styled/scanner:build:          ╵                                       [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:     src/parallel-scanner.ts:119:65:
+@tailwind-styled/scanner:build: [37m      119 │ ...ame !== "undefined" ? __filename : fileURLToPath([32mimport.meta[37m.url)
+@tailwind-styled/scanner:build:           ╵                                                     [32m~~~~~~~~~~~[0m
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: 
+@tailwind-styled/scanner:build: CJS dist/index.cjs 37.13 KB
+@tailwind-styled/scanner:build: CJS ⚡️ Build success in 116ms
+@tailwind-styled/storybook-addon:build: CJS dist/index.cjs     3.98 KB
+@tailwind-styled/storybook-addon:build: CJS dist/index.cjs.map 6.71 KB
+@tailwind-styled/storybook-addon:build: CJS ⚡️ Build success in 58ms
+@tailwind-styled/storybook-addon:build: ESM dist/index.js     2.73 KB
+@tailwind-styled/storybook-addon:build: ESM dist/index.js.map 6.64 KB
+@tailwind-styled/storybook-addon:build: ESM ⚡️ Build success in 59ms
+@tailwind-styled/storybook-addon:build: CJS dist/index.cjs     3.98 KB
+@tailwind-styled/storybook-addon:build: CJS dist/index.cjs.map 6.71 KB
+@tailwind-styled/storybook-addon:build: CJS ⚡️ Build success in 54ms
+@tailwind-styled/storybook-addon:build: ESM dist/index.js     2.73 KB
+@tailwind-styled/storybook-addon:build: ESM dist/index.js.map 6.64 KB
+@tailwind-styled/storybook-addon:build: ESM ⚡️ Build success in 56ms
+@tailwind-styled/theme:build: DTS Build start
+@tailwind-styled/plugin-api:build: DTS Build start
+@tailwind-styled/scanner:build: DTS Build start
+@tailwind-styled/storybook-addon:build: DTS Build start
+@tailwind-styled/storybook-addon:build: DTS Build start
+@tailwind-styled/storybook-addon:build: DTS ⚡️ Build success in 4041ms
+@tailwind-styled/storybook-addon:build: DTS dist/index.d.cts 1.93 KB
+@tailwind-styled/storybook-addon:build: DTS dist/index.d.ts  1.93 KB
+@tailwind-styled/storybook-addon:build: DTS ⚡️ Build success in 4203ms
+@tailwind-styled/storybook-addon:build: DTS dist/index.d.cts 1.93 KB
+@tailwind-styled/storybook-addon:build: DTS dist/index.d.ts  1.93 KB
+@tailwind-styled/plugin-api:build: DTS ⚡️ Build success in 5301ms
+@tailwind-styled/plugin-api:build: DTS dist/index.d.cts 6.43 KB
+@tailwind-styled/plugin-api:build: DTS dist/index.d.ts  6.43 KB
+@tailwind-styled/scanner:build: DTS ⚡️ Build success in 5296ms
+@tailwind-styled/scanner:build: DTS dist/index.d.ts  2.92 KB
+@tailwind-styled/scanner:build: DTS dist/index.d.cts 2.92 KB
+@tailwind-styled/analyzer:build: cache miss, executing faa8721b871ee333
+@tailwind-styled/compiler:build: cache miss, executing 5ba92a36d1a282af
+@tailwind-styled/plugin:build: cache miss, executing e52e2c40fef002e0
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: > @tailwind-styled/analyzer@5.0.4 build
+@tailwind-styled/analyzer:build: > tsup
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: > @tailwind-styled/compiler@5.0.14 build
+@tailwind-styled/compiler:build: > tsup
+@tailwind-styled/compiler:build: 
+@tailwind-styled/plugin:build: 
+@tailwind-styled/plugin:build: > @tailwind-styled/plugin@5.0.4 build
+@tailwind-styled/plugin:build: > tsup
+@tailwind-styled/plugin:build: 
+@tailwind-styled/compiler:build: CLI Building entry: {"index":"src/index.ts","compiler":"src/compiler/index.ts","parser":"src/parser/index.ts","analyzer":"src/analyzer/index.ts","cache":"src/cache/index.ts","redis":"src/redis/index.ts","watch":"src/watch/index.ts","internal":"src/internal.ts"}
+@tailwind-styled/compiler:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/compiler:build: CLI tsup v8.5.1
+@tailwind-styled/compiler:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/compiler/tsup.config.ts
+@tailwind-styled/compiler:build: CLI Target: node20
+@tailwind-styled/compiler:build: CLI Cleaning output folder
+@tailwind-styled/compiler:build: ESM Build start
+@tailwind-styled/compiler:build: CJS Build start
+@tailwind-styled/analyzer:build: CLI Building entry: {"index":"src/index.ts"}
+@tailwind-styled/analyzer:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/analyzer:build: CLI tsup v8.5.1
+@tailwind-styled/analyzer:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/analyzer/tsup.config.ts
+@tailwind-styled/plugin:build: CLI Building entry: {"index":"src/index.ts","plugins":"src/plugins.ts","presets":"src/presets.ts"}
+@tailwind-styled/plugin:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/plugin:build: CLI tsup v8.5.1
+@tailwind-styled/plugin:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/plugin/tsup.config.ts
+@tailwind-styled/analyzer:build: CLI Target: node20
+@tailwind-styled/plugin:build: CLI Target: node20
+@tailwind-styled/analyzer:build: CLI Cleaning output folder
+@tailwind-styled/analyzer:build: ESM Build start
+@tailwind-styled/analyzer:build: CJS Build start
+@tailwind-styled/plugin:build: CLI Cleaning output folder
+@tailwind-styled/plugin:build: ESM Build start
+@tailwind-styled/plugin:build: CJS Build start
+@tailwind-styled/plugin:build: ESM dist/index.js   2.13 KB
+@tailwind-styled/plugin:build: ESM dist/plugins.js 12.91 KB
+@tailwind-styled/plugin:build: ESM dist/presets.js 175.00 B
+@tailwind-styled/plugin:build: ESM ⚡️ Build success in 64ms
+@tailwind-styled/plugin:build: CJS dist/plugins.cjs 14.18 KB
+@tailwind-styled/plugin:build: CJS dist/index.cjs   4.07 KB
+@tailwind-styled/plugin:build: CJS dist/presets.cjs 1.27 KB
+@tailwind-styled/plugin:build: CJS ⚡️ Build success in 79ms
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:     src/binding.ts:28:8:
+@tailwind-styled/analyzer:build: [37m      28 │         [32mimport.meta[37m.url
+@tailwind-styled/analyzer:build:          ╵         [32m~~~~~~~~~~~[0m
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:     src/binding.ts:85:4:
+@tailwind-styled/analyzer:build: [37m      85 │     [32mimport.meta[37m.url
+@tailwind-styled/analyzer:build:          ╵     [32m~~~~~~~~~~~[0m
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: 
+@tailwind-styled/analyzer:build: ESM dist/index.js 27.73 KB
+@tailwind-styled/analyzer:build: ESM ⚡️ Build success in 145ms
+@tailwind-styled/analyzer:build: CJS dist/index.cjs 30.24 KB
+@tailwind-styled/analyzer:build: CJS ⚡️ Build success in 147ms
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/compiler/tailwindEngine.ts:19:14:
+@tailwind-styled/compiler:build: [37m      19 │     : (typeof [32mimport.meta[37m !== "undefined" && import.meta.url ? imp...
+@tailwind-styled/compiler:build:          ╵               [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/compiler/tailwindEngine.ts:19:45:
+@tailwind-styled/compiler:build: [37m      19 │ ...t.meta !== "undefined" && [32mimport.meta[37m.url ? import.meta.url : "...
+@tailwind-styled/compiler:build:          ╵                              [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/compiler/tailwindEngine.ts:19:63:
+@tailwind-styled/compiler:build: [37m      19 │ ...ndefined" && import.meta.url ? [32mimport.meta[37m.url : "file://unknown")
+@tailwind-styled/compiler:build:          ╵                                   [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/index.ts:21:6:
+@tailwind-styled/compiler:build: [37m      21 │     : [32mimport.meta[37m.url
+@tailwind-styled/compiler:build:          ╵       [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/tailwindEngine.ts:17:14:
+@tailwind-styled/compiler:build: [37m      17 │     : (typeof [32mimport.meta[37m !== "undefined" && import.meta.url ? imp...
+@tailwind-styled/compiler:build:          ╵               [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/tailwindEngine.ts:17:45:
+@tailwind-styled/compiler:build: [37m      17 │ ...t.meta !== "undefined" && [32mimport.meta[37m.url ? import.meta.url : "...
+@tailwind-styled/compiler:build:          ╵                              [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:  WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:     src/tailwindEngine.ts:17:63:
+@tailwind-styled/compiler:build: [37m      17 │ ...ndefined" && import.meta.url ? [32mimport.meta[37m.url : "file://unknown")
+@tailwind-styled/compiler:build:          ╵                                   [32m~~~~~~~~~~~[0m
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build:   You need to set the output format to "esm" for "import.meta" to work correctly.
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: 
+@tailwind-styled/compiler:build: CJS dist/index.cjs    105.23 KB
+@tailwind-styled/compiler:build: CJS dist/parser.cjs   8.46 KB
+@tailwind-styled/compiler:build: CJS dist/compiler.cjs 30.38 KB
+@tailwind-styled/compiler:build: CJS dist/analyzer.cjs 15.18 KB
+@tailwind-styled/compiler:build: CJS dist/cache.cjs    10.81 KB
+@tailwind-styled/compiler:build: CJS dist/redis.cjs    15.09 KB
+@tailwind-styled/compiler:build: CJS dist/internal.cjs 88.06 KB
+@tailwind-styled/compiler:build: CJS dist/watch.cjs    10.54 KB
+@tailwind-styled/compiler:build: CJS ⚡️ Build success in 251ms
+@tailwind-styled/compiler:build: ESM dist/tailwindEngine-7AP6QLJ3.js 305.00 B
+@tailwind-styled/compiler:build: ESM dist/index.js                   10.34 KB
+@tailwind-styled/compiler:build: ESM dist/compiler.js                2.45 KB
+@tailwind-styled/compiler:build: ESM dist/analyzer.js                1.58 KB
+@tailwind-styled/compiler:build: ESM dist/parser.js                  599.00 B
+@tailwind-styled/compiler:build: ESM dist/cache.js                   811.00 B
+@tailwind-styled/compiler:build: ESM dist/redis.js                   1.52 KB
+@tailwind-styled/compiler:build: ESM dist/watch.js                   931.00 B
+@tailwind-styled/compiler:build: ESM dist/chunk-ANJ5IWWX.js          29.83 KB
+@tailwind-styled/compiler:build: ESM dist/internal.js                9.51 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-VKW57R3Y.js          10.81 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-DXIYFZZI.js          12.76 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-QGZHO2UH.js          3.57 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-XBBG7T3D.js          9.21 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-ZPZYPWV6.js          5.70 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-7OCU42OM.js          9.17 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-VQDVAWL7.js          5.29 KB
+@tailwind-styled/compiler:build: ESM dist/chunk-2FXQFY2N.js          4.25 KB
+@tailwind-styled/compiler:build: ESM ⚡️ Build success in 256ms
+@tailwind-styled/analyzer:build: DTS Build start
+@tailwind-styled/compiler:build: DTS Build start
+@tailwind-styled/theme:build: DTS ⚡️ Build success in 7580ms
+@tailwind-styled/theme:build: DTS dist/index.d.ts       11.21 KB
+@tailwind-styled/theme:build: DTS dist/liveTokens.d.ts  1.67 KB
+@tailwind-styled/theme:build: DTS dist/index.d.cts      11.21 KB
+@tailwind-styled/theme:build: DTS dist/liveTokens.d.cts 1.67 KB
+@tailwind-styled/plugin:build: DTS Build start
+@tailwind-styled/runtime:build: cache miss, executing 1298f93eae5b3bc1
+@tailwind-styled/runtime:build: 
+@tailwind-styled/runtime:build: > @tailwind-styled/runtime@5.0.4 build
+@tailwind-styled/runtime:build: > tsup
+@tailwind-styled/runtime:build: 
+@tailwind-styled/runtime:build: CLI Building entry: {"index":"src/index.ts"}
+@tailwind-styled/runtime:build: CLI Using tsconfig: tsconfig.json
+@tailwind-styled/runtime:build: CLI tsup v8.5.1
+@tailwind-styled/runtime:build: CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/runtime/tsup.config.ts
+@tailwind-styled/runtime:build: CLI Target: node20
+@tailwind-styled/runtime:build: CLI Cleaning output folder
+@tailwind-styled/runtime:build: ESM Build start
+@tailwind-styled/runtime:build: CJS Build start
+@tailwind-styled/runtime:build: CJS dist/index.cjs 5.88 KB
+@tailwind-styled/runtime:build: CJS ⚡️ Build success in 48ms
+@tailwind-styled/runtime:build: ESM dist/index.js 3.37 KB
+@tailwind-styled/runtime:build: ESM ⚡️ Build success in 48ms

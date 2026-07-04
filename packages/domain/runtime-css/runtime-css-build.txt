@@ -1,0 +1,34 @@
+
+> @tailwind-styled/runtime-css@5.0.4 build
+> tsup
+
+CLI Building entry: {"index":"src/index.ts","client":"src/batchedInjector.ts","server":"src/CssInjector.tsx","batched":"src/batchedInjector.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/runtime-css/tsup.config.ts
+CLI Target: node20
+CLI Cleaning output folder
+ESM Build start
+CJS Build start
+ESM dist/index.js          363.00 B
+ESM dist/client.js         273.00 B
+ESM dist/chunk-KER5I5GG.js 3.03 KB
+ESM dist/server.js         115.00 B
+ESM dist/batched.js        273.00 B
+ESM dist/chunk-GFXKF6ZX.js 2.38 KB
+ESM ⚡️ Build success in 17ms
+CJS dist/index.cjs   7.39 KB
+CJS dist/client.cjs  3.60 KB
+CJS dist/server.cjs  4.81 KB
+CJS dist/batched.cjs 3.60 KB
+CJS ⚡️ Build success in 17ms
+DTS Build start
+DTS ⚡️ Build success in 2049ms
+DTS dist/index.d.ts    198.00 B
+DTS dist/client.d.ts   1.50 KB
+DTS dist/server.d.ts   1.51 KB
+DTS dist/batched.d.ts  123.00 B
+DTS dist/index.d.cts   200.00 B
+DTS dist/client.d.cts  1.50 KB
+DTS dist/server.d.cts  1.51 KB
+DTS dist/batched.d.cts 124.00 B

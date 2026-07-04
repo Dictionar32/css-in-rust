@@ -1,0 +1,40 @@
+## Next.js Dev Server Fix Summary
+
+### Problem
+Dev server was failing with:
+  TypeError: {imported module ./examples/next-js-app/nodemodules/tailwind-styled-v4/dist/index.mjs}.tw.body is not a function
+
+This indicated that the `tw` export from tailwind-styled-v4 was not properly exporting element factories like `tw.body`, `tw.div`, etc.
+
+### Root Cause
+The distribution builds in `/dist` were stale or missing. The next-js-app was trying to import from node_modules/tailwind-styled-v4 but the package wasn't properly built/distributed.
+
+### Solution
+1. Ran `npm run build` from root directory to rebuild all packages:
+   - Built Rust native engine: SUCCEEDED
+   - Built all 29 npm packages via Turbo: SUCCEEDED  
+   - Bundled umbrella exports: SUCCEEDED
+   - Generated type definitions: SUCCEEDED
+
+2. Reinstalled dependencies in examples/next-js-app:
+   - `npm install` refreshed node_modules with built package
+
+3. Restarted dev server:
+   - `npm run dev` now works correctly
+   - All pages are now loadable
+   - Scanner is working with native bindings
+
+### Status
+✅ Dev server running successfully on http://localhost:3000
+✅ All HTML tags are now available: tw.div, tw.body, tw.button, etc.
+✅ Native parser integration working
+✅ Scanner cache system operational
+
+### Build Output Details
+- Root build time: ~88ms (cached turbo)
+- All 29 packages built successfully
+- ESM and CJS builds completed
+- Type definitions generated
+- Native binary compiled (Rust)
+
+Date: July 4, 2026

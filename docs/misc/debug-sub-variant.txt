@@ -1,0 +1,39 @@
+## Debug Sub-Component dengan Nested Variants
+
+### Test Output:
+```
+✅ Card component created
+   Card type: object  ← PROBLEM! Seharusnya "function"
+   Card.displayName: tw.div
+
+Footer sub-component:
+   Card.footer type: object  ← CORRECT
+   Card.footer.displayName: tw.div  ← CORRECT
+
+❌ ERROR: Card is not a function
+```
+
+### Analysis:
+
+1. **Card type adalah "object" bukan "function"**
+   - Seharusnya Card adalah React.FC yang bisa dipanggil
+   - Tapi sekarang Card sendiri adalah object
+
+2. **Card.footer type juga "object"**
+   - Ini CORRECT karena footer adalah sub-component yang di-wrap dengan Proxy
+   - Sub-component seharusnya callable
+
+3. **Masalah di dist/index.mjs?**
+   - Mungkin issue di export atau bundling
+   - Cek apakah createComponent return value di-export dengan benar
+
+### Solusi Kemungkinan:
+
+Issue mungkin di:
+- Line 193 di registerSubComponents - assign ke map[key] bisa overwrite component itu sendiri
+- Atau dist/index.mjs tidak export dengan benar
+
+### Langkah Debug:
+1. Cek apakah tw() function export dengan benar
+2. Cek apakah return value dari createComponent preserve function type
+3. Test langsung tanpa sub-component dulu

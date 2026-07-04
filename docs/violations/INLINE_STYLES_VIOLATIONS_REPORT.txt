@@ -1,0 +1,371 @@
+================================================================================
+INLINE STYLES & CLASSNAME VIOLATIONS REPORT
+Folder: examples/next-js-app/src/app/learn/advandced/
+Date: July 3, 2026
+================================================================================
+
+SUMMARY
+=======
+Total className violations:  62 instances
+Total style={{}} violations: 20 instances
+Total violations:             82 instances
+
+SEVERITY: 🔴 CRITICAL (Anti-pattern violations found)
+
+================================================================================
+DETAILED BREAKDOWN BY FILE
+================================================================================
+
+1. ANCHOR-POSITIONING/PAGE.TSX
+================================================================================
+   className violations:     0 ✅
+   style violations:         1 ❌
+   
+   Line 60: {/* ✅ FIX: Using AnchorPopup variant instead of style{{}} */}
+   Line 465: <MenuButton style={{ anchorName: "--menu-btn" } as React.CSSProperties}>
+   
+   Note: Line 465 is ACCEPTABLE — CSS variable must be dynamic
+   Status: ✅ MOSTLY CLEAN (1 acceptable exception)
+
+---
+
+2. CONTAINER-STYLE-QUERIES/PAGE.TSX
+================================================================================
+   className violations:     4 ❌
+   style violations:         8 ❌
+   Total violations:         12 🔴 HIGHEST
+   
+   className violations:
+   Line 52:   <P className="!text-xs !mb-0">Lebar container:</P>
+   Line 59:   className="flex-1 accent-[var(--accent)]"
+   Line 98:   <P className="!text-xs !mb-0">
+   Line 523:  className={featured ? "[--variant:featured]" : ""}
+   
+   style violations:
+   Line 70:   <div style={{ width: `${width}px`, transition: "width 200ms", margin: "0 auto" }}>
+   Line 74:   <div style={{
+   Line 82:   <div style={{
+   Line 95:   <div style={{ fontSize: isVeryWide ? "1rem" : "0.875rem", fontWeight: 600 }}>
+   Line 152:  <CompTableCell style={{ fontWeight: 500 }}>Referensi</CompTableCell>
+   Line 157:  <CompTableCell style={{ fontWeight: 500 }}>Reusability</CompTableCell>
+   Line 162:  <CompTableCell style={{ fontWeight: 500 }}>Sidebar card</CompTableCell>
+   Line 167:  <CompTableCell style={{ fontWeight: 500 }}>Support</CompTableCell>
+   Line 522:  <div style={{ containerType: "normal" } as React.CSSProperties}
+   
+   Status: 🔴 CRITICAL (Playground demo code with many inline styles)
+
+---
+
+3. CSS-FUNCTIONS-FUTURE/PAGE.TSX
+================================================================================
+   className violations:     31 ❌
+   style violations:         7 ❌
+   Total violations:         38 🔴 HIGHEST
+   
+   className violations (31 total):
+   Line 68:   <p className="font-semibold mb-2">{textContent}</p>
+   Line 108:  <div className="rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden">
+   Line 111:  className="w-full text-left px-4 py-3 font-medium text-sm flex items-center justify-between bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] transition-colors"
+   Line 121:  <div className="px-4 py-3 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]">
+   Line 123:  <p className="mt-2">...
+   Line 127:  <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mt-2">
+   Line 159:  <div className="flex gap-2 flex-wrap my-4">
+   Line 202:  <div className="flex gap-2 flex-wrap my-4">
+   Line 261:  <div className="flex gap-2 flex-wrap my-4">
+   Line 282:  <div className="my-5 p-4 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--accent)_20%,transparent)]">
+   Line 283:  <p className="text-xs font-semibold mb-3 text-[var(--accent)]">Demo — textarea dengan field-sizing: content (Chrome 123+)</p>
+   Line 286:  className="w-full rounded-lg border border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] bg-[var(--surface)] p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+   Lines 306-560 (16 more divs/spans/ps with className) — feature card demo
+   
+   style violations (7 total):
+   Line 56:   style={{
+   Line 69:   <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", fontSize: "0.875rem" }}>
+   Line 72:   <div style={{
+   Line 114:  <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 300ms" }}>▼</span>
+   Line 116:  <div style={{
+   Line 287:  style={{ fieldSizing: "content" as never, minHeight: "3em", maxHeight: "12em" }}
+   
+   Status: 🔴 CRITICAL (Massive inline className usage, feature demo)
+
+---
+
+4. POPOVER-API/PAGE.TSX
+================================================================================
+   className violations:     4 ❌
+   style violations:         0 ✅
+   
+   className violations:
+   Line 67:   <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">
+   Line 91:   Mode: <code className="font-mono">{type}</code>
+   Line 93:   <DemoBtn onClick={handleClose} className="w-full text-center">
+   Line 133:  <div className="flex gap-2 flex-wrap my-4">
+   
+   Status: 🟡 MEDIUM (Few violations, mostly demo/description)
+
+---
+
+5. SUBGRID/PAGE.TSX
+================================================================================
+   className violations:     10 ❌
+   style violations:         4 ❌
+   Total violations:         14 🔴 CRITICAL
+   
+   className violations:
+   Line 56:   <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">
+   Line 87:   <div className="px-3 py-2 text-xs font-semibold bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] text-[var(--accent)]">
+   Line 90:   <div className="px-3 py-2 text-xs text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] flex-1">
+   Line 93:   <div className="px-3 py-2 text-[10px] font-medium border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">
+   Line 129:  <div className="flex gap-2 flex-wrap my-4">
+   (5 more divs with className)
+   
+   style violations:
+   Line 62:   <div style={{
+   Line 72:   <div style={useSubgrid ? {
+   Line 184:  <SubgridDemo style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+   Line 185:  <GridCell style={{ gridColumn: "span 3", display: "grid", gridTemplateColumns: "subgrid", gap: "0.5rem" }}>
+   
+   Status: 🔴 CRITICAL (Playground/grid demo with inline styles)
+
+---
+
+6. VIEW-TRANSITIONS-ADVANCED/PAGE.TSX
+================================================================================
+   className violations:     13 ❌
+   style violations:         2 ❌
+   Total violations:         15 🔴 HIGH
+   
+   className violations:
+   Line 80:   <div className="flex gap-2">
+   Line 81:   className={page === "A" ? "opacity-50 cursor-default" : ""}
+   Line 84:   className={page === "B" ? "opacity-50 cursor-default" : ""}
+   Line 92:   <div className="p-6">
+   Line 93:   <div className="w-full h-24 rounded-lg bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] mb-4 flex items-center justify-center text-2xl">
+   Line 96:   <h3 className="font-bold text-lg mb-1">Halaman A — Home</h3>
+   Line 97:   <p className="text-sm text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
+   Line 102:  <div className="p-6">
+   Line 103:  <div className="w-full h-24 rounded-lg bg-[color-mix(in_srgb,var(--accent)_25%,transparent)] mb-4 flex items-center justify-center text-2xl">
+   Line 106:  <h3 className="font-bold text-lg mb-1">Halaman B — Detail</h3>
+   Line 107:  <p className="text-sm text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]">
+   Line 164:  <div className="flex gap-2 flex-wrap my-4">
+   Line 467:  <a href={href} onClick={handleClick} className={className}>
+   
+   style violations:
+   Line 90:   <TransitionBox style={transitionStyle}>
+   Line 531:  style={{ viewTransitionName: `product-\${product.id}` }}
+   
+   Status: 🔴 CRITICAL (Transition demo with className and style)
+
+---
+
+================================================================================
+ANALYSIS & CATEGORIZATION
+================================================================================
+
+ACCEPTABLE VIOLATIONS (Playground/Demo Code):
+─────────────────────────────────────────────────
+These are DEMO/SIMULATION components where inline styles/className are needed
+for interactive examples. But SHOULD BE EXTRACTED TO tw() COMPONENTS.
+
+Files:
+  • container-style-queries/page.tsx (grid demo)
+  • css-functions-future/page.tsx (feature cards, accordion)
+  • subgrid/page.tsx (grid visualization)
+  • view-transitions-advanced/page.tsx (transition demo)
+
+Action: EXTRACT TO STYLED COMPONENTS IN styles.ts
+
+---
+
+DOCUMENTATION/CONTENT (Should be in styled components):
+────────────────────────────────────────────────────
+Simple text/layout that wraps content. These SHOULD be:
+  • BadgeRow container
+  • Support badge groups
+  • Feature card grids
+
+Files:
+  • popover-api/page.tsx (4 violations)
+  • All files with "flex gap-2 flex-wrap my-4" pattern
+
+---
+
+CRITICAL ISSUES:
+───────────────
+1. CSS-FUNCTIONS-FUTURE: 38 violations (31 className + 7 style)
+   → Massive inline styling in feature card demo
+   → Should all be tw() components
+
+2. SUBGRID: 14 violations (10 className + 4 style)
+   → Grid demo with inline styles for layout
+   → Should be extracted
+
+3. CONTAINER-STYLE-QUERIES: 12 violations (4 className + 8 style)
+   → Playground simulation code
+   → Width/size demo with inline calculations
+
+4. VIEW-TRANSITIONS-ADVANCED: 15 violations (13 className + 2 style)
+   → Transition demo pages
+   → Should use variant-based components
+
+================================================================================
+PRIORITY FIX ORDER
+================================================================================
+
+🔴 TIER 1 — FIX IMMEDIATELY (Highest Impact)
+───────────────────────────────────────
+1. css-functions-future/page.tsx (38 violations)
+   • Extract accordion component
+   • Extract feature cards (16 cards with inline className)
+   • Extract textarea demo
+   • Estimated time: 30 minutes
+
+2. container-style-queries/page.tsx (12 violations)
+   • Extract playground controls
+   • Extract demo card layout
+   • Estimated time: 20 minutes
+
+🟡 TIER 2 — FIX SOON (Medium Impact)
+───────────────────────────────
+3. view-transitions-advanced/page.tsx (15 violations)
+   • Extract page cards (A and B)
+   • Extract navigation buttons
+   • Estimated time: 25 minutes
+
+4. subgrid/page.tsx (14 violations)
+   • Extract grid demo component
+   • Extract cell grid
+   • Estimated time: 20 minutes
+
+🟢 TIER 3 — FIX LAST (Low Impact)
+──────────────────────
+5. popover-api/page.tsx (4 violations)
+   • Extract badge row
+   • Extract demo button styling
+   • Estimated time: 10 minutes
+
+6. anchor-positioning/page.tsx (0 violations) ✅
+   • ALREADY CLEAN — No action needed
+
+================================================================================
+PATTERNS TO EXTRACT
+================================================================================
+
+PATTERN 1: Badge/Support rows
+─────────────────────────────
+Current (WRONG):
+  <div className="flex gap-2 flex-wrap my-4">
+    <SupportBadge>...</SupportBadge>
+  </div>
+
+Should be:
+  export const BadgeContainer = tw.div({
+    base: "flex gap-2 flex-wrap my-4"
+  })
+  
+  <BadgeContainer>
+    <SupportBadge>...</SupportBadge>
+  </BadgeContainer>
+
+Occurrences: 5+ across multiple files
+
+---
+
+PATTERN 2: Feature card containers
+───────────────────────────────────
+Current (WRONG):
+  <div className="flex items-center gap-2 mb-2">
+    <IC>function</IC>
+    <FutureTag>Status</FutureTag>
+  </div>
+
+Should be:
+  export const CardHeader = tw.div({
+    base: "flex items-center gap-2 mb-2"
+  })
+  
+  <CardHeader>
+    <IC>function</IC>
+    <FutureTag>Status</FutureTag>
+  </CardHeader>
+
+Occurrences: 16+ in css-functions-future
+
+---
+
+PATTERN 3: Playground demo boxes
+────────────────────────────────
+Current (WRONG):
+  <div style={{ width: `${width}px`, transition: "width 200ms" }}>
+    Content
+  </div>
+
+Should be:
+  export const DemoBox = tw.div({
+    base: "transition-[width] duration-200",
+    styles: {
+      width: `${width}px` // OR use variant if possible
+    }
+  })
+
+---
+
+PATTERN 4: Conditional className
+─────────────────────────────────
+Current (WRONG):
+  className={page === "A" ? "opacity-50 cursor-default" : ""}
+
+Should be:
+  export const PageNav = tw.button({
+    variants: {
+      active: {
+        true: "opacity-50 cursor-default",
+        false: "opacity-100 cursor-pointer"
+      }
+    }
+  })
+  
+  <PageNav active={page === "A"}>Page A</PageNav>
+
+Occurrences: 3+ in view-transitions-advanced
+
+================================================================================
+ESTIMATED TOTAL FIX TIME
+================================================================================
+
+Code extraction:         115 minutes (~2 hours)
+Testing/verification:    30 minutes
+Total:                   ~2.5 hours
+
+Per file breakdown:
+  • css-functions-future:        30 min
+  • container-style-queries:     20 min
+  • view-transitions-advanced:   25 min
+  • subgrid:                     20 min
+  • popover-api:                 10 min
+  • Verification:                30 min
+
+================================================================================
+STEERING RULE VIOLATIONS
+================================================================================
+
+Files violating:
+  ✅ .kiro/steering/no-inline-styles.md              (6 files with violations)
+  ✅ .kiro/steering/tailwind-styled-v4-guidelines.md (5 files)
+  ✅ .kiro/steering/build-time-magic.md              (5 files, no Rust optimization)
+
+Specific violations:
+  🔴 "JANGAN PERNAH GUNAKAN style={{}}" — 20 instances
+  🔴 "JANGAN PERNAH GUNAKAN className=\"\"" — 62 instances
+  🔴 "HANYA GUNAKAN tw() ONLY" — Not followed in 5 files
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. ✅ COMPLETE: Analysis and categorization done
+2. ⏳ TODO: Extract all violations to tw() components
+3. ⏳ TODO: Verify no new violations introduced
+4. ⏳ TODO: Update steering enforcement (pre-commit hook)
+5. ⏳ TODO: Document patterns for future reference
+
+================================================================================

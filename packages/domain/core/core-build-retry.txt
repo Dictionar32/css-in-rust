@@ -1,0 +1,164 @@
+
+> @tailwind-styled/core@5.0.4 build
+> tsup
+
+CLI Building entry: {"index":"src/index.ts","next":"src/next.ts","vite":"src/vite.ts","compiler":"src/compiler.ts","preset":"src/preset.ts","css":"src/css.ts","plugins":"src/plugins.ts","devtools":"src/devtools.ts","animate":"src/animate.ts","theme":"src/theme.ts","browser":"src/index.browser.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/core/tsup.config.ts
+CLI Target: node20
+CLI Cleaning output folder
+ESM Build start
+CJS Build start
+ESM dist/animate.js        60.00 B
+ESM dist/browser.js        1.24 KB
+ESM dist/index.js          1.24 KB
+ESM dist/next.js           54.00 B
+ESM dist/chunk-5RTSCNWV.js 67.81 KB
+ESM dist/vite.js           54.00 B
+ESM dist/preset.js         58.00 B
+ESM dist/compiler.js       62.00 B
+ESM dist/plugins.js        59.00 B
+ESM dist/css.js            60.00 B
+ESM dist/devtools.js       62.00 B
+ESM dist/theme.js          56.00 B
+ESM ⚡️ Build success in 48ms
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    src/native.ts:21:14:
+[37m      21 │     : (typeof [32mimport.meta[37m !== "undefined" && import.meta.url ? imp...
+         ╵               [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    src/native.ts:21:45:
+[37m      21 │ ...t.meta !== "undefined" && [32mimport.meta[37m.url ? import.meta.url : "...
+         ╵                              [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    src/native.ts:21:63:
+[37m      21 │ ...ndefined" && import.meta.url ? [32mimport.meta[37m.url : "file://unknown")
+         ╵                                   [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:266:6:
+[37m      266 │   if ([32mimport.meta[37m.url) {
+          ╵       [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:267:11:
+[37m      267 │     return [32mimport.meta[37m.url;
+          ╵            [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:810:13:
+[37m      810 │   if (typeof [32mimport.meta[37m !== "undefined" && import.meta.url && !i...
+          ╵              [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:810:44:
+[37m      810 │ ...t.meta !== "undefined" && [32mimport.meta[37m.url && !import.meta.url....
+          ╵                              [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:810:64:
+[37m      810 │ ...ed" && import.meta.url && ![32mimport.meta[37m.url.includes("unknown")) {
+          ╵                               [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:811:25:
+[37m      811 │     return createRequire([32mimport.meta[37m.url);
+          ╵                          [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+
+ WARN  [33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1m"import.meta" is not available with the "cjs" output format and will be empty[0m [empty-import-meta]
+
+    ../shared/dist/index.mjs:1385:63:
+[37m      1385 │ ..." ? file://${__filename} : [32mimport.meta[37m.url ?? "file://unknown"
+           ╵                                 [32m~~~~~~~~~~~[0m
+
+  You need to set the output format to "esm" for "import.meta" to work correctly.
+
+
+
+CJS dist/vite.cjs     1.08 KB
+CJS dist/compiler.cjs 1.10 KB
+CJS dist/index.cjs    72.56 KB
+CJS dist/css.cjs      1.09 KB
+CJS dist/plugins.cjs  1.10 KB
+CJS dist/devtools.cjs 1.10 KB
+CJS dist/animate.cjs  1.10 KB
+CJS dist/theme.cjs    1.09 KB
+CJS dist/preset.cjs   1.09 KB
+CJS dist/browser.cjs  72.60 KB
+CJS dist/next.cjs     1.08 KB
+CJS ⚡️ Build success in 71ms
+DTS Build start
+src/css.ts(1,15): error TS2307: Cannot find module '@tailwind-styled/runtime-css' or its corresponding type declarations.
+
+Error: error occurred in dts build
+    at Worker.<anonymous> (/home/annas-zen/Documents/css-in-rust/node_modules/tsup/dist/index.js:1545:26)
+    at Worker.emit (node:events:509:20)
+    at MessagePort.<anonymous> (node:internal/worker:358:14)
+    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+DTS Build error
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /home/annas-zen/Documents/css-in-rust/packages/domain/core
+npm error workspace @tailwind-styled/core@5.0.4
+npm error location /home/annas-zen/Documents/css-in-rust/packages/domain/core
+npm error command failed
+npm error command sh -c tsup

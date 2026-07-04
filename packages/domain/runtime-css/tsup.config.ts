@@ -2,12 +2,14 @@ import { defineConfig } from "tsup"
 
 export default defineConfig({
   entry: {
-    CssInjector: "src/CssInjector.tsx",
-    batchedInjector: "src/batchedInjector.ts",
+    index: "src/index.ts",
+    client: "src/batchedInjector.ts",
+    server: "src/CssInjector.tsx",
+    batched: "src/batchedInjector.ts"
   },
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
-  bundle: false,
-  external: ["react", "react-dom", "inversify", "reflect-metadata", "zod"],
+  target: "node20",
+  platform: "node",
 })

@@ -1,0 +1,38 @@
+
+> @tailwind-styled/core@5.0.4 build
+> tsup
+
+CLI Building entry: {"index":"src/index.ts","next":"src/next.ts","vite":"src/vite.ts","compiler":"src/compiler.ts","preset":"src/preset.ts","css":"src/css.ts","plugins":"src/plugins.ts","devtools":"src/devtools.ts","animate":"src/animate.ts","theme":"src/theme.ts","browser":"src/index.browser.ts"}
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: /home/annas-zen/Documents/css-in-rust/packages/domain/core/tsup.config.ts
+CLI Target: node20
+CLI Cleaning output folder
+ESM Build start
+CJS Build start
+ESM dist/animate.js        60.00 B
+ESM dist/browser.js        1.24 KB
+ESM dist/index.js          1.24 KB
+ESM dist/chunk-5RTSCNWV.js 67.81 KB
+ESM dist/next.js           54.00 B
+ESM dist/theme.js          56.00 B
+ESM dist/vite.js           54.00 B
+ESM dist/compiler.js       62.00 B
+ESM dist/preset.js         58.00 B
+ESM dist/plugins.js        59.00 B
+ESM dist/devtools.js       62.00 B
+ESM dist/css.js            60.00 B
+ESM ⚡️ Build success in 42ms
+CJS dist/vite.cjs     1.08 KB
+CJS dist/compiler.cjs 1.10 KB
+CJS dist/index.cjs    72.56 KB
+CJS dist/preset.cjs   1.09 KB
+CJS dist/css.cjs      1.09 KB
+CJS dist/plugins.cjs  1.10 KB
+CJS dist/devtools.cjs 1.10 KB
+CJS dist/animate.cjs  1.10 KB
+CJS dist/theme.cjs    1.09 KB
+CJS dist/next.cjs     1.08 KB
+CJS dist/browser.cjs  72.60 KB
+CJS ⚡️ Build success in 69ms
+DTS Build start
