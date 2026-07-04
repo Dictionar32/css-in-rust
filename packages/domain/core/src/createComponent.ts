@@ -427,7 +427,7 @@ function attachExtend<TConfig extends ComponentConfig>(
 
   component.extend = extendWithClasses as TwStyledComponent<TConfig, string>["extend"]
 
-  component.withVariants = (newConfig: Partial<ComponentConfig>) => {
+  component.withVariants = ((newConfig: Partial<ComponentConfig>) => {
     const existing = typeof config === "object" ? config : {}
     return createComponent(originalTag, {
       ...existing,
@@ -442,7 +442,7 @@ function attachExtend<TConfig extends ComponentConfig>(
         ...(newConfig.defaultVariants ?? {}),
       },
     }) as unknown as TwStyledComponent<TConfig, string>
-  }
+  }) as TwStyledComponent<TConfig, string>["withVariants"]
 
   // .animate() dipindah ke tailwind-styled-v4/animate agar tidak bundle @tailwind-styled/animate
   // ke dalam main browser bundle (animate butuh Rust native binding → Node.js only)

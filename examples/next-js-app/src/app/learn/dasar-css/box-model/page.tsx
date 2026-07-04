@@ -740,9 +740,9 @@ const SPACING_PX: Record<string, string> = {
 const BORDER_PX: Record<string, string> = {
   0: "0px", 1: "1px", 2: "2px", 4: "4px", 8: "8px",
 }
-const MARGIN_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
-const PADDING_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
-const BORDER_STEPS = ["0", "1", "2", "4", "8"] as const
+const MARGIN_STEPS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12] as const
+const PADDING_STEPS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12] as const
+const BORDER_STEPS = [0, 1, 2, 4, 8] as const
 
 type MarginSize = typeof MARGIN_STEPS[number]
 type PaddingSize = typeof PADDING_STEPS[number]
@@ -753,34 +753,34 @@ type BorderSize = typeof BORDER_STEPS[number]
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TOC = [
-  { id: "anatomy", label: "Anatomi Box Model", depth: "2" as const },
-  { id: "playground", label: "Interactive Playground", depth: "2" as const },
-  { id: "box-sizing", label: "box-sizing", depth: "2" as const },
-  { id: "outline", label: "outline vs border", depth: "2" as const },
-  { id: "margin-collapse", label: "Margin Collapse", depth: "2" as const },
-  { id: "negative-margin", label: "Negative Margin", depth: "2" as const },
-  { id: "overflow", label: "overflow", depth: "2" as const },
-  { id: "width-variants", label: "width / min / max", depth: "2" as const },
-  { id: "height", label: "height: 100%", depth: "2" as const },
-  { id: "inline-box", label: "Inline & Box Model", depth: "2" as const },
-  { id: "calc", label: "calc()", depth: "2" as const },
-  { id: "aspect-ratio", label: "aspect-ratio", depth: "2" as const },
-  { id: "logical-props", label: "Logical Properties", depth: "2" as const },
-  { id: "box-decoration", label: "box-decoration-break", depth: "2" as const },
-  { id: "min-width-flex", label: "min-width: 0 di Flex", depth: "2" as const },
-  { id: "writing-mode", label: "writing-mode", depth: "2" as const },
-  { id: "resize", label: "resize", depth: "2" as const },
-  { id: "table-box", label: "Box Model di Tabel", depth: "2" as const },
-  { id: "contain", label: "contain", depth: "2" as const },
-  { id: "scrollbar-gutter", label: "scrollbar-gutter", depth: "2" as const },
-  { id: "visibility", label: "visibility vs display vs opacity", depth: "2" as const },
-  { id: "margin-auto", label: "margin: auto centering", depth: "2" as const },
-  { id: "box-shadow", label: "box-shadow vs drop-shadow", depth: "2" as const },
-  { id: "border-radius", label: "border-radius", depth: "2" as const },
-  { id: "border-style", label: "border-style lengkap", depth: "2" as const },
-  { id: "clamp", label: "clamp() sizing", depth: "2" as const },
-  { id: "tw-usage", label: "Pakai di tw", depth: "2" as const },
-  { id: "exercise", label: "Latihan", depth: "2" as const },
+  { id: "anatomy", label: "Anatomi Box Model", depth: 2 as const },
+  { id: "playground", label: "Interactive Playground", depth: 2 as const },
+  { id: "box-sizing", label: "box-sizing", depth: 2 as const },
+  { id: "outline", label: "outline vs border", depth: 2 as const },
+  { id: "margin-collapse", label: "Margin Collapse", depth: 2 as const },
+  { id: "negative-margin", label: "Negative Margin", depth: 2 as const },
+  { id: "overflow", label: "overflow", depth: 2 as const },
+  { id: "width-variants", label: "width / min / max", depth: 2 as const },
+  { id: "height", label: "height: 100%", depth: 2 as const },
+  { id: "inline-box", label: "Inline & Box Model", depth: 2 as const },
+  { id: "calc", label: "calc()", depth: 2 as const },
+  { id: "aspect-ratio", label: "aspect-ratio", depth: 2 as const },
+  { id: "logical-props", label: "Logical Properties", depth: 2 as const },
+  { id: "box-decoration", label: "box-decoration-break", depth: 2 as const },
+  { id: "min-width-flex", label: "min-width: 0 di Flex", depth: 2 as const },
+  { id: "writing-mode", label: "writing-mode", depth: 2 as const },
+  { id: "resize", label: "resize", depth: 2 as const },
+  { id: "table-box", label: "Box Model di Tabel", depth: 2 as const },
+  { id: "contain", label: "contain", depth: 2 as const },
+  { id: "scrollbar-gutter", label: "scrollbar-gutter", depth: 2 as const },
+  { id: "visibility", label: "visibility vs display vs opacity", depth: 2 as const },
+  { id: "margin-auto", label: "margin: auto centering", depth: 2 as const },
+  { id: "box-shadow", label: "box-shadow vs drop-shadow", depth: 2 as const },
+  { id: "border-radius", label: "border-radius", depth: 2 as const },
+  { id: "border-style", label: "border-style lengkap", depth: 2 as const },
+  { id: "clamp", label: "clamp() sizing", depth: 2 as const },
+  { id: "tw-usage", label: "Pakai di tw", depth: 2 as const },
+  { id: "exercise", label: "Latihan", depth: 2 as const },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1048,9 +1048,9 @@ function Code({ file, children }: { file?: string; children: string }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function BoxModelPlayground() {
-  const [margin, setMargin] = useState<MarginSize>("6")
-  const [padding, setPadding] = useState<PaddingSize>("4")
-  const [border, setBorder] = useState<BorderSize>("4")
+  const [margin, setMargin] = useState<MarginSize>(6)
+  const [padding, setPadding] = useState<PaddingSize>(4)
+  const [border, setBorder] = useState<BorderSize>(4)
 
   return (
     <PlaygroundWrap>
@@ -1228,10 +1228,10 @@ function OutlineBorderPlayground() {
 // Playground: margin collapse
 // ─────────────────────────────────────────────────────────────────────────────
 
-type CollapseMargin = 2 | 4 | 8 | 12 | "4" | "8" | "12"
+type CollapseMargin = 2 | 4 | 8 | 12
 
 function MarginCollapsePlayground() {
-  const [margin, setMargin] = useState<CollapseMargin>("8")
+  const [margin, setMargin] = useState<CollapseMargin>(8)
   const [showCollapse, setShowCollapse] = useState(true)
 
   return (
@@ -1242,7 +1242,7 @@ function MarginCollapsePlayground() {
           <ControlGroup>
             <ControlGroup.label>margin-top/bottom</ControlGroup.label>
             <ChipRow>
-              {(["2", "4", "8", "12"] as CollapseMargin[]).map(v => (
+              {([2, 4, 8, 12] as CollapseMargin[]).map(v => (
                 <Chip key={v} active={margin === v} onClick={() => setMargin(v)}>
                   {SPACING_PX[v]}
                 </Chip>
@@ -1405,19 +1405,19 @@ function WidthPlayground() {
 // Playground: negative margin
 // ─────────────────────────────────────────────────────────────────────────────
 
-type NegMarginVal = 0 | 1 | 2 | 4 | 8 | 12 | "-2" | "-4" | "-8" | "-12"
+type NegMarginVal = 0 | -2 | -4 | -8 | -12
 
 function NegativeMarginPlayground() {
-  const [neg, setNeg] = useState<NegMarginVal>("0")
+  const [neg, setNeg] = useState<NegMarginVal>(0)
 
   return (
     <PlaygroundWrap>
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Negative margin — tarik elemen ke arah sebaliknya</PlaygroundWrap.label>
         <ChipRow>
-          {(["0", "-2", "-4", "-8", "-12"] as NegMarginVal[]).map(v => (
+          {([0, -2, -4, -8, -12] as NegMarginVal[]).map(v => (
             <Chip key={v} active={neg === v} onClick={() => setNeg(v)}>
-              margin-top: {v === "0" ? "0" : v + " (" + Math.abs(parseInt(v)) * 4 + "px)"}
+              margin-top: {v === 0 ? "0" : v + " (" + Math.abs(v) * 4 + "px)"}
             </Chip>
           ))}
         </ChipRow>
@@ -1428,14 +1428,14 @@ function NegativeMarginPlayground() {
           Element A
         </NegMarginParent>
         <NegMarginBox neg={neg}>
-          Element B {neg !== "0" && `(mt: ${neg})`}
+          Element B {neg !== 0 && `(mt: ${neg})`}
         </NegMarginBox>
       </PlaygroundWrap.canvas>
 
       <PlaygroundWrap.codeline>
-        {neg === "0"
+        {neg === 0
           ? ".b { margin-top: 0; } /* normal */"
-          : `.b { margin-top: ${parseInt(neg) * 4}px; } /* negative — tarik ke atas */`
+          : `.b { margin-top: ${neg * 4}px; } /* negative — tarik ke atas */`
         }
       </PlaygroundWrap.codeline>
     </PlaygroundWrap>

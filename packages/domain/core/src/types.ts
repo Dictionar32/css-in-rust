@@ -47,19 +47,8 @@ export type InferVariantProps<T extends ComponentConfig> = InferVariantPropsFrom
  * 
  * This helper ensures type safety when defaultVariants contains non-string values.
  */
-export type InferDefaultVariantsType<T extends ComponentConfig> = {
-  [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer KeyType, string>
-  ? KeyType extends "true" | "false"
-  ? boolean
-  : KeyType extends number
-  ? KeyType
-  : KeyType extends `${infer N extends number}`
-  ? N
-  : KeyType extends string
-  ? KeyType
-  : never
-  : never
-}
+export type InferDefaultVariantsType<T extends ComponentConfig> =
+  InferVariantPropsFromVariantsMap<T["variants"]>
 
 export type InferSizeProps<T extends ComponentConfig> =
   T["sizes"] extends Record<string, string>
@@ -440,14 +429,14 @@ export type TwStyledComponent<
   displayName?: string
   extend: {
     (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
-    (config: {
+    <EC extends {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
+    }>(config: EC & { defaultVariants?: InferDefaultVariantsType<{ variants: EC["variants"] }> }): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
+  withVariants: (config: Partial<Omit<Config, "defaultVariants">> & { defaultVariants?: InferDefaultVariantsType<Config> }) => TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
   /**
    * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
    *
@@ -476,7 +465,7 @@ export interface TwTemplateFactory<
 > {
   // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
   // MUST come first so object literals are matched before template literals
-  <C extends ComponentConfig>(config: C): TwStyledComponent<
+  <C extends ComponentConfig>(config: C & { defaultVariants?: InferDefaultVariantsType<C> }): TwStyledComponent<
     C,
     InferSubFromConfig<C>,
     InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>,
