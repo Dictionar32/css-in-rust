@@ -1,7 +1,7 @@
 {
   "name": "@tailwind-styled/runtime-css",
   "version": "5.0.4",
-  "description": "RSC-aware CSS injector for tailwind-styled-v5 \u2014 streaming-friendly, zero client JS",
+  "description": "RSC-aware CSS injector for tailwind-styled-v5 — streaming-friendly, zero client JS",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -12,20 +12,24 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/CssInjector.d.ts",
-      "import": "./dist/CssInjector.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     },
     "./client": {
-      "types": "./dist/batchedInjector.d.ts",
-      "import": "./dist/batchedInjector.js"
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "require": "./dist/client.cjs"
     },
     "./server": {
-      "types": "./dist/CssInjector.d.ts",
-      "import": "./dist/CssInjector.js"
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
     },
     "./batched": {
-      "types": "./dist/batchedInjector.d.ts",
-      "import": "./dist/batchedInjector.js"
+      "types": "./dist/batched.d.ts",
+      "import": "./dist/batched.js",
+      "require": "./dist/batched.cjs"
     }
   },
   "files": [
