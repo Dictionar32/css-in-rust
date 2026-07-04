@@ -1,11 +1,13 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/defaultPreset.ts"],
-  format: ["cjs", "esm"],
+  entry: {
+    index: "src/index.ts",
+    default: "src/defaultPreset.ts"
+  },
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
   target: "node20",
   platform: "node",
-  external: ["inversify", "reflect-metadata", "zod"],
 })

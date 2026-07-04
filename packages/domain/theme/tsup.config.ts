@@ -1,17 +1,13 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/liveTokens.ts"],
-  format: ["cjs", "esm"],
+  entry: {
+    index: "src/index.ts",
+    liveTokens: "src/liveTokens.ts",  // Changed from "live-tokens" to match package.json exports
+  },
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
   target: "node20",
   platform: "node",
-  external: [
-    "@tailwind-styled/shared",
-    "react",
-    "inversify",
-    "reflect-metadata",
-    "zod",
-  ],
 })
