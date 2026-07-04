@@ -40,9 +40,10 @@ export type InferStatesProps<T extends ComponentConfig> = {
 
 // ── Sub-component Config ──────────────────────────────────────────────────────
 /**
- * Sub config bisa berupa:
- * - string: "font-bold text-lg" → render <span>
- * - Record<name, string>: nested object per HTML tag
+ * Sub-component config bisa berupa:
+ * - string: "font-bold text-lg" → render <span> dengan classes
+ * - Record<componentName, string>: nested HTML tag dengan component names dan classes
+ * - Record<componentName, SubComponentConfig>: nested HTML tag dengan component names dan full variant config
  *
  * @example
  * sub: {
@@ -50,9 +51,17 @@ export type InferStatesProps<T extends ComponentConfig> = {
  *   header: { topBar: "bg-gray-900" },       // → <header> dipanggil Card.topBar
  *   h2: { title: "text-xl font-bold" },      // → <h2> dipanggil Card.title
  *   section: { content: "px-6 py-4" },       // → <section> dipanggil Card.content
+ *   canvas: { base: "p-6", variants: { layout: { wrap: "gap-4", column: "gap-0" } } }  // → <div> dengan variants
  * }
  */
-export type SubValue = string | Record<string, string>
+export interface SubComponentConfig {
+  base?: string
+  variants?: Record<string, Record<string, string>>
+  defaultVariants?: Record<string, string>
+  compoundVariants?: Array<{ class: string;[key: string]: string }>
+}
+
+export type SubValue = string | Record<string, string | SubComponentConfig>
 
 // ── States Config ─────────────────────────────────────────────────────────────
 /**
@@ -77,7 +86,7 @@ export interface ComponentConfig {
   /** Variants — nested: { intent: { primary: "..." }, size: { sm: "..." } } */
   variants?: Record<string, Record<string, string>>
   defaultVariants?: Record<string, string>
-  compoundVariants?: Array<{ class: string; [key: string]: string }>
+  compoundVariants?: Array<{ class: string;[key: string]: string }>
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>
   containerName?: string
@@ -99,6 +108,36 @@ export interface ComponentConfig {
    * @internal — jangan set manual, ini di-inject otomatis saat build/dev.
    */
   __hash?: string
+  /**
+   * Wave 3: Semantic component type untuk auto-generated ARIA metadata.
+   * Digunakan oleh build-time ARIA injection plugin untuk determine semantic role.
+   * 
+   * Common values: 'button', 'link', 'checkbox', 'radio', 'input', 'form', 'dialog',
+   *                'navigation', 'heading', 'alert', 'tab', 'section', 'status', 'aside'
+   * 
+   * @example
+   * '@semantic': 'button'  // → auto-inject role="button"
+   * '@semantic': 'dialog'  // → auto-inject role="dialog", aria-modal="true"
+   */
+  '@semantic'?: string
+  /**
+   * Wave 3: Explicit ARIA attributes untuk semantic component.
+   * Merged dengan auto-injected ARIA dari semantic type.
+   * User-provided ARIA memiliki precedence lebih tinggi (tidak di-override).
+   * 
+   * @example
+   * '@aria': { role: 'tab', 'aria-selected': 'true' }
+   */
+  '@aria'?: Record<string, string>
+  /**
+   * Wave 3: State → ARIA property mapping untuk semantic metadata.
+   * Determines mana variant/state yang map ke ARIA properties.
+   * 
+   * @example
+   * '@state': { expanded: 'aria-expanded', disabled: 'aria-disabled' }
+   * → When expanded prop true → aria-expanded="true" auto-injected
+   */
+  '@state'?: Record<string, string>
 }
 
 /**

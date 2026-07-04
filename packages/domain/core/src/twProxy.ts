@@ -132,6 +132,7 @@ function makeTag(tag: React.ElementType): RuntimeTagFactory {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const HTML_TAGS = [
+  "html", "head", "body",
   "div", "section", "article", "aside", "header", "footer", "main", "nav",
   "figure", "figcaption", "details", "summary",
   "h1", "h2", "h3", "h4", "h5", "h6",
