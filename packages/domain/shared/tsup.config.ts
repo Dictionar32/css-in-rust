@@ -1,25 +1,18 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
-  entry: ["src/index.ts"],
-  format: ["cjs", "esm"],
-  // Fix: gunakan shims:true (tsup built-in) untuk polyfill import.meta.url di CJS
-  // dan __dirname/__filename di ESM. Lebih robust dari manual banner dan handle
-  // browser context juga. Ref: https://tsup.egoist.dev/#inject-cjs-and-esm-shims
-  shims: true,
-  dts: {
-    resolve: false,
+  // Multi-entry support: each entry gets its own .d.ts file
+  entry: {
+    index: "src/index.ts",
+    // Add more entries below as needed for your package
   },
-  tsconfig: "tsconfig.dts.json",
-  outDir: "dist",
+  format: ["esm", "cjs"],
+  dts: true,  // ✨ Modern: native tsup dts generation (works with multi-entry!)
+  clean: true,
+  target: "node20",
+  platform: "node",
+  // External dependencies to prevent bundling and circular dependencies
   external: [
-    "node:fs",
-    "node:path",
-    "node:crypto",
-    "node:module",
-    "node:url",
-    "node:os",
-    "@tailwind-styled/compiler",
-    "@tailwind-styled/compiler/internal",
+    "@tailwind-styled/compiler",  // Prevents circular dependency
   ],
 })
