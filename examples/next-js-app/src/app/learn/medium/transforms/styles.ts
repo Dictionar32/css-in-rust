@@ -55,3 +55,24 @@ export const Perspective3D = tw.div({
     },
     defaultVariants: { style: "card" },
 })
+
+// ─── Playground layout components ──────────────────────────────────────────────
+export const PlaygroundDemoContainer = tw.div({
+    base: "flex items-center justify-start gap-6 min-h-[100px]",
+})
+
+export const PlaygroundDemoBox = tw.div({
+    base: "w-16 h-16 rounded-xl bg-indigo-500 flex items-center justify-center text-white text-xs font-bold transition-transform duration-500 ease-out cursor-pointer",
+})
+
+export const PlaygroundRefBox = tw.div({
+    base: "w-16 h-16 rounded-xl border-2 border-dashed border-indigo-200 opacity-40",
+})
+
+export const PlaygroundFlipCard = tw.div({
+    base: "w-24 h-24 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer transition-transform duration-500 ease-out",
+})
+
+export const PlaygroundFlipHint = tw.p({
+    base: "mt-3 text-xs text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]",
+})

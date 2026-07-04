@@ -4,102 +4,103 @@
 "use client"
 import { useState } from "react"
 import {
-    Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
-    PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
-    CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
-    PlaygroundWrap, Chip, ChipRow, TransformBox, SceneWrap,
+  Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
+  PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
+  CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
+  PlaygroundWrap, Chip, ChipRow, TransformBox, SceneWrap,
+  PlaygroundDemoContainer, PlaygroundDemoBox, PlaygroundRefBox,
+  PlaygroundFlipCard, PlaygroundFlipHint,
 } from "./styles"
 
 const TOC = [
-    { id: "2d-transforms", label: "2D Transforms" },
-    { id: "transform-origin", label: "transform-origin" },
-    { id: "3d-transforms", label: "3D Transforms" },
-    { id: "perspective", label: "perspective & perspective-origin" },
-    { id: "backface", label: "backface-visibility" },
-    { id: "preserve-3d", label: "transform-style: preserve-3d" },
-    { id: "will-change", label: "will-change" },
-    { id: "individual", label: "Individual Transform Properties" },
-    { id: "tw-usage", label: "Pakai di tw" },
-    { id: "exercise", label: "Latihan" },
+  { id: "2d-transforms", label: "2D Transforms" },
+  { id: "transform-origin", label: "transform-origin" },
+  { id: "3d-transforms", label: "3D Transforms" },
+  { id: "perspective", label: "perspective & perspective-origin" },
+  { id: "backface", label: "backface-visibility" },
+  { id: "preserve-3d", label: "transform-style: preserve-3d" },
+  { id: "will-change", label: "will-change" },
+  { id: "individual", label: "Individual Transform Properties" },
+  { id: "tw-usage", label: "Pakai di tw" },
+  { id: "exercise", label: "Latihan" },
 ]
 
 function Code({ file, children }: { file?: string; children: string }) {
-    const [copied, setCopied] = useState(false)
-    return (
-        <CodeWrap>
-            <CodeWrap.header>
-                <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
-                <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
-                    {copied ? "✓ Copied" : "Copy"}
-                </CopyBtn>
-            </CodeWrap.header>
-            <CodeWrap.body>{children.trim()}</CodeWrap.body>
-        </CodeWrap>
-    )
+  const [copied, setCopied] = useState(false)
+  return (
+    <CodeWrap>
+      <CodeWrap.header>
+        <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
+        <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+          {copied ? "✓ Copied" : "Copy"}
+        </CopyBtn>
+      </CodeWrap.header>
+      <CodeWrap.body>{children.trim()}</CodeWrap.body>
+    </CodeWrap>
+  )
 }
 
 type TransformPreset = "translate" | "rotate" | "scale" | "skew" | "combined"
 
 function TransformPlayground() {
-    const [preset, setPreset] = useState<TransformPreset>("translate")
-    const presets: TransformPreset[] = ["translate", "rotate", "scale", "skew", "combined"]
+  const [preset, setPreset] = useState<TransformPreset>("translate")
+  const presets: TransformPreset[] = ["translate", "rotate", "scale", "skew", "combined"]
 
-    const transformValues: Record<TransformPreset, string> = {
-        translate: "translateX(60px) translateY(-20px)",
-        rotate: "rotate(45deg)",
-        scale: "scale(1.4)",
-        skew: "skewX(20deg) skewY(5deg)",
-        combined: "translateX(30px) rotate(30deg) scale(1.2)",
-    }
+  const transformValues: Record<TransformPreset, string> = {
+    translate: "translateX(60px) translateY(-20px)",
+    rotate: "rotate(45deg)",
+    scale: "scale(1.4)",
+    skew: "skewX(20deg) skewY(5deg)",
+    combined: "translateX(30px) rotate(30deg) scale(1.2)",
+  }
 
-    return (
-        <PlaygroundWrap>
-            <PlaygroundWrap.controls>
-                <PlaygroundWrap.label>🎯 Transform Playground — hover kotak untuk melihat transform</PlaygroundWrap.label>
-                <ChipRow>
-                    {presets.map(p => <Chip key={p} active={preset === p ? "true" : "false"} onClick={() => setPreset(p)}>{p}</Chip>)}
-                </ChipRow>
-            </PlaygroundWrap.controls>
-            <PlaygroundWrap.canvas>
-                <div className="flex items-center justify-start gap-6 min-h-[100px]">
-                    <div
-                        className="w-16 h-16 rounded-xl bg-indigo-500 flex items-center justify-center text-white text-xs font-bold transition-transform duration-500 ease-out cursor-pointer"
-                        style={{ transform: transformValues[preset] }}
-                    >
-                        Box
-                    </div>
-                    <div className="w-16 h-16 rounded-xl border-2 border-dashed border-indigo-200 opacity-40" />
-                </div>
-            </PlaygroundWrap.canvas>
-            <PlaygroundWrap.codeline>
-                {`transform: ${transformValues[preset]};`}
-            </PlaygroundWrap.codeline>
-        </PlaygroundWrap>
-    )
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>🎯 Transform Playground — hover kotak untuk melihat transform</PlaygroundWrap.label>
+        <ChipRow>
+          {presets.map(p => <Chip key={p} active={preset === p ? "true" : "false"} onClick={() => setPreset(p)}>{p}</Chip>)}
+        </ChipRow>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas>
+        <PlaygroundDemoContainer>
+          <PlaygroundDemoBox
+            style={{ transform: transformValues[preset] }}
+          >
+            Box
+          </PlaygroundDemoBox>
+          <PlaygroundRefBox />
+        </PlaygroundDemoContainer>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {`transform: ${transformValues[preset]};`}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
 }
 
 export default function TransformsPage() {
-    const [activeSection, setActiveSection] = useState("2d-transforms")
-    const [flipped, setFlipped] = useState(false)
+  const [activeSection, setActiveSection] = useState("2d-transforms")
+  const [flipped, setFlipped] = useState(false)
 
-    return (
-        <Page>
-            <TopBar><TopBarInner>
-                <Breadcrumb>
-                    <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.link href="/learn/medium">Medium</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.curr>Transforms</Breadcrumb.curr>
-                </Breadcrumb>
-            </TopBarInner></TopBar>
-            <Body>
-                <Content>
-                    <PageTitle>CSS Transforms</PageTitle>
-                    <PageDesc>Translate, rotate, scale, skew — 2D dan 3D transforms, perspective, will-change, sampai CSS Level 5 individual transform properties.</PageDesc>
+  return (
+    <Page>
+      <TopBar><TopBarInner>
+        <Breadcrumb>
+          <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.link href="/learn/medium">Medium</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.curr>Transforms</Breadcrumb.curr>
+        </Breadcrumb>
+      </TopBarInner></TopBar>
+      <Body>
+        <Content>
+          <PageTitle>CSS Transforms</PageTitle>
+          <PageDesc>Translate, rotate, scale, skew — 2D dan 3D transforms, perspective, will-change, sampai CSS Level 5 individual transform properties.</PageDesc>
 
-                    <Section id="2d-transforms" onClick={() => setActiveSection("2d-transforms")}>
-                        <H2>2D Transforms<H2.anchor href="#2d-transforms">#</H2.anchor></H2>
-                        <TransformPlayground />
-                        <Code file="2d-transforms.css">{`
+          <Section id="2d-transforms" onClick={() => setActiveSection("2d-transforms")}>
+            <H2>2D Transforms<H2.anchor href="#2d-transforms">#</H2.anchor></H2>
+            <TransformPlayground />
+            <Code file="2d-transforms.css">{`
 /* translate — pindah posisi tanpa mengubah layout */
 .move-right  { transform: translateX(50px); }
 .move-up     { transform: translateY(-20px); }
@@ -127,13 +128,13 @@ export default function TransformsPage() {
 /* Rotasi lalu translate ≠ translate lalu rotasi */
 .combined { transform: translateX(50px) rotate(45deg) scale(1.2); }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="transform-origin" onClick={() => setActiveSection("transform-origin")}>
-                        <H2>transform-origin<H2.anchor href="#transform-origin">#</H2.anchor></H2>
-                        <P>Titik asal transform — dari mana rotasi, scale, dan skew dihitung. Default: <IC>center center</IC> (tengah elemen).</P>
-                        <Code file="transform-origin.css">{`
+          <Section id="transform-origin" onClick={() => setActiveSection("transform-origin")}>
+            <H2>transform-origin<H2.anchor href="#transform-origin">#</H2.anchor></H2>
+            <P>Titik asal transform — dari mana rotasi, scale, dan skew dihitung. Default: <IC>center center</IC> (tengah elemen).</P>
+            <Code file="transform-origin.css">{`
 /* Keywords */
 .center      { transform-origin: center; }          /* default */
 .top-left    { transform-origin: top left; }
@@ -163,12 +164,12 @@ export default function TransformsPage() {
   to   { transform: rotate(360deg); }
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="3d-transforms" onClick={() => setActiveSection("3d-transforms")}>
-                        <H2>3D Transforms<H2.anchor href="#3d-transforms">#</H2.anchor></H2>
-                        <Code file="3d-transforms.css">{`
+          <Section id="3d-transforms" onClick={() => setActiveSection("3d-transforms")}>
+            <H2>3D Transforms<H2.anchor href="#3d-transforms">#</H2.anchor></H2>
+            <Code file="3d-transforms.css">{`
 /* 3D translate */
 .translate-z  { transform: translateZ(50px); }    /* mendekat ke viewer */
 .translate-3d { transform: translate3d(20px, 10px, 30px); }
@@ -187,26 +188,25 @@ export default function TransformsPage() {
 /* Biasanya dihasilkan oleh tools/library, tidak ditulis manual */
 .matrix { transform: matrix3d(1,0,0,0, 0,1,0,0, 0,0,1,0, 50,0,0,1); }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="perspective" onClick={() => setActiveSection("perspective")}>
-                        <H2>perspective & perspective-origin<H2.anchor href="#perspective">#</H2.anchor></H2>
-                        <P><IC>perspective</IC> menentukan jarak viewer dari layar — semakin kecil nilainya, semakin dramatis efek 3D-nya. Bisa dipasang di parent atau sebagai fungsi transform.</P>
-                        <SceneWrap>
-                            <div
-                                className="w-24 h-24 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm cursor-pointer transition-transform duration-500 ease-out"
-                                style={{
-                                    perspective: "400px",
-                                    transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                                }}
-                                onClick={() => setFlipped(f => !f)}
-                            >
-                                {flipped ? "Back" : "Front"}
-                            </div>
-                            <p className="mt-3 text-xs text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]">Klik untuk flip</p>
-                        </SceneWrap>
-                        <Code file="perspective.css">{`
+          <Section id="perspective" onClick={() => setActiveSection("perspective")}>
+            <H2>perspective & perspective-origin<H2.anchor href="#perspective">#</H2.anchor></H2>
+            <P><IC>perspective</IC> menentukan jarak viewer dari layar — semakin kecil nilainya, semakin dramatis efek 3D-nya. Bisa dipasang di parent atau sebagai fungsi transform.</P>
+            <SceneWrap>
+              <PlaygroundFlipCard
+                style={{
+                  perspective: "400px",
+                  transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+                onClick={() => setFlipped(f => !f)}
+              >
+                {flipped ? "Back" : "Front"}
+              </PlaygroundFlipCard>
+              <PlaygroundFlipHint>Klik untuk flip</PlaygroundFlipHint>
+            </SceneWrap>
+            <Code file="perspective.css">{`
 /* perspective di parent — satu titik vanish untuk semua children */
 .scene {
   perspective: 800px;          /* jarak viewer, lebih kecil = lebih dramatis */
@@ -228,13 +228,13 @@ export default function TransformsPage() {
 .left-view   { perspective-origin: 0% 50%; }      /* dari kiri */
 .corner-view { perspective-origin: 0% 0%; }       /* dari sudut kiri atas */
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="backface" onClick={() => setActiveSection("backface")}>
-                        <H2>backface-visibility<H2.anchor href="#backface">#</H2.anchor></H2>
-                        <P>Mengontrol apakah sisi belakang elemen terlihat saat di-flip 180°. Penting untuk card flip animations.</P>
-                        <Code file="backface-visibility.css">{`
+          <Section id="backface" onClick={() => setActiveSection("backface")}>
+            <H2>backface-visibility<H2.anchor href="#backface">#</H2.anchor></H2>
+            <P>Mengontrol apakah sisi belakang elemen terlihat saat di-flip 180°. Penting untuk card flip animations.</P>
+            <Code file="backface-visibility.css">{`
 /* Card flip — contoh klasik backface-visibility */
 .card-container {
   perspective: 800px;
@@ -270,12 +270,12 @@ export default function TransformsPage() {
   transform: rotateY(180deg);    /* balik ke belakang sejak awal */
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="preserve-3d" onClick={() => setActiveSection("preserve-3d")}>
-                        <H2>transform-style: preserve-3d<H2.anchor href="#preserve-3d">#</H2.anchor></H2>
-                        <Code file="preserve-3d.css">{`
+          <Section id="preserve-3d" onClick={() => setActiveSection("preserve-3d")}>
+            <H2>transform-style: preserve-3d<H2.anchor href="#preserve-3d">#</H2.anchor></H2>
+            <Code file="preserve-3d.css">{`
 /* transform-style: flat (default) — children di-flatten ke 2D */
 /* transform-style: preserve-3d — children ikut 3D space parent */
 
@@ -317,13 +317,13 @@ export default function TransformsPage() {
 .top    { transform: translateY(-50px) rotateX(90deg); background: rgba(239,68,68,0.7); }
 .bottom { transform: translateY(50px) rotateX(-90deg); background: rgba(99,102,241,0.4); }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="will-change" onClick={() => setActiveSection("will-change")}>
-                        <H2>will-change<H2.anchor href="#will-change">#</H2.anchor></H2>
-                        <P><IC>will-change</IC> memberi tahu browser properti apa yang akan berubah, sehingga browser bisa mempromosikan elemen ke layer terpisah di GPU — menghasilkan animasi yang lebih smooth.</P>
-                        <Code file="will-change.css">{`
+          <Section id="will-change" onClick={() => setActiveSection("will-change")}>
+            <H2>will-change<H2.anchor href="#will-change">#</H2.anchor></H2>
+            <P><IC>will-change</IC> memberi tahu browser properti apa yang akan berubah, sehingga browser bisa mempromosikan elemen ke layer terpisah di GPU — menghasilkan animasi yang lebih smooth.</P>
+            <Code file="will-change.css">{`
 /* Hint ke browser sebelum animasi dimulai */
 .animated-card {
   will-change: transform, opacity;
@@ -356,20 +356,20 @@ card.addEventListener('mouseleave', () => {
 /* transform: translateZ(0) — creates GPU layer */
 .gpu-layer { transform: translateZ(0); }
         `}</Code>
-                        <Callout type="warning">
-                            <Callout.icon>⚠️</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>Gunakan will-change dengan bijak</Callout.title>
-                                Setiap elemen dengan <IC>will-change: transform</IC> dialokasikan di memori GPU. Terlalu banyak bisa habiskan VRAM dan justru memperlambat — gunakan hanya sesaat sebelum animasi dimulai, lalu reset ke <IC>auto</IC>.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>Gunakan will-change dengan bijak</Callout.title>
+                Setiap elemen dengan <IC>will-change: transform</IC> dialokasikan di memori GPU. Terlalu banyak bisa habiskan VRAM dan justru memperlambat — gunakan hanya sesaat sebelum animasi dimulai, lalu reset ke <IC>auto</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="individual" onClick={() => setActiveSection("individual")}>
-                        <H2>Individual Transform Properties (CSS Level 5)<H2.anchor href="#individual">#</H2.anchor></H2>
-                        <P>CSS Level 5 memperkenalkan <IC>translate</IC>, <IC>rotate</IC>, dan <IC>scale</IC> sebagai properti tersendiri — memudahkan animasi yang hanya mengubah satu aspek tanpa override transform lain.</P>
-                        <Code file="individual-transforms.css">{`
+          <Section id="individual" onClick={() => setActiveSection("individual")}>
+            <H2>Individual Transform Properties (CSS Level 5)<H2.anchor href="#individual">#</H2.anchor></H2>
+            <P>CSS Level 5 memperkenalkan <IC>translate</IC>, <IC>rotate</IC>, dan <IC>scale</IC> sebagai properti tersendiri — memudahkan animasi yang hanya mengubah satu aspek tanpa override transform lain.</P>
+            <Code file="individual-transforms.css">{`
 /* CSS Level 5 — individual transform properties */
 /* Urutan aplikasi: translate → rotate → scale → transform */
 
@@ -412,12 +412,12 @@ card.addEventListener('mouseleave', () => {
   animation: spin-only 2s linear infinite, float 3s ease-in-out infinite;
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
-                        <H2>Transforms di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
-                        <Code file="transforms-tw.tsx">{`
+          <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
+            <H2>Transforms di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
+            <Code file="transforms-tw.tsx">{`
 import { tw } from "tailwind-styled-v4"
 
 /* Hover transforms via Tailwind */
@@ -451,44 +451,44 @@ const Spinner = tw.div({
   base: "w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent [rotate:0deg] animate-spin",
 })
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="exercise" onClick={() => setActiveSection("exercise")}>
-                        <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Card flip 3D</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat card flip 3D yang menampilkan sisi depan (info produk) dan sisi belakang (detail) saat hover. Gunakan <IC>transform-style: preserve-3d</IC>, <IC>backface-visibility: hidden</IC>, dan <IC>perspective</IC>.</p>
-                                <p>Pastikan transisi smooth 600ms dengan <IC>ease-in-out</IC>.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — CSS Cube</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat cube 3D dengan 6 sisi menggunakan 6 elemen <IC>div</IC>. Posisikan masing-masing sisi dengan <IC>translateZ</IC> dan <IC>rotateX/Y</IC>, bungkus dalam parent dengan <IC>transform-style: preserve-3d</IC>.</p>
-                                <p>Animasikan cube berputar terus menggunakan <IC>@keyframes</IC> yang mengubah <IC>rotateX</IC> dan <IC>rotateY</IC>.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Individual transform composition</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat elemen yang punya dua animasi berjalan bersamaan menggunakan CSS Level 5 individual properties: <IC>translate</IC> untuk float naik-turun, dan <IC>rotate</IC> untuk berputar terus.</p>
-                                <p>Pastikan kedua animasi independen — mengubah durasi salah satu tidak mempengaruhi yang lain.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                    </Section>
+          <Section id="exercise" onClick={() => setActiveSection("exercise")}>
+            <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Card flip 3D</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat card flip 3D yang menampilkan sisi depan (info produk) dan sisi belakang (detail) saat hover. Gunakan <IC>transform-style: preserve-3d</IC>, <IC>backface-visibility: hidden</IC>, dan <IC>perspective</IC>.</p>
+                <p>Pastikan transisi smooth 600ms dengan <IC>ease-in-out</IC>.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — CSS Cube</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat cube 3D dengan 6 sisi menggunakan 6 elemen <IC>div</IC>. Posisikan masing-masing sisi dengan <IC>translateZ</IC> dan <IC>rotateX/Y</IC>, bungkus dalam parent dengan <IC>transform-style: preserve-3d</IC>.</p>
+                <p>Animasikan cube berputar terus menggunakan <IC>@keyframes</IC> yang mengubah <IC>rotateX</IC> dan <IC>rotateY</IC>.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Individual transform composition</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat elemen yang punya dua animasi berjalan bersamaan menggunakan CSS Level 5 individual properties: <IC>translate</IC> untuk float naik-turun, dan <IC>rotate</IC> untuk berputar terus.</p>
+                <p>Pastikan kedua animasi independen — mengubah durasi salah satu tidak mempengaruhi yang lain.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+          </Section>
 
-                    <PageNav>
-                        <NavBtn href="/learn/medium/transitions-animations" dir="prev"><NavBtn.hint>← Previous</NavBtn.hint><NavBtn.label>Transitions & Animations</NavBtn.label></NavBtn>
-                        <NavBtn href="/learn/medium/visual-effects" dir="next"><NavBtn.hint>Next →</NavBtn.hint><NavBtn.label>Visual Effects</NavBtn.label></NavBtn>
-                    </PageNav>
-                </Content>
-                <Toc>
-                    <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
-                </Toc>
-            </Body>
-        </Page>
-    )
+          <PageNav>
+            <NavBtn href="/learn/medium/transitions-animations" dir="prev"><NavBtn.hint>← Previous</NavBtn.hint><NavBtn.label>Transitions & Animations</NavBtn.label></NavBtn>
+            <NavBtn href="/learn/medium/visual-effects" dir="next"><NavBtn.hint>Next →</NavBtn.hint><NavBtn.label>Visual Effects</NavBtn.label></NavBtn>
+          </PageNav>
+        </Content>
+        <Toc>
+          <TocLabel>On this page</TocLabel>
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+        </Toc>
+      </Body>
+    </Page>
+  )
 }
