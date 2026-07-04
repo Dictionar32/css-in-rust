@@ -8,6 +8,7 @@ import {
     PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
     PageNav, NavBtn,
     ResourceLink, SkillTag, TipCard,
+    GameGrid, GameCard, GameIconBox, GameContent, GameTitle, GameDesc, GameTagContainer,
 } from "../styles"
 
 const TOC = [
@@ -129,26 +130,25 @@ export default function ResourcesPage() {
                     <Section id="games" onClick={() => setActiveSection("games")}>
                         <H2>Games Belajar CSS<H2.anchor href="#games">#</H2.anchor></H2>
                         <P>Belajar CSS lewat games — sangat efektif untuk topik tertentu seperti flexbox, grid, dan selectors.</P>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <GameGrid>
                             {GAMES.map(g => (
-                                <a
+                                <GameCard
                                     key={g.href}
                                     href={g.href}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="flex gap-3 p-3 rounded-xl border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[var(--surface)] hover:border-[var(--accent)] transition-all group"
                                 >
-                                    <span className="shrink-0 w-10 h-10 rounded-lg bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] flex items-center justify-center text-xl">{g.icon}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold group-hover:text-[var(--accent)] transition-colors">{g.title}</p>
-                                        <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)] mt-0.5 leading-snug">{g.desc}</p>
-                                        <div className="flex flex-wrap gap-1 mt-1.5">
+                                    <GameIconBox>{g.icon}</GameIconBox>
+                                    <GameContent>
+                                        <GameTitle>{g.title}</GameTitle>
+                                        <GameDesc>{g.desc}</GameDesc>
+                                        <GameTagContainer>
                                             {g.tags.map(t => <SkillTag key={t}>{t}</SkillTag>)}
-                                        </div>
-                                    </div>
-                                </a>
+                                        </GameTagContainer>
+                                    </GameContent>
+                                </GameCard>
                             ))}
-                        </div>
+                        </GameGrid>
                     </Section>
                     <Divider />
 

@@ -135,3 +135,41 @@ export const ResourceLink = tw.a({
         "span:arrow": "text-[color-mix(in_srgb,var(--foreground)_25%,transparent)] group-hover:text-[var(--accent)] transition-colors text-sm",
     },
 })
+
+// ─── Resources page components ────────────────────────────────────────────────
+
+export const GameGrid = tw.div({
+    base: "grid grid-cols-1 sm:grid-cols-2 gap-3",
+})
+
+export const GameCard = tw.a({
+    base: "flex gap-3 p-3 rounded-xl border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[var(--surface)] hover:border-[var(--accent)] transition-all group",
+})
+
+export const GameIconBox = tw.span({
+    base: "shrink-0 w-10 h-10 rounded-lg bg-[color-mix(in_srgb,var(--accent)_8%,transparent)] flex items-center justify-center text-xl",
+})
+
+export const GameContent = tw.div({
+    base: "flex-1 min-w-0",
+})
+
+export const GameTitle = tw.p({
+    base: "text-sm font-semibold group-hover:text-[var(--accent)] transition-colors",
+})
+
+export const GameDesc = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)] mt-0.5 leading-snug",
+})
+
+export const GameTagContainer = tw.div({
+    base: "flex flex-wrap gap-1 mt-1.5",
+})
+
+export const SkillTag = tw.span({
+    base: "inline-flex items-center text-[9px] font-semibold px-2 py-0.5 rounded-md border border-[color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[color-mix(in_srgb,var(--accent)_5%,transparent)] text-[color-mix(in_srgb,var(--accent)_80%,transparent)]",
+})
+
+export const TipCard = tw.div({
+    base: "rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 my-4",
+})
