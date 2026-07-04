@@ -8,7 +8,8 @@ import {
   PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
   CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
   PlaygroundWrap, Chip, ChipRow,
-  ApiCard, ApiGrid, SupportBadge, SupportRow, PaintPreview,
+  ApiCard, ApiCardBadge, ApiGrid, SupportBadge, SupportRow, PaintPreview,
+  CodePre, OutputBox,
 } from "./styles"
 
 const TOC = [
@@ -23,7 +24,7 @@ const TOC = [
   { id: "exercise", label: "Latihan" },
 ]
 
-function Code({ file, children }: { file?: string; children: string }) {
+function Code({ file, children }: { file: string; children: string }) {
   const [copied, setCopied] = useState(false)
   return (
     <CodeWrap>
@@ -42,32 +43,32 @@ function HoudiniApiOverview() {
   return (
     <ApiGrid>
       <ApiCard status="stable">
-        <ApiCard.badge className="bg-emerald-100 text-emerald-700">Stable</ApiCard.badge>
+        <ApiCardBadge status="stable">Stable</ApiCardBadge>
         <ApiCard.name>Properties & Values API</ApiCard.name>
         <ApiCard.desc>CSS.registerProperty() + @property. Typed custom properties dengan animasi support.</ApiCard.desc>
       </ApiCard>
       <ApiCard status="stable">
-        <ApiCard.badge className="bg-emerald-100 text-emerald-700">Stable</ApiCard.badge>
+        <ApiCardBadge status="stable">Stable</ApiCardBadge>
         <ApiCard.name>CSS Typed OM</ApiCard.name>
         <ApiCard.desc>Type-safe CSSOM via attributeStyleMap. Lebih cepat dari string manipulation.</ApiCard.desc>
       </ApiCard>
       <ApiCard status="experimental">
-        <ApiCard.badge className="bg-amber-100 text-amber-700">Limited</ApiCard.badge>
+        <ApiCardBadge status="limited">Limited</ApiCardBadge>
         <ApiCard.name>Paint Worklet</ApiCard.name>
         <ApiCard.desc>Custom CSS background/border via registerPaint(). Chrome/Edge only saat ini.</ApiCard.desc>
       </ApiCard>
       <ApiCard status="experimental">
-        <ApiCard.badge className="bg-red-100 text-red-700">Experimental</ApiCard.badge>
+        <ApiCardBadge status="experimental">Experimental</ApiCardBadge>
         <ApiCard.name>Layout Worklet</ApiCard.name>
         <ApiCard.desc>Custom layout algorithm. Masih very experimental, belum production ready.</ApiCard.desc>
       </ApiCard>
       <ApiCard status="experimental">
-        <ApiCard.badge className="bg-amber-100 text-amber-700">Limited</ApiCard.badge>
+        <ApiCardBadge status="limited">Limited</ApiCardBadge>
         <ApiCard.name>Animation Worklet</ApiCard.name>
         <ApiCard.desc>Custom animation di compositor thread. Performa tinggi untuk scroll-driven.</ApiCard.desc>
       </ApiCard>
       <ApiCard status="stable">
-        <ApiCard.badge className="bg-emerald-100 text-emerald-700">Stable</ApiCard.badge>
+        <ApiCardBadge status="stable">Stable</ApiCardBadge>
         <ApiCard.name>@font-palette-values</ApiCard.name>
         <ApiCard.desc>Kustomisasi color palette untuk color fonts. Dukungan browser sudah luas.</ApiCard.desc>
       </ApiCard>
@@ -130,10 +131,10 @@ el.attributeStyleMap.set('opacity', opacity.value + 0.1)`,
         </ChipRow>
       </PlaygroundWrap.controls>
       <PlaygroundWrap.canvas>
-        <pre className="text-xs font-mono leading-6 whitespace-pre-wrap text-[var(--foreground)]">{examples[propType].code}</pre>
-        <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono">
+        <CodePre>{examples[propType].code}</CodePre>
+        <OutputBox>
           → {examples[propType].output}
-        </div>
+        </OutputBox>
       </PlaygroundWrap.canvas>
       <PlaygroundWrap.codeline>{`el.attributeStyleMap.get('${propType === "length" ? "width" : propType}')`}</PlaygroundWrap.codeline>
     </PlaygroundWrap>

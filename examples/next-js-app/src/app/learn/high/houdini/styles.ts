@@ -45,6 +45,18 @@ export const ApiCard = tw.div({
     },
 })
 
+// Make badge a separate component with variants
+export const ApiCardBadge = tw.span({
+    base: "text-[10px] font-semibold px-2 py-0.5 rounded-full self-start",
+    variants: {
+        status: {
+            stable: "bg-emerald-100 text-emerald-700",
+            experimental: "bg-red-100 text-red-700",
+            limited: "bg-amber-100 text-amber-700",
+        },
+    },
+})
+
 export const ApiGrid = tw.div({ base: "grid grid-cols-1 sm:grid-cols-3 gap-3 my-5" })
 
 export const SupportBadge = tw.span({
@@ -64,4 +76,12 @@ export const SupportRow = tw.div({ base: "flex flex-wrap gap-2 my-3" })
 export const PaintPreview = tw.div({
     base: "w-full h-32 rounded-xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_30%,transparent)] flex items-center justify-center",
     sub: { "span:text": "text-xs text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]" },
+})
+
+export const CodePre = tw.pre({
+    base: "text-xs font-mono leading-6 whitespace-pre-wrap text-[var(--foreground)]",
+})
+
+export const OutputBox = tw.div({
+    base: "mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-mono",
 })
