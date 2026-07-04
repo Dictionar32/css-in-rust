@@ -63,6 +63,13 @@ tw migrate --wizard
 | `tw plugin list` | List available plugins |
 | `tw plugin install <name>` | Install plugin |
 
+### Design Token Sync
+| Command | Description |
+|---------|-------------|
+| `tw figma pull [--dry-run]` | Import design tokens dari Figma → `tokens.sync.json` |
+| `tw figma push [--dry-run]` | Export tokens dari file → update Figma variables |
+| `tw figma diff` | Compare local tokens vs Figma variables |
+
 ### Development
 | Command | Description |
 |---------|-------------|
@@ -97,6 +104,61 @@ tw analyze --json > analysis.json
 # Migrate with dry-run
 tw migrate --dry-run --wizard
 ```
+
+## Figma Design Token Sync
+
+Sync design tokens dari Figma ke codebase (build-time CLI command).
+
+### Prerequisites
+- Figma account dengan Enterprise plan (untuk Figma Variables API)
+- Personal access token dari [figma.com/account/tokens](https://figma.com/account/tokens)
+
+### Setup
+
+Setkan environment variables:
+
+```bash
+export FIGMA_TOKEN=figd_...              # Figma personal access token
+export FIGMA_FILE_KEY=abc123XYZ          # Figma file key dari URL: figma.com/file/<KEY>/...
+```
+
+### Usage
+
+```bash
+# Pull (Figma → tokens.sync.json)
+tw figma pull
+
+# Preview changes sebelum write
+tw figma pull --dry-run
+
+# Push (tokens.sync.json → Figma)
+tw figma push
+
+# Preview push changes
+tw figma push --dry-run
+
+# Compare local vs Figma
+tw figma diff
+```
+
+### Troubleshooting
+
+**Error: Missing FIGMA_TOKEN or FIGMA_FILE_KEY**
+```bash
+# Set missing env vars:
+export FIGMA_TOKEN=your_personal_access_token
+export FIGMA_FILE_KEY=your_figma_file_key
+```
+
+**Error: tokens.sync.json not found**
+```bash
+# Run pull first untuk create token file:
+tw figma pull
+```
+
+**Figma API Error (requires Enterprise)**
+- Figma Variables API hanya tersedia di Enterprise plan
+- Fallback: manual manage `tokens.sync.json` file dan push ke Figma
 
 ## Troubleshooting
 
