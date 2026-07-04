@@ -1,55 +1,15 @@
 import { defineConfig } from "tsup"
 
 export default defineConfig({
+  // Multi-entry support: each entry gets its own .d.ts file
   entry: {
-    index:           "src/index.ts",
-    turbopackLoader: "src/turbopackLoader.ts",
-    webpackLoader:   "src/webpackLoader.ts",
+    index: "src/index.ts",
+    // Add more entries below as needed for your package
   },
-  format: ["esm"],
-  dts: true,
+  format: ["esm", "cjs"],
+  dts: true,  // ✨ Modern: native tsup dts generation (works with multi-entry!)
   clean: true,
+  target: "node20",
   platform: "node",
-  external: [
-    // All node built-ins must be external
-    "fs",
-    "path",
-    "crypto",
-    "module",
-    "url",
-    "os",
-    "node:fs",
-    "node:path",
-    "node:crypto",
-    "node:module",
-    "node:url",
-    "node:os",
-    // Framework
-    "next",
-    // Tailwind packages
-    "@tailwind-styled/compiler",
-    "@tailwind-styled/plugin",
-    "@tailwind-styled/shared",
-    "@tailwind-styled/engine",
-    "@tailwind-styled/scanner",        // FIX: ada di deps tapi missing di external
-    "create-tailwind-styled",          // FIX: nama package asli, biarkan runtime resolve
-    // Loaders
-    "./turbopackLoader",
-    "./webpackLoader",
-    // Other deps
-    "tailwindcss",
-    "@tailwindcss/oxide",
-    "@tailwindcss/postcss",
-    "postcss",
-    "zod",
-    "inversify",
-    "reflect-metadata",
-  ],
-  noExternal: [],
-  tsconfig: "tsconfig.json",
-  outExtension({ format }) {
-    return {
-      js: format === "esm" ? ".mjs" : ".cjs"
-    }
-  }
+  // Configure external dependencies in your package.json
 })
