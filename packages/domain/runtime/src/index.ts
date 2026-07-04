@@ -8,12 +8,32 @@
 import React from "react"
 
 // Re-export live token engine from @tailwind-styled/theme
+// Note: Importing from main export, then re-exporting specific items
+// This ensures proper TypeScript resolution in DTS generation
 export type {
   LiveTokenEngineBridge,
   LiveTokenSet,
   TokenMap,
   TokenSubscriber,
 } from "@tailwind-styled/theme"
+
+// Import from main theme export which includes live-tokens exports
+import {
+  applyTokenSet,
+  createUseTokens,
+  generateTokenCssString,
+  getToken,
+  getTokens,
+  liveToken,
+  liveTokenEngine,
+  setToken,
+  setTokens,
+  subscribeTokens,
+  tokenRef,
+  tokenVar,
+} from "@tailwind-styled/theme"
+
+// Re-export with proper types
 export {
   applyTokenSet,
   createUseTokens,
@@ -28,7 +48,7 @@ export {
   tokenRef,
   tokenRef as containerRef,
   tokenVar,
-} from "@tailwind-styled/theme/live-tokens"
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -154,7 +174,7 @@ export function createComponent<S extends SubComponentMap = SubComponentMap>(
     return React.createElement(tag, { ...clean, ref, className: className || undefined })
   })
 
-  ;(Base as { displayName?: string }).displayName = `tw.${String(tag)}`
+    ; (Base as { displayName?: string }).displayName = `tw.${String(tag)}`
 
   // ── Attach subcomponent properties ────────────────────────────────────────
   if (subComponents) {
@@ -169,9 +189,9 @@ export function createComponent<S extends SubComponentMap = SubComponentMap>(
         return React.createElement(subTag, { ...clean, ref, className: className || undefined })
       })
 
-      ;(SubComp as { displayName?: string }).displayName = `tw.${String(tag)}.${String(subName)}`
+        ; (SubComp as { displayName?: string }).displayName = `tw.${String(tag)}.${String(subName)}`
 
-      ;(Base as unknown as Record<string, unknown>)[subName] = SubComp
+        ; (Base as unknown as Record<string, unknown>)[subName] = SubComp
     }
   }
 
