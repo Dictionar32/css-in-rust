@@ -5,6 +5,86 @@ Append-only log of diagnosed issues in this repo, newest first. Format per entry
 
 ---
 
+## 2026-07-04 — `RuntimeProps` type did not support native HTML attributes (ARIA, `role`, etc.) on `tw.*` styled components
+
+- **Symptom:** TypeScript error when passing standard HTML attributes like `role`, `aria-label`, `aria-checked`, `aria-selected`, etc. to `tw.*` components:
+  ```tsx
+  const Button = tw.button({
+    base: "px-4 py-2",
+    variants: { variant: { primary: "..." } }
+  })
+  
+  <Button
+    variant="primary"
+    role="tab"
+    aria-selected={activeTab === 0}
+    aria-label="Tab 1"
+  />
+  // TS2322: Property 'role' does not exist on type...
+  // TS2322: Property 'aria-selected' does not exist on type...
+  ```
+  Affected all standard HTML attributes: `role`, `aria-*`, `data-*`, `id`, `className`, `children`, `onClick`, `onChange`, event handlers, etc. The component's props were never inferred from the actual HTML tag being rendered (e.g. `button`), so developers had to cast (`as any`) or avoid using these essential attributes.
+  
+- **Where:** `packages/domain/core/src/createComponent.ts` — `RuntimeProps<TConfig>` type definition (lines 219-228 before fix).
+
+- **Root cause (Technical):** The `RuntimeProps` type was defined as an intersection that *manually* listed a few hardcoded attributes, but never included the full HTML attributes for the specific tag:
+  ```typescript
+  // WRONG: Before fix
+  type RuntimeProps<TConfig extends ComponentConfig> =
+    InferVariantProps<TConfig> &
+    InferStatesProps<TConfig> &
+    React.HTMLAttributes<HTMLElement> &  // Too generic, not tag-specific
+    Record<string, unknown>
+  ```
+  
+  React's `ComponentPropsWithoutRef<Tag>` type is tag-specific — it extracts all valid props (including ARIA, event handlers, data-attributes) based on the HTML tag (e.g. `ComponentPropsWithoutRef<"button">` includes `type: "submit" | "reset" | "button"`, but `ComponentPropsWithoutRef<"input">` includes `value`, `onChange`, `inputMode`, etc.). The original type ignored this capability entirely, treating all tags identically.
+  
+  The root cause had three layers:
+  1. Missing `Tag` generic parameter in `RuntimeProps` — no way to express "this is a button component, so use button-specific props"
+  2. Intersection order issue — when `[key: string]: unknown` index signature existed in `StyledComponentProps`, it "swallowed" all narrower types from `React.ComponentPropsWithoutRef<Tag>`, making every prop resolve to `unknown`
+  3. Hardcoded attribute list — the attempted fix (manually listing common ARIA attributes) was brittle, non-scalable, and still incomplete (missing many valid attributes)
+
+- **Design context:** While the hardcoded ARIA list was being drafted, user noted "loh kok hardcode sih... padahal react ada fungsi yang ngehandle itu" (why hardcode it when React already has functions for this). This observation led to the proper fix.
+
+- **Fix (Technical):** 
+  1. Added `Tag extends React.ElementType` as a second generic parameter to `RuntimeProps`:
+     ```typescript
+     type RuntimeProps<TConfig extends ComponentConfig, TTag extends React.ElementType> =
+       InferVariantProps<TConfig> &
+       InferStatesProps<TConfig> &
+       React.ComponentPropsWithoutRef<TTag> &  // Tag-specific props from React
+       Record<string, unknown>
+     ```
+  
+  2. Updated both `React.forwardRef()` call sites to include the tag:
+     ```typescript
+     // Before
+     const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig>>((props, ref) => {
+     
+     // After
+     const baseComponent = React.forwardRef<unknown, RuntimeProps<TConfig, typeof tag>>((props, ref) => {
+     ```
+  
+  3. This ensures that when `tw.button` is created, `RuntimeProps` resolves to button-specific props, and when `tw.input` is created, it resolves to input-specific props, etc. All HTML attributes (including ARIA, data-*, event handlers) are now automatically included based on the actual HTML tag.
+
+- **Validation:** 
+  - `npm run build:packages` — all 29 packages build successfully with 0 type errors
+  - `examples/next-js-app`: `npx tsc --noEmit` — 0 errors (ARIA attributes now accepted on components)
+  - Component usage in real example files now passes TypeScript:
+    ```tsx
+    <ToggleButton active={theme === "light"} role="radio" aria-checked aria-label />
+    <TabButton active={activeTab === "aria"} role="tab" aria-selected aria-controls />
+    <Button variant="primary" onClick={() => {}} aria-label="Action" />
+    ```
+
+- **Known limitations:**
+  - The `as` polymorphism prop (e.g. `<Button as="a" href="...">`) still uses the original tag's types and does not narrow to the polymorphic tag — supporting this would require 100+ overload signatures or complex TypeScript features. This matches pre-fix behavior (no regression).
+  - Event handler parameter types now correctly narrow to the tag (e.g. `onClick` on `tw.button` → `React.MouseEvent<HTMLButtonElement>`) — this is the correct behavior and not a limitation, but is a side effect of the fix worth noting.
+
+- **Status:** Fixed. All attributes now flow from React's native type definitions — no hardcoding, no brittleness. The fix leverages React's existing infrastructure for tag-specific typing, which is exactly what React.ComponentPropsWithoutRef is designed for. This is the proper, scalable solution that "React already has".
+
+---
+
 ## ⭐ RECOMMENDED PATTERN: Ultra-Minimal Theme Architecture (v5.0.17+)
 
 **Not an issue — a best practice / recommended pattern.**

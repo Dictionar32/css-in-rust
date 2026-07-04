@@ -11,6 +11,24 @@ dan project ini mengikuti [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 All Wave 1-3 features are published to npm and integrated in production (next-js-app example).
 
+#### Wave 5.3: TypeScript Props Type Inference Fix (v5.0.18+ ✅ JULY 4, 2026)
+
+- **Fixed: `RuntimeProps` Type Now Supports All HTML Attributes (ARIA, data-*, event handlers, etc.)** ✅
+  - **Problem:** Passing `role`, `aria-label`, `aria-selected`, `onClick`, `data-*`, and other standard HTML attributes to `tw.*` components resulted in TypeScript errors `Property 'X' does not exist on type...`
+  - **Root cause:** `RuntimeProps<TConfig>` was not tag-specific — all `tw.button`, `tw.input`, `tw.div` used identical prop types, ignoring React's built-in tag-specific attribute inference
+  - **Solution:** Added `Tag extends React.ElementType` generic parameter to `RuntimeProps`, then use `React.ComponentPropsWithoutRef<TTag>` to dynamically extract all valid props for the actual HTML tag
+    ```typescript
+    // Before: Generic, ignored tag-specific attributes
+    type RuntimeProps<TConfig> = InferVariantProps<TConfig> & React.HTMLAttributes<HTMLElement>
+    
+    // After: Tag-specific, includes all native HTML props
+    type RuntimeProps<TConfig, TTag extends React.ElementType> = 
+      InferVariantProps<TConfig> & React.ComponentPropsWithoutRef<TTag>
+    ```
+  - **Impact:** All HTML attributes now work — ARIA attributes, data-attributes, event handlers with correct typings, tag-specific attributes (e.g. `href` on `<a>`, `value` on `<input>`)
+  - **Validated:** `npm run build:packages` ✅, `examples/next-js-app tsc --noEmit` ✅, real component usage with ARIA in `aria-dynamic-theme/` example ✅
+  - **Reference:** `packages/domain/core/src/createComponent.ts` (lines 219-225), `known-issues.md` (2026-07-04 entry)
+
 #### Wave 5.2: Complete Build-Time Magic Documentation (v5.0.17+ ✅ JULY 3, 2026)
 
 - **18-Layer Architecture Documentation** - Complete exploration of all magic layers di next-js-app
