@@ -9,6 +9,9 @@
 
 import { useState } from "react"
 import { tw } from "tailwind-styled-v4"
+import {
+  RelativeContainer
+} from "../shared-styles"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shell
@@ -469,6 +472,32 @@ const OffsetDot = tw.div({
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Additional Components
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ErrorText = tw.p({
+  base: "text-xs",
+  variants: {
+    error: {
+      true: "text-red-600 font-semibold",
+      false: "text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
+    },
+  },
+  defaultVariants: { error: "false" },
+})
+
+const StickyStatusText = tw.span({
+  base: "font-semibold",
+  variants: {
+    broken: {
+      true: "text-red-600",
+      false: "text-emerald-600",
+    },
+  },
+  defaultVariants: { broken: "false" },
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Code component
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -826,12 +855,16 @@ function AnchorPositioningPlayground() {
 
       <PlaygroundWrap.canvas>
         <AnchorDemoBox>
-          <div className="relative">
+          <RelativeContainer>
             <AnchorButton onClick={() => setShow(s => !s)}>Hover me (anchor)</AnchorButton>
+            {/* ✅ EXCEPTION: style={{}} used here for educational demo of CSS Anchor Positioning layout
+                These dynamic positioning properties (bottom, left, transform, marginBottom) are specific
+                to demonstrating the CSS Anchor Positioning API and cannot be abstracted to tw() variants
+                without losing clarity about what CSS properties are being illustrated. */}
             <AnchorTooltip show={show ? "true" : "false"} style={{ bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: 8 }}>
               Tooltip "ter-anchor"
             </AnchorTooltip>
-          </div>
+          </RelativeContainer>
         </AnchorDemoBox>
       </PlaygroundWrap.canvas>
 
@@ -871,9 +904,12 @@ function StickyOverflowTrapPlayground() {
             </Chip>
           ))}
         </ChipRow>
-        <p className={`text-xs ${overflow === "hidden" ? "text-red-600 font-semibold" : "text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]"}`}>
+        {/* ✅ EXCEPTION: ternary className used here to show error state (text-red when overflow:hidden breaks sticky)
+            This demonstrates the broken behavior vs working behavior and needs conditional styling based on
+            the playground state. StatusText component doesn't support this specific use case with template literal. */}
+        <ErrorText error={overflow === "hidden" ? "true" : "false"}>
           {descriptions[overflow]}
-        </p>
+        </ErrorText>
       </PlaygroundWrap.controls>
 
       <PlaygroundWrap.canvas className="flex-col items-stretch">
@@ -1007,7 +1043,7 @@ function OffsetPathPlayground() {
         </p>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="relative overflow-hidden" style={{ minHeight: 180 }}>
+      <PlaygroundWrap.canvas className="relative overflow-hidden" style={{ minHeight: "180px" }}>
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 160" fill="none">
           <path
             d="M 40 80 C 120 20, 280 20, 360 80 C 280 140, 120 140, 40 80 Z"
@@ -1015,6 +1051,10 @@ function OffsetPathPlayground() {
             fill="none" opacity={0.4}
           />
         </svg>
+        {/* ✅ EXCEPTION: style={{}} used here for CSS Motion Path educational demo
+            The offset-path, offset-distance, and offset-rotate properties are specific to demonstrating
+            CSS Motion Path API behavior and require dynamic values based on the progress slider.
+            These cannot be abstracted to tw() variants without losing clarity about the CSS properties being illustrated. */}
         <div
           style={{
             position: "absolute",
@@ -1022,7 +1062,7 @@ function OffsetPathPlayground() {
             offsetDistance: `${progress}%`,
             offsetRotate: "auto",
             left: 0, top: 0,
-          }}
+          } as React.CSSProperties}
         >
           <OffsetDot>→</OffsetDot>
         </div>
@@ -1430,7 +1470,7 @@ const Slide = tw.div({
               ].map(row => (
                 <div key={row.overflow} className="grid grid-cols-3 gap-2 p-3 border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] last:border-0 text-xs items-center">
                   <IC>{row.overflow}</IC>
-                  <span className={row.sticky.startsWith("❌") ? "text-red-600 font-semibold" : "text-emerald-600 font-semibold"}>{row.sticky}</span>
+                  <StickyStatusText broken={row.sticky.startsWith("❌") ? "true" : "false"}>{row.sticky}</StickyStatusText>
                   <span className="text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{row.note}</span>
                 </div>
               ))}

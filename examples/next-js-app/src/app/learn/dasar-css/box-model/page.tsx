@@ -193,7 +193,20 @@ const PlaygroundWrap = tw.div({
   sub: {
     controls: "p-4 border-b border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-[color-mix(in_srgb,var(--foreground)_2%,transparent)] space-y-3",
     "p:label": "text-[10px] font-semibold uppercase tracking-widest text-[color-mix(in_srgb,var(--foreground)_35%,transparent)]",
-    canvas: "p-6 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] flex items-center justify-center min-h-52",
+    canvas: {
+      base: "p-6 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] flex items-center justify-center min-h-52",
+      variants: {
+        layout: {
+          "wrap": "gap-12 flex-wrap",
+          "wrap-sm": "gap-4 flex-wrap",
+          "column": "flex-col gap-0",
+          "column-center": "flex-col gap-0 items-center",
+          "column-stretch": "flex-col items-stretch",
+          "gap-flex": "gap-3 flex-col items-center",
+        },
+      },
+      defaultVariants: { layout: "wrap" },
+    },
     codeline: "px-4 py-3 border-t border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] bg-[var(--surface)] font-mono text-[11px] text-[var(--accent)]",
   },
 })
@@ -234,6 +247,19 @@ const ControlsRow = tw.div({ base: "flex items-center gap-4" })
 // Wrapper compare columns (box-sizing, dll)
 const CompareCol = tw.div({
   base: "flex flex-col items-center gap-2",
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MarginAuto playground components
+// ─────────────────────────────────────────────────────────────────────────────
+
+const MarginAutoContainer = tw.div({ base: "flex items-center" })
+const MarginAutoItem = tw.div({ base: "px-3 py-2 rounded-lg text-white text-[11px] font-mono" })
+const MarginAutoLogo = tw.div({
+  base: "px-3 py-2 rounded-lg bg-[var(--accent)] text-white text-[11px] font-mono",
+})
+const MarginAutoButton = tw.div({
+  base: "px-3 py-2 rounded-lg bg-blue-400 text-white text-[11px] font-mono ml-auto",
 })
 
 // Label untuk compare header
@@ -979,6 +1005,13 @@ const CompareRow = tw.div({
 
 const CompareCell = tw.span({
   base: "text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]",
+  variants: {
+    span: {
+      1: "",
+      2: "col-span-2",
+    },
+  },
+  defaultVariants: { span: "1" },
 })
 
 const TocFooter = tw.div({ base: "mt-6 pt-4 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" })
@@ -1105,7 +1138,7 @@ function BoxSizingPlayground() {
         </ControlGroup>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="gap-12 flex-wrap">
+      <PlaygroundWrap.canvas layout="wrap">
         <CompareCol>
           <CompareLabel color="blue">content-box</CompareLabel>
           <ContentBoxEl padding={padding}>
@@ -1170,7 +1203,7 @@ function OutlineBorderPlayground() {
         </DescText>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="gap-4 flex-wrap">
+      <PlaygroundWrap.canvas layout="wrap-sm">
         <OutlineContainer>
           <OutlineBorderBox type={type}>
             <OutlineItemLabel>{type}</OutlineItemLabel>
@@ -1226,7 +1259,7 @@ function MarginCollapsePlayground() {
         </ControlsRow>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="flex-col gap-0">
+      <PlaygroundWrap.canvas layout="column">
         <CollapseBox>
           {showCollapse ? (
             /* Block context — margin collapse terjadi */
@@ -1390,7 +1423,7 @@ function NegativeMarginPlayground() {
         </ChipRow>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="flex-col gap-0 items-center">
+      <PlaygroundWrap.canvas layout="column-center">
         <NegMarginParent>
           Element A
         </NegMarginParent>
@@ -1973,7 +2006,7 @@ function ClampPlayground() {
         </ChipRow>
         <DescText>{descriptions[mode]}</DescText>
       </PlaygroundWrap.controls>
-      <PlaygroundWrap.canvas className="flex-col items-stretch">
+      <PlaygroundWrap.canvas layout="column-stretch">
         <DemoBackground>
           <ClampBox mode={mode}>
             {mode === "clamp2" ? "Fluid text" : `width: ${mode}`}
@@ -2024,7 +2057,7 @@ function VisibilityPlayground() {
         <DescText>{descriptions[mode]}</DescText>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="gap-3 flex-col items-center">
+      <PlaygroundWrap.canvas layout="gap-flex">
         <VisibilityRow>
           <VisibilityBox mode={mode}>Target Box</VisibilityBox>
           <NeighborBox>
@@ -2078,13 +2111,13 @@ function MarginAutoPlayground() {
         <DescText>{descriptions[mode]}</DescText>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="flex-col items-stretch">
+      <PlaygroundWrap.canvas layout="column-stretch">
         <DemoBackground>
           {mode === "flex-center" ? (
-            <div className="flex items-center">
-              <div className="px-3 py-2 rounded-lg bg-[var(--accent)] text-white text-[11px] font-mono">Logo</div>
-              <div className="px-3 py-2 rounded-lg bg-blue-400 text-white text-[11px] font-mono ml-auto">Button</div>
-            </div>
+            <MarginAutoContainer>
+              <MarginAutoLogo>Logo</MarginAutoLogo>
+              <MarginAutoButton>Button</MarginAutoButton>
+            </MarginAutoContainer>
           ) : (
             <AutoMarginChild mode={mode}>
               {mode === "none" ? "w-48 (no auto)" : `w-48 · ${mode === "center" ? "mx-auto" : mode === "left" ? "mr-auto" : "ml-auto"}`}
@@ -2153,7 +2186,7 @@ function BoxShadowPlayground() {
         </ControlGroup>
       </PlaygroundWrap.controls>
 
-      <PlaygroundWrap.canvas className="gap-12 flex-wrap">
+      <PlaygroundWrap.canvas layout="wrap">
         <ShadowContainer>
           <ShadowContainer.group>
             <ShadowContainer.caption>Box (rectangular)</ShadowContainer.caption>
@@ -3186,7 +3219,7 @@ table {
                   <IC>{row.prop}</IC>
                   <CompareCell>{row.space}</CompareCell>
                   <CompareCell>{row.click}</CompareCell>
-                  <CompareCell className="col-span-2">{row.a11y}</CompareCell>
+                  <CompareCell span={2}>{row.a11y}</CompareCell>
                 </CompareRow>
               ))}
             </CompareTable>
