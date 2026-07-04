@@ -23,9 +23,9 @@ const Button = tw.button({
   base: "inline-flex items-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2",
   variants: {
     intent: {
-      primary:   "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
+      primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
       secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-400",
-      danger:    "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+      danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
     },
     size: {
       sm: "text-sm px-3 py-1.5",
@@ -47,20 +47,77 @@ const Card = tw.div`
   transition hover:shadow-md
 `
 const CardHeader = tw.div`px-6 py-4 border-b border-gray-100`
-const CardBody   = tw.div`px-6 py-4`
+const CardBody = tw.div`px-6 py-4`
 const CardFooter = tw.div`px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl`
 
-// ── 5. cx() conditional merge ────────────────────────────────────────────────
-function StatusDot({ online }: { online: boolean }) {
-  return (
-    <span
-      className={cx(
-        "h-2.5 w-2.5 rounded-full",
-        online ? "bg-green-500" : "bg-gray-300"
-      )}
-    />
-  )
-}
+// ── 5. Layout & Typography ────────────────────────────────────────────────────
+const Header = tw.div({
+  base: ""
+})
+
+const Title = tw.h1({
+  base: "text-3xl font-bold text-gray-900"
+})
+
+const Subtitle = tw.p({
+  base: "mt-1 text-gray-500"
+})
+
+const MainLayout = tw.main({
+  base: "min-h-screen bg-gray-50 p-8"
+})
+
+const ContentWrapper = tw.div({
+  base: "mx-auto max-w-2xl space-y-8"
+})
+
+const CardHeaderContent = tw.div({
+  base: "flex items-center justify-between"
+})
+
+const CardHeaderTitle = tw.h2({
+  base: "font-semibold text-gray-900"
+})
+
+const ButtonGrid = tw.div({
+  base: "flex flex-wrap gap-3"
+})
+
+const CounterContainer = tw.div({
+  base: "flex items-center gap-4"
+})
+
+const CounterDisplay = tw.span({
+  base: "w-12 text-center text-2xl font-bold"
+})
+
+const CodeBlock = tw.code({
+  base: "rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs"
+})
+
+const CounterNote = tw.p({
+  base: "mt-3 text-sm text-gray-500"
+})
+
+const StatusContainer = tw.div({
+  base: "flex items-center gap-3"
+})
+
+const StatusText = tw.span({
+  base: "text-sm text-gray-700"
+})
+
+// ── 6. cx() conditional merge ────────────────────────────────────────────────
+const StatusDot = tw.span({
+  base: "h-2.5 w-2.5 rounded-full",
+  variants: {
+    online: {
+      true: "bg-green-500",
+      false: "bg-gray-300",
+    },
+  },
+  defaultVariants: { online: "true" },
+})
 
 // ── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -68,35 +125,31 @@ export default function App() {
   const [online, setOnline] = useState(true)
 
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="mx-auto max-w-2xl space-y-8">
+    <MainLayout>
+      <ContentWrapper>
 
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            tailwind-styled-v4
-          </h1>
-          <p className="mt-1 text-gray-500">
-            Vite example — template literal, variants, extend, cx
-          </p>
-        </div>
+        <Header>
+          <Title>tailwind-styled-v4</Title>
+          <Subtitle>Vite example — template literal, variants, extend, cx</Subtitle>
+        </Header>
 
         {/* Card dengan semua fitur */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">Button Variants</h2>
+            <CardHeaderContent>
+              <CardHeaderTitle>Button Variants</CardHeaderTitle>
               <Badge>tw.button()</Badge>
-            </div>
+            </CardHeaderContent>
           </CardHeader>
           <CardBody>
-            <div className="flex flex-wrap gap-3">
+            <ButtonGrid>
               <Button intent="primary">Primary</Button>
               <Button intent="secondary">Secondary</Button>
               <Button intent="danger">Danger</Button>
               <Button intent="primary" size="sm">Small</Button>
               <Button intent="primary" size="lg">Large</Button>
-            </div>
+            </ButtonGrid>
           </CardBody>
           <CardFooter>
             <p className="text-sm text-gray-500">
@@ -108,37 +161,37 @@ export default function App() {
         {/* Counter dengan IconButton */}
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">Counter + extend()</h2>
+            <CardHeaderTitle>Counter + extend()</CardHeaderTitle>
           </CardHeader>
           <CardBody>
-            <div className="flex items-center gap-4">
+            <CounterContainer>
               <IconButton intent="secondary" onClick={() => setCount(c => c - 1)}>
                 −
               </IconButton>
-              <span className="w-12 text-center text-2xl font-bold">{count}</span>
+              <CounterDisplay>{count}</CounterDisplay>
               <IconButton intent="primary" onClick={() => setCount(c => c + 1)}>
                 +
               </IconButton>
-            </div>
-            <p className="mt-3 text-sm text-gray-500">
-              <code className="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs">
+            </CounterContainer>
+            <CounterNote>
+              <CodeBlock>
                 IconButton = Button.extend`...`
-              </code>
-            </p>
+              </CodeBlock>
+            </CounterNote>
           </CardBody>
         </Card>
 
-        {/* cx() demo */}
+        {/* StatusDot demo */}
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-gray-900">cx() conditional merge</h2>
+            <CardHeaderTitle>Variants conditional</CardHeaderTitle>
           </CardHeader>
           <CardBody>
-            <div className="flex items-center gap-3">
-              <StatusDot online={online} />
-              <span className="text-sm text-gray-700">
+            <StatusContainer>
+              <StatusDot online={online ? "true" : "false"} />
+              <StatusText>
                 Status: <strong>{online ? "Online" : "Offline"}</strong>
-              </span>
+              </StatusText>
               <Button
                 intent="secondary"
                 size="sm"
@@ -146,11 +199,11 @@ export default function App() {
               >
                 Toggle
               </Button>
-            </div>
+            </StatusContainer>
           </CardBody>
         </Card>
 
-      </div>
-    </main>
+      </ContentWrapper>
+    </MainLayout>
   )
 }

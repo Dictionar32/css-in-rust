@@ -43,6 +43,41 @@ const Code = tw.pre`
   leading-relaxed
 `
 
+const AppRoot = tw.div({
+  base: "",
+  variants: {
+    dark: {
+      true: "dark",
+      false: "",
+    },
+  },
+  defaultVariants: { dark: "false" },
+})
+
+const MainContent = tw.main({
+  base: "min-h-screen bg-gray-50 transition-colors dark:bg-gray-950",
+})
+
+const MainWrapper = tw.div({
+  base: "mx-auto max-w-5xl px-6 py-16",
+})
+
+const HeroSection = tw.div({
+  base: "mb-12 text-center",
+})
+
+const ThemeToggleBtn = tw.button({
+  base: "mt-6 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+})
+
+const FeaturesGrid = tw.div({
+  base: "mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
+})
+
+const FeatureCardWrapper = tw.div({
+  base: "flex items-start justify-between gap-2",
+})
+
 const features = [
   {
     icon: "RS",
@@ -105,41 +140,38 @@ export default function App() {
   const [dark, setDark] = useState(false)
 
   return (
-    <div className={dark ? "dark" : ""}>
-      <main className="min-h-screen bg-gray-50 transition-colors dark:bg-gray-950">
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          <div className="mb-12 text-center">
+    <AppRoot dark={dark ? "true" : "false"}>
+      <MainContent>
+        <MainWrapper>
+          <HeroSection>
             <Tag>Rust + TypeScript + React</Tag>
-            <Heading className="mt-4">tailwind-styled-v4</Heading>
+            <Heading>tailwind-styled-v4</Heading>
             <Lead>
               A Tailwind compiler for React with a styled-components-like authoring model.
               <br />
               Faster build-time extraction with a small runtime surface.
             </Lead>
-            <button
-              onClick={() => setDark((value) => !value)}
-              className="mt-6 rounded-full border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-            >
+            <ThemeToggleBtn onClick={() => setDark((value) => !value)}>
               {dark ? "Light mode" : "Dark mode"}
-            </button>
-          </div>
+            </ThemeToggleBtn>
+          </HeroSection>
 
           <Code>{exampleSnippet}</Code>
 
-          <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <FeaturesGrid>
             {features.map((feature) => (
               <FeatureCard key={feature.title}>
                 <FeatureIcon>{feature.icon}</FeatureIcon>
-                <div className="flex items-start justify-between gap-2">
+                <FeatureCardWrapper>
                   <FeatureTitle>{feature.title}</FeatureTitle>
                   <Tag>{feature.tag}</Tag>
-                </div>
+                </FeatureCardWrapper>
                 <FeatureDesc>{feature.desc}</FeatureDesc>
               </FeatureCard>
             ))}
-          </div>
-        </div>
-      </main>
-    </div>
+          </FeaturesGrid>
+        </MainWrapper>
+      </MainContent>
+    </AppRoot>
   )
 }
