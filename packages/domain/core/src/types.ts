@@ -19,8 +19,13 @@ export type VariantLiterals = string | number | boolean
 /** Sizes sugar syntax — shorthand untuk variants.size */
 export type SizesConfig = Record<string, string>
 
-export type InferVariantProps<T extends ComponentConfig> = {
-  [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer Key, any>
+/**
+ * Shared literal-narrowing logic dipakai baik oleh `InferVariantProps` (top-level
+ * component variants) maupun `InferSubVariantsFromConfig` (sub-component variants) —
+ * supaya kedua tempat itu tidak duplikasi & selalu konsisten.
+ */
+type InferVariantPropsFromVariantsMap<V> = {
+  [K in keyof V]?: V[K] extends Record<infer Key, any>
   ? Key extends "true" | "false"
   ? boolean
   : Key extends number
@@ -30,6 +35,8 @@ export type InferVariantProps<T extends ComponentConfig> = {
   : Key
   : never
 }
+
+export type InferVariantProps<T extends ComponentConfig> = InferVariantPropsFromVariantsMap<T["variants"]>
 
 /**
  * Infer allowed types for defaultVariants based on variant keys.
@@ -94,7 +101,7 @@ export interface SubComponentConfig {
   compoundVariants?: Array<{ class: string;[key: string]: string }>
 }
 
-export type SubValue = string | Record<string, string | SubComponentConfig>
+export type SubValue = string | SubComponentConfig | Record<string, string | SubComponentConfig>
 
 // ── States Config ─────────────────────────────────────────────────────────────
 /**
@@ -185,10 +192,30 @@ type ExtractSubName<K extends string> =
   K extends `${string}:${infer Name}` ? Name : K
 
 /**
+ * True kalau S[K] adalah SubComponentConfig LANGSUNG (satu sub-component dengan
+ * `base`/`variants` sendiri, mis. `canvas: { base: "...", variants: {...} }`) —
+ * bukan nested named-group (mis. `header: { topBar: "...", nav: "..." }`).
+ *
+ * HARUS identik dengan discriminant runtime di createComponent.ts:
+ * `"base" in value || "variants" in value`. Kedua bentuk sama-sama tampak sebagai
+ * `Record<string, ...>` secara struktural, jadi tidak bisa dibedakan cuma lewat
+ * `extends Record<string, string>` — perlu cek keberadaan key `base`/`variants`
+ * secara eksplisit seperti runtime-nya.
+ */
+type IsDirectSubConfig<V> = V extends string
+  ? false
+  : "variants" extends keyof V
+  ? true
+  : "base" extends keyof V
+  ? true
+  : false
+
+/**
  * Infer semua sub-component names dari config.sub:
- * - string value plain   → key langsung: { icon: "..." } → "icon"
- * - string value tag:name → strip tag: { "div:action": "..." } → "action"
- * - nested object        → nested keys: { h2: { title: "..." } } → "title"
+ * - string value plain     → key langsung: { icon: "..." } → "icon"
+ * - string value tag:name  → strip tag: { "div:action": "..." } → "action"
+ * - direct SubComponentConfig → key langsung (support "tag:name" juga): { canvas: {base, variants} } → "canvas"
+ * - nested named-group     → nested keys: { h2: { title: "..." } } → "title"
  */
 export type InferSubFromConfig<C extends ComponentConfig> =
   C extends { sub: infer S extends Record<string, SubValue> }
@@ -197,8 +224,12 @@ export type InferSubFromConfig<C extends ComponentConfig> =
     ? K extends string
     ? ExtractSubName<K>         // strip "tag:name" → "name"
     : never
+    : IsDirectSubConfig<S[K]> extends true
+    ? K extends string
+    ? ExtractSubName<K>         // direct SubComponentConfig, name = key itself
+    : never
     : S[K] extends Record<infer N extends string, string>
-    ? N                         // nested object → nested keys
+    ? N                         // nested named-group → nested keys
     : never
   }[keyof S]
   : never
@@ -254,6 +285,8 @@ export type InferSubTagsFromConfig<C extends ComponentConfig> =
       [K in keyof S]: K extends string
       ? S[K] extends string
       ? { [N in ExtractSubName<K>]: ResolveSubTag<K> }
+      : IsDirectSubConfig<S[K]> extends true
+      ? { [N in ExtractSubName<K>]: ResolveSubTag<K> }
       : S[K] extends Record<string, string>
       ? { [N in keyof S[K]]: K extends HtmlTagName ? K : "span" }
       : never
@@ -261,6 +294,31 @@ export type InferSubTagsFromConfig<C extends ComponentConfig> =
     }[keyof S]
   >
   : Record<string, never>
+
+/**
+ * Infer mapping { subComponentName: variantProps } dari config.sub — dipakai supaya
+ * sub-component yang punya `variants` sendiri (mis. `canvas: { base, variants: { layout: {...} } }`)
+ * ikut ke-expose propnya (`layout`) di accessor-nya (`PlaygroundWrap.canvas`), bukan cuma
+ * native HTML attributes dari tag-nya.
+ *
+ * @example
+ * sub: { canvas: { variants: { layout: { wrap: "...", column: "..." } } } }
+ * → { canvas: { layout?: "wrap" | "column" } }
+ */
+export type InferSubVariantsFromConfig<C extends ComponentConfig> =
+  C extends { sub: infer S extends Record<string, SubValue> }
+  ? UnionToIntersection<
+    {
+      [K in keyof S]: K extends string
+      ? IsDirectSubConfig<S[K]> extends true
+      ? S[K] extends { variants?: infer V }
+      ? { [N in ExtractSubName<K>]: InferVariantPropsFromVariantsMap<V> }
+      : Record<never, never>
+      : Record<never, never>
+      : Record<never, never>
+    }[keyof S]
+  >
+  : Record<never, never>
 
 // ── Container Config ─────────────────────────────────────────────────────────
 export interface ContainerConfig {
@@ -297,9 +355,15 @@ export type SubComponentMap = Record<string, unknown>
 // ── Tw Object ────────────────────────────────────────────────────────────────
 // ── Tw Styled Component ──────────────────────────────────────────────────────
 // Sub-component accessor — typed sesuai HTML tag asli yang di-render (href untuk <a>,
-// src untuk <img>, dst), bukan cuma children/className generik.
-export type TwSubComponentAccessor<Tag extends HtmlTagName = "span"> =
-  React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref"> & {
+// src untuk <img>, dst), bukan cuma children/className generik. `ExtraProps` membawa
+// variant props milik sub-component itu sendiri kalau dia dideklarasikan sebagai
+// direct SubComponentConfig (mis. `canvas: { base, variants: { layout: {...} } }`
+// → ExtraProps = { layout?: "wrap" | "column" | ... }).
+export type TwSubComponentAccessor<
+  Tag extends HtmlTagName = "span",
+  ExtraProps extends Record<string, unknown> = Record<never, never>
+> =
+  React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref"> & ExtraProps & {
     children?: React.ReactNode
     className?: string
   }>
@@ -347,35 +411,43 @@ export interface TwSubComponentProps {
 // infer nama dari multiline template literal), fallback ke loose index signature.
 // Kalau S sudah spesifik ("icon" | "badge"), strict — hanya key terdaftar valid, dan
 // setiap key di-tipe-kan sesuai tag asli-nya lewat TagMap (default "span" kalau tidak diketahui).
-type SubComponentKeys<S extends string, TagMap extends Record<string, string> = Record<string, never>> = {
-  [K in S]: TwSubComponentAccessor<
-    K extends keyof TagMap
-    ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")
-    : "span"
-  >
-}
+type SubComponentKeys<
+  S extends string,
+  TagMap extends Record<string, string> = Record<string, never>,
+  SubVariantsMap extends Record<string, Record<string, unknown>> = Record<string, never>
+> = {
+    [K in S]: TwSubComponentAccessor<
+      K extends keyof TagMap
+      ? (TagMap[K] extends HtmlTagName ? TagMap[K] : "span")
+      : "span",
+      K extends keyof SubVariantsMap ? SubVariantsMap[K] : Record<never, never>
+    >
+  }
 
 // TwStyledComponent dengan generic Sub untuk nama sub-component
 // S = union of sub-component names — di-infer otomatis dari [name] patterns
 // di template literal via ExtractSubNames, atau di-declare manual via .withSub<>()
+// SubVariantsMap = { subName: variantProps } — dipakai kalau sub-component itu sendiri
+// punya `variants` (mis. `canvas: { base, variants: { layout: {...} } }`).
 export type TwStyledComponent<
   Config extends ComponentConfig = ComponentConfig,
   S extends string = string,
   TagMap extends Record<string, string> = Record<string, never>,
-  Tag extends HtmlTagName = HtmlTagName
+  Tag extends HtmlTagName = HtmlTagName,
+  SubVariantsMap extends Record<string, Record<string, unknown>> = Record<string, never>
 > = {
   (props: React.ComponentPropsWithoutRef<Tag> & StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
-    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap, Tag>
+    (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
     (config: {
       classes?: string
       variants?: ComponentConfig["variants"]
       defaultVariants?: ComponentConfig["defaultVariants"]
       compoundVariants?: ComponentConfig["compoundVariants"]
-    }): TwStyledComponent<Config, S, TagMap, Tag>
+    }): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
   }
-  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap, Tag>
+  withVariants: (config: Partial<Config>) => TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>
   /**
    * Declare sub-component names secara eksplisit untuk autocomplete + type safety.
    *
@@ -389,8 +461,8 @@ export type TwStyledComponent<
    * Button.footer // ✅ autocomplete
    * Button.xyz    // ❌ TypeScript error
    */
-  withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap, Tag>
-} & SubComponentKeys<S, TagMap>
+  withSub<NewS extends string>(): TwStyledComponent<Config, NewS, TagMap, Tag, SubVariantsMap>
+} & SubComponentKeys<S, TagMap, SubVariantsMap>
 
 // ── Tw Sub Component ─────────────────────────────────────────────────────────
 export interface TwSubComponent<P = unknown> {
@@ -408,7 +480,8 @@ export interface TwTemplateFactory<
     C,
     InferSubFromConfig<C>,
     InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>,
-    Tag
+    Tag,
+    InferSubVariantsFromConfig<C> extends Record<string, Record<string, unknown>> ? InferSubVariantsFromConfig<C> : Record<string, never>
   >
   // Template literal — TypeScript infer sub-component names dari [name] { ... }
   // Catatan: infer hanya works pada template TANPA expression (no ${}).
