@@ -38,6 +38,14 @@ export const FocusDemo = tw.button({
         },
     },
     defaultVariants: { style: "good" },
+    // Wave 3: Semantic ARIA metadata untuk auto-injection
+    '@semantic': 'button',
+    '@aria': {
+        role: 'button',
+    },
+    '@state': {
+        disabled: 'aria-disabled',
+    },
 })
 
 export const ContrastSwatch = tw.div({
@@ -47,6 +55,12 @@ export const ContrastSwatch = tw.div({
         "span:ratio": "text-xs font-bold px-2 py-0.5 rounded",
         "p:text": "text-sm font-medium",
     },
+    // Wave 3: Semantic metadata untuk color contrast visualization
+    '@semantic': 'section',
+    '@aria': {
+        role: 'region',
+        'aria-label': 'Color contrast information',
+    },
 })
 
 export const ContrastGrid = tw.div({ base: "grid grid-cols-1 sm:grid-cols-2 gap-3 my-4" })
@@ -54,6 +68,11 @@ export const ContrastGrid = tw.div({ base: "grid grid-cols-1 sm:grid-cols-2 gap-
 export const SrOnlyDemo = tw.span({
     base: "absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0",
     style: { clip: "rect(0,0,0,0)", clipPath: "inset(50%)" },
+    // Wave 3: Semantic metadata untuk screen-reader only content
+    '@semantic': 'aside',
+    '@aria': {
+        'aria-label': 'Screen reader only content',
+    },
 })
 
 export const WcagBadge = tw.span({
@@ -66,4 +85,69 @@ export const WcagBadge = tw.span({
         },
     },
     defaultVariants: { level: "AA" },
+    // Wave 3: Semantic metadata untuk WCAG compliance badge
+    '@semantic': 'status',
+    '@aria': {
+        role: 'status',
+        'aria-live': 'polite',
+    },
+})
+
+// ─── Inline component utilities (untuk page.tsx) ────────────────────────────────
+export const FocusPlaygroundControlsHint = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
+})
+
+export const FocusPlaygroundContainer = tw.div({
+    base: "flex flex-wrap gap-3",
+})
+
+export const FocusPlaygroundColumn = tw.div({
+    base: "flex flex-col gap-1.5 items-start",
+})
+
+export const FocusPlaygroundStatusBadge = tw.span({
+    base: "text-[10px] font-semibold uppercase",
+    variants: {
+        status: {
+            bad: "text-red-600",
+            good: "text-emerald-600",
+            custom: "text-blue-600",
+        },
+    },
+})
+
+export const ContrastSwatchBg = tw.div({
+    base: "p-4 flex items-center justify-between",
+    variants: {
+        bg: {
+            white: "bg-white",
+            "indigo-600": "bg-indigo-600",
+            "yellow-400": "bg-yellow-400",
+        },
+    },
+})
+
+export const ContrastSwatchText = tw.p({
+    base: "text-sm font-medium",
+    variants: {
+        textColor: {
+            "gray-400": "text-gray-400",
+            "gray-700": "text-gray-700",
+            white: "text-white",
+            "yellow-900": "text-yellow-900",
+        },
+    },
+})
+
+export const PositioningPlaygroundInfo = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
+})
+
+export const PositioningAnalogySwatch = tw.p({
+    base: "text-xs bg-violet-50 rounded-lg px-3 py-2 border border-violet-100 flex gap-2 text-violet-600",
+})
+
+export const PositioningPlaygroundDebug = tw.p({
+    base: "text-[10px] text-gray-400 font-mono mb-2",
 })
