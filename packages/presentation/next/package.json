@@ -8,13 +8,14 @@
   "engines": {
     "node": ">=20"
   },
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.mjs"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     }
   },
   "files": [
