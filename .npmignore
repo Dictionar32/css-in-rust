@@ -18,9 +18,13 @@ native/target/
 # Source files (should be compiled)
 packages/*/src/
 packages/*/test/
+packages/*/tests/
 packages/*/tsconfig.json
 packages/*/vitest.config.ts
 packages/*/tsup.config.ts
+
+# ✅ EXCLUDE intermediate package dist folders — only root dist/ should be published
+packages/*/dist/
 
 # Build artifacts (keep only dist)
 # *.map diinclude supaya user bisa debug → tidak di-exclude

@@ -498,6 +498,151 @@ export default defineConfig({
 // rspack.config.js
 import { tailwindStyled } from "tailwind-styled-v4/rspack"
 
+---
+
+## Theme Management
+
+Tailwind-styled-v4 automatic mengelola CSS custom properties via `@theme inline` directive. Compiler Rust pre-generate semua CSS state rules di build time — zero runtime overhead.
+
+### Setup Tema
+
+**globals.css — Define CSS Variables:**
+```css
+@import "tailwindcss";
+
+:root {
+  --background: #f5f7fb;
+  --foreground: #111827;
+  --surface: #ffffff;
+  --accent: #2563eb;
+}
+
+[data-theme="dark"] {
+  --background: #070b16;
+  --foreground: #e5e7eb;
+  --surface: #0f172a;
+  --accent: #60a5fa;
+}
+
+/* Bridge to Tailwind */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-accent: var(--accent);
+}
+```
+
+**ThemeProvider.tsx — Runtime Toggle:**
+```tsx
+"use client";
+
+import { ReactNode, useEffect, useState, createContext, useContext } from "react";
+
+const STORAGE_KEY = "app-theme";
+
+function applyTheme(theme: "light" | "dark") {
+  document.documentElement.setAttribute("data-theme", theme);
+}
+
+const ThemeContext = createContext<{
+  theme: "light" | "dark";
+  setTheme: (theme: "light" | "dark") => void;
+} | null>(null);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setThemeState] = useState<"light" | "dark">("light");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY) || "light";
+    setThemeState(stored as "light" | "dark");
+    applyTheme(stored as "light" | "dark");
+    setMounted(true);
+  }, []);
+
+  const setTheme = (newTheme: "light" | "dark") => {
+    localStorage.setItem(STORAGE_KEY, newTheme);
+    setThemeState(newTheme);
+    applyTheme(newTheme);
+  };
+
+  return (
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      {mounted ? children : null}
+    </ThemeContext.Provider>
+  );
+}
+
+export function useTheme() {
+  const context = useContext(ThemeContext);
+  if (!context) throw new Error("useTheme must be inside ThemeProvider");
+  return context;
+}
+```
+
+**layout.tsx — Wrap App:**
+```tsx
+import { ThemeProvider } from "@/components/ThemeProvider";
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="id">
+      <body>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### Gunakan di Komponen
+
+```tsx
+import { useTheme } from "@/components/ThemeProvider";
+import { tw } from "tailwind-styled-v4";
+
+const ThemeButton = tw.button`
+  px-4 py-2 rounded-lg
+  bg-[var(--accent)] text-white
+  hover:opacity-80 transition
+`;
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useTheme();
+
+  return (
+    <ThemeButton onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+      {theme === "light" ? "🌙 Dark" : "☀️ Light"}
+    </ThemeButton>
+  );
+}
+```
+
+### Mengapa Ini Berbeda
+
+Tailwind-styled-v4 tidak butuh library theme khusus — compiler Rust handle CSS optimization:
+
+1. **Build-time state extraction**: Compiler scan 81 file, extract 182 komponen, generate 20 state rules
+2. **CSS custom properties**: Tailwind bridge variabel ke design system via `@theme inline`
+3. **Zero runtime**: Theme toggle hanya set `data-theme` attribute — CSS change instant
+4. **localStorage + system preference**: ThemeProvider handle persistence dan auto-sync
+
+**Hasil di `.next/tw-classes/_tw-state-static.css` (auto-generated):**
+```css
+/* Button component state rules — pre-generated di build time */
+.tw-s-b35937[data-disabled="true"] { opacity: 50%; cursor: not-allowed; }
+.tw-s-b35937[data-loading="true"] { opacity: 60%; cursor: wait; }
+
+/* State selectors menggunakan CSS variables */
+.tw-s-93c530[data-copied="true"] { 
+  background-color: var(--color-emerald-500);
+  color: var(--color-white);
+}
+```
+
+Semua state rules di-generate Rust saat build — tidak ada string comparison atau kondisional di runtime! 🚀
+
 export default {
   plugins: [tailwindStyled()],
 }
@@ -650,6 +795,33 @@ tailwind-styled-v4/
 
 ---
 
+## 🪄 Build-Time Magic: Pelajari Lebih Lanjut
+
+Tailwind-styled-v4 melakukan serangkaian operasi sophisticated di build time. Baca dokumentasi untuk understand:
+
+- **[.next-MAGIC-EXPLAINED.md](.next-MAGIC-EXPLAINED.md)** — Complete breakdown dari semua yang terjadi di `.next/tw-classes/`
+  - Phase 1-5 workflow
+  - Rust engine scanning (425× lebih cepat)
+  - State rule pre-generation
+  - Route attribution & CSS splitting
+  - Component hash determinism
+  
+- **[BUILD_TIME_FLOW_DIAGRAM.md](BUILD_TIME_FLOW_DIAGRAM.md)** — Visual flowchart & architecture
+  - Complete flow dari `npm run dev` hingga browser
+  - File dependency graph
+  - Key decision points & tradeoffs
+  - Performance comparison
+  
+- **[BUILD_ARTIFACTS_BREAKDOWN.md](BUILD_ARTIFACTS_BREAKDOWN.md)** — Apa yang actually di-generate
+  - `_initial-scan.css` (3500 lines)
+  - `_tw-state-static.css` (20 pre-generated rules)
+  - `css-manifest.json` (route attribution)
+  - Statistics & examples
+
+**Highlight**: Engine melakukan ~370ms work di build time → runtime zero overhead ✨
+
+---
+
 ## Development
 
 ```bash
@@ -676,6 +848,50 @@ npm run bench
 ```
 
 **Requirements:** Node.js 20+, Rust 1.75+ (untuk build dari source)
+
+---
+
+## Build-Time Magic Documentation
+
+Tailwind-styled-v4 performs 18+ layers of build-time optimization yang menghasilkan zero runtime overhead. Dokumentasi lengkap tersedia:
+
+- **Quick Overview** (5 min): `MAGIC_QUICK_REFERENCE.md`
+- **Architecture Flow** (15 min): `BUILD_TIME_FLOW_DIAGRAM.md`
+- **Technical Deep Dive** (30 min): `.next-MAGIC-EXPLAINED.md`
+- **Entire .next/ Folder** (30 min): `COMPLETE_NEXT_FOLDER_MAGIC.md`
+- **Real Files Breakdown** (20 min): `BUILD_ARTIFACTS_BREAKDOWN.md`
+- **All 18 Layers Explained** (45 min): `COMPLETE_MAGIC_LAYERS_NEXTJS_APP.md` ⭐
+
+**Steering File** (for future agents): `.kiro/steering/build-time-magic.md`
+
+Untuk development workflows dan advanced patterns, lihat:
+- `PROPER_THEME_ARCHITECTURE.md` — Theme setup guide
+- `ARIA_VS_VARIANTS_CLARIFICATION.md` — Accessibility patterns
+- `FINAL_THEME_SOLUTION.md` — Complete theme solution
+- `docs/WAVE5_INTEGRATION_GUIDE.md` — Wave 5 integration
+
+---
+
+## Build-Time Magic Documentation
+
+Tailwind-styled-v4 performs 18+ layers of build-time optimization yang menghasilkan zero runtime overhead. Dokumentasi lengkap tersedia di `docs/` folder:
+
+### 📚 Quick Navigation
+
+**Main Documentation Folder**: 
+- **`docs/README_BUILD_TIME_MAGIC.md`** - Main entry point
+- **`docs/DOCUMENTATION_INDEX.md`** - Complete navigation guide
+- **`docs/build-time-magic/`** - 18 layers documentation (6 files)
+- **`docs/theme-architecture/`** - Theme setup patterns
+- **`docs/accessibility/`** - ARIA & semantic components
+
+### 🚀 Start Reading
+
+1. **5-Minute Overview**: `docs/build-time-magic/01-QUICK_REFERENCE.md`
+2. **15-Minute Architecture**: `docs/build-time-magic/02-FLOW_DIAGRAM.md`
+3. **45-Minute Complete**: `docs/build-time-magic/06-ALL_18_LAYERS.md` ⭐
+
+**All in**: `docs/build-time-magic/` folder with 6 comprehensive files.
 
 ---
 
