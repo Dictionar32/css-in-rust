@@ -81,4 +81,5 @@ export type {
   SystemTokenMap,
 } from "../../packages/domain/core/src/styledSystem"
 export type { SubComponentEntry, SubComponentProps } from "../../packages/domain/core/src/registry"
-export type { LiveTokenSet, TokenMap, TokenSubscriber } from "../../packages/domain/core/src/liveTokenEngine"
+// LiveTokenSet, TokenMap, TokenSubscriber types not re-exported — use "tailwind-styled-v4/runtime" instead
+// (see known-issues 2026-06-28 for details on why liveTokenEngine is excluded from main entry)
