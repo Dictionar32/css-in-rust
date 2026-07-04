@@ -41,8 +41,6 @@ export default function AriaDynamicThemePage() {
     );
     const [showAlert, setShowAlert] = useState(true);
 
-    if (!isLoaded) return null; // Prevent hydration mismatch
-
     return (
         <Page>
             <Section>

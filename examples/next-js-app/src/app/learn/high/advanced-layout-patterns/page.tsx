@@ -74,7 +74,7 @@ function CenteringPlayground() {
                 <PlaygroundWrap.label>🎯 Center Anything — semua cara modern</PlaygroundWrap.label>
                 <ChipRow>
                     {(["flex", "grid", "absolute", "margin", "place"] as CenterMethod[]).map(m => (
-                        <Chip key={m} active={method === m ? "true" : "false"} onClick={() => setMethod(m)}>{m}</Chip>
+                        <Chip key={m} active={method === m} onClick={() => setMethod(m)}>{m}</Chip>
                     ))}
                 </ChipRow>
             </PlaygroundWrap.controls>
@@ -713,7 +713,7 @@ const HCentered = tw.div({ base: "flex justify-center" })
                 </Content>
                 <Toc>
                     <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
                 </Toc>
             </Body>
         </Page>

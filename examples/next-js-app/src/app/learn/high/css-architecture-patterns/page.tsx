@@ -102,7 +102,7 @@ function ArchComparison() {
         <PlaygroundWrap.label>📐 CSS Architecture — perbandingan pendekatan</PlaygroundWrap.label>
         <ChipRow>
           {(["bem", "cube", "utility", "tokens"] as ArchTab[]).map(t => (
-            <Chip key={t} active={tab === t ? "true" : "false"} onClick={() => setTab(t)}>{t}</Chip>
+            <Chip key={t} active={tab === t} onClick={() => setTab(t)}>{t}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -527,7 +527,7 @@ const NavItem = tw.a({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>
