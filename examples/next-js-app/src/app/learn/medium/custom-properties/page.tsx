@@ -55,7 +55,7 @@ function ThemePlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎛 CSS Custom Properties theming — satu set variabel, banyak tampilan</PlaygroundWrap.label>
                 <ChipRow>
-                    {themes.map(t => <Chip key={t} active={theme === t ? "true" : "false"} onClick={() => setTheme(t)}>{t}</Chip>)}
+                    {themes.map(t => <Chip key={t} active={theme === t} onClick={() => setTheme(t)}>{t}</Chip>)}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
                     Semua komponen menggunakan variabel yang sama — hanya nilai variabel di root yang berubah.
@@ -428,7 +428,7 @@ const Button = tw.button({
                 </Content>
                 <Toc>
                     <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
                 </Toc>
             </Body>
         </Page>

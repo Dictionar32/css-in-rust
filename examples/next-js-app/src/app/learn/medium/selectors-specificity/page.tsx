@@ -56,7 +56,7 @@ function PseudoClassPlayground() {
                 <PlaygroundWrap.label>🎛 Pseudo-class state simulator</PlaygroundWrap.label>
                 <ChipRow>
                     {(["default", "hover", "focus", "active", "checked"] as PseudoState[]).map(v => (
-                        <Chip key={v} active={state === v ? "true" : "false"} onClick={() => setState(v)}>{v}</Chip>
+                        <Chip key={v} active={state === v} onClick={() => setState(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[state]}</p>
@@ -94,7 +94,7 @@ function SpecificityPlayground() {
                 <PlaygroundWrap.label>🎛 Specificity calculator</PlaygroundWrap.label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     {examples.map((ex, i) => (
-                        <Chip key={ex.selector} active={selected === i ? "true" : "false"} onClick={() => setSelected(i)}>
+                        <Chip key={ex.selector} active={selected === i} onClick={() => setSelected(i)}>
                             {ex.selector}
                         </Chip>
                     ))}
@@ -576,7 +576,7 @@ const FormGroup = tw.div({
                 <Toc>
                     <TocLabel>On this page</TocLabel>
                     {TOC.map(item => (
-                        <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>
+                        <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>
                     ))}
                 </Toc>
             </Body>

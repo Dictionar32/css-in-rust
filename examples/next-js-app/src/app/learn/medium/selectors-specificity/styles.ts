@@ -17,7 +17,7 @@ export const TocLabel = tw.p({ base: "text-[10px] font-semibold uppercase tracki
 export const TocItem = tw.a({
     base: "block text-xs py-1 leading-snug transition-colors",
     variants: { active: { true: "text-[var(--accent)] font-semibold", false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]" } },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 export const PageTitle = tw.h1({ base: "text-3xl font-bold tracking-tight mb-2" })
 export const PageDesc = tw.p({ base: "text-base text-[color-mix(in_srgb,var(--foreground)_60%,transparent)] mb-10 leading-relaxed" })
@@ -90,7 +90,7 @@ export const Chip = tw.button({
             false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 

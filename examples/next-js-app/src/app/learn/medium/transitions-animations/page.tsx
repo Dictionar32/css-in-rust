@@ -51,7 +51,7 @@ function TransitionPlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>⚡ Transition Playground</PlaygroundWrap.label>
                 <ChipRow>
-                    {easings.map(e => <Chip key={e} active={easing === e ? "true" : "false"} onClick={() => setEasing(e)}>{e}</Chip>)}
+                    {easings.map(e => <Chip key={e} active={easing === e} onClick={() => setEasing(e)}>{e}</Chip>)}
                 </ChipRow>
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">Klik kotak untuk trigger transition</p>
             </PlaygroundWrap.controls>
@@ -641,7 +641,7 @@ const HeroImg = tw.img({
                 </Content>
                 <Toc>
                     <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
                 </Toc>
             </Body>
         </Page>

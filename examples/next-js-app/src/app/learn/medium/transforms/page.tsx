@@ -59,7 +59,7 @@ function TransformPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎯 Transform Playground — hover kotak untuk melihat transform</PlaygroundWrap.label>
         <ChipRow>
-          {presets.map(p => <Chip key={p} active={preset === p ? "true" : "false"} onClick={() => setPreset(p)}>{p}</Chip>)}
+          {presets.map(p => <Chip key={p} active={preset === p} onClick={() => setPreset(p)}>{p}</Chip>)}
         </ChipRow>
       </PlaygroundWrap.controls>
       <PlaygroundWrap.canvas>
@@ -486,7 +486,7 @@ const Spinner = tw.div({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>
