@@ -1,7 +1,7 @@
 {
   "name": "@tailwind-styled/plugin",
   "version": "5.0.4",
-  "description": "Plugin system for tailwind-styled-v5 \u2014 extend compiler pipeline at any stage",
+  "description": "Plugin system for tailwind-styled-v5 — extend compiler pipeline at any stage",
   "license": "MIT",
   "type": "module",
   "sideEffects": false,

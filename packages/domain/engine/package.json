@@ -38,7 +38,7 @@
     "typescript": "^6"
   },
   "scripts": {
-    "build": "tsup --config tsup.config.ts",
+    "build": "tsup",
     "build:dev": "tsup --config tsup.config.ts --sourcemap --watch",
     "build:release": "tsup --config tsup.config.ts --no-sourcemap",
     "check": "tsc --noEmit -p tsconfig.json",
