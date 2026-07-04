@@ -23,8 +23,10 @@ export type InferVariantProps<T extends ComponentConfig> = {
   [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer Key, any>
   ? Key extends "true" | "false"
   ? boolean
+  : Key extends number
+  ? Key
   : Key extends `${infer N extends number}`
-  ? N | number
+  ? N
   : Key
   : never
 }
@@ -42,6 +44,10 @@ export type InferDefaultVariantsType<T extends ComponentConfig> = {
   [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer KeyType, string>
   ? KeyType extends "true" | "false"
   ? boolean
+  : KeyType extends number
+  ? KeyType
+  : KeyType extends `${infer N extends number}`
+  ? N
   : KeyType extends string
   ? KeyType
   : never
@@ -396,18 +402,19 @@ export interface TwTemplateFactory<
   Config extends ComponentConfig = ComponentConfig,
   Tag extends HtmlTagName = HtmlTagName
 > {
-  // Template literal — TypeScript infer sub-component names dari [name] { ... }
-  // Catatan: infer hanya works pada template TANPA expression (no ${}).
-  // Untuk template kompleks gunakan config object syntax: tw.button({ base: "...", sub: { icon: "..." } })
-  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>, Record<string, never>, Tag>
-  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string, Record<string, never>, Tag>
   // Config object syntax — TypeScript infer sub names dari object literal key secara sempurna
+  // MUST come first so object literals are matched before template literals
   <C extends ComponentConfig>(config: C): TwStyledComponent<
     C,
     InferSubFromConfig<C>,
     InferSubTagsFromConfig<C> extends Record<string, string> ? InferSubTagsFromConfig<C> : Record<string, never>,
     Tag
   >
+  // Template literal — TypeScript infer sub-component names dari [name] { ... }
+  // Catatan: infer hanya works pada template TANPA expression (no ${}).
+  // Untuk template kompleks gunakan config object syntax: tw.button({ base: "...", sub: { icon: "..." } })
+  <const T extends string>(strings: readonly [T], ...exprs: []): TwStyledComponent<Config, ExtractSubNames<T>, Record<string, never>, Tag>
+  (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, string, Record<string, never>, Tag>
 }
 
 // ── Tw Tag Factory ───────────────────────────────────────────────────────────

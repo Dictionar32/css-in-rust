@@ -66,11 +66,11 @@ const TocItem = tw.a({
       false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
     },
     depth: {
-      "2": "pl-0",
-      "3": "pl-3",
+      2: "pl-0",
+      3: "pl-3",
     },
   },
-  defaultVariants: { active: "false", depth: "2" },
+  defaultVariants: { active: "false", depth: 2 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -361,11 +361,11 @@ const BoxMarginLayer = tw.div({
   base: "bg-blue-50 border-2 border-dashed border-blue-300 rounded-xl flex items-center justify-center relative transition-all duration-200",
   variants: {
     size: {
-      "0": "p-0", "1": "p-1", "2": "p-2", "3": "p-3", "4": "p-4",
-      "5": "p-5", "6": "p-6", "8": "p-8", "10": "p-10", "12": "p-12",
+      0: "p-0", 1: "p-1", 2: "p-2", 3: "p-3", 4: "p-4",
+      5: "p-5", 6: "p-6", 8: "p-8", 10: "p-10", 12: "p-12",
     },
   },
-  defaultVariants: { size: "6" },
+  defaultVariants: { size: 6 },
   sub: {
     "span:label": "absolute top-1 left-2 text-[9px] font-bold text-blue-400 uppercase tracking-wider select-none",
   },
@@ -376,10 +376,10 @@ const BoxBorderLayer = tw.div({
   base: "bg-orange-100 rounded-lg flex items-center justify-center border-orange-400 border-solid transition-all duration-200",
   variants: {
     size: {
-      "0": "border-0", "1": "border", "2": "border-2", "4": "border-4", "8": "border-8",
+      0: "border-0", 1: "border", 2: "border-2", 4: "border-4", 8: "border-8",
     },
   },
-  defaultVariants: { size: "4" },
+  defaultVariants: { size: 4 },
 })
 
 // Padding layer
@@ -387,11 +387,11 @@ const BoxPaddingLayer = tw.div({
   base: "bg-green-50 rounded flex items-center justify-center relative transition-all duration-200",
   variants: {
     size: {
-      "0": "p-0", "1": "p-1", "2": "p-2", "3": "p-3", "4": "p-4",
-      "5": "p-5", "6": "p-6", "8": "p-8", "10": "p-10", "12": "p-12",
+      0: "p-0", 1: "p-1", 2: "p-2", 3: "p-3", 4: "p-4",
+      5: "p-5", 6: "p-6", 8: "p-8", 10: "p-10", 12: "p-12",
     },
   },
-  defaultVariants: { size: "4" },
+  defaultVariants: { size: 4 },
   sub: {
     "span:label": "absolute top-0.5 left-1 text-[8px] font-bold text-green-500 uppercase select-none",
   },
@@ -446,13 +446,13 @@ const CollapseBlock = tw.div({
   base: "bg-blue-100 border border-blue-300 rounded px-4 py-2 text-blue-800 text-xs font-mono text-center",
   variants: {
     margin: {
-      "2": "my-2",
-      "4": "my-4",
-      "8": "my-8",
-      "12": "my-12",
+      2: "my-2",
+      4: "my-4",
+      8: "my-8",
+      12: "my-12",
     },
   },
-  defaultVariants: { margin: "8" },
+  defaultVariants: { margin: 8 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -518,14 +518,14 @@ const NegMarginBox = tw.div({
   base: "bg-pink-100 border-2 border-pink-400 rounded-lg px-4 py-3 text-[11px] font-mono text-pink-800 text-center transition-all duration-200 relative",
   variants: {
     neg: {
-      "0": "",
+      0: "",
       "-2": "-mt-2",
       "-4": "-mt-4",
       "-8": "-mt-8",
       "-12": "-mt-12",
     },
   },
-  defaultVariants: { neg: "0" },
+  defaultVariants: { neg: 0 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -584,11 +584,11 @@ const LogicalBox = tw.div({
       rtl: "",
     },
     size: {
-      "4": "ps-4 pe-2 py-3",
-      "8": "ps-8 pe-2 py-3",
+      4: "ps-4 pe-2 py-3",
+      8: "ps-8 pe-2 py-3",
     },
   },
-  defaultVariants: { dir: "ltr", size: "4" },
+  defaultVariants: { dir: "ltr", size: 4 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -734,11 +734,11 @@ const ScrollGutterBox = tw.div({
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SPACING_PX: Record<string, string> = {
-  "0": "0px", "1": "4px", "2": "8px", "3": "12px", "4": "16px",
-  "5": "20px", "6": "24px", "8": "32px", "10": "40px", "12": "48px",
+  0: "0px", 1: "4px", 2: "8px", 3: "12px", 4: "16px",
+  5: "20px", 6: "24px", 8: "32px", 10: "40px", 12: "48px",
 }
 const BORDER_PX: Record<string, string> = {
-  "0": "0px", "1": "1px", "2": "2px", "4": "4px", "8": "8px",
+  0: "0px", 1: "1px", 2: "2px", 4: "4px", 8: "8px",
 }
 const MARGIN_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
 const PADDING_STEPS = ["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"] as const
@@ -1011,7 +1011,7 @@ const CompareCell = tw.span({
       2: "col-span-2",
     },
   },
-  defaultVariants: { span: "1" },
+  defaultVariants: { span: 1 },
 })
 
 const TocFooter = tw.div({ base: "mt-6 pt-4 border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]" })
@@ -1228,7 +1228,7 @@ function OutlineBorderPlayground() {
 // Playground: margin collapse
 // ─────────────────────────────────────────────────────────────────────────────
 
-type CollapseMargin = "2" | "4" | "8" | "12"
+type CollapseMargin = 2 | 4 | 8 | 12 | "4" | "8" | "12"
 
 function MarginCollapsePlayground() {
   const [margin, setMargin] = useState<CollapseMargin>("8")
@@ -1405,7 +1405,7 @@ function WidthPlayground() {
 // Playground: negative margin
 // ─────────────────────────────────────────────────────────────────────────────
 
-type NegMarginVal = "0" | "-2" | "-4" | "-8" | "-12"
+type NegMarginVal = 0 | 1 | 2 | 4 | 8 | 12 | "-2" | "-4" | "-8" | "-12"
 
 function NegativeMarginPlayground() {
   const [neg, setNeg] = useState<NegMarginVal>("0")
@@ -1566,7 +1566,7 @@ function LogicalPropsPlayground() {
 
       <PlaygroundWrap.canvas>
         <CenteredMedium dir={dir}>
-          <LogicalBox size="4" dir={dir}>
+          <LogicalBox size={4} dir={dir}>
             ps-4 pe-2 → {dir === "ltr" ? "padding kiri lebih besar" : "padding kanan lebih besar"}
           </LogicalBox>
         </CenteredMedium>

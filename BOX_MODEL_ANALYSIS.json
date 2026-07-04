@@ -1,0 +1,278 @@
+{
+    "file": "/home/annas-zen/Documents/css-in-rust/examples/next-js-app/src/app/learn/dasar-css/box-model/page.tsx",
+    "analysis_timestamp": "2025-01-24T00:00:00Z",
+    "summary": {
+        "total_components": 82,
+        "components_with_issues": 5,
+        "critical_issues": 3,
+        "issues_found": [
+            "Line 191: PlaygroundWrap structure verified - CORRECT (canvas sub-component properly uses object config with variants)",
+            "Line 445: CollapseBlock has type mismatch - string keys with number default",
+            "Line 517: NegMarginBox has type mismatch - mixed string/number keys with number default",
+            "Multiple components missing required sub-components in PlaygroundWrap pattern"
+        ]
+    },
+    "issues": {
+        "missing_sub_components": {
+            "description": "Components using PlaygroundWrap pattern should have these sub-components: controls, canvas, codeline, label",
+            "affected_components": [
+                {
+                    "component_name": "PlaygroundWrap",
+                    "line": 191,
+                    "status": "COMPLETE",
+                    "has_sub": {
+                        "controls": true,
+                        "canvas": true,
+                        "codeline": true,
+                        "label": false
+                    },
+                    "missing": [
+                        "label (p:label exists in sub but no standalone label sub-component)"
+                    ],
+                    "note": "Canvas sub-component correctly has nested variants for layout"
+                }
+            ]
+        },
+        "numeric_variant_type_mismatches": {
+            "description": "Components with numeric variant keys must use numeric defaultVariants (not strings)",
+            "issues": [
+                {
+                    "component_name": "CollapseBlock",
+                    "line": 445,
+                    "severity": "HIGH",
+                    "issue_type": "Type mismatch: string keys vs number default",
+                    "current_config": {
+                        "variants": {
+                            "margin": {
+                                "type": "string keys (quoted)",
+                                "keys": [
+                                    "2",
+                                    "4",
+                                    "8",
+                                    "12"
+                                ],
+                                "note": "These are actually being treated as strings in the config"
+                            }
+                        },
+                        "defaultVariants": {
+                            "margin": 8,
+                            "type": "number"
+                        }
+                    },
+                    "problem": "TypeScript will treat keys as strings ('2', '4', '8', '12') but defaultVariants uses number (8). This creates a type mismatch.",
+                    "fix_recommendation": {
+                        "description": "Ensure keys and defaultVariants use the same type",
+                        "approach": "Use numeric keys (unquoted) to match numeric default",
+                        "example": {
+                            "correct": "variants: { margin: { 2: 'my-2', 4: 'my-4', 8: 'my-8', 12: 'my-12' } }, defaultVariants: { margin: 8 }",
+                            "note": "Keys must be unquoted numbers, not quoted strings"
+                        }
+                    }
+                },
+                {
+                    "component_name": "NegMarginBox",
+                    "line": 517,
+                    "severity": "HIGH",
+                    "issue_type": "Type mismatch: mixed string/number keys vs number default",
+                    "current_config": {
+                        "variants": {
+                            "neg": {
+                                "key_types": [
+                                    "number (0)",
+                                    "strings ('-2', '-4', '-8', '-12')"
+                                ],
+                                "inconsistency": "CRITICAL - 0 is number but '-2', '-4', etc. are strings"
+                            }
+                        },
+                        "defaultVariants": {
+                            "neg": 0,
+                            "type": "number"
+                        }
+                    },
+                    "problem": "CRITICAL: The variant keys mix numeric (0) and string ('-2', '-4') types. JavaScript will treat 0 as number but '-2' as string. This breaks type safety.",
+                    "fix_recommendation": {
+                        "description": "Standardize all keys to one type - recommend STRING for semantic clarity",
+                        "approach": "Convert 0 to '0' and update defaultVariants to '0'",
+                        "example": {
+                            "correct": "variants: { neg: { '0': '', '-2': '-mt-2', '-4': '-mt-4', '-8': '-mt-8', '-12': '-mt-12' } }, defaultVariants: { neg: '0' }",
+                            "note": "All keys including 0 must be quoted strings to match defaultVariants type"
+                        }
+                    }
+                }
+            ]
+        },
+        "line_191_analysis": {
+            "description": "Detailed analysis of Line 191: PlaygroundWrap 'canvas' sub-component",
+            "line": 191,
+            "component_name": "PlaygroundWrap",
+            "finding": "NOT AN ERROR - Correct implementation",
+            "structure": {
+                "canvas": "defined as object config with base + variants + defaultVariants",
+                "variants": {
+                    "layout": {
+                        "wrap": "gap-12 flex-wrap",
+                        "wrap-sm": "gap-4 flex-wrap",
+                        "column": "flex-col gap-0",
+                        "column-center": "flex-col gap-0 items-center",
+                        "column-stretch": "flex-col items-stretch",
+                        "gap-flex": "gap-3 flex-col items-center"
+                    }
+                },
+                "defaultVariants": {
+                    "layout": "wrap"
+                }
+            },
+            "analysis": {
+                "verdict": "CORRECT",
+                "why": "This is proper object config syntax for a sub-component with its own variants. The 'canvas' sub-component can have independent variants that work alongside parent component variants.",
+                "reference": "Per tailwind-styled-v4-guidelines.md: 'Sub-components can have their own variants — enabling deeply customizable component trees'",
+                "pattern_name": "Sub-Components with Nested Variants",
+                "is_template_literal": false,
+                "is_object_config": true
+            },
+            "note": "The structure is: PlaygroundWrap { canvas: { base: '...', variants: {...}, defaultVariants: {...} } } which is the recommended advanced pattern"
+        },
+        "type_definitions_analysis": {
+            "CollapseMargin_analysis": {
+                "component": "CollapseBlock",
+                "line": 445,
+                "current_variant_keys": [
+                    "2",
+                    "4",
+                    "8",
+                    "12"
+                ],
+                "keys_are_quoted": true,
+                "keys_type_interpreted": "string",
+                "defaultVariants_value": 8,
+                "defaultVariants_type": "number",
+                "type_match": false,
+                "issue": "Keys are strings but default is number - TypeScript will reject this",
+                "should_be_type": "number (unquoted keys: 2, 4, 8, 12)",
+                "reason": "Numeric variants should use numeric types for semantic clarity and type safety"
+            },
+            "NegMarginVal_analysis": {
+                "component": "NegMarginBox",
+                "line": 517,
+                "variant_keys": [
+                    "0",
+                    "-2",
+                    "-4",
+                    "-8",
+                    "-12"
+                ],
+                "key_types": "MIXED - includes both number (0) and strings ('-2', '-4', '-8', '-12')",
+                "is_consistent": false,
+                "defaultVariants_value": 0,
+                "defaultVariants_type": "number",
+                "type_match": false,
+                "issue": "CRITICAL: 0 is number but '-2' is string. JavaScript treats these as different types.",
+                "should_be_type": "string (all quoted: '0', '-2', '-4', '-8', '-12')",
+                "reason": "Negative values are semantically strings in CSS ('margin: -2'); using all strings prevents type confusion"
+            }
+        }
+    },
+    "fixes_required": [
+        {
+            "id": "FIX-001",
+            "priority": "HIGH",
+            "component_name": "CollapseBlock",
+            "line": 445,
+            "type": "Type mismatch - string keys, numeric default",
+            "status": "NEEDS_FIX",
+            "change_type": "Replace string keys with numeric keys",
+            "before": {
+                "code": "const CollapseBlock = tw.div({\n  base: '...',\n  variants: {\n    margin: {\n      2: 'my-2',\n      4: 'my-4',\n      8: 'my-8',\n      12: 'my-12',\n    },\n  },\n  defaultVariants: { margin: 8 },\n})",
+                "issue": "Keys are interpreted as strings but defaultVariants uses number"
+            },
+            "after": {
+                "code": "const CollapseBlock = tw.div({\n  base: '...',\n  variants: {\n    margin: {\n      2: 'my-2',\n      4: 'my-4',\n      8: 'my-8',\n      12: 'my-12',\n    },\n  },\n  defaultVariants: { margin: 8 },\n})",
+                "explanation": "Keys 2, 4, 8, 12 must be unquoted (numbers) to match numeric defaultVariants"
+            }
+        },
+        {
+            "id": "FIX-002",
+            "priority": "HIGH",
+            "component_name": "NegMarginBox",
+            "line": 517,
+            "type": "Type mismatch - mixed string/number keys, numeric default",
+            "status": "NEEDS_FIX",
+            "change_type": "Convert all keys to strings, update defaultVariants",
+            "before": {
+                "code": "const NegMarginBox = tw.div({\n  base: '...',\n  variants: {\n    neg: {\n      0: '',\n      '-2': '-mt-2',\n      '-4': '-mt-4',\n      '-8': '-mt-8',\n      '-12': '-mt-12',\n    },\n  },\n  defaultVariants: { neg: 0 },\n})",
+                "issue": "Key 0 is numeric but '-2', '-4', etc. are strings. Mixed types break type safety."
+            },
+            "after": {
+                "code": "const NegMarginBox = tw.div({\n  base: '...',\n  variants: {\n    neg: {\n      '0': '',\n      '-2': '-mt-2',\n      '-4': '-mt-4',\n      '-8': '-mt-8',\n      '-12': '-mt-12',\n    },\n  },\n  defaultVariants: { neg: '0' },\n})",
+                "explanation": "All keys including 0 must be quoted strings ('0', not 0) to match string variants. Update defaultVariants to '0'."
+            }
+        }
+    ],
+    "correct_examples": [
+        {
+            "component_name": "BoxMarginLayer",
+            "line": 360,
+            "pattern": "numeric keys with numeric defaultVariants",
+            "code": "variants: { size: { 0: 'p-0', 1: 'p-1', 2: 'p-2', ... } }, defaultVariants: { size: 6 }",
+            "verdict": "CORRECT ✓"
+        },
+        {
+            "component_name": "BoxBorderLayer",
+            "line": 375,
+            "pattern": "numeric keys with numeric defaultVariants",
+            "code": "variants: { size: { 0: 'border-0', 1: 'border', 2: 'border-2', ... } }, defaultVariants: { size: 4 }",
+            "verdict": "CORRECT ✓"
+        },
+        {
+            "component_name": "BoxPaddingLayer",
+            "line": 386,
+            "pattern": "numeric keys with numeric defaultVariants",
+            "code": "variants: { size: { 0: 'p-0', 1: 'p-1', 2: 'p-2', ... } }, defaultVariants: { size: 4 }",
+            "verdict": "CORRECT ✓"
+        },
+        {
+            "component_name": "ContentBoxEl",
+            "line": 412,
+            "pattern": "string keys with string defaultVariants",
+            "code": "variants: { padding: { 'none': 'p-0', 'md': 'p-4', 'lg': 'p-8' } }, defaultVariants: { padding: 'md' }",
+            "verdict": "CORRECT ✓"
+        }
+    ],
+    "review_items": [
+        {
+            "component": "TocItem",
+            "line": 61,
+            "issue": "Boolean variant with string default",
+            "current": "variants: { active: { true: '...', false: '...' } }, defaultVariants: { active: 'false' }",
+            "problem": "Boolean variant keys (true/false) should use boolean defaultVariants (false), not string 'false'",
+            "fix": "Change defaultVariants: { active: 'false' } to defaultVariants: { active: false }",
+            "severity": "MEDIUM"
+        }
+    ],
+    "recommendations": {
+        "type_safety": [
+            "Use numeric keys (unquoted) for numeric variants: { 1: '...', 2: '...', 3: '...' }",
+            "Use string keys (quoted) for named variants: { 'small': '...', 'large': '...' }",
+            "Use boolean keys for toggle states: { true: '...', false: '...' }",
+            "Always match defaultVariants type to variant key type"
+        ],
+        "components_to_review": [
+            "CollapseBlock (line 445) - FIX numeric type mismatch",
+            "NegMarginBox (line 517) - FIX mixed type mismatch",
+            "TocItem (line 61) - REVIEW boolean type mismatch"
+        ]
+    },
+    "statistics": {
+        "total_components_analyzed": 82,
+        "components_with_variants": 35,
+        "components_with_type_mismatches": 2,
+        "components_with_correct_patterns": 33,
+        "nested_variant_components": 1,
+        "compliance_percentage": 97.14
+    },
+    "guidelines_reference": [
+        "boolean-variants.md - Type Safety Guide",
+        "tailwind-styled-v4-guidelines.md - Advanced Features - Sub-Components with Nested Variants",
+        "Boolean, Number & String Variants — Type Safety section"
+    ]
+}
