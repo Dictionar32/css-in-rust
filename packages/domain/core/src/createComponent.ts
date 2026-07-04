@@ -132,8 +132,8 @@ function createSubComponentAccessor(
   classes: string,
   tag: string = "span",
   asChild: boolean = false
-): React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> {
-  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> = ({
+): React.FC<{ children?: React.ReactNode; className?: string;[key: string]: unknown }> {
+  const SubComponent: React.FC<{ children?: React.ReactNode; className?: string;[key: string]: unknown }> = ({
     children,
     className,
     ...rest  // tangkap semua native HTML props (href, onClick, src, alt, dll)
@@ -183,15 +183,24 @@ function registerSubComponents<P extends object>(
         map[componentName] = createSubComponentAccessor(
           displayName, componentName, value.trim().replace(/\s+/g, " "), tag
         )
+      } else if ("base" in value || "variants" in value) {
+        // SubComponentConfig dengan potentially variants — direct nested component
+        // value sendiri yang adalah ComponentConfig, bukan map lagi
+        map[key] = createComponent("div", value as ComponentConfig)
       } else {
-        // Nested object — key adalah HTML tag, nested keys adalah component names
+        // Plain nested object — key adalah HTML tag, nested keys adalah component names
         // contoh: h2: { title: "text-xl", subtitle: "text-lg" }
         // → Card.title renders <h2>, Card.subtitle renders <h2>
         const tag = key
-        for (const [componentName, classes] of Object.entries(value)) {
-          map[componentName] = createSubComponentAccessor(
-            displayName, componentName, classes.trim().replace(/\s+/g, " "), tag
-          )
+        for (const [componentName, classesOrConfig] of Object.entries(value)) {
+          if (typeof classesOrConfig === "string") {
+            map[componentName] = createSubComponentAccessor(
+              displayName, componentName, classesOrConfig.trim().replace(/\s+/g, " "), tag
+            )
+          } else {
+            // SubComponentConfig nested di dalam nested object
+            map[componentName] = createComponent(tag as React.ElementType, classesOrConfig as ComponentConfig)
+          }
         }
       }
     }
@@ -587,6 +596,10 @@ function wrapWithSubProxy<P extends object>(
   tagLabel: string
 ): TwStyledComponent<P> {
   return new Proxy(component, {
+    // Forward function calls to target component
+    apply(target, thisArg, args) {
+      return Reflect.apply(target as Function, thisArg, args)
+    },
     get(target, prop: string | symbol) {
       const value = (target as unknown as Record<string | symbol, unknown>)[prop]
       // Jika sudah ada (sub-component terdefinisi, method, dll) → pakai langsung
@@ -595,7 +608,7 @@ function wrapWithSubProxy<P extends object>(
       if (typeof prop === "symbol") return value
       if (SKIP_PROXY_KEYS.has(prop as string)) return value
       // Fallback: buat passthrough <span> untuk sub-component yang tidak terdefinisi
-      const Fallback: React.FC<{ children?: React.ReactNode; className?: string; [key: string]: unknown }> = ({
+      const Fallback: React.FC<{ children?: React.ReactNode; className?: string;[key: string]: unknown }> = ({
         children,
         className,
         ...rest

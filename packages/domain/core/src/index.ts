@@ -33,6 +33,13 @@ export {
   tokenRef as containerRef,
   tokenVar,
 } from "./liveTokenEngine"
+// NOTE: Live Token Engine has been moved to @tailwind-styled/runtime
+// to prevent "use client" directive from affecting the main bundle.
+// Import live token functions from "tailwind-styled-v4/runtime" or
+// "@tailwind-styled/runtime" instead.
+// Previous exports: applyTokenSet, createUseTokens, generateTokenCssString,
+// getToken, getTokens, liveToken, setToken, setTokens, subscribeTokens,
+// tokenRef, tokenVar, LiveTokenSet, TokenMap, TokenSubscriber
 export type { MergeOptions } from "./merge"
 export { createTwMerge, mergeWithRules, twMerge } from "./merge"
 // ── Native Rust Bindings ─────────────────────────────────────────────────────
