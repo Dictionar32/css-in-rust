@@ -4,185 +4,174 @@
 "use client"
 import { useState } from "react"
 import {
-    Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
-    PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
-    CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
-    PlaygroundWrap, Chip, ChipRow, SupportBadge,
-    ContainerBox, ContainerLabel,
+  Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
+  PageTitle, PageDesc, Divider, Section, H2, P, IC, Callout,
+  CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
+  PlaygroundWrap, Chip, ChipRow, SupportBadge, BadgeRow,
+  ContainerBox, ContainerLabel, ControlsRow, WidthValue, CardIcon, CardContent, CardMeta,
+  ComparisonTable, CompTable, CompTableHead, CompTableHeadRow, CompTableHeadCell, CompTableBody, CompTableRow, CompTableCell,
+  PlaygroundWidthContainer, CardContainer, CardImage, CardTitleNormal, CardTitleLarge, CompTableCellBold, RangeSlider, SmallText, SmallDescription,
 } from "./styles"
 
 const TOC = [
-    { id: "intro", label: "Container Queries vs Media Queries" },
-    { id: "container-type", label: "container-type & container-name" },
-    { id: "size-queries", label: "Size Queries" },
-    { id: "style-queries", label: "Style Queries" },
-    { id: "container-units", label: "Container Units (cqw, cqh, cqi, cqb)" },
-    { id: "nested", label: "Nested Containers" },
-    { id: "tw-usage", label: "Pakai di tw" },
-    { id: "exercise", label: "Latihan" },
+  { id: "intro", label: "Container Queries vs Media Queries" },
+  { id: "container-type", label: "container-type & container-name" },
+  { id: "size-queries", label: "Size Queries" },
+  { id: "style-queries", label: "Style Queries" },
+  { id: "container-units", label: "Container Units (cqw, cqh, cqi, cqb)" },
+  { id: "nested", label: "Nested Containers" },
+  { id: "tw-usage", label: "Pakai di tw" },
+  { id: "exercise", label: "Latihan" },
 ]
 
 function Code({ file, children }: { file?: string; children: string }) {
-    const [copied, setCopied] = useState(false)
-    return (
-        <CodeWrap>
-            <CodeWrap.header>
-                <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
-                <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
-                    {copied ? "✓ Copied" : "Copy"}
-                </CopyBtn>
-            </CodeWrap.header>
-            <CodeWrap.body>{children.trim()}</CodeWrap.body>
-        </CodeWrap>
-    )
+  const [copied, setCopied] = useState(false)
+  return (
+    <CodeWrap>
+      <CodeWrap.header>
+        <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
+        <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+          {copied ? "✓ Copied" : "Copy"}
+        </CopyBtn>
+      </CodeWrap.header>
+      <CodeWrap.body>{children.trim()}</CodeWrap.body>
+    </CodeWrap>
+  )
 }
 
 function ContainerQueryPlayground() {
-    const [width, setWidth] = useState(300)
+  const [width, setWidth] = useState(300)
 
-    const isWide = width >= 400
-    const isVeryWide = width >= 560
+  const isWide = width >= 400
+  const isVeryWide = width >= 560
 
-    return (
-        <PlaygroundWrap>
-            <PlaygroundWrap.controls>
-                <PlaygroundWrap.label>📦 Container Query Playground</PlaygroundWrap.label>
-                <div className="flex items-center gap-3">
-                    <span className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">Lebar container:</span>
-                    <input
-                        type="range"
-                        min={180}
-                        max={640}
-                        value={width}
-                        onChange={e => setWidth(Number(e.target.value))}
-                        className="flex-1 accent-[var(--accent)]"
-                    />
-                    <span className="text-xs font-mono text-[var(--accent)] w-16 text-right">{width}px</span>
-                </div>
-                <ChipRow>
-                    <Chip active={!isWide ? "true" : "false"} onClick={() => setWidth(300)}>{"< 400px"}</Chip>
-                    <Chip active={isWide && !isVeryWide ? "true" : "false"} onClick={() => setWidth(480)}>400–559px</Chip>
-                    <Chip active={isVeryWide ? "true" : "false"} onClick={() => setWidth(600)}>{"≥ 560px"}</Chip>
-                </ChipRow>
-            </PlaygroundWrap.controls>
-            <PlaygroundWrap.canvas>
-                <div style={{ width: `${width}px`, transition: "width 200ms", margin: "0 auto" }}>
-                    <ContainerBox>
-                        <ContainerLabel>container-type: inline-size | {width}px</ContainerLabel>
-                        {/* Simulasi card yang berubah layout berdasarkan container width */}
-                        <div style={{
-                            display: "flex",
-                            flexDirection: isWide ? "row" : "column",
-                            gap: "0.75rem",
-                            background: "color-mix(in srgb, var(--accent) 6%, transparent)",
-                            borderRadius: "0.5rem",
-                            padding: "0.75rem",
-                        }}>
-                            <div style={{
-                                width: isWide ? "80px" : "100%",
-                                height: isWide ? "80px" : "120px",
-                                background: "color-mix(in srgb, var(--accent) 20%, transparent)",
-                                borderRadius: "0.5rem",
-                                flexShrink: 0,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                            }}>
-                                <span className="text-2xl">🖼️</span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <div style={{ fontSize: isVeryWide ? "1rem" : "0.875rem", fontWeight: 600 }}>
-                                    Judul Artikel
-                                </div>
-                                <div className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
-                                    {isWide ? "Deskripsi artikel ini tampil karena container cukup lebar." : "Deskripsi singkat."}
-                                </div>
-                                {isVeryWide && (
-                                    <div className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mt-1">
-                                        Tag • Kategori • 5 menit baca
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </ContainerBox>
-                </div>
-            </PlaygroundWrap.canvas>
-            <PlaygroundWrap.codeline>
-                {isVeryWide
-                    ? "@container (min-width: 560px) { /* layout row + title besar + meta */ }"
-                    : isWide
-                        ? "@container (min-width: 400px) { .card { flex-direction: row; } }"
-                        : "@container { /* layout vertikal default */ }"}
-            </PlaygroundWrap.codeline>
-        </PlaygroundWrap>
-    )
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>📦 Container Query Playground</PlaygroundWrap.label>
+        <ControlsRow>
+          <SmallText>Lebar container:</SmallText>
+          <RangeSlider
+            type="range"
+            min={180}
+            max={640}
+            value={width}
+            onChange={e => setWidth(Number(e.target.value))}
+          />
+          <WidthValue>{width}px</WidthValue>
+        </ControlsRow>
+        <ChipRow>
+          <Chip active={!isWide ? "true" : "false"} onClick={() => setWidth(300)}>{"< 400px"}</Chip>
+          <Chip active={isWide && !isVeryWide ? "true" : "false"} onClick={() => setWidth(480)}>400–559px</Chip>
+          <Chip active={isVeryWide ? "true" : "false"} onClick={() => setWidth(600)}>{"≥ 560px"}</Chip>
+        </ChipRow>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas>
+        {/* ✅ EXCEPTION: Dynamic width state for container query demo */}
+        {/* Cannot be extracted to tw() because width depends on React state */}
+        <PlaygroundWidthContainer style={{ width: `${width}px` }}>
+          <ContainerBox>
+            <ContainerLabel>container-type: inline-size | {width}px</ContainerLabel>
+            {/* Simulasi card yang berubah layout berdasarkan container width */}
+            <CardContainer layout={isWide ? "row" : "column"}>
+              <CardImage layout={isWide ? "row" : "column"}>
+                <CardIcon>🖼️</CardIcon>
+              </CardImage>
+              <CardContent>
+                {isVeryWide ? (
+                  <CardTitleLarge>Judul Artikel</CardTitleLarge>
+                ) : (
+                  <CardTitleNormal>Judul Artikel</CardTitleNormal>
+                )}
+                <SmallDescription>
+                  {isWide ? "Deskripsi artikel ini tampil karena container cukup lebar." : "Deskripsi singkat."}
+                </SmallDescription>
+                {isVeryWide && (
+                  <CardMeta>
+                    Tag • Kategori • 5 menit baca
+                  </CardMeta>
+                )}
+              </CardContent>
+            </CardContainer>
+          </ContainerBox>
+        </PlaygroundWidthContainer>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {isVeryWide
+          ? "@container (min-width: 560px) { /* layout row + title besar + meta */ }"
+          : isWide
+            ? "@container (min-width: 400px) { .card { flex-direction: row; } }"
+            : "@container { /* layout vertikal default */ }"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
 }
 
 export default function ContainerStyleQueriesPage() {
-    const [activeSection, setActiveSection] = useState("intro")
-    return (
-        <Page>
-            <TopBar><TopBarInner>
-                <Breadcrumb>
-                    <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.link href="/learn/advandced">Advanced</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.curr>Container & Style Queries</Breadcrumb.curr>
-                </Breadcrumb>
-            </TopBarInner></TopBar>
-            <Body>
-                <Content>
-                    <PageTitle>Container & Style Queries</PageTitle>
-                    <PageDesc>Buat komponen yang responsif terhadap ukuran container-nya sendiri — bukan viewport. Plus style queries yang bereaksi terhadap nilai CSS custom property.</PageDesc>
+  const [activeSection, setActiveSection] = useState("intro")
+  return (
+    <Page>
+      <TopBar><TopBarInner>
+        <Breadcrumb>
+          <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.link href="/learn/advandced">Advanced</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.curr>Container & Style Queries</Breadcrumb.curr>
+        </Breadcrumb>
+      </TopBarInner></TopBar>
+      <Body>
+        <Content>
+          <PageTitle>Container & Style Queries</PageTitle>
+          <PageDesc>Buat komponen yang responsif terhadap ukuran container-nya sendiri — bukan viewport. Plus style queries yang bereaksi terhadap nilai CSS custom property.</PageDesc>
 
-                    <Section id="intro" onClick={() => setActiveSection("intro")}>
-                        <H2>Container Queries vs Media Queries<H2.anchor href="#intro">#</H2.anchor></H2>
-                        <P>Media queries bereaksi terhadap viewport. Container queries bereaksi terhadap ukuran elemen container tempat komponen berada. Ini memungkinkan komponen yang benar-benar reusable — berubah layout berdasarkan ruang yang tersedia, bukan ukuran layar.</P>
-                        <div className="overflow-x-auto my-5">
-                            <table className="w-full text-xs border-collapse">
-                                <thead>
-                                    <tr className="border-b border-[color-mix(in_srgb,var(--foreground)_10%,transparent)]">
-                                        <th className="text-left py-2 px-3 font-semibold">Aspek</th>
-                                        <th className="text-left py-2 px-3 font-semibold">Media Query</th>
-                                        <th className="text-left py-2 px-3 font-semibold">Container Query</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]">
-                                    <tr className="border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)]">
-                                        <td className="py-2 px-3 font-medium">Referensi</td>
-                                        <td className="py-2 px-3">Viewport (window)</td>
-                                        <td className="py-2 px-3">Container element</td>
-                                    </tr>
-                                    <tr className="border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)]">
-                                        <td className="py-2 px-3 font-medium">Reusability</td>
-                                        <td className="py-2 px-3">Terikat layout halaman</td>
-                                        <td className="py-2 px-3">Komponen mandiri</td>
-                                    </tr>
-                                    <tr className="border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)]">
-                                        <td className="py-2 px-3 font-medium">Sidebar card</td>
-                                        <td className="py-2 px-3">Perlu tahu konteks halaman</td>
-                                        <td className="py-2 px-3">Otomatis menyesuaikan</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="py-2 px-3 font-medium">Support</td>
-                                        <td className="py-2 px-3">Semua browser</td>
-                                        <td className="py-2 px-3">Chrome 105+, Safari 16+, FF 110+</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div className="flex gap-2 flex-wrap my-4">
-                            <SupportBadge status="supported">✅ Chrome 105+</SupportBadge>
-                            <SupportBadge status="supported">✅ Edge 105+</SupportBadge>
-                            <SupportBadge status="supported">✅ Safari 16+</SupportBadge>
-                            <SupportBadge status="supported">✅ Firefox 110+</SupportBadge>
-                        </div>
-                    </Section>
-                    <Divider />
+          <Section id="intro" onClick={() => setActiveSection("intro")}>
+            <H2>Container Queries vs Media Queries<H2.anchor href="#intro">#</H2.anchor></H2>
+            <P>Media queries bereaksi terhadap viewport. Container queries bereaksi terhadap ukuran elemen container tempat komponen berada. Ini memungkinkan komponen yang benar-benar reusable — berubah layout berdasarkan ruang yang tersedia, bukan ukuran layar.</P>
+            <ComparisonTable>
+              <CompTable>
+                <CompTableHead>
+                  <CompTableHeadRow>
+                    <CompTableHeadCell>Aspek</CompTableHeadCell>
+                    <CompTableHeadCell>Media Query</CompTableHeadCell>
+                    <CompTableHeadCell>Container Query</CompTableHeadCell>
+                  </CompTableHeadRow>
+                </CompTableHead>
+                <CompTableBody>
+                  <CompTableRow>
+                    <CompTableCellBold>Referensi</CompTableCellBold>
+                    <CompTableCell>Viewport (window)</CompTableCell>
+                    <CompTableCell>Container element</CompTableCell>
+                  </CompTableRow>
+                  <CompTableRow>
+                    <CompTableCellBold>Reusability</CompTableCellBold>
+                    <CompTableCell>Terikat layout halaman</CompTableCell>
+                    <CompTableCell>Komponen mandiri</CompTableCell>
+                  </CompTableRow>
+                  <CompTableRow>
+                    <CompTableCellBold>Sidebar card</CompTableCellBold>
+                    <CompTableCell>Perlu tahu konteks halaman</CompTableCell>
+                    <CompTableCell>Otomatis menyesuaikan</CompTableCell>
+                  </CompTableRow>
+                  <CompTableRow>
+                    <CompTableCellBold>Support</CompTableCellBold>
+                    <CompTableCell>Semua browser</CompTableCell>
+                    <CompTableCell>Chrome 105+, Safari 16+, FF 110+</CompTableCell>
+                  </CompTableRow>
+                </CompTableBody>
+              </CompTable>
+            </ComparisonTable>
+            <BadgeRow>
+              <SupportBadge status="supported">✅ Chrome 105+</SupportBadge>
+              <SupportBadge status="supported">✅ Edge 105+</SupportBadge>
+              <SupportBadge status="supported">✅ Safari 16+</SupportBadge>
+              <SupportBadge status="supported">✅ Firefox 110+</SupportBadge>
+            </BadgeRow>
+          </Section>
+          <Divider />
 
-                    <Section id="container-type" onClick={() => setActiveSection("container-type")}>
-                        <H2>container-type & container-name<H2.anchor href="#container-type">#</H2.anchor></H2>
-                        <P>Untuk menggunakan container query, elemen harus didaftarkan sebagai container menggunakan <IC>container-type</IC>. Opsional, beri nama dengan <IC>container-name</IC> agar bisa di-query secara spesifik.</P>
-                        <Code file="container-setup.css">{`
+          <Section id="container-type" onClick={() => setActiveSection("container-type")}>
+            <H2>container-type & container-name<H2.anchor href="#container-type">#</H2.anchor></H2>
+            <P>Untuk menggunakan container query, elemen harus didaftarkan sebagai container menggunakan <IC>container-type</IC>. Opsional, beri nama dengan <IC>container-name</IC> agar bisa di-query secara spesifik.</P>
+            <Code file="container-setup.css">{`
 /* container-type values: */
 /* inline-size — track width (paling umum) */
 /* size         — track width + height */
@@ -212,20 +201,20 @@ export default function ContainerStyleQueriesPage() {
 /* Penting: container tidak bisa query dirinya sendiri */
 /* Query hanya mempengaruhi descendants */
         `}</Code>
-                        <Callout type="warning">
-                            <Callout.icon>⚠️</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>containment side effect</Callout.title>
-                                <IC>container-type: size</IC> menerapkan <IC>contain: size</IC> yang menyebabkan elemen tidak lagi mendapat ukuran dari kontennya. Pakai <IC>inline-size</IC> untuk menghindari ini — paling aman untuk kebanyakan kasus.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+            <Callout type="warning">
+              <Callout.icon>⚠️</Callout.icon>
+              <Callout.content>
+                <Callout.title>containment side effect</Callout.title>
+                <IC>container-type: size</IC> menerapkan <IC>contain: size</IC> yang menyebabkan elemen tidak lagi mendapat ukuran dari kontennya. Pakai <IC>inline-size</IC> untuk menghindari ini — paling aman untuk kebanyakan kasus.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="size-queries" onClick={() => setActiveSection("size-queries")}>
-                        <H2>Size Queries<H2.anchor href="#size-queries">#</H2.anchor></H2>
-                        <P>Size queries menggunakan sintaks mirip media queries tapi di dalam <IC>@container</IC>. Bisa query <IC>width</IC>, <IC>height</IC>, <IC>inline-size</IC>, <IC>block-size</IC>, <IC>aspect-ratio</IC>, dan <IC>orientation</IC>.</P>
-                        <Code file="container-queries.css">{`
+          <Section id="size-queries" onClick={() => setActiveSection("size-queries")}>
+            <H2>Size Queries<H2.anchor href="#size-queries">#</H2.anchor></H2>
+            <P>Size queries menggunakan sintaks mirip media queries tapi di dalam <IC>@container</IC>. Bisa query <IC>width</IC>, <IC>height</IC>, <IC>inline-size</IC>, <IC>block-size</IC>, <IC>aspect-ratio</IC>, dan <IC>orientation</IC>.</P>
+            <Code file="container-queries.css">{`
 /* container-queries.css */
 /* Definisikan container */
 .card-wrapper {
@@ -253,8 +242,8 @@ export default function ContainerStyleQueriesPage() {
 
 .btn-primary { --variant: primary; }
         `}</Code>
-                        <ContainerQueryPlayground />
-                        <Code file="size-query-examples.css">{`
+            <ContainerQueryPlayground />
+            <Code file="size-query-examples.css">{`
 /* Range syntax (modern, lebih ekspresif) */
 @container (200px <= inline-size <= 500px) {
   .card { /* layout untuk container medium */ }
@@ -294,13 +283,13 @@ export default function ContainerStyleQueriesPage() {
   }
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="style-queries" onClick={() => setActiveSection("style-queries")}>
-                        <H2>Style Queries<H2.anchor href="#style-queries">#</H2.anchor></H2>
-                        <P>Style queries memungkinkan styling berdasarkan nilai CSS custom property pada container. Ini membuka pola baru: komponen yang bisa berubah tampilan berdasarkan "tema" yang ditetapkan parent-nya.</P>
-                        <Code file="style-queries.css">{`
+          <Section id="style-queries" onClick={() => setActiveSection("style-queries")}>
+            <H2>Style Queries<H2.anchor href="#style-queries">#</H2.anchor></H2>
+            <P>Style queries memungkinkan styling berdasarkan nilai CSS custom property pada container. Ini membuka pola baru: komponen yang bisa berubah tampilan berdasarkan "tema" yang ditetapkan parent-nya.</P>
+            <Code file="style-queries.css">{`
 /* Style query — @container style(--property: value) */
 /* Perlu container-type: normal (atau container-type lain) */
 
@@ -353,20 +342,20 @@ export default function ContainerStyleQueriesPage() {
   .btn { background: red; color: white; }
 }
         `}</Code>
-                        <Callout type="note">
-                            <Callout.icon>🧪</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>Style queries — partial support</Callout.title>
-                                Style queries untuk custom properties didukung Chrome 111+ dan Safari 18+. Firefox masih dalam pengembangan. Gunakan dengan progressive enhancement.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+            <Callout type="note">
+              <Callout.icon>🧪</Callout.icon>
+              <Callout.content>
+                <Callout.title>Style queries — partial support</Callout.title>
+                Style queries untuk custom properties didukung Chrome 111+ dan Safari 18+. Firefox masih dalam pengembangan. Gunakan dengan progressive enhancement.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="container-units" onClick={() => setActiveSection("container-units")}>
-                        <H2>Container Units (cqw, cqh, cqi, cqb)<H2.anchor href="#container-units">#</H2.anchor></H2>
-                        <P>Container units mirip viewport units tapi relatif terhadap container terdekat yang punya containment. Sangat berguna untuk tipografi dan sizing yang fluid.</P>
-                        <Code file="container-units.css">{`
+          <Section id="container-units" onClick={() => setActiveSection("container-units")}>
+            <H2>Container Units (cqw, cqh, cqi, cqb)<H2.anchor href="#container-units">#</H2.anchor></H2>
+            <P>Container units mirip viewport units tapi relatif terhadap container terdekat yang punya containment. Sangat berguna untuk tipografi dan sizing yang fluid.</P>
+            <Code file="container-units.css">{`
 /* Container Query Units */
 /* cqw  — 1% dari container width */
 /* cqh  — 1% dari container height */
@@ -409,13 +398,13 @@ export default function ContainerStyleQueriesPage() {
   /* Bukan 4vw yang akan terlalu besar di desktop */
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="nested" onClick={() => setActiveSection("nested")}>
-                        <H2>Nested Containers<H2.anchor href="#nested">#</H2.anchor></H2>
-                        <P>Container bisa bersarang. Query akan mencari container terdekat yang match dengan nama (jika disebutkan) atau container apapun yang terdekat.</P>
-                        <Code file="nested-containers.css">{`
+          <Section id="nested" onClick={() => setActiveSection("nested")}>
+            <H2>Nested Containers<H2.anchor href="#nested">#</H2.anchor></H2>
+            <P>Container bisa bersarang. Query akan mencari container terdekat yang match dengan nama (jika disebutkan) atau container apapun yang terdekat.</P>
+            <Code file="nested-containers.css">{`
 /* Hierarki container */
 .page-layout {
   container: page / inline-size;  /* outermost */
@@ -460,13 +449,13 @@ export default function ContainerStyleQueriesPage() {
   .card { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
-                        <H2>Container Queries di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
-                        <P>Tailwind CSS v4 punya dukungan native container queries. Gunakan prefix <IC>@</IC> untuk container queries dan <IC>@[Xpx]</IC> untuk arbitrary sizes.</P>
-                        <Code file="tw-container.tsx">{`
+          <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
+            <H2>Container Queries di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
+            <P>Tailwind CSS v4 punya dukungan native container queries. Gunakan prefix <IC>@</IC> untuk container queries dan <IC>@[Xpx]</IC> untuk arbitrary sizes.</P>
+            <Code file="tw-container.tsx">{`
 import { tw } from "tailwind-styled-v4"
 
 /* Definisikan container */
@@ -534,43 +523,43 @@ function ProductCard({ featured = false }) {
   )
 }
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="exercise" onClick={() => setActiveSection("exercise")}>
-                        <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Responsive card component</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat card komponen yang pakai <IC>@container</IC>. Saat container sempit ({'< 350px'}): tampilkan hanya gambar dan judul. Saat medium (350–550px): tambahkan deskripsi. Saat lebar ({'> 550px'}): layout horizontal dengan semua detail.</p>
-                                <p>Tempatkan card yang sama di main content (lebar) dan sidebar (sempit) untuk melihat container query bekerja.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — Container units untuk tipografi fluid</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat hero section di dalam container. Gunakan <IC>cqi</IC> units untuk font-size heading agar proporsional dengan container, bukan viewport. Tambahkan <IC>clamp()</IC> agar ada batas minimum dan maksimum.</p>
-                                <p>Uji dengan menempatkan hero di berbagai lebar container (fullwidth vs sidebar).</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Style queries untuk variasi tema</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat sistem button yang bereaksi terhadap style query. Parent component set <IC>--context: danger</IC> atau <IC>--context: success</IC>, dan semua button di dalamnya otomatis berubah warna menggunakan <IC>@container style(--context: danger)</IC>.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                    </Section>
+          <Section id="exercise" onClick={() => setActiveSection("exercise")}>
+            <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Responsive card component</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat card komponen yang pakai <IC>@container</IC>. Saat container sempit ({'< 350px'}): tampilkan hanya gambar dan judul. Saat medium (350–550px): tambahkan deskripsi. Saat lebar ({'> 550px'}): layout horizontal dengan semua detail.</p>
+                <p>Tempatkan card yang sama di main content (lebar) dan sidebar (sempit) untuk melihat container query bekerja.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — Container units untuk tipografi fluid</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat hero section di dalam container. Gunakan <IC>cqi</IC> units untuk font-size heading agar proporsional dengan container, bukan viewport. Tambahkan <IC>clamp()</IC> agar ada batas minimum dan maksimum.</p>
+                <p>Uji dengan menempatkan hero di berbagai lebar container (fullwidth vs sidebar).</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Style queries untuk variasi tema</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat sistem button yang bereaksi terhadap style query. Parent component set <IC>--context: danger</IC> atau <IC>--context: success</IC>, dan semua button di dalamnya otomatis berubah warna menggunakan <IC>@container style(--context: danger)</IC>.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+          </Section>
 
-                    <PageNav>
-                        <NavBtn href="/learn/advandced/anchor-positioning" dir="prev"><NavBtn.hint>← Sebelumnya</NavBtn.hint><NavBtn.label>Anchor Positioning</NavBtn.label></NavBtn>
-                        <NavBtn href="/learn/advandced/popover-api" dir="next"><NavBtn.hint>Selanjutnya →</NavBtn.hint><NavBtn.label>Popover API</NavBtn.label></NavBtn>
-                    </PageNav>
-                </Content>
-                <Toc>
-                    <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
-                </Toc>
-            </Body>
-        </Page>
-    )
+          <PageNav>
+            <NavBtn href="/learn/advandced/anchor-positioning" dir="prev"><NavBtn.hint>← Sebelumnya</NavBtn.hint><NavBtn.label>Anchor Positioning</NavBtn.label></NavBtn>
+            <NavBtn href="/learn/advandced/popover-api" dir="next"><NavBtn.hint>Selanjutnya →</NavBtn.hint><NavBtn.label>Popover API</NavBtn.label></NavBtn>
+          </PageNav>
+        </Content>
+        <Toc>
+          <TocLabel>On this page</TocLabel>
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+        </Toc>
+      </Body>
+    </Page>
+  )
 }

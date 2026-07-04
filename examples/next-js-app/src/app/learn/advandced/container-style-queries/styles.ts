@@ -14,7 +14,6 @@ export const PageDesc = tw.p({ base: "text-base text-[color-mix(in_srgb,var(--fo
 export const Divider = tw.hr({ base: "border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] my-10" })
 export const Section = tw.section({ base: "scroll-mt-20 mb-10" })
 export const H2 = tw.h2({ base: "text-xl font-bold mb-4 scroll-mt-20 flex items-center gap-2 group", sub: { "a:anchor": "opacity-0 group-hover:opacity-100 text-[var(--accent)] text-base no-underline" } })
-export const H3 = tw.h3({ base: "text-base font-semibold mb-3 mt-6 scroll-mt-20" })
 export const P = tw.p({ base: "text-sm leading-7 text-[color-mix(in_srgb,var(--foreground)_80%,transparent)] mb-4" })
 export const IC = tw.code({ base: "px-1.5 py-0.5 rounded text-[11px] font-mono bg-[color-mix(in_srgb,var(--accent)_10%,transparent)] text-[var(--accent)] border border-[color-mix(in_srgb,var(--accent)_20%,transparent)]" })
 export const Callout = tw.div({ base: "rounded-xl border px-4 py-3 my-5 text-sm leading-relaxed flex gap-3", variants: { type: { note: "bg-blue-50 border-blue-200 text-blue-900", tip: "bg-emerald-50 border-emerald-200 text-emerald-900", warning: "bg-amber-50 border-amber-200 text-amber-900", danger: "bg-red-50 border-red-200 text-red-900" } }, defaultVariants: { type: "note" }, sub: { "span:icon": "text-base shrink-0 mt-0.5", "div:content": "flex-1", "strong:title": "block font-semibold mb-0.5" } })
@@ -27,7 +26,81 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { supported: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700", none: "bg-red-100 text-red-700" } }, defaultVariants: { status: "supported" } })
+export const BadgeRow = tw.div({ base: "flex gap-2 flex-wrap my-4" })
+export const ContainerBox = tw.div({ base: "@container rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] p-3 min-h-[200px] flex items-center justify-center" })
+export const ContainerLabel = tw.span({ base: "absolute top-2 left-2 text-[10px] font-mono text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]" })
 
-// Container queries-specific components
-export const ContainerBox = tw.div({ base: "resize-x overflow-auto min-w-[200px] max-w-full border-2 border-dashed border-indigo-300 rounded-xl p-4" })
-export const ContainerLabel = tw.p({ base: "text-[10px] font-mono text-indigo-400 mb-2" })
+// Container queries specific components
+export const ControlsRow = tw.div({ base: "flex items-center gap-3" })
+export const WidthValue = tw.span({ base: "text-xs font-mono text-[var(--accent)] w-16 text-right" })
+export const CardIcon = tw.span({ base: "text-2xl" })
+export const CardContent = tw.div({ base: "flex flex-col gap-1" })
+export const CardMeta = tw.div({ base: "text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mt-1" })
+export const ComparisonTable = tw.div({ base: "overflow-x-auto my-5" })
+export const CompTable = tw.table({ base: "w-full text-xs border-collapse" })
+export const CompTableHead = tw.thead({})
+export const CompTableHeadRow = tw.tr({ base: "border-b border-[color-mix(in_srgb,var(--foreground)_10%,transparent)]" })
+export const CompTableHeadCell = tw.th({ base: "text-left py-2 px-3 font-semibold" })
+export const CompTableBody = tw.tbody({ base: "text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]" })
+export const CompTableRow = tw.tr({ base: "border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)]" })
+export const CompTableCell = tw.td({ base: "py-2 px-3" })
+
+// Container query playground components
+export const PlaygroundWidthContainer = tw.div({
+    base: "transition-all duration-200 m-auto",
+})
+
+export const CardContainer = tw.div({
+    base: [
+        "display-flex",
+        "gap-3",
+        "bg-[color-mix(in_srgb,var(--accent)_6%,transparent)]",
+        "rounded-lg p-3",
+    ].join(" "),
+    variants: {
+        layout: {
+            column: "flex-col",
+            row: "flex-row",
+        },
+    },
+    defaultVariants: { layout: "column" },
+})
+
+export const CardImage = tw.div({
+    base: [
+        "bg-[color-mix(in_srgb,var(--accent)_20%,transparent)]",
+        "rounded-lg flex-shrink-0",
+        "flex items-center justify-center",
+    ].join(" "),
+    variants: {
+        layout: {
+            column: "w-full h-[120px]",
+            row: "w-20 h-20",
+        },
+    },
+    defaultVariants: { layout: "column" },
+})
+
+export const CardTitleNormal = tw.div({
+    base: "text-sm font-semibold",
+})
+
+export const CardTitleLarge = tw.div({
+    base: "text-base font-semibold",
+})
+
+export const CompTableCellBold = tw.td({
+    base: "py-2 px-3 font-medium",
+})
+
+export const RangeSlider = tw.input({
+    base: "flex-1 accent-[var(--accent)]",
+})
+
+export const SmallText = tw.span({
+    base: "text-xs leading-none",
+})
+
+export const SmallDescription = tw.p({
+    base: "text-xs leading-relaxed text-[color-mix(in_srgb,var(--foreground)_80%,transparent)]",
+})
