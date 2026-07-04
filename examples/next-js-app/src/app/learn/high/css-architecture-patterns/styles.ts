@@ -27,6 +27,11 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 
+// ─── Common re-usable code blocks ─────────────────────────────────────────────
+export const CodePre = tw.pre({
+    base: "text-xs font-mono leading-6 whitespace-pre-wrap text-[var(--foreground)]",
+})
+
 // ─── Architecture-specific primitives ─────────────────────────────────────────
 export const MethodCard = tw.div({
     base: "rounded-xl border p-4 bg-[var(--surface)]",
@@ -60,6 +65,17 @@ export const TokenItem = tw.div({
     },
     defaultVariants: { layer: "primitive" },
     sub: { "span:name": "flex-1 font-semibold", "span:value": "opacity-70", "span:badge": "text-[9px] px-1.5 py-0.5 rounded-full font-sans font-semibold uppercase" },
+})
+
+export const TokenItemBadge = tw.span({
+    base: "text-[9px] px-1.5 py-0.5 rounded-full font-sans font-semibold uppercase",
+    variants: {
+        layer: {
+            primitive: "bg-blue-100 text-blue-700",
+            semantic: "bg-violet-100 text-violet-700",
+            component: "bg-emerald-100 text-emerald-700",
+        },
+    },
 })
 
 export const CompareTable = tw.table({ base: "w-full text-xs border-collapse my-4" })
