@@ -3,29 +3,20 @@ import { defineConfig } from "tsup"
 export default defineConfig({
   entry: {
     index: "src/index.ts",
-    internal: "src/internal.ts",
-    "compiler/index": "src/compiler/index.ts",
-    "parser/index": "src/parser/index.ts",
-    "analyzer/index": "src/analyzer/index.ts",
-    "cache/index": "src/cache/index.ts",
-    "redis/index": "src/redis/index.ts",
-    "watch/index": "src/watch/index.ts",
+    compiler: "src/compiler/index.ts",
+    parser: "src/parser/index.ts",
+    analyzer: "src/analyzer/index.ts",
+    cache: "src/cache/index.ts",
+    redis: "src/redis/index.ts",
+    watch: "src/watch/index.ts",
+    internal: "src/internal.ts"
   },
   format: ["esm", "cjs"],
   dts: true,
   clean: true,
   target: "node20",
   platform: "node",
-  tsconfig: "tsconfig.dts.json",
   external: [
-    "typescript",
-    "tailwindcss",
-    "@tailwindcss/postcss",
-    "postcss",
-    "oxc-parser"
+    "@tailwind-styled/shared",  // Prevent circular dependency during build
   ],
-  // Ref: tsup docs — shims:true otomatis polyfill import.meta.url untuk CJS
-  // dan __dirname/__filename untuk ESM, tanpa manual banner.
-  // https://tsup.egoist.dev/#inject-cjs-and-esm-shims
-  shims: true,
 })

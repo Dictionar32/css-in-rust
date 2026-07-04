@@ -441,3 +441,212 @@ try {
   }
 }
 ```
+
+---
+
+## Semantic Component Type Inference (Build-Time)
+
+Kira kira dari v5.0.15+, compiler includes build-time semantic component analyzer untuk auto-generate TypeScript type definitions.
+
+### Overview
+
+Semantic type inference analyzes component metadata (`@semantic`, `@aria`, `@state` annotations) at build-time dan generates type stubs dengan semantic information untuk better IDE intellisense.
+
+**Key benefit**: Zero runtime overhead—type generation happens during build, generated code is 100% static.
+
+### Setup
+
+1. **Annotate components** dengan semantic metadata:
+
+```typescript
+const MyButton = tw.button({
+  '@semantic': 'button',           // Component semantic intent
+  '@aria': { role: 'button' },     // Explicit ARIA attributes
+  '@state': {
+    active: 'aria-pressed',        // State → ARIA property mapping
+    disabled: 'aria-disabled'
+  }
+})
+```
+
+2. **Use in tsup.config.ts** (optional, for auto-generation):
+
+```typescript
+import { createTypeGenerationPlugin } from '@tailwind-styled/compiler'
+
+export default defineConfig({
+  plugins: [
+    createTypeGenerationPlugin({
+      outputDir: './dist/types',
+      packageName: 'my-component-lib',
+      verbose: true,
+    })
+  ]
+})
+```
+
+### Semantic Intents
+
+Supported semantic intents (auto-map to ARIA roles):
+
+| Intent | HTML Tag | ARIA Role | Use Case |
+|--------|----------|-----------|----------|
+| `button` | `<button>` | `button` | Interactive buttons |
+| `link` | `<a>` | `link` | Navigation links |
+| `navigation` | `<nav>` | `navigation` | Navigation regions |
+| `heading` | `<h1-h6>` | `heading` | Page headings |
+| `paragraph` | `<p>` | — | Text content (no role needed) |
+| `list` | `<ul>`, `<ol>` | `list` | Lists |
+| `input` | `<input>` | `textbox` | Text inputs |
+| `form` | `<form>` | `form` | Form containers |
+| `dialog` | `<dialog>` | `dialog` | Modal dialogs |
+| `alert` | `<div role="alert">` | `alert` | Alert messages |
+| `tab` | Custom | `tab` | Tab panels |
+| `checkbox` | `<input type="checkbox">` | `checkbox` | Checkbox inputs |
+| `radio` | `<input type="radio">` | `radio` | Radio inputs |
+| `select` | `<select>` | `listbox` | Select dropdowns |
+| `custom` | Any | — | Custom components |
+
+### API Reference
+
+#### analyzeComponentSemantics
+
+Analyze component config untuk determine semantic intent:
+
+```typescript
+import { analyzeComponentSemantics } from '@tailwind-styled/compiler'
+
+const analysis = analyzeComponentSemantics('MyButton', {
+  tag: 'button',
+  '@semantic': 'button',
+  '@aria': { role: 'button' },
+  '@state': { active: 'aria-pressed' }
+})
+
+console.log(analysis.semantic)      // 'button'
+console.log(analysis.tag)            // 'button'
+console.log(analysis.metadata)       // { '@semantic': 'button', ... }
+console.log(analysis.stateProperties) // Map { 'active' => 'aria-pressed' }
+```
+
+#### generateTypeDefinition
+
+Generate TypeScript interface definition dari analysis:
+
+```typescript
+import { generateTypeDefinition, renderTypeDefinition } from '@tailwind-styled/compiler'
+
+const def = generateTypeDefinition(analysis, 'MyButton')
+const code = renderTypeDefinition(def)
+
+console.log(code)
+// export interface MyButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+//   /** State mapped to ARIA property: aria-pressed */
+//   active?: boolean | undefined
+// }
+```
+
+#### analyzeComponentBatch
+
+Batch analyze multiple components:
+
+```typescript
+import { analyzeComponentBatch } from '@tailwind-styled/compiler'
+
+const components = new Map([
+  ['Button', { tag: 'button', '@semantic': 'button' }],
+  ['Link', { tag: 'a', '@semantic': 'link' }],
+])
+
+const analyses = analyzeComponentBatch(components)
+// Map { 'Button' => AnalysisResult, 'Link' => AnalysisResult }
+```
+
+#### generateTypeStubFile
+
+Generate complete .d.ts file untuk semua components:
+
+```typescript
+import { generateTypeStubFile } from '@tailwind-styled/compiler'
+
+const stub = generateTypeStubFile(analyses, 'my-component-lib')
+
+fs.writeFileSync('dist/components.d.ts', stub)
+```
+
+### Examples
+
+#### Button dengan state mapping
+
+```typescript
+const Button = tw.button({
+  '@semantic': 'button',
+  '@state': {
+    disabled: 'aria-disabled',
+    active: 'aria-pressed',
+  }
+})
+
+// Generated type:
+// export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+//   disabled?: boolean | undefined
+//   active?: boolean | undefined
+// }
+```
+
+#### Link dengan explicit ARIA
+
+```typescript
+const Link = tw.a({
+  '@semantic': 'link',
+  '@aria': {
+    'aria-current': 'page'
+  }
+})
+
+// Generated type includes semantic info + ARIA metadata
+```
+
+#### Custom component (fallback)
+
+```typescript
+const Custom = tw.div({
+  '@semantic': 'custom',  // No ARIA role assigned
+})
+```
+
+### Validation
+
+Validate semantic metadata:
+
+```typescript
+import { validateSemanticMetadata } from '@tailwind-styled/compiler'
+
+const issues = validateSemanticMetadata({
+  '@semantic': 'invalid-intent'
+})
+
+console.log(issues)
+// ['Invalid @semantic value: invalid-intent']
+```
+
+### Build-Time Integration
+
+Semantic type generation runs at build time:
+
+1. Component configs scanned during build
+2. `@semantic`, `@aria`, `@state` metadata extracted
+3. Analysis performed (tag → semantic intent inference)
+4. TypeScript type stubs generated
+5. Output to `.d.ts` files alongside compiled code
+
+**No runtime overhead**: Generated code is 100% static, no runtime imports or execution.
+
+### Best Practices
+
+1. **Always annotate buttons/links** dengan `@semantic` untuk ARIA auto-injection
+2. **Map state properties** ke ARIA equivalents untuk accessibility
+3. **Use explicit ARIA** hanya jika default tidak cukup
+4. **Validate metadata** di build pipeline untuk catch errors early
+5. **Generate type stubs** untuk library components untuk better DX
+
