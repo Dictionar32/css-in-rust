@@ -126,7 +126,7 @@ el.attributeStyleMap.set('opacity', opacity.value + 0.1)`,
         <PlaygroundWrap.label>🔬 CSS Typed OM — type-safe style manipulation</PlaygroundWrap.label>
         <ChipRow>
           {(["color", "length", "percentage", "number"] as PropertyExample[]).map(t => (
-            <Chip key={t} active={propType === t ? "true" : "false"} onClick={() => setPropType(t)}>{t}</Chip>
+            <Chip key={t} active={propType === t} onClick={() => setPropType(t)}>{t}</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -497,7 +497,7 @@ const CheckerBg = tw.div({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

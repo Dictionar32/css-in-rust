@@ -51,7 +51,7 @@ function MultiColPlayground() {
         <PlaygroundWrap.label>📰 Multi-column Playground</PlaygroundWrap.label>
         <ChipRow>
           {(["2", "3", "4"] as ColCount[]).map(c => (
-            <Chip key={c} active={cols === c ? "true" : "false"} onClick={() => setCols(c)}>{c} kolom</Chip>
+            <Chip key={c} active={cols === c} onClick={() => setCols(c)}>{c} kolom</Chip>
           ))}
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -684,7 +684,7 @@ const InlineTag = tw.span({
         </Content>
         <Toc>
           <TocLabel>On this page</TocLabel>
-          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
         </Toc>
       </Body>
     </Page>

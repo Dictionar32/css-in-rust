@@ -56,7 +56,7 @@ function GradientPlayground() {
             <PlaygroundWrap.controls>
                 <PlaygroundWrap.label>🎨 Gradient Playground</PlaygroundWrap.label>
                 <ChipRow>
-                    {types.map(t => <Chip key={t} active={type === t ? "true" : "false"} onClick={() => setType(t)}>{t}</Chip>)}
+                    {types.map(t => <Chip key={t} active={type === t} onClick={() => setType(t)}>{t}</Chip>)}
                 </ChipRow>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
@@ -628,7 +628,7 @@ const DynamicGradient = tw.div({
                 </Content>
                 <Toc>
                     <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
                 </Toc>
             </Body>
         </Page>

@@ -58,13 +58,13 @@ function TypoPlayground() {
                 <div className="space-y-2">
                     <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]">font-weight</p>
                     <ChipRow>
-                        {weights.map(w => <Chip key={w} active={weight === w ? "true" : "false"} onClick={() => setWeight(w)}>{w}</Chip>)}
+                        {weights.map(w => <Chip key={w} active={weight === w} onClick={() => setWeight(w)}>{w}</Chip>)}
                     </ChipRow>
                 </div>
                 <div className="space-y-2">
                     <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]">text-align</p>
                     <ChipRow>
-                        {aligns.map(a => <Chip key={a} active={align === a ? "true" : "false"} onClick={() => setAlign(a)}>{a}</Chip>)}
+                        {aligns.map(a => <Chip key={a} active={align === a} onClick={() => setAlign(a)}>{a}</Chip>)}
                     </ChipRow>
                 </div>
             </PlaygroundWrap.controls>
@@ -692,7 +692,7 @@ const Clamp = tw.p({
                 </Content>
                 <Toc>
                     <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
                 </Toc>
             </Body>
         </Page>
