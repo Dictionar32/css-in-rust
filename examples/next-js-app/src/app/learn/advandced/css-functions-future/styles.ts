@@ -32,3 +32,155 @@ export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text
 export const FutureTag = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { "baseline": "bg-emerald-100 text-emerald-700", "newly": "bg-blue-100 text-blue-700", "experimental": "bg-amber-100 text-amber-700", "coming": "bg-purple-100 text-purple-700" } }, defaultVariants: { status: "newly" } })
 export const FutureGrid = tw.div({ base: "grid grid-cols-1 sm:grid-cols-2 gap-3 my-5" })
 export const FutureCard = tw.div({ base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[var(--surface)] p-4" })
+
+// Inline styles extracted to tw() components
+export const LightDarkDemo = tw.div({
+    base: [
+        "rounded-xl border border-solid p-6 transition-all duration-200",
+        "bg-white text-[#111827] border-[#e5e7eb]",
+    ].join(" "),
+})
+
+export const LightDarkDarkMode = tw.div({
+    base: [
+        "rounded-xl border border-solid p-6 transition-all duration-200",
+        "bg-[#1a1a2e] text-[#f9fafb] border-[#374151]",
+    ].join(" "),
+})
+
+export const LightDarkText = tw.p({
+    base: "text-sm text-[#6b7280] leading-relaxed",
+})
+
+export const LightDarkTextDark = tw.p({
+    base: "text-sm text-[#9ca3af] leading-relaxed",
+})
+
+export const LightDarkCodeBox = tw.div({
+    base: [
+        "mt-4 p-3 rounded-lg text-xs font-mono",
+        "bg-[#f3f4f6] text-[#4f46e5]",
+    ].join(" "),
+})
+
+export const LightDarkCodeBoxDark = tw.div({
+    base: [
+        "mt-4 p-3 rounded-lg text-xs font-mono",
+        "bg-[#374151] text-[#a5b4fc]",
+    ].join(" "),
+})
+
+export const AccordionContainer = tw.div({
+    base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden",
+})
+
+export const AccordionButton = tw.button({
+    base: [
+        "w-full text-left px-4 py-3 font-medium text-sm",
+        "flex items-center justify-between",
+        "bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)]",
+        "hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]",
+        "transition-colors",
+    ].join(" "),
+})
+
+export const AccordionChevron = tw.span({
+    base: "transition-transform duration-300",
+    variants: {
+        state: {
+            open: "rotate-180",
+            closed: "",
+        },
+    },
+    defaultVariants: { state: "closed" },
+})
+
+export const AccordionContent = tw.div({
+    base: [
+        "overflow-hidden transition-all duration-300",
+    ].join(" "),
+    variants: {
+        state: {
+            open: "max-h-[200px]",
+            closed: "max-h-0",
+        },
+    },
+    defaultVariants: { state: "closed" },
+})
+
+export const AccordionBody = tw.div({
+    base: "px-4 py-3 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]",
+})
+
+export const AccordionHint = tw.p({
+    base: "text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mt-2",
+})
+
+export const SupportBadgeRow = tw.div({
+    base: "flex gap-2 flex-wrap my-4",
+})
+
+export const DemoContainer = tw.div({
+    base: [
+        "my-5 p-4 rounded-xl border",
+        "bg-[color-mix(in_srgb,var(--accent)_4%,transparent)]",
+        "border-[color-mix(in_srgb,var(--accent)_20%,transparent)]",
+    ].join(" "),
+})
+
+export const DemoLabel = tw.p({
+    base: "text-xs font-semibold mb-3 text-[var(--accent)]",
+})
+
+export const DemoTextarea = tw.textarea({
+    base: [
+        "w-full rounded-lg border p-3 text-sm resize-none",
+        "border-[color-mix(in_srgb,var(--foreground)_15%,transparent)]",
+        "bg-[var(--surface)]",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]",
+    ].join(" "),
+})
+
+export const MathFunctionCardHeader = tw.div({
+    base: "flex items-center gap-2 mb-2",
+})
+
+export const MathFunctionCardText = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]",
+})
+
+export const FutureCardHeader = tw.div({
+    base: "flex items-center gap-2 mb-2",
+})
+
+export const FutureCardTitle = tw.span({
+    base: "text-sm font-semibold",
+})
+
+export const FutureCardDesc = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]",
+})
+
+export const DemoTextHeader = tw.p({
+    base: "font-semibold mb-2",
+})
+
+export const AccordionNote = tw.p({
+    base: "mt-2",
+})
+
+export const PlaygroundWidthContainer = tw.div({
+    base: "rounded-lg border border-[color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] p-4 flex items-center justify-center transition-all",
+})
+
+export const DemoTextareaWithFieldSizing = tw.textarea({
+    base: [
+        "w-full rounded-lg border p-3 text-sm resize-none",
+        "border-[color-mix(in_srgb,var(--foreground)_15%,transparent)]",
+        "bg-[var(--surface)]",
+        "focus:outline-none focus:ring-2 focus:ring-[var(--accent)]",
+    ].join(" "),
+    attrs: {
+        style: { fieldSizing: "content", minHeight: "3em", maxHeight: "12em" } as React.CSSProperties,
+    },
+})

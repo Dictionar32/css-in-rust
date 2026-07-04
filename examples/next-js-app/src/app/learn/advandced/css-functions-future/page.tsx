@@ -9,6 +9,11 @@ import {
     CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
     PlaygroundWrap, Chip, ChipRow, SupportBadge,
     FutureTag, FutureGrid, FutureCard,
+    LightDarkDemo, LightDarkDarkMode, LightDarkText, LightDarkTextDark, LightDarkCodeBox, LightDarkCodeBoxDark,
+    AccordionContainer, AccordionButton, AccordionChevron, AccordionContent, AccordionBody, AccordionHint,
+    SupportBadgeRow, DemoContainer, DemoLabel, DemoTextarea,
+    MathFunctionCardHeader, MathFunctionCardText, FutureCardHeader, FutureCardTitle, FutureCardDesc, DemoTextHeader, AccordionNote,
+    PlaygroundWidthContainer, DemoTextareaWithFieldSizing,
 } from "./styles"
 
 const TOC = [
@@ -42,6 +47,10 @@ function LightDarkPlayground() {
     const [darkMode, setDarkMode] = useState(false)
     const [textContent, setTextContent] = useState("Halo, light-dark()!")
 
+    const DemoComponent = darkMode ? LightDarkDarkMode : LightDarkDemo
+    const TextComponent = darkMode ? LightDarkTextDark : LightDarkText
+    const CodeBoxComponent = darkMode ? LightDarkCodeBoxDark : LightDarkCodeBox
+
     return (
         <PlaygroundWrap>
             <PlaygroundWrap.controls>
@@ -52,36 +61,16 @@ function LightDarkPlayground() {
                 </ChipRow>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div
-                    style={{
-                        colorScheme: darkMode ? "dark" : "light",
-                        background: darkMode ? "#1a1a2e" : "#ffffff",
-                        color: darkMode ? "#f9fafb" : "#111827",
-                        borderColor: darkMode ? "#374151" : "#e5e7eb",
-                        borderWidth: 1,
-                        borderStyle: "solid",
-                        borderRadius: "0.75rem",
-                        padding: "1.5rem",
-                        transition: "background 200ms, color 200ms, border-color 200ms",
-                    }}
-                >
-                    <p className="font-semibold mb-2">{textContent}</p>
-                    <p style={{ color: darkMode ? "#9ca3af" : "#6b7280", fontSize: "0.875rem" }}>
+                <DemoComponent>
+                    <DemoTextHeader>{textContent}</DemoTextHeader>
+                    <TextComponent>
                         Simulasi light-dark() — background, color, dan border berubah otomatis.
-                    </p>
-                    <div style={{
-                        marginTop: "1rem",
-                        padding: "0.75rem",
-                        borderRadius: "0.5rem",
-                        background: darkMode ? "#374151" : "#f3f4f6",
-                        fontSize: "0.75rem",
-                        fontFamily: "monospace",
-                        color: darkMode ? "#a5b4fc" : "#4f46e5",
-                    }}>
+                    </TextComponent>
+                    <CodeBoxComponent>
                         background: light-dark(#ffffff, #1a1a2e);<br />
                         color: light-dark(#111827, #f9fafb);
-                    </div>
-                </div>
+                    </CodeBoxComponent>
+                </DemoComponent>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>
                 {darkMode
@@ -105,28 +94,21 @@ function AccordionPlayground() {
                 </ChipRow>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className="rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden">
-                    <button
-                        onClick={() => setOpen(o => !o)}
-                        className="w-full text-left px-4 py-3 font-medium text-sm flex items-center justify-between bg-[color-mix(in_srgb,var(--foreground)_3%,transparent)] hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] transition-colors"
-                    >
+                <AccordionContainer>
+                    <AccordionButton onClick={() => setOpen(o => !o)}>
                         <span>Accordion Item</span>
-                        <span style={{ transform: open ? "rotate(180deg)" : "none", transition: "transform 300ms" }}>▼</span>
-                    </button>
-                    <div style={{
-                        maxHeight: open ? "200px" : "0",
-                        overflow: "hidden",
-                        transition: "max-height 300ms ease",
-                    }}>
-                        <div className="px-4 py-3 text-sm text-[color-mix(in_srgb,var(--foreground)_70%,transparent)]">
+                        <AccordionChevron state={open ? "open" : "closed"}>▼</AccordionChevron>
+                    </AccordionButton>
+                    <AccordionContent state={open ? "open" : "closed"}>
+                        <AccordionBody>
                             <p>Dengan <strong>interpolate-size: allow-keywords</strong>, animasi <code>height: 0 → height: auto</code> sekarang mungkin dilakukan secara native CSS — tanpa JavaScript mengukur tinggi konten!</p>
-                            <p className="mt-2">Ini menggantikan hack lama menggunakan <code>max-height</code> yang boros atau JavaScript getBoundingClientRect().</p>
-                        </div>
-                    </div>
-                </div>
-                <p className="text-[10px] text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mt-2">
+                            <AccordionNote>Ini menggantikan hack lama menggunakan <code>max-height</code> yang boros atau JavaScript getBoundingClientRect().</AccordionNote>
+                        </AccordionBody>
+                    </AccordionContent>
+                </AccordionContainer>
+                <AccordionHint>
                     (Demo ini menggunakan max-height fallback — browser nyata dengan interpolate-size menggunakan height: auto langsung)
-                </p>
+                </AccordionHint>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>
                 {open
@@ -156,12 +138,12 @@ export default function CssFunctionsFuturePage() {
                     <Section id="interpolate-size" onClick={() => setActiveSection("interpolate-size")}>
                         <H2>interpolate-size & height: auto animation<H2.anchor href="#interpolate-size">#</H2.anchor></H2>
                         <P>Selama bertahun-tahun, animasi dari <IC>height: 0</IC> ke <IC>height: auto</IC> tidak bisa dilakukan dengan CSS transition. <IC>interpolate-size: allow-keywords</IC> akhirnya menyelesaikan masalah ini.</P>
-                        <div className="flex gap-2 flex-wrap my-4">
+                        <SupportBadgeRow>
                             <SupportBadge status="supported">✅ Chrome 129+</SupportBadge>
                             <SupportBadge status="partial">🔶 Safari (preview)</SupportBadge>
                             <SupportBadge status="none">❌ Firefox (belum)</SupportBadge>
                             <FutureTag status="newly">Newly Available</FutureTag>
-                        </div>
+                        </SupportBadgeRow>
                         <AccordionPlayground />
                         <Code file="interpolate-size.css">{`
 /* interpolate-size.css */
@@ -199,12 +181,12 @@ export default function CssFunctionsFuturePage() {
                     <Section id="light-dark" onClick={() => setActiveSection("light-dark")}>
                         <H2>light-dark() function<H2.anchor href="#light-dark">#</H2.anchor></H2>
                         <P>Fungsi <IC>light-dark()</IC> secara otomatis memilih nilai berdasarkan <IC>color-scheme</IC> yang aktif — tanpa memerlukan media query atau class terpisah.</P>
-                        <div className="flex gap-2 flex-wrap my-4">
+                        <SupportBadgeRow>
                             <SupportBadge status="supported">✅ Chrome 123+</SupportBadge>
                             <SupportBadge status="supported">✅ Safari 17.5+</SupportBadge>
                             <SupportBadge status="supported">✅ Firefox 120+</SupportBadge>
                             <FutureTag status="baseline">Baseline</FutureTag>
-                        </div>
+                        </SupportBadgeRow>
                         <LightDarkPlayground />
                         <Code file="light-dark.css">{`
 /* light-dark.css */
@@ -258,12 +240,12 @@ export default function CssFunctionsFuturePage() {
                     <Section id="field-sizing" onClick={() => setActiveSection("field-sizing")}>
                         <H2>field-sizing: content<H2.anchor href="#field-sizing">#</H2.anchor></H2>
                         <P>Properti <IC>field-sizing: content</IC> membuat input dan textarea otomatis mengubah ukuran mengikuti kontennya — tanpa JavaScript sama sekali.</P>
-                        <div className="flex gap-2 flex-wrap my-4">
+                        <SupportBadgeRow>
                             <SupportBadge status="supported">✅ Chrome 123+</SupportBadge>
                             <SupportBadge status="none">❌ Safari (belum)</SupportBadge>
                             <SupportBadge status="none">❌ Firefox (belum)</SupportBadge>
                             <FutureTag status="experimental">Experimental</FutureTag>
-                        </div>
+                        </SupportBadgeRow>
                         <Code file="field-sizing.css">{`
 /* field-sizing.css */
 /* Input/textarea yang ukurannya mengikuti konten */
@@ -279,15 +261,13 @@ input[type="text"] {
   max-width: 40ch;
 }
         `}</Code>
-                        <div className="my-5 p-4 bg-[color-mix(in_srgb,var(--accent)_4%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--accent)_20%,transparent)]">
-                            <p className="text-xs font-semibold mb-3 text-[var(--accent)]">Demo — textarea dengan field-sizing: content (Chrome 123+)</p>
-                            <textarea
+                        <DemoContainer>
+                            <DemoLabel>Demo — textarea dengan field-sizing: content (Chrome 123+)</DemoLabel>
+                            <DemoTextareaWithFieldSizing
                                 placeholder="Ketik di sini — textarea akan mengembang otomatis..."
-                                className="w-full rounded-lg border border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] bg-[var(--surface)] p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-                                style={{ fieldSizing: "content" as never, minHeight: "3em", maxHeight: "12em" }}
                                 rows={2}
                             />
-                        </div>
+                        </DemoContainer>
                         <Callout type="note">
                             <Callout.icon>🧪</Callout.icon>
                             <Callout.content>
@@ -303,46 +283,46 @@ input[type="text"] {
                         <P>CSS mendapatkan beberapa fungsi matematika baru yang meningkatkan kemampuan kalkulasi deklaratif tanpa JavaScript.</P>
                         <FutureGrid>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>round()</IC>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Bulatkan ke kelipatan tertentu. Strategi: nearest, up, down, to-zero.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Bulatkan ke kelipatan tertentu. Strategi: nearest, up, down, to-zero.</MathFunctionCardText>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>mod()</IC> / <IC>rem()</IC>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Operasi modulo. mod() ikut tanda pembagi, rem() ikut tanda dividend.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Operasi modulo. mod() ikut tanda pembagi, rem() ikut tanda dividend.</MathFunctionCardText>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>abs()</IC> / <IC>sign()</IC>
                                     <FutureTag status="newly">Newly Available</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Nilai absolut dan tanda (-1, 0, 1). Berguna untuk animasi berbasis arah.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Nilai absolut dan tanda (-1, 0, 1). Berguna untuk animasi berbasis arah.</MathFunctionCardText>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>pow()</IC> / <IC>sqrt()</IC>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Pangkat dan akar. Berguna untuk spacing scales dan curve calculations.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Pangkat dan akar. Berguna untuk spacing scales dan curve calculations.</MathFunctionCardText>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>sin()</IC> / <IC>cos()</IC> / <IC>tan()</IC>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Fungsi trigonometri. Berguna untuk circular layouts dan wave animations.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Fungsi trigonometri. Berguna untuk circular layouts dan wave animations.</MathFunctionCardText>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
+                                <MathFunctionCardHeader>
                                     <IC>log()</IC> / <IC>exp()</IC>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Logaritma dan eksponensial. Berguna untuk easing curves dan scale systems.</p>
+                                </MathFunctionCardHeader>
+                                <MathFunctionCardText>Logaritma dan eksponensial. Berguna untuk easing curves dan scale systems.</MathFunctionCardText>
                             </FutureCard>
                         </FutureGrid>
                         <Code file="math-functions.css">{`
@@ -531,32 +511,32 @@ input[type="text"] {
         `}</Code>
                         <FutureGrid>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-sm font-semibold">CSS Nesting</span>
+                                <FutureCardHeader>
+                                    <FutureCardTitle>CSS Nesting</FutureCardTitle>
                                     <FutureTag status="baseline">Baseline</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Nesting native sudah available. Gunakan <IC>&</IC> untuk nested selectors.</p>
+                                </FutureCardHeader>
+                                <FutureCardDesc>Nesting native sudah available. Gunakan <IC>&</IC> untuk nested selectors.</FutureCardDesc>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-sm font-semibold">@scope</span>
+                                <FutureCardHeader>
+                                    <FutureCardTitle>@scope</FutureCardTitle>
                                     <FutureTag status="newly">Newly Available</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Batasi scope selector ke subtree DOM tertentu. Solusi untuk CSS leakage.</p>
+                                </FutureCardHeader>
+                                <FutureCardDesc>Batasi scope selector ke subtree DOM tertentu. Solusi untuk CSS leakage.</FutureCardDesc>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-sm font-semibold">@function</span>
+                                <FutureCardHeader>
+                                    <FutureCardTitle>@function</FutureCardTitle>
                                     <FutureTag status="coming">Coming</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">CSS custom functions dengan parameter. Masih proposal CSSWG.</p>
+                                </FutureCardHeader>
+                                <FutureCardDesc>CSS custom functions dengan parameter. Masih proposal CSSWG.</FutureCardDesc>
                             </FutureCard>
                             <FutureCard>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-sm font-semibold">if()</span>
+                                <FutureCardHeader>
+                                    <FutureCardTitle>if()</FutureCardTitle>
                                     <FutureTag status="coming">Coming</FutureTag>
-                                </div>
-                                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_65%,transparent)]">Inline conditionals. Masih draft di CSSWG.</p>
+                                </FutureCardHeader>
+                                <FutureCardDesc>Inline conditionals. Masih draft di CSSWG.</FutureCardDesc>
                             </FutureCard>
                         </FutureGrid>
                     </Section>
