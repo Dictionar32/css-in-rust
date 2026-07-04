@@ -4,148 +4,119 @@
 "use client"
 import { useState } from "react"
 import {
-    Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
-    PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
-    CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
-    PlaygroundWrap, Chip, ChipRow, SupportBadge,
-    SubgridDemo, GridCell,
+  Page, TopBar, TopBarInner, Breadcrumb, Body, Content, Toc, TocLabel, TocItem,
+  PageTitle, PageDesc, Divider, Section, H2, H3, P, IC, Callout,
+  CodeWrap, CopyBtn, ExerciseCard, PageNav, NavBtn,
+  PlaygroundWrap, Chip, ChipRow, SupportBadge,
+  SubgridDemo, GridCell, PlaygroundGridContainer, PlaygroundCard, PlaygroundCardHeader, PlaygroundCardBody, PlaygroundCardFooter, HintText, BadgeRow,
 } from "./styles"
 
 const TOC = [
-    { id: "intro", label: "Apa itu Subgrid" },
-    { id: "grid-subgrid", label: "grid-template-rows/columns: subgrid" },
-    { id: "alignment", label: "Item Alignment dengan Subgrid" },
-    { id: "named-lines", label: "Named Grid Lines di Subgrid" },
-    { id: "use-cases", label: "Use Cases: Card, Form, Table" },
-    { id: "tw-usage", label: "Pakai di tw" },
-    { id: "exercise", label: "Latihan" },
+  { id: "intro", label: "Apa itu Subgrid" },
+  { id: "grid-subgrid", label: "grid-template-rows/columns: subgrid" },
+  { id: "alignment", label: "Item Alignment dengan Subgrid" },
+  { id: "named-lines", label: "Named Grid Lines di Subgrid" },
+  { id: "use-cases", label: "Use Cases: Card, Form, Table" },
+  { id: "tw-usage", label: "Pakai di tw" },
+  { id: "exercise", label: "Latihan" },
 ]
 
 function Code({ file, children }: { file?: string; children: string }) {
-    const [copied, setCopied] = useState(false)
-    return (
-        <CodeWrap>
-            <CodeWrap.header>
-                <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
-                <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
-                    {copied ? "✓ Copied" : "Copy"}
-                </CopyBtn>
-            </CodeWrap.header>
-            <CodeWrap.body>{children.trim()}</CodeWrap.body>
-        </CodeWrap>
-    )
+  const [copied, setCopied] = useState(false)
+  return (
+    <CodeWrap>
+      <CodeWrap.header>
+        <CodeWrap.filename>{file ?? "css"}</CodeWrap.filename>
+        <CopyBtn copied={copied} onClick={() => { navigator.clipboard.writeText(children.trim()); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>
+          {copied ? "✓ Copied" : "Copy"}
+        </CopyBtn>
+      </CodeWrap.header>
+      <CodeWrap.body>{children.trim()}</CodeWrap.body>
+    </CodeWrap>
+  )
 }
 
 function SubgridPlayground() {
-    const [useSubgrid, setUseSubgrid] = useState(false)
+  const [useSubgrid, setUseSubgrid] = useState(false)
 
-    const cards = [
-        { header: "Card Pendek", body: "Ini konten card yang relatif singkat.", footer: "Aksi" },
-        { header: "Card dengan Judul Panjang", body: "Konten card ini lebih panjang dari card lain karena ada lebih banyak teks di sini.", footer: "Lihat Detail" },
-        { header: "Card Medium", body: "Konten medium length untuk demonstrasi.", footer: "Edit" },
-    ]
+  const cards = [
+    { header: "Card Pendek", body: "Ini konten card yang relatif singkat.", footer: "Aksi" },
+    { header: "Card dengan Judul Panjang", body: "Konten card ini lebih panjang dari card lain karena ada lebih banyak teks di sini.", footer: "Lihat Detail" },
+    { header: "Card Medium", body: "Konten medium length untuk demonstrasi.", footer: "Edit" },
+  ]
 
-    return (
-        <PlaygroundWrap>
-            <PlaygroundWrap.controls>
-                <PlaygroundWrap.label>📐 Subgrid Playground</PlaygroundWrap.label>
-                <ChipRow>
-                    <Chip active={!useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(false)}>Tanpa Subgrid</Chip>
-                    <Chip active={useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(true)}>Dengan Subgrid</Chip>
-                </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">
-                    Perhatikan alignment header, body, dan footer antar card
-                </p>
-            </PlaygroundWrap.controls>
-            <PlaygroundWrap.canvas>
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gridTemplateRows: "auto auto auto",
-                        gap: "1rem",
-                    }}
-                >
-                    {cards.map((card, i) => (
-                        <div
-                            key={i}
-                            style={useSubgrid ? {
-                                gridRow: "span 3",
-                                display: "grid",
-                                gridTemplateRows: "subgrid",
-                                border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
-                                borderRadius: "0.5rem",
-                                overflow: "hidden",
-                            } : {
-                                display: "flex",
-                                flexDirection: "column",
-                                border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
-                                borderRadius: "0.5rem",
-                                overflow: "hidden",
-                            }}
-                        >
-                            <div className="px-3 py-2 text-xs font-semibold bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] text-[var(--accent)]">
-                                {card.header}
-                            </div>
-                            <div className="px-3 py-2 text-xs text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] flex-1">
-                                {card.body}
-                            </div>
-                            <div className="px-3 py-2 text-[10px] font-medium border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">
-                                {card.footer}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </PlaygroundWrap.canvas>
-            <PlaygroundWrap.codeline>
-                {useSubgrid
-                    ? "grid-row: span 3; display: grid; grid-template-rows: subgrid;"
-                    : "display: flex; flex-direction: column; /* header/footer tidak ter-align antar card */"}
-            </PlaygroundWrap.codeline>
-        </PlaygroundWrap>
-    )
+  return (
+    <PlaygroundWrap>
+      <PlaygroundWrap.controls>
+        <PlaygroundWrap.label>📐 Subgrid Playground</PlaygroundWrap.label>
+        <ChipRow>
+          <Chip active={!useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(false)}>Tanpa Subgrid</Chip>
+          <Chip active={useSubgrid ? "true" : "false"} onClick={() => setUseSubgrid(true)}>Dengan Subgrid</Chip>
+        </ChipRow>
+        <HintText>
+          Perhatikan alignment header, body, dan footer antar card
+        </HintText>
+      </PlaygroundWrap.controls>
+      <PlaygroundWrap.canvas>
+        <PlaygroundGridContainer columns="three" rows="three">
+          {cards.map((card, i) => (
+            <PlaygroundCard key={i} layout={useSubgrid ? "subgrid" : "flex"}>
+              <PlaygroundCardHeader>{card.header}</PlaygroundCardHeader>
+              <PlaygroundCardBody>{card.body}</PlaygroundCardBody>
+              <PlaygroundCardFooter>{card.footer}</PlaygroundCardFooter>
+            </PlaygroundCard>
+          ))}
+        </PlaygroundGridContainer>
+      </PlaygroundWrap.canvas>
+      <PlaygroundWrap.codeline>
+        {useSubgrid
+          ? "grid-row: span 3; display: grid; grid-template-rows: subgrid;"
+          : "display: flex; flex-direction: column; /* header/footer tidak ter-align antar card */"}
+      </PlaygroundWrap.codeline>
+    </PlaygroundWrap>
+  )
 }
 
 export default function SubgridPage() {
-    const [activeSection, setActiveSection] = useState("intro")
-    return (
-        <Page>
-            <TopBar><TopBarInner>
-                <Breadcrumb>
-                    <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.link href="/learn/advandced">Advanced</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
-                    <Breadcrumb.curr>Subgrid</Breadcrumb.curr>
-                </Breadcrumb>
-            </TopBarInner></TopBar>
-            <Body>
-                <Content>
-                    <PageTitle>CSS Subgrid</PageTitle>
-                    <PageDesc>Buat children ikut track grid parent — selesaikan masalah alignment card, form, dan table yang selama ini butuh JavaScript atau hack CSS. Baseline 2023.</PageDesc>
+  const [activeSection, setActiveSection] = useState("intro")
+  return (
+    <Page>
+      <TopBar><TopBarInner>
+        <Breadcrumb>
+          <Breadcrumb.link href="/learn">Learn</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.link href="/learn/advandced">Advanced</Breadcrumb.link><Breadcrumb.sep>/</Breadcrumb.sep>
+          <Breadcrumb.curr>Subgrid</Breadcrumb.curr>
+        </Breadcrumb>
+      </TopBarInner></TopBar>
+      <Body>
+        <Content>
+          <PageTitle>CSS Subgrid</PageTitle>
+          <PageDesc>Buat children ikut track grid parent — selesaikan masalah alignment card, form, dan table yang selama ini butuh JavaScript atau hack CSS. Baseline 2023.</PageDesc>
 
-                    <Section id="intro" onClick={() => setActiveSection("intro")}>
-                        <H2>Apa itu Subgrid<H2.anchor href="#intro">#</H2.anchor></H2>
-                        <P>Subgrid memungkinkan elemen di dalam grid item untuk ikut track kolom atau baris dari grid parent. Sebelum subgrid, alignment antar children dari grid item yang berbeda tidak mungkin dilakukan secara CSS murni.</P>
-                        <P>Masalah klasik: tiga card di grid, masing-masing punya header, body, dan footer. Tanpa subgrid, tinggi header tidak otomatis sama — harus pakai JavaScript untuk mengukur dan menyamakan tinggi.</P>
-                        <div className="flex gap-2 flex-wrap my-4">
-                            <SupportBadge status="supported">✅ Chrome 117+</SupportBadge>
-                            <SupportBadge status="supported">✅ Edge 117+</SupportBadge>
-                            <SupportBadge status="supported">✅ Safari 16+</SupportBadge>
-                            <SupportBadge status="supported">✅ Firefox 71+</SupportBadge>
-                        </div>
-                        <Callout type="tip">
-                            <Callout.icon>📐</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>Baseline 2023 — Widely Available</Callout.title>
-                                CSS Subgrid sudah Baseline 2023 dan didukung semua browser modern. Aman dipakai sekarang.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+          <Section id="intro" onClick={() => setActiveSection("intro")}>
+            <H2>Apa itu Subgrid<H2.anchor href="#intro">#</H2.anchor></H2>
+            <P>Subgrid memungkinkan elemen di dalam grid item untuk ikut track kolom atau baris dari grid parent. Sebelum subgrid, alignment antar children dari grid item yang berbeda tidak mungkin dilakukan secara CSS murni.</P>
+            <P>Masalah klasik: tiga card di grid, masing-masing punya header, body, dan footer. Tanpa subgrid, tinggi header tidak otomatis sama — harus pakai JavaScript untuk mengukur dan menyamakan tinggi.</P>
+            <BadgeRow>
+              <SupportBadge status="supported">✅ Chrome 117+</SupportBadge>
+              <SupportBadge status="supported">✅ Edge 117+</SupportBadge>
+              <SupportBadge status="supported">✅ Safari 16+</SupportBadge>
+              <SupportBadge status="supported">✅ Firefox 71+</SupportBadge>
+            </BadgeRow>
+            <Callout type="tip">
+              <Callout.icon>📐</Callout.icon>
+              <Callout.content>
+                <Callout.title>Baseline 2023 — Widely Available</Callout.title>
+                CSS Subgrid sudah Baseline 2023 dan didukung semua browser modern. Aman dipakai sekarang.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="grid-subgrid" onClick={() => setActiveSection("grid-subgrid")}>
-                        <H2>grid-template-rows/columns: subgrid<H2.anchor href="#grid-subgrid">#</H2.anchor></H2>
-                        <P>Nilai <IC>subgrid</IC> bisa dipakai pada <IC>grid-template-columns</IC> atau <IC>grid-template-rows</IC>. Grid item yang jadi subgrid akan menggunakan track dari parent-nya, bukan mendefinisikan track baru.</P>
-                        <Code file="subgrid-basic.css">{`
+          <Section id="grid-subgrid" onClick={() => setActiveSection("grid-subgrid")}>
+            <H2>grid-template-rows/columns: subgrid<H2.anchor href="#grid-subgrid">#</H2.anchor></H2>
+            <P>Nilai <IC>subgrid</IC> bisa dipakai pada <IC>grid-template-columns</IC> atau <IC>grid-template-rows</IC>. Grid item yang jadi subgrid akan menggunakan track dari parent-nya, bukan mendefinisikan track baru.</P>
+            <Code file="subgrid-basic.css">{`
 /* subgrid-basic.css */
 .grid-container {
   display: grid;
@@ -180,24 +151,26 @@ export default function SubgridPage() {
   /* Nama [start], [mid], [end] tersedia di child */
 }
         `}</Code>
-                        <SubgridPlayground />
-                        <SubgridDemo style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-                            <GridCell style={{ gridColumn: "span 3", display: "grid", gridTemplateColumns: "subgrid", gap: "0.5rem" }}>
-                                <GridCell>col 1 (subgrid)</GridCell>
-                                <GridCell>col 2 (subgrid)</GridCell>
-                                <GridCell>col 3 (subgrid)</GridCell>
-                            </GridCell>
-                            <GridCell>track 1</GridCell>
-                            <GridCell>track 2</GridCell>
-                            <GridCell>track 3</GridCell>
-                        </SubgridDemo>
-                    </Section>
-                    <Divider />
+            <SubgridPlayground />
+            {/* ✅ EXCEPTION: Educational subgrid demo with static layout values */}
+            {/* These inline styles demonstrate actual CSS subgrid behavior and cannot be abstracted to tw() */}
+            <SubgridDemo style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+              <GridCell style={{ gridColumn: "span 3", display: "grid", gridTemplateColumns: "subgrid", gap: "0.5rem" }}>
+                <GridCell>col 1 (subgrid)</GridCell>
+                <GridCell>col 2 (subgrid)</GridCell>
+                <GridCell>col 3 (subgrid)</GridCell>
+              </GridCell>
+              <GridCell>track 1</GridCell>
+              <GridCell>track 2</GridCell>
+              <GridCell>track 3</GridCell>
+            </SubgridDemo>
+          </Section>
+          <Divider />
 
-                    <Section id="alignment" onClick={() => setActiveSection("alignment")}>
-                        <H2>Item Alignment dengan Subgrid<H2.anchor href="#alignment">#</H2.anchor></H2>
-                        <P>Keuntungan utama subgrid adalah elemen di dalam subgrid item bisa ter-align ke track parent. Ini sangat berguna untuk card layouts di mana setiap card punya struktur header–body–footer.</P>
-                        <Code file="subgrid-alignment.css">{`
+          <Section id="alignment" onClick={() => setActiveSection("alignment")}>
+            <H2>Item Alignment dengan Subgrid<H2.anchor href="#alignment">#</H2.anchor></H2>
+            <P>Keuntungan utama subgrid adalah elemen di dalam subgrid item bisa ter-align ke track parent. Ini sangat berguna untuk card layouts di mana setiap card punya struktur header–body–footer.</P>
+            <Code file="subgrid-alignment.css">{`
 /* Container grid — 3 kolom, 3 baris */
 .card-grid {
   display: grid;
@@ -240,20 +213,20 @@ export default function SubgridPage() {
 /* Hasilnya: semua header sejajar, semua footer sejajar */
 /* Tidak perlu min-height atau JavaScript! */
         `}</Code>
-                        <Callout type="note">
-                            <Callout.icon>💡</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>Grid rows vs columns</Callout.title>
-                                Subgrid bisa diterapkan pada kolom saja, baris saja, atau keduanya sekaligus. Paling umum adalah <IC>grid-template-rows: subgrid</IC> untuk alignment header/footer antar card.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+            <Callout type="note">
+              <Callout.icon>💡</Callout.icon>
+              <Callout.content>
+                <Callout.title>Grid rows vs columns</Callout.title>
+                Subgrid bisa diterapkan pada kolom saja, baris saja, atau keduanya sekaligus. Paling umum adalah <IC>grid-template-rows: subgrid</IC> untuk alignment header/footer antar card.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="named-lines" onClick={() => setActiveSection("named-lines")}>
-                        <H2>Named Grid Lines di Subgrid<H2.anchor href="#named-lines">#</H2.anchor></H2>
-                        <P>Named lines yang didefinisikan di parent grid tersedia di dalam subgrid. Ini memungkinkan positioning yang lebih ekspresif menggunakan nama bukan angka.</P>
-                        <Code file="subgrid-named.css">{`
+          <Section id="named-lines" onClick={() => setActiveSection("named-lines")}>
+            <H2>Named Grid Lines di Subgrid<H2.anchor href="#named-lines">#</H2.anchor></H2>
+            <P>Named lines yang didefinisikan di parent grid tersedia di dalam subgrid. Ini memungkinkan positioning yang lebih ekspresif menggunakan nama bukan angka.</P>
+            <Code file="subgrid-named.css">{`
 /* Parent mendefinisikan named lines */
 .layout {
   display: grid;
@@ -290,9 +263,9 @@ export default function SubgridPage() {
   /* (ini menambah, bukan mengganti, nama dari parent) */
 }
         `}</Code>
-                        <H3>Subgrid Gap</H3>
-                        <P>Subgrid mewarisi gap dari parent secara default. Gap bisa di-override di subgrid jika perlu spacing yang berbeda antar level.</P>
-                        <Code file="subgrid-gap.css">{`
+            <H3>Subgrid Gap</H3>
+            <P>Subgrid mewarisi gap dari parent secara default. Gap bisa di-override di subgrid jika perlu spacing yang berbeda antar level.</P>
+            <Code file="subgrid-gap.css">{`
 .parent {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -312,13 +285,13 @@ export default function SubgridPage() {
 /* gap pada subgrid hanya mempengaruhi children langsung subgrid tersebut */
 /* bukan gap antar grid item di parent */
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="use-cases" onClick={() => setActiveSection("use-cases")}>
-                        <H2>Use Cases: Card, Form, Table<H2.anchor href="#use-cases">#</H2.anchor></H2>
-                        <H3>Card Grid</H3>
-                        <Code file="card-grid.css">{`
+          <Section id="use-cases" onClick={() => setActiveSection("use-cases")}>
+            <H2>Use Cases: Card, Form, Table<H2.anchor href="#use-cases">#</H2.anchor></H2>
+            <H3>Card Grid</H3>
+            <Code file="card-grid.css">{`
 /* Card grid — header/footer ter-align antar card */
 .products {
   display: grid;
@@ -341,8 +314,8 @@ export default function SubgridPage() {
 .product-desc   { padding: 0.5rem 1rem; font-size: 0.875rem; color: #6b7280; }
 .product-footer { padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
         `}</Code>
-                        <H3>Form Layout</H3>
-                        <Code file="form-subgrid.css">{`
+            <H3>Form Layout</H3>
+            <Code file="form-subgrid.css">{`
 /* Form dengan label dan input ter-align */
 .form-grid {
   display: grid;
@@ -386,8 +359,8 @@ export default function SubgridPage() {
   margin-top: -0.5rem;
 }
         `}</Code>
-                        <H3>Data Table</H3>
-                        <Code file="table-subgrid.css">{`
+            <H3>Data Table</H3>
+            <Code file="table-subgrid.css">{`
 /* Table-like layout dengan subgrid */
 .data-table {
   display: grid;
@@ -427,13 +400,13 @@ export default function SubgridPage() {
 /* Zebra stripes dengan :nth-child — tricky dengan display: contents */
 /* Gunakan CSS @layer atau custom property untuk workaround */
         `}</Code>
-                    </Section>
-                    <Divider />
+          </Section>
+          <Divider />
 
-                    <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
-                        <H2>Subgrid di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
-                        <P>Tailwind CSS v4 mendukung <IC>subgrid</IC> sebagai nilai grid template. Gunakan <IC>grid-rows-subgrid</IC> dan <IC>grid-cols-subgrid</IC> untuk mengaktifkan subgrid.</P>
-                        <Code file="tw-subgrid.tsx">{`
+          <Section id="tw-usage" onClick={() => setActiveSection("tw-usage")}>
+            <H2>Subgrid di tailwind-styled-v4<H2.anchor href="#tw-usage">#</H2.anchor></H2>
+            <P>Tailwind CSS v4 mendukung <IC>subgrid</IC> sebagai nilai grid template. Gunakan <IC>grid-rows-subgrid</IC> dan <IC>grid-cols-subgrid</IC> untuk mengaktifkan subgrid.</P>
+            <Code file="tw-subgrid.tsx">{`
 import { tw } from "tailwind-styled-v4"
 
 /* Parent grid — definisikan track dan baris */
@@ -482,51 +455,51 @@ function ProductList() {
   )
 }
         `}</Code>
-                        <Callout type="tip">
-                            <Callout.icon>✨</Callout.icon>
-                            <Callout.content>
-                                <Callout.title>grid-rows-subgrid di Tailwind v4</Callout.title>
-                                Tailwind v4 menambahkan utilitas <IC>grid-rows-subgrid</IC> dan <IC>grid-cols-subgrid</IC>. Untuk Tailwind v3, gunakan arbitrary value: <IC>[grid-template-rows:subgrid]</IC>.
-                            </Callout.content>
-                        </Callout>
-                    </Section>
-                    <Divider />
+            <Callout type="tip">
+              <Callout.icon>✨</Callout.icon>
+              <Callout.content>
+                <Callout.title>grid-rows-subgrid di Tailwind v4</Callout.title>
+                Tailwind v4 menambahkan utilitas <IC>grid-rows-subgrid</IC> dan <IC>grid-cols-subgrid</IC>. Untuk Tailwind v3, gunakan arbitrary value: <IC>[grid-template-rows:subgrid]</IC>.
+              </Callout.content>
+            </Callout>
+          </Section>
+          <Divider />
 
-                    <Section id="exercise" onClick={() => setActiveSection("exercise")}>
-                        <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Card grid dengan subgrid</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat grid 3 kolom berisi product card. Setiap card punya gambar, judul, deskripsi, dan tombol CTA. Gunakan subgrid agar semua CTA selalu sejajar di bagian bawah meski konten berbeda panjang.</p>
-                                <p>Hint: <IC>grid-template-rows: auto 1fr auto</IC> di parent, <IC>grid-row: span 3; grid-template-rows: subgrid</IC> di card.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — Form layout dengan subgrid</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat form login dengan label kiri dan input kanan yang rata menggunakan <IC>grid-template-columns: max-content 1fr</IC>. Tambahkan pesan error di bawah input menggunakan <IC>display: contents</IC> atau subgrid.</p>
-                                <p>Pastikan field email, password, dan checkbox "ingat saya" semua ter-align dengan rapi.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                        <ExerciseCard>
-                            <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Data table dengan subgrid</ExerciseCard.title></ExerciseCard.header>
-                            <ExerciseCard.body>
-                                <p>Buat tabel data sederhana (nama, harga, stok, kategori) menggunakan <IC>display: grid</IC> + subgrid. Header dan body harus ter-align ke kolom yang sama. Tambahkan hover state dan zebra stripes.</p>
-                                <p>Bonus: buat kolom terakhir berisi tombol aksi (Edit, Hapus) yang selalu rata kanan.</p>
-                            </ExerciseCard.body>
-                        </ExerciseCard>
-                    </Section>
+          <Section id="exercise" onClick={() => setActiveSection("exercise")}>
+            <H2>Latihan<H2.anchor href="#exercise">#</H2.anchor></H2>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 1 — Card grid dengan subgrid</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat grid 3 kolom berisi product card. Setiap card punya gambar, judul, deskripsi, dan tombol CTA. Gunakan subgrid agar semua CTA selalu sejajar di bagian bawah meski konten berbeda panjang.</p>
+                <p>Hint: <IC>grid-template-rows: auto 1fr auto</IC> di parent, <IC>grid-row: span 3; grid-template-rows: subgrid</IC> di card.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 2 — Form layout dengan subgrid</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat form login dengan label kiri dan input kanan yang rata menggunakan <IC>grid-template-columns: max-content 1fr</IC>. Tambahkan pesan error di bawah input menggunakan <IC>display: contents</IC> atau subgrid.</p>
+                <p>Pastikan field email, password, dan checkbox "ingat saya" semua ter-align dengan rapi.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+            <ExerciseCard>
+              <ExerciseCard.header><span>🏋️</span><ExerciseCard.title>Latihan 3 — Data table dengan subgrid</ExerciseCard.title></ExerciseCard.header>
+              <ExerciseCard.body>
+                <p>Buat tabel data sederhana (nama, harga, stok, kategori) menggunakan <IC>display: grid</IC> + subgrid. Header dan body harus ter-align ke kolom yang sama. Tambahkan hover state dan zebra stripes.</p>
+                <p>Bonus: buat kolom terakhir berisi tombol aksi (Edit, Hapus) yang selalu rata kanan.</p>
+              </ExerciseCard.body>
+            </ExerciseCard>
+          </Section>
 
-                    <PageNav>
-                        <NavBtn href="/learn/advandced/anchor-positioning" dir="prev"><NavBtn.hint>← Sebelumnya</NavBtn.hint><NavBtn.label>Anchor Positioning</NavBtn.label></NavBtn>
-                        <NavBtn href="/learn/advandced/container-style-queries" dir="next"><NavBtn.hint>Selanjutnya →</NavBtn.hint><NavBtn.label>Container & Style Queries</NavBtn.label></NavBtn>
-                    </PageNav>
-                </Content>
-                <Toc>
-                    <TocLabel>On this page</TocLabel>
-                    {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
-                </Toc>
-            </Body>
-        </Page>
-    )
+          <PageNav>
+            <NavBtn href="/learn/advandced/anchor-positioning" dir="prev"><NavBtn.hint>← Sebelumnya</NavBtn.hint><NavBtn.label>Anchor Positioning</NavBtn.label></NavBtn>
+            <NavBtn href="/learn/advandced/container-style-queries" dir="next"><NavBtn.hint>Selanjutnya →</NavBtn.hint><NavBtn.label>Container & Style Queries</NavBtn.label></NavBtn>
+          </PageNav>
+        </Content>
+        <Toc>
+          <TocLabel>On this page</TocLabel>
+          {TOC.map(item => <TocItem key={item.id} href={`#${item.id}`} active={activeSection === item.id ? "true" : "false"} onClick={() => setActiveSection(item.id)}>{item.label}</TocItem>)}
+        </Toc>
+      </Body>
+    </Page>
+  )
 }

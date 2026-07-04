@@ -27,7 +27,44 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { supported: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700", none: "bg-red-100 text-red-700" } }, defaultVariants: { status: "supported" } })
+export const SubgridDemo = tw.div({ base: "grid gap-2 my-5 p-3 rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[color-mix(in_srgb,var(--accent)_4%,transparent)]" })
+export const GridCell = tw.div({ base: "rounded-lg bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] p-2 text-xs font-medium text-[var(--accent)] flex items-center justify-center" })
 
-// Subgrid-specific components
-export const SubgridDemo = tw.div({ base: "grid gap-4 p-4 bg-[var(--surface)] rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)]" })
-export const GridCell = tw.div({ base: "bg-[color-mix(in_srgb,var(--accent)_12%,transparent)] border border-[color-mix(in_srgb,var(--accent)_25%,transparent)] rounded-lg p-2 text-xs text-[var(--accent)] font-mono" })
+// Playground support components
+export const PlaygroundGridContainer = tw.div({
+    base: "grid gap-4 my-5",
+    variants: {
+        columns: { three: "grid-cols-3" },
+        rows: { three: "grid-rows-3" }
+    }
+})
+
+export const PlaygroundCard = tw.div({
+    base: "rounded-lg border overflow-hidden transition-all",
+    variants: {
+        layout: {
+            flex: "flex flex-col",
+            subgrid: "row-span-3 grid grid-rows-subgrid"
+        }
+    }
+})
+
+export const PlaygroundCardHeader = tw.div({
+    base: "px-3 py-2 text-xs font-semibold bg-[color-mix(in_srgb,var(--accent)_15%,transparent)] text-[var(--accent)]"
+})
+
+export const PlaygroundCardBody = tw.div({
+    base: "px-3 py-2 text-xs text-[color-mix(in_srgb,var(--foreground)_70%,transparent)] flex-1"
+})
+
+export const PlaygroundCardFooter = tw.div({
+    base: "px-3 py-2 text-[10px] font-medium border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]"
+})
+
+export const HintText = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]",
+})
+
+export const BadgeRow = tw.div({
+    base: "flex gap-2 flex-wrap my-4",
+})
