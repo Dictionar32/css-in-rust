@@ -1,13 +1,14 @@
 import { tw } from "tailwind-styled-v4";
 
 /**
- * ARIA + Dynamic Theme Styles
- * 
- * Demonstrating:
- * - @aria, @semantic, @state sa tw() object config
- * - CSS variables para sa dynamic theme
- * - Type-safe component props
- * - Proper accessibility attributes
+ * ARIA + Dynamic Theme Styles — FIXED
+ *
+ * Key learnings:
+ * - @state: Maps state NAME → ARIA PROPERTY (string to string mapping)
+ *   Example: { expanded: "aria-expanded" } means "expanded" prop → aria-expanded attribute
+ * - variants: Maps prop names → CSS classes (for any type of prop: boolean, string, etc)
+ *   Example: { disabled: { true: "opacity-50", false: "" } }
+ * - Use variants for CSS control, @state for ARIA mapping
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,17 +18,11 @@ import { tw } from "tailwind-styled-v4";
 export const Page = tw.main({
     base: "min-h-screen bg-[var(--color-bg)] text-[var(--color-fg)] transition-colors duration-300",
     "@semantic": "main",
-    "@aria": {
-        role: "main",
-    },
 });
 
 export const Section = tw.section({
     base: "max-w-5xl mx-auto px-4 py-10 scroll-mt-20",
     "@semantic": "section",
-    "@aria": {
-        role: "region",
-    },
 });
 
 export const Title = tw.h1({
@@ -49,9 +44,6 @@ export const Text = tw.p({
 export const Card = tw.article({
     base: "bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow",
     "@semantic": "article",
-    "@aria": {
-        role: "article",
-    },
     sub: {
         header: "border-b border-[var(--color-border)] pb-4 mb-4",
         footer: "border-t border-[var(--color-border)] pt-4 mt-4",
@@ -59,7 +51,7 @@ export const Card = tw.article({
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Button Component with ARIA States
+// Button Component with Proper Variants (not @state)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const Button = tw.button({
@@ -67,9 +59,6 @@ export const Button = tw.button({
     "@semantic": "button",
     "@aria": {
         role: "button",
-    },
-    "@state": {
-        disabled: "aria-disabled",
     },
     variants: {
         variant: {
@@ -80,12 +69,12 @@ export const Button = tw.button({
             outline:
                 "border-2 border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white",
         },
+        disabled: {
+            true: "opacity-50 cursor-not-allowed pointer-events-none",
+            false: "",
+        },
     },
-    defaultVariants: { variant: "primary" },
-    states: {
-        loading: "opacity-60 cursor-wait pointer-events-none",
-        disabled: "opacity-50 cursor-not-allowed",
-    },
+    defaultVariants: { variant: "primary", disabled: false },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,9 +84,6 @@ export const Button = tw.button({
 export const Grid = tw.div({
     base: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-6",
     "@semantic": "div",
-    "@aria": {
-        role: "presentation",
-    },
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -106,7 +92,6 @@ export const Grid = tw.div({
 
 export const Badge = tw.span({
     base: "inline-block px-3 py-1 rounded-full text-xs font-semibold",
-    "@semantic": "span",
     variants: {
         variant: {
             primary: "bg-[var(--color-primary)] text-white",
@@ -177,14 +162,12 @@ export const TabList = tw.div({
     },
 });
 
+// TabButton uses variant for styling, no @state
 export const TabButton = tw.button({
     base: "px-4 py-2 text-sm font-medium border-b-2 border-transparent hover:border-[var(--color-primary)] transition-colors",
     "@semantic": "button",
     "@aria": {
         role: "tab",
-    },
-    "@state": {
-        active: "aria-selected",
     },
     variants: {
         active: {
@@ -215,14 +198,12 @@ export const ToggleGroup = tw.div({
     },
 });
 
+// ToggleButton uses variant for styling
 export const ToggleButton = tw.button({
     base: "px-3 py-2 rounded-lg font-medium transition-all border-2",
     "@semantic": "button",
     "@aria": {
         role: "radio",
-    },
-    "@state": {
-        active: "aria-pressed",
     },
     variants: {
         active: {
@@ -262,7 +243,7 @@ export const LivePreview = tw.div({
 
 /**
  * CSS Custom Properties (sa globals.css):
- * 
+ *
  * :root {
  *   --color-bg: #ffffff;
  *   --color-fg: #000000;
@@ -278,7 +259,7 @@ export const LivePreview = tw.div({
  *   --color-preview-bg: #f0f9ff;
  *   --color-fg-muted: #6b7280;
  * }
- * 
+ *
  * [data-theme="dark"] {
  *   --color-bg: #1f2937;
  *   --color-fg: #f9fafb;

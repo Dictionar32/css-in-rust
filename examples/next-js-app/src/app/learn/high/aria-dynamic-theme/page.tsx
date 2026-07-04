@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTheme } from "@/components/theme-and-cart-controls";
+import { useTheme } from "@/hooks/useTheme";
 import {
     Page,
     Section,
@@ -27,7 +27,7 @@ import {
 
 /**
  * ARIA + Dynamic Theme Demo Page
- * 
+ *
  * Mendemonstrasikan:
  * 1. ARIA attributes (@aria, @semantic, @state) via tw()
  * 2. Dynamic theme switching dengan useTheme()
@@ -35,13 +35,13 @@ import {
  * 4. Best practices untuk accessibility + styling
  */
 export default function AriaDynamicThemePage() {
-    const { theme, setTheme, mounted } = useTheme();
+    const { theme, toggleTheme, isLoaded } = useTheme();
     const [activeTab, setActiveTab] = useState<"aria" | "theme" | "combined">(
         "aria"
     );
     const [showAlert, setShowAlert] = useState(true);
 
-    if (!mounted) return null; // Prevent hydration mismatch
+    if (!isLoaded) return null; // Prevent hydration mismatch
 
     return (
         <Page>
@@ -56,14 +56,10 @@ export default function AriaDynamicThemePage() {
             {/* Theme Toggle — di header untuk easy access */}
             <Section>
                 <Subtitle>Current Theme</Subtitle>
-                <ToggleGroup
-                    role="radiogroup"
-                    aria-label="Select color scheme"
-                    aria-describedby="theme-desc"
-                >
+                <ToggleGroup>
                     <ToggleButton
                         active={theme === "light"}
-                        onClick={() => setTheme("light")}
+                        onClick={() => theme !== "light" && toggleTheme()}
                         role="radio"
                         aria-checked={theme === "light"}
                         aria-label="Light theme"
@@ -72,7 +68,7 @@ export default function AriaDynamicThemePage() {
                     </ToggleButton>
                     <ToggleButton
                         active={theme === "dark"}
-                        onClick={() => setTheme("dark")}
+                        onClick={() => theme !== "dark" && toggleTheme()}
                         role="radio"
                         aria-checked={theme === "dark"}
                         aria-label="Dark theme"
@@ -80,12 +76,12 @@ export default function AriaDynamicThemePage() {
                         🌙 Dark
                     </ToggleButton>
                 </ToggleGroup>
-                <Text id="theme-desc" style={{ fontSize: "0.875rem", opacity: 0.7 }}>
+                <Text style={{ fontSize: "0.875rem", opacity: 0.7 }}>
                     Your choice persists sa localStorage
                 </Text>
             </Section>
 
-            {/* Tabs — demonstrating @aria + @state */}
+            {/* Tabs — demonstrating @aria + variants */}
             <Section>
                 <TabList role="tablist" aria-label="Demo categories">
                     <TabButton
@@ -136,6 +132,7 @@ export default function AriaDynamicThemePage() {
                                     dan live regions.
                                 </AlertDescription>
                                 <Button
+                                    variant="primary"
                                     onClick={() => setShowAlert(false)}
                                     aria-label="Dismiss alert"
                                 >
@@ -144,11 +141,12 @@ export default function AriaDynamicThemePage() {
                             </Alert>
                         )}
 
-                        {/* Buttons — @semantic + @state */}
+                        {/* Buttons — @semantic + variants */}
                         <Card>
                             <Subtitle>Button States with ARIA</Subtitle>
                             <Grid>
                                 <Button
+                                    variant="primary"
                                     role="button"
                                     tabIndex={0}
                                     aria-label="Primary action button"
@@ -156,7 +154,7 @@ export default function AriaDynamicThemePage() {
                                     Primary Button
                                 </Button>
                                 <Button
-                                    role="button"
+                                    variant="primary"
                                     disabled
                                     aria-label="Disabled button"
                                     aria-disabled="true"
@@ -164,9 +162,10 @@ export default function AriaDynamicThemePage() {
                                     Disabled Button
                                 </Button>
                                 <Button
+                                    variant="primary"
                                     role="button"
                                     aria-pressed="false"
-                                    onClick={(e) => {
+                                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                         const btn = e.currentTarget;
                                         btn.setAttribute(
                                             "aria-pressed",
@@ -181,7 +180,7 @@ export default function AriaDynamicThemePage() {
                             </Grid>
                         </Card>
 
-                        {/* Status Indicators — @state */}
+                        {/* Status Indicators — variants */}
                         <Card>
                             <Subtitle>Status with Dynamic Styling</Subtitle>
                             <Grid>
@@ -296,7 +295,7 @@ const Card = tw.div({
                                     <p id="dialog-desc">
                                         Ni component ay may semantic roles + theme-aware styling
                                     </p>
-                                    <Button>Close Dialog</Button>
+                                    <Button variant="primary">Close Dialog</Button>
                                 </div>
 
                                 {/* Fieldset with legend */}
@@ -348,7 +347,7 @@ const Card = tw.div({
                 <LivePreview>
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                         <div>
-                            <strong>Current Theme:</strong> {theme.toUpperCase()}
+                            <strong>Current Theme:</strong> {theme?.toUpperCase() || "LOADING"}
                         </div>
                         <Card>
                             <Subtitle>Theme-Aware Content</Subtitle>

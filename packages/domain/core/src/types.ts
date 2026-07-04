@@ -18,7 +18,11 @@ export type VariantLiterals = string | number | boolean
 export type SizesConfig = Record<string, string>
 
 export type InferVariantProps<T extends ComponentConfig> = {
-  [K in keyof T["variants"]]?: keyof T["variants"][K]
+  [K in keyof T["variants"]]?: T["variants"][K] extends Record<infer Key, any>
+  ? Key extends "true" | "false"
+  ? boolean
+  : Key
+  : never
 }
 
 export type InferSizeProps<T extends ComponentConfig> =
@@ -83,9 +87,11 @@ export type StatesConfig = Record<string, string>
 // ── Component Config ─────────────────────────────────────────────────────────
 export interface ComponentConfig {
   base?: string
-  /** Variants — nested: { intent: { primary: "..." }, size: { sm: "..." } } */
-  variants?: Record<string, Record<string, string>>
-  defaultVariants?: Record<string, string>
+  /** Variants — nested: { intent: { primary: "..." }, size: { sm: "..." } } 
+   * Supports string and boolean keys: { disabled: { true: "...", false: "..." } }
+   */
+  variants?: Record<string, Record<string | "true" | "false" | boolean, string>>
+  defaultVariants?: Record<string, string | boolean>
   compoundVariants?: Array<{ class: string;[key: string]: string }>
   state?: Record<string, Record<string, string>>
   container?: Record<string, string>

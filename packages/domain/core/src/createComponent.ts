@@ -243,9 +243,9 @@ function makeFilterProps(variantKeys: Set<string>, stateKeys: Set<string> = new 
 }
 
 function resolveVariants(
-  variants: Record<string, Record<string, string>>,
+  variants: Record<string, Record<string | "true" | "false" | boolean, string>>,
   props: Record<string, unknown>,
-  defaults: Record<string, string>
+  defaults: Record<string, string | boolean>
 ): string {
   // Only include declared variant keys — prevents non-variant props (e.g. `selected`, `disabled`)
   // from leaking into the resolver and causing SSR/client hydration mismatches.
