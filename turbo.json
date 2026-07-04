@@ -68,6 +68,118 @@
       "outputs": [
         "dist/**"
       ]
+    },
+    "@tailwind-styled/compiler#build": {
+      "dependsOn": [
+        "@tailwind-styled/plugin-api#build",
+        "@tailwind-styled/shared#build",
+        "@tailwind-styled/syntax#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/atomic#build": {
+      "dependsOn": [
+        "@tailwind-styled/compiler#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/engine#build": {
+      "dependsOn": [
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/analyzer#build",
+        "@tailwind-styled/scanner#build",
+        "@tailwind-styled/shared#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/plugin-accessibility#build": {
+      "dependsOn": [
+        "@tailwind-styled/compiler#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/core#build": {
+      "dependsOn": [
+        "@tailwind-styled/animate#build",
+        "@tailwind-styled/compiler#build",
+        "@tailwind-styled/devtools#build",
+        "@tailwind-styled/next#build",
+        "@tailwind-styled/plugin#build",
+        "@tailwind-styled/preset#build",
+        "@tailwind-styled/runtime-css#build",
+        "@tailwind-styled/theme#build",
+        "@tailwind-styled/vite#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/theme#build": {
+      "dependsOn": [
+        "@tailwind-styled/shared#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/runtime#build": {
+      "dependsOn": [
+        "@tailwind-styled/theme#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/devtools#build": {
+      "dependsOn": [
+        "@tailwind-styled/compiler#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/rspack#build": {
+      "dependsOn": [
+        "@tailwind-styled/compiler#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/svelte#build": {
+      "dependsOn": [
+        "@tailwind-styled/core#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@tailwind-styled/vue#build": {
+      "dependsOn": [
+        "@tailwind-styled/core#build",
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     }
   }
 }
