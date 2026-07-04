@@ -27,7 +27,53 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { supported: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700", none: "bg-red-100 text-red-700" } }, defaultVariants: { status: "supported" } })
+export const TransitionBox = tw.div({ base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[var(--surface)] overflow-hidden" })
+export const TransitionBtn = tw.button({ base: "px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-default" })
 
-// View Transitions-specific components
-export const TransitionBox = tw.div({ base: "rounded-xl overflow-hidden border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-[var(--surface)]" })
-export const TransitionBtn = tw.button({ base: "px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity" })
+// View transitions specific components
+export const ModeButtonsRow = tw.div({ base: "flex gap-2" })
+export const PageContent = tw.div({
+    base: "transition-all duration-300",
+    variants: {
+        state: {
+            transitioning: "opacity-0",
+            visible: "opacity-100",
+        },
+    },
+    defaultVariants: { state: "visible" },
+})
+
+// Playground components
+export const PlaygroundTransitionBox = tw.div({
+    base: "rounded-xl border border-[color-mix(in_srgb,var(--accent)_15%,transparent)] bg-[var(--surface)] overflow-hidden p-6 transition-all duration-300",
+    states: {
+        transitioning: "opacity-0 scale-95 -translate-y-1",
+        visible: "opacity-100 scale-100 translate-y-0"
+    }
+})
+
+export const PlaygroundHeroSection = tw.div({
+    base: "w-full h-24 rounded-lg mb-4 flex items-center justify-center text-2xl",
+    variants: {
+        page: {
+            a: "bg-[color-mix(in_srgb,var(--accent)_15%,transparent)]",
+            b: "bg-[color-mix(in_srgb,var(--accent)_25%,transparent)]"
+        }
+    }
+})
+
+export const PlaygroundPageTitle = tw.h3({
+    base: "font-bold text-lg mb-1"
+})
+
+export const PlaygroundPageDesc = tw.p({
+    base: "text-sm text-[color-mix(in_srgb,var(--foreground)_60%,transparent)]"
+})
+
+export const TransitionNavButtons = tw.div({
+    base: "flex gap-2"
+})
+
+export const BadgeRow = tw.div({
+    base: "flex gap-2 flex-wrap my-4",
+})
