@@ -51,6 +51,11 @@ export * from './watch'
 // Route graph - static import-graph based per-route class attribution
 export * from './routeGraph'
 
+// Semantic components - Type inference dan metadata analysis (Build-time)
+export * from './semanticComponentAnalyzer'
+export * from './typeGeneratorFromMetadata'
+export * from './typeGenerationPlugin'
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PURE RUST SYNC API (v5.0.19+) — NO FALLBACK
 // ═══════════════════════════════════════════════════════════════════════════
@@ -514,7 +519,7 @@ export const getBucketEngine = () => {
   }
 }
 
-export const resetBucketEngine = (): void => {}
+export const resetBucketEngine = (): void => { }
 
 export class BucketEngine {
   add(className: string) { return className }
