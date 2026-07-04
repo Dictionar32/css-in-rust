@@ -27,7 +27,30 @@ export const PlaygroundWrap = tw.div({ base: "rounded-xl border border-[color-mi
 export const Chip = tw.button({ base: "px-2.5 py-1 rounded-md text-[11px] font-mono font-medium border transition-all", variants: { active: { true: "bg-[var(--accent)] text-white border-[var(--accent)]", false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]" } }, defaultVariants: { active: "false" } })
 export const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 export const SupportBadge = tw.span({ base: "inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full", variants: { status: { supported: "bg-emerald-100 text-emerald-700", partial: "bg-amber-100 text-amber-700", none: "bg-red-100 text-red-700" } }, defaultVariants: { status: "supported" } })
+export const DemoBtn = tw.button({ base: "px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity cursor-pointer" })
 
-// Popover API-specific components
-export const PopoverDemo = tw.div({ base: "rounded-xl border-2 border-dashed border-[color-mix(in_srgb,var(--accent)_30%,transparent)] p-6 min-h-[120px] flex items-center justify-center gap-4 bg-[color-mix(in_srgb,var(--accent)_3%,transparent)]" })
-export const DemoBtn = tw.button({ base: "px-3 py-1.5 rounded-lg text-sm font-medium bg-[var(--accent)] text-white cursor-pointer hover:opacity-90 transition-opacity" })
+// Popover API specific components
+export const PopoverContainer = tw.div({ base: "relative min-h-[180px] flex items-center justify-center gap-3 flex-wrap" })
+export const Backdrop = tw.div({ base: "fixed inset-0 z-40" })
+export const BackdropDim = tw.div({ base: "fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" })
+export const PopoverContent = tw.div({ base: "z-50 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--surface)] border border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] rounded-xl shadow-xl p-4 min-w-[200px] text-sm" })
+export const PopoverTitle = tw.p({ base: "font-semibold mb-2" })
+export const PopoverDescription = tw.p({ base: "text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] mb-3" })
+export const EventLog = tw.div({ base: "mt-3 space-y-1" })
+export const EventLogItem = tw.div({ base: "text-[10px] font-mono text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]" })
+
+export const HintText = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]",
+})
+
+export const CodeInline = tw.code({
+    base: "font-mono",
+})
+
+export const CloseBtnFull = tw.button({
+    base: "px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity cursor-pointer w-full text-center",
+})
+
+export const BadgeRow = tw.div({
+    base: "flex gap-2 flex-wrap my-4",
+})
