@@ -36,12 +36,12 @@ export const GridLayout = tw.div({
     base: "grid gap-4",
     variants: {
         columns: {
-            "1": "grid-cols-1",
-            "2": "sm:grid-cols-2",
-            "3": "sm:grid-cols-3",
+            1: "grid-cols-1",
+            2: "sm:grid-cols-2",
+            3: "sm:grid-cols-3",
         },
     },
-    defaultVariants: { columns: "3" },
+    defaultVariants: { columns: 3 },
 })
 
 export const FlexContainer = tw.div({
@@ -276,13 +276,13 @@ export const StackBox = tw.div({
             c: "bg-amber-400 top-20 left-28",
         },
         z: {
-            "0": "z-0",
-            "10": "z-10",
-            "20": "z-20",
-            "30": "z-30",
+            0: "z-0",
+            10: "z-10",
+            20: "z-20",
+            30: "z-30",
         },
     },
-    defaultVariants: { layer: "a", z: "0" },
+    defaultVariants: { layer: "a", z: 0 },
 })
 
 export const OpacityParent = tw.div({
@@ -354,14 +354,14 @@ export const SnapItem = tw.div({
     base: "shrink-0 w-32 h-full rounded-lg flex items-center justify-center text-white font-bold snap-center",
     variants: {
         color: {
-            "0": "bg-rose-400",
-            "1": "bg-blue-400",
-            "2": "bg-emerald-400",
-            "3": "bg-amber-400",
-            "4": "bg-violet-400",
+            0: "bg-rose-400",
+            1: "bg-blue-400",
+            2: "bg-emerald-400",
+            3: "bg-amber-400",
+            4: "bg-violet-400",
         },
     },
-    defaultVariants: { color: "0" },
+    defaultVariants: { color: 0 },
 })
 
 export const AnchorDemoBox = tw.div({

@@ -23,43 +23,43 @@ const NAV_SECTIONS = [
   {
     label: "Getting Started",
     items: [
-      { id: "overview",     label: "Overview" },
-      { id: "install",      label: "Installation" },
+      { id: "overview", label: "Overview" },
+      { id: "install", label: "Installation" },
       { id: "setup-nextjs", label: "Setup: Next.js" },
-      { id: "setup-vite",   label: "Setup: Vite" },
+      { id: "setup-vite", label: "Setup: Vite" },
       { id: "setup-rspack", label: "Setup: Rspack" },
     ],
   },
   {
     label: "Core API",
     items: [
-      { id: "template-literal",    label: "Template Literal" },
-      { id: "object-config",       label: "Object Config" },
-      { id: "sub-components",      label: "Sub-Components" },
-      { id: "cv",                  label: "cv()" },
-      { id: "states",              label: "states" },
-      { id: "state-data-attr",     label: "state (data-attr)" },
-      { id: "extend",              label: ".extend()" },
-      { id: "container-queries",   label: "container queries" },
-      { id: "server-components",   label: "server." },
+      { id: "template-literal", label: "Template Literal" },
+      { id: "object-config", label: "Object Config" },
+      { id: "sub-components", label: "Sub-Components" },
+      { id: "cv", label: "cv()" },
+      { id: "states", label: "states" },
+      { id: "state-data-attr", label: "state (data-attr)" },
+      { id: "extend", label: ".extend()" },
+      { id: "container-queries", label: "container queries" },
+      { id: "server-components", label: "server." },
     ],
   },
   {
     label: "Design System",
     items: [
       { id: "create-styled-system", label: "createStyledSystem()" },
-      { id: "live-token",           label: "liveToken()" },
-      { id: "utilities",            label: "cn / cx / twMerge" },
+      { id: "live-token", label: "liveToken()" },
+      { id: "utilities", label: "cn / cx / twMerge" },
     ],
   },
   {
     label: "Reference",
     items: [
-      { id: "typescript",   label: "TypeScript" },
-      { id: "cli",          label: "CLI" },
-      { id: "devtools",     label: "DevTools" },
-      { id: "env-vars",     label: "Environment Vars" },
-      { id: "benchmark",    label: "Benchmark" },
+      { id: "typescript", label: "TypeScript" },
+      { id: "cli", label: "CLI" },
+      { id: "devtools", label: "DevTools" },
+      { id: "env-vars", label: "Environment Vars" },
+      { id: "benchmark", label: "Benchmark" },
       { id: "architecture", label: "Architecture" },
     ],
   },
@@ -67,25 +67,25 @@ const NAV_SECTIONS = [
 
 // TOC — diambil dari heading2 di content
 const TOC_ITEMS = [
-  { id: "overview",             label: "Overview",             depth: 2 },
-  { id: "install",              label: "Installation",         depth: 2 },
-  { id: "setup-nextjs",         label: "Setup: Next.js",       depth: 2 },
-  { id: "setup-vite",           label: "Setup: Vite",          depth: 2 },
-  { id: "template-literal",     label: "Template Literal",     depth: 2 },
-  { id: "object-config",        label: "Object Config",        depth: 2 },
-  { id: "sub-components",       label: "Sub-Components",       depth: 2 },
-  { id: "cv",                   label: "cv()",                 depth: 2 },
-  { id: "states",               label: "states",               depth: 2 },
-  { id: "state-data-attr",      label: "state (data-attr)",    depth: 2 },
-  { id: "extend",               label: ".extend()",            depth: 2 },
-  { id: "container-queries",    label: "Container Queries",    depth: 2 },
-  { id: "server-components",    label: "server.",              depth: 2 },
+  { id: "overview", label: "Overview", depth: 2 },
+  { id: "install", label: "Installation", depth: 2 },
+  { id: "setup-nextjs", label: "Setup: Next.js", depth: 2 },
+  { id: "setup-vite", label: "Setup: Vite", depth: 2 },
+  { id: "template-literal", label: "Template Literal", depth: 2 },
+  { id: "object-config", label: "Object Config", depth: 2 },
+  { id: "sub-components", label: "Sub-Components", depth: 2 },
+  { id: "cv", label: "cv()", depth: 2 },
+  { id: "states", label: "states", depth: 2 },
+  { id: "state-data-attr", label: "state (data-attr)", depth: 2 },
+  { id: "extend", label: ".extend()", depth: 2 },
+  { id: "container-queries", label: "Container Queries", depth: 2 },
+  { id: "server-components", label: "server.", depth: 2 },
   { id: "create-styled-system", label: "createStyledSystem()", depth: 2 },
-  { id: "live-token",           label: "liveToken()",          depth: 2 },
-  { id: "utilities",            label: "cn / cx / twMerge",    depth: 2 },
-  { id: "typescript",           label: "TypeScript",           depth: 2 },
-  { id: "benchmark",            label: "Benchmark",            depth: 2 },
-  { id: "architecture",         label: "Architecture",         depth: 2 },
+  { id: "live-token", label: "liveToken()", depth: 2 },
+  { id: "utilities", label: "cn / cx / twMerge", depth: 2 },
+  { id: "typescript", label: "TypeScript", depth: 2 },
+  { id: "benchmark", label: "Benchmark", depth: 2 },
+  { id: "architecture", label: "Architecture", depth: 2 },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -124,6 +124,9 @@ const NavRight = tw.div({
 
 const NavLink = tw.a({
   base: "hover:text-[var(--foreground)] transition-colors",
+  states: {
+    hideOnMobile: "hidden sm:block",
+  },
 });
 
 const GhubLink = tw.a({
@@ -134,6 +137,13 @@ const GhubLink = tw.a({
     transition-colors
   `,
 });
+
+const NavLeftGroup = tw.div({ base: "flex items-center gap-4" });
+const HamburgerButton = tw.button({
+  base: "lg:hidden p-1.5 rounded-lg hover:bg-[var(--surface-muted)] transition-colors",
+});
+const HamburgerIcon = tw.span({ base: "inline-block w-4 h-4" });
+const GhubIcon = tw.span({ base: "inline-block w-3.5 h-3.5" });
 
 // 3-column body
 const BodyGrid = tw.div({
@@ -160,6 +170,27 @@ const SidebarSectionLabel = tw.p({
   base: "px-3 mb-1 text-[11px] font-semibold uppercase tracking-wider text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]",
 });
 
+const SidebarButton = tw.button({
+  base: "w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all",
+  variants: {
+    state: {
+      active: "bg-[var(--accent)] text-white font-medium",
+      inactive:"text-[color-mix(in_srgb,var(--foreground)_65%,transparent)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]",
+    },
+  },
+  defaultVariants: { state: "inactive" },
+});
+
+// Mobile nav drawer
+const MobileNavOverlay = tw.div({ base: "lg:hidden fixed inset-0 z-40 bg-black/50" });
+const MobileNavPanel = tw.div({
+  base: "absolute left-0 top-14 bottom-0 w-72 bg-[var(--background)] border-r border-[var(--border)] p-4 overflow-y-auto",
+});
+const MobileSection = tw.div({ base: "mb-5" });
+const MobileSectionLabel = tw.p({
+  base: "text-[11px] font-semibold uppercase tracking-wider text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mb-1 px-2",
+});
+
 // ── Center content ──
 const ContentArea = tw.main({
   base: "flex-1 min-w-0 px-6 lg:px-10 py-10",
@@ -184,6 +215,26 @@ const TocLabel = tw.p({
   base: "mb-3 text-[11px] font-semibold uppercase tracking-wider text-[color-mix(in_srgb,var(--foreground)_40%,transparent)]",
 });
 
+const TocLink = tw.a({
+  base: "block text-xs py-1 transition-colors leading-snug",
+  variants: {
+    state: {
+      active: "text-[var(--accent)] font-medium",
+      inactive: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
+    },
+  },
+  states: {
+    indented: "pl-3",
+  },
+  defaultVariants: { state: "inactive" },
+});
+
+const TocList = tw.div({ base: "space-y-0.5 border-l border-[var(--border)] pl-3" });
+const TocFooter = tw.div({ base: "mt-6 pt-4 border-t border-[var(--border)]" });
+const EditGithubLink = tw.a({
+  base: "text-xs text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1",
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Content primitives — pola Fumadocs/Nextra typography
 // ─────────────────────────────────────────────────────────────────────────────
@@ -201,10 +252,15 @@ const Breadcrumb = tw.div({
 });
 
 const BreadcrumbSep = tw.span({ base: "opacity-40" });
+const BreadcrumbLink = tw.a({ base: "hover:text-[var(--foreground)] transition-colors" });
 
 // Section heading dengan anchor
 const H2 = tw.h2({
   base: "text-xl font-bold mt-12 mb-4 scroll-mt-20 flex items-center gap-2 group",
+});
+
+const AnchorLink = tw.a({
+  base: "opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg",
 });
 
 const H3 = tw.h3({
@@ -245,14 +301,16 @@ const CalloutBase = tw.div({
   base: "flex gap-3 rounded-xl border px-4 py-3.5 my-5 text-sm leading-relaxed",
   variants: {
     type: {
-      info:    "bg-blue-50 border-blue-200 text-blue-900",
+      info: "bg-blue-50 border-blue-200 text-blue-900",
       warning: "bg-amber-50 border-amber-200 text-amber-900",
-      tip:     "bg-emerald-50 border-emerald-200 text-emerald-900",
-      danger:  "bg-red-50 border-red-200 text-red-900",
+      tip: "bg-emerald-50 border-emerald-200 text-emerald-900",
+      danger: "bg-red-50 border-red-200 text-red-900",
     },
   },
   defaultVariants: { type: "info" },
 });
+
+const CalloutIcon = tw.span({ base: "text-base leading-none mt-0.5 shrink-0" });
 
 // Steps — pola Nextra
 const StepsWrapper = tw.div({
@@ -273,6 +331,10 @@ const StepNumber = tw.div({
 
 const StepTitle = tw.h4({
   base: "font-semibold mb-2 text-sm",
+});
+
+const StepDesc = tw.div({
+  base: "text-sm text-[color-mix(in_srgb,var(--foreground)_75%,transparent)]",
 });
 
 // Cards — pola Nextra
@@ -312,6 +374,17 @@ const Th = tw.th({
 
 const Td = tw.td({
   base: "px-4 py-3 border-b border-[var(--border)] text-[color-mix(in_srgb,var(--foreground)_80%,transparent)] align-top",
+  variants: {
+    tone: {
+      default: "",
+      label: "font-medium",
+      success: "text-emerald-700 font-medium",
+      successBold: "text-emerald-700 font-semibold",
+      indigoBold: "text-indigo-700 font-bold",
+      mutedCenter: "text-center text-gray-400",
+    },
+  },
+  defaultVariants: { tone: "default" },
 });
 
 const TdMono = tw.td({
@@ -347,26 +420,31 @@ const FooterNavLabel = tw.span({
 // Copy button hook + component
 // ─────────────────────────────────────────────────────────────────────────────
 
+const CopyBtn = tw.button({
+  base: "text-[10px] font-medium px-2 py-1 rounded-md transition-all border border-[var(--border)]",
+  variants: {
+    state: {
+      copied: "bg-emerald-500 text-white border-emerald-500",
+      idle: "bg-[var(--surface)] text-[color-mix(in_srgb,var(--foreground)_50%,transparent)] hover:bg-[var(--surface-muted)]",
+    },
+  },
+  defaultVariants: { state: "idle" },
+});
+
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <CopyBtn
+      state={copied ? "copied" : "idle"}
       onClick={() => {
         navigator.clipboard.writeText(text).then(() => {
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
         });
       }}
-      className={cn(
-        "text-[10px] font-medium px-2 py-1 rounded-md transition-all",
-        "border border-[var(--border)]",
-        copied
-          ? "bg-emerald-500 text-white border-emerald-500"
-          : "bg-[var(--surface)] text-[color-mix(in_srgb,var(--foreground)_50%,transparent)] hover:bg-[var(--surface-muted)]"
-      )}
     >
       {copied ? "Copied!" : "Copy"}
-    </button>
+    </CopyBtn>
   );
 }
 
@@ -394,7 +472,7 @@ function Callout({
   const icons = { info: "ℹ️", warning: "⚠️", tip: "💡", danger: "🚨" };
   return (
     <CalloutBase type={type}>
-      <span className="text-base leading-none mt-0.5 shrink-0">{icons[type]}</span>
+      <CalloutIcon>{icons[type]}</CalloutIcon>
       <div>{children}</div>
     </CalloutBase>
   );
@@ -408,9 +486,7 @@ function Steps({ items }: { items: { title: string; content: React.ReactNode }[]
         <StepItem key={i}>
           <StepNumber>{i + 1}</StepNumber>
           <StepTitle>{item.title}</StepTitle>
-          <div className="text-sm text-[color-mix(in_srgb,var(--foreground)_75%,transparent)]">
-            {item.content}
-          </div>
+          <StepDesc>{item.content}</StepDesc>
         </StepItem>
       ))}
     </StepsWrapper>
@@ -432,17 +508,9 @@ function SidebarItem({
 }) {
   const isActive = activeId === item.id;
   return (
-    <button
-      onClick={() => onClick(item.id)}
-      className={cn(
-        "w-full text-left px-3 py-1.5 rounded-lg text-sm transition-all",
-        isActive
-          ? "bg-[var(--accent)] text-white font-medium"
-          : "text-[color-mix(in_srgb,var(--foreground)_65%,transparent)] hover:bg-[var(--surface-muted)] hover:text-[var(--foreground)]"
-      )}
-    >
+    <SidebarButton onClick={() => onClick(item.id)} state={isActive ? "active" : "inactive"}>
       {item.label}
-    </button>
+    </SidebarButton>
   );
 }
 
@@ -456,18 +524,13 @@ function TocItem({
 }) {
   const isActive = activeId === item.id;
   return (
-    <a
+    <TocLink
       href={`#${item.id}`}
-      className={cn(
-        "block text-xs py-1 transition-colors leading-snug",
-        item.depth === 3 && "pl-3",
-        isActive
-          ? "text-[var(--accent)] font-medium"
-          : "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]"
-      )}
+      state={isActive ? "active" : "inactive"}
+      indented={item.depth === 3}
     >
       {item.label}
-    </a>
+    </TocLink>
   );
 }
 
@@ -518,29 +581,32 @@ export default function DocsPage() {
       {/* ── Top Nav ── */}
       <TopNav>
         <TopNavInner>
-          <div className="flex items-center gap-4">
+          <NavLeftGroup>
             {/* Mobile hamburger */}
-            <button
-              className="lg:hidden p-1.5 rounded-lg hover:bg-[var(--surface-muted)] transition-colors"
+            <HamburgerButton
               onClick={() => setMobileNavOpen(!mobileNavOpen)}
               aria-label="Toggle nav"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d={mobileNavOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-              </svg>
-            </button>
+              <HamburgerIcon>
+                <svg width="100%" height="100%" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d={mobileNavOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                </svg>
+              </HamburgerIcon>
+            </HamburgerButton>
             <Logo href="/">
               tailwind-styled-v4
               <LogoBadge>v5</LogoBadge>
             </Logo>
-          </div>
+          </NavLeftGroup>
           <NavRight>
-            <NavLink href="/" className="hidden sm:block">← Demo</NavLink>
+            <NavLink href="/" hideOnMobile>← Demo</NavLink>
             <GhubLink href="https://github.com/Dictionar32/tailwind-styled-v4" target="_blank">
-              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
-              </svg>
+              <GhubIcon>
+                <svg width="100%" height="100%" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+                </svg>
+              </GhubIcon>
               GitHub
             </GhubLink>
           </NavRight>
@@ -549,16 +615,11 @@ export default function DocsPage() {
 
       {/* Mobile nav drawer */}
       {mobileNavOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-black/50" onClick={() => setMobileNavOpen(false)}>
-          <div
-            className="absolute left-0 top-14 bottom-0 w-72 bg-[var(--background)] border-r border-[var(--border)] p-4 overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <MobileNavOverlay onClick={() => setMobileNavOpen(false)}>
+          <MobileNavPanel onClick={(e) => e.stopPropagation()}>
             {NAV_SECTIONS.map((section) => (
-              <div key={section.label} className="mb-5">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-[color-mix(in_srgb,var(--foreground)_40%,transparent)] mb-1 px-2">
-                  {section.label}
-                </p>
+              <MobileSection key={section.label}>
+                <MobileSectionLabel>{section.label}</MobileSectionLabel>
                 {section.items.map((item) => (
                   <SidebarItem
                     key={item.id}
@@ -567,10 +628,10 @@ export default function DocsPage() {
                     onClick={scrollTo}
                   />
                 ))}
-              </div>
+              </MobileSection>
             ))}
-          </div>
-        </div>
+          </MobileNavPanel>
+        </MobileNavOverlay>
       )}
 
       {/* ── 3-column body ── */}
@@ -599,7 +660,7 @@ export default function DocsPage() {
 
             {/* Breadcrumb */}
             <Breadcrumb>
-              <a href="/" className="hover:text-[var(--foreground)] transition-colors">Home</a>
+              <BreadcrumbLink href="/">Home</BreadcrumbLink>
               <BreadcrumbSep>/</BreadcrumbSep>
               <span>Documentation</span>
             </Breadcrumb>
@@ -613,7 +674,7 @@ export default function DocsPage() {
             {/* ── Overview ── */}
             <H2 id="overview">
               Overview
-              <a href="#overview" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#overview">#</AnchorLink>
             </H2>
             <P>
               <InlineCode>tailwind-styled-v4</InlineCode> menggabungkan DX{" "}
@@ -634,16 +695,16 @@ export default function DocsPage() {
                 </thead>
                 <tbody>
                   {[
-                    ["Build-time CSS",      "✅",         "❌ runtime",  "✅"],
-                    ["Runtime JS",          "~0",          "~15KB",       "~0"],
-                    ["Variants API",        "✅ type-safe","terbatas",    "✅"],
-                    ["SSR / RSC",           "✅ zero cfg", "⚠️ setup",    "✅"],
-                    ["Engine",             "🦀 Rust",     "JS",          "JS"],
-                    ["TypeScript",          "✅ full",     "partial",     "✅"],
+                    ["Build-time CSS", "✅", "❌ runtime", "✅"],
+                    ["Runtime JS", "~0", "~15KB", "~0"],
+                    ["Variants API", "✅ type-safe", "terbatas", "✅"],
+                    ["SSR / RSC", "✅ zero cfg", "⚠️ setup", "✅"],
+                    ["Engine", "🦀 Rust", "JS", "JS"],
+                    ["TypeScript", "✅ full", "partial", "✅"],
                   ].map(([f, a, b, c]) => (
                     <tr key={f}>
-                      <Td className="font-medium">{f}</Td>
-                      <Td className="text-emerald-700 font-medium">{a}</Td>
+                      <Td tone="label">{f}</Td>
+                      <Td tone="success">{a}</Td>
                       <Td>{b}</Td>
                       <Td>{c}</Td>
                     </tr>
@@ -657,7 +718,7 @@ export default function DocsPage() {
             {/* ── Installation ── */}
             <H2 id="install">
               Installation
-              <a href="#install" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#install">#</AnchorLink>
             </H2>
 
             <Steps items={[
@@ -665,7 +726,7 @@ export default function DocsPage() {
                 title: "Install package",
                 content: (
                   <Code filename="terminal">
-{`npm install tailwind-styled-v4`}
+                    {`npm install tailwind-styled-v4`}
                   </Code>
                 ),
               },
@@ -696,11 +757,11 @@ export default function DocsPage() {
             {/* ── Setup Next.js ── */}
             <H2 id="setup-nextjs">
               Setup: Next.js
-              <a href="#setup-nextjs" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#setup-nextjs">#</AnchorLink>
             </H2>
 
             <Code filename="next.config.ts">
-{`import { withTailwindStyled } from "tailwind-styled-v4/next"
+              {`import { withTailwindStyled } from "tailwind-styled-v4/next"
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {}
@@ -711,7 +772,7 @@ export default withTailwindStyled({
             </Code>
 
             <Code filename="src/app/layout.tsx">
-{`import { TwCssInjector } from "tailwind-styled-v4/runtime-css"
+              {`import { TwCssInjector } from "tailwind-styled-v4/runtime-css"
 
 export default function RootLayout({ children }) {
   return (
@@ -727,7 +788,7 @@ export default function RootLayout({ children }) {
             </Code>
 
             <Code filename="globals.css">
-{`@import "tailwindcss";
+              {`@import "tailwindcss";
 
 :root {
   --background: #f5f7fb;
@@ -751,11 +812,11 @@ export default function RootLayout({ children }) {
             {/* ── Setup Vite ── */}
             <H2 id="setup-vite">
               Setup: Vite
-              <a href="#setup-vite" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#setup-vite">#</AnchorLink>
             </H2>
 
             <Code filename="vite.config.ts">
-{`import { defineConfig } from "vite"
+              {`import { defineConfig } from "vite"
 import react from "@vitejs/plugin-react"
 import { tailwindStyled } from "tailwind-styled-v4/vite"
 
@@ -769,12 +830,12 @@ export default defineConfig({
             {/* ── Template Literal ── */}
             <H2 id="template-literal">
               Template Literal
-              <a href="#template-literal" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#template-literal">#</AnchorLink>
             </H2>
             <P>API paling sederhana — satu tag, satu string kelas.</P>
 
             <Code filename="Button.tsx">
-{`import { tw } from "tailwind-styled-v4"
+              {`import { tw } from "tailwind-styled-v4"
 
 const Button = tw.button\`
   inline-flex items-center rounded-lg px-4 py-2
@@ -790,7 +851,7 @@ const Button = tw.button\`
             {/* ── Object Config ── */}
             <H2 id="object-config">
               Object Config
-              <a href="#object-config" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#object-config">#</AnchorLink>
             </H2>
             <P>
               API utama — mendukung <InlineCode>base</InlineCode>,{" "}
@@ -799,7 +860,7 @@ const Button = tw.button\`
             </P>
 
             <Code filename="Button.tsx">
-{`const Button = tw.button({
+              {`const Button = tw.button({
   base: "inline-flex items-center rounded-lg font-medium transition-all",
   variants: {
     intent: {
@@ -830,7 +891,7 @@ const Button = tw.button\`
             {/* ── Sub-Components ── */}
             <H2 id="sub-components">
               Sub-Components
-              <a href="#sub-components" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#sub-components">#</AnchorLink>
             </H2>
             <P>
               Definisi slot anak langsung di config. Format{" "}
@@ -838,7 +899,7 @@ const Button = tw.button\`
             </P>
 
             <Code filename="Card.tsx">
-{`const Card = tw.article({
+              {`const Card = tw.article({
   base: "rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden",
   sub: {
     "header:header": "px-6 pt-5 pb-0 flex items-start justify-between",
@@ -870,12 +931,12 @@ const Button = tw.button\`
             {/* ── cv() ── */}
             <H2 id="cv">
               cv()
-              <a href="#cv" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#cv">#</AnchorLink>
             </H2>
             <P>Untuk styling non-komponen — mengembalikan <InlineCode>string</InlineCode> className, bukan komponen React.</P>
 
             <Code filename="badge.ts">
-{`import { cv } from "tailwind-styled-v4"
+              {`import { cv } from "tailwind-styled-v4"
 
 const badge = cv({
   base: "inline-flex items-center gap-1.5 rounded-full font-medium",
@@ -904,7 +965,7 @@ const badge = cv({
             {/* ── states ── */}
             <H2 id="states">
               states
-              <a href="#states" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#states">#</AnchorLink>
             </H2>
             <P>
               Boolean props yang di-resolve via Rust bitmask lookup table. Tidak ada
@@ -912,7 +973,7 @@ const badge = cv({
             </P>
 
             <Code filename="Button.tsx">
-{`const Button = tw.button({
+              {`const Button = tw.button({
   base: "inline-flex items-center px-4 py-2 rounded-lg font-medium",
   variants: { intent: { primary: "bg-indigo-600 text-white" } },
   defaultVariants: { intent: "primary" },
@@ -933,12 +994,12 @@ const badge = cv({
             {/* ── state data-attr ── */}
             <H2 id="state-data-attr">
               state (data-attr)
-              <a href="#state-data-attr" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#state-data-attr">#</AnchorLink>
             </H2>
             <P>Toggle style via data attribute — tanpa React re-render, cocok untuk animasi.</P>
 
             <Code filename="Dropdown.tsx">
-{`const Dropdown = tw.div({
+              {`const Dropdown = tw.div({
   base: "overflow-hidden transition-all duration-200",
   state: {
     open: {
@@ -960,11 +1021,11 @@ dropdownRef.current?.setAttribute("data-open", "true")
             {/* ── extend ── */}
             <H2 id="extend">
               .extend()
-              <a href="#extend" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#extend">#</AnchorLink>
             </H2>
 
             <Code filename="Button.tsx">
-{`// Template literal extend
+              {`// Template literal extend
 const PrimaryButton = Button.extend\`
   bg-indigo-600 text-white hover:bg-indigo-700
 \`
@@ -982,12 +1043,12 @@ const BigDangerButton = Button.extend({
             {/* ── Container Queries ── */}
             <H2 id="container-queries">
               Container Queries
-              <a href="#container-queries" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#container-queries">#</AnchorLink>
             </H2>
             <P>Responsive berdasarkan lebar container parent, bukan viewport.</P>
 
             <Code filename="Card.tsx">
-{`const Card = tw.div({
+              {`const Card = tw.div({
   base: "p-4 flex flex-col",
   container: {
     sm: "flex-col",    // @container (min-width: 320px)
@@ -1015,12 +1076,12 @@ const CardWrapper = tw.div\`@container\`
             {/* ── server. ── */}
             <H2 id="server-components">
               server.
-              <a href="#server-components" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#server-components">#</AnchorLink>
             </H2>
             <P>Komponen yang di-enforce hanya boleh render di server. Dev warning otomatis jika render di browser.</P>
 
             <Code filename="PageHeader.tsx">
-{`import { server } from "tailwind-styled-v4"
+              {`import { server } from "tailwind-styled-v4"
 
 const PageHeader = server.header({
   base: "w-full border-b px-6 py-4 bg-white",
@@ -1036,12 +1097,12 @@ const PageHeader = server.header({
             {/* ── createStyledSystem ── */}
             <H2 id="create-styled-system">
               createStyledSystem()
-              <a href="#create-styled-system" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#create-styled-system">#</AnchorLink>
             </H2>
             <P>Design system factory dengan token terpusat. Token di-inject sebagai CSS custom properties <InlineCode>{`--sys-{group}-{name}`}</InlineCode>.</P>
 
             <Code filename="ui.ts">
-{`import { createStyledSystem } from "tailwind-styled-v4"
+              {`import { createStyledSystem } from "tailwind-styled-v4"
 
 const ui = createStyledSystem({
   tokens: {
@@ -1074,12 +1135,12 @@ ui.setTokens({ colors: { primary: "#8b5cf6" } }) // update runtime`}
             {/* ── liveToken ── */}
             <H2 id="live-token">
               liveToken()
-              <a href="#live-token" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#live-token">#</AnchorLink>
             </H2>
             <P>Reactive design token yang bisa diupdate runtime dan di-subscribe lewat React hook.</P>
 
             <Code filename="tokens.ts">
-{`import { liveToken, tokenVar, createUseTokens } from "tailwind-styled-v4"
+              {`import { liveToken, tokenVar, createUseTokens } from "tailwind-styled-v4"
 
 const tokens = liveToken({
   primary: "#6366f1",
@@ -1111,11 +1172,11 @@ tokens.primary.set("#8b5cf6")`}
             {/* ── utilities ── */}
             <H2 id="utilities">
               cn / cx / twMerge
-              <a href="#utilities" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#utilities">#</AnchorLink>
             </H2>
 
             <Code filename="utils.ts">
-{`import { cn, cx, twMerge } from "tailwind-styled-v4"
+              {`import { cn, cx, twMerge } from "tailwind-styled-v4"
 
 // cn — merge dengan Tailwind conflict resolution
 cn("px-4 py-2", isActive && "bg-blue-500", className)
@@ -1134,12 +1195,12 @@ twMerge("text-sm font-bold", "text-lg") // → "font-bold text-lg"`}
             {/* ── TypeScript ── */}
             <H2 id="typescript">
               TypeScript
-              <a href="#typescript" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#typescript">#</AnchorLink>
             </H2>
             <P>Semua API fully typed — tidak ada <InlineCode>any</InlineCode> di public API.</P>
 
             <Code filename="types.tsx">
-{`// Variant type inference otomatis dari config
+              {`// Variant type inference otomatis dari config
 const Button = tw.button({
   variants: {
     intent: { primary: "...", ghost: "...", danger: "..." },
@@ -1170,7 +1231,7 @@ Card.xyz     // ❌ TypeScript error`}
             {/* ── CLI ── */}
             <H2 id="cli">
               CLI
-              <a href="#cli" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#cli">#</AnchorLink>
             </H2>
 
             <TableWrapper>
@@ -1183,13 +1244,13 @@ Card.xyz     // ❌ TypeScript error`}
                 </thead>
                 <tbody>
                   {[
-                    ["npx tw setup",     "Setup otomatis: detect bundler, patch config, pre-warm cache"],
+                    ["npx tw setup", "Setup otomatis: detect bundler, patch config, pre-warm cache"],
                     ["npx tw preflight", "Verifikasi setup — config, native binary, dependencies"],
-                    ["npx tw audit",     "Analisis workspace — unused classes, missing variants"],
+                    ["npx tw audit", "Analisis workspace — unused classes, missing variants"],
                     ["npx tw benchmark", "Benchmark performa scanner + compiler"],
-                    ["npx tw doctor",    "Diagnosa masalah + rekomendasi perbaikan"],
-                    ["npx tw trace",     "Trace resolusi class untuk debug"],
-                    ["npx tw why",       "Jelaskan dari mana class tertentu berasal"],
+                    ["npx tw doctor", "Diagnosa masalah + rekomendasi perbaikan"],
+                    ["npx tw trace", "Trace resolusi class untuk debug"],
+                    ["npx tw why", "Jelaskan dari mana class tertentu berasal"],
                   ].map(([cmd, desc]) => (
                     <tr key={cmd}>
                       <TdMono>{cmd}</TdMono>
@@ -1205,11 +1266,11 @@ Card.xyz     // ❌ TypeScript error`}
             {/* ── DevTools ── */}
             <H2 id="devtools">
               DevTools
-              <a href="#devtools" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#devtools">#</AnchorLink>
             </H2>
 
             <Code filename="layout.tsx">
-{`import dynamic from "next/dynamic"
+              {`import dynamic from "next/dynamic"
 
 const DevTools = dynamic(
   () => import("tailwind-styled-v4/devtools").then(m => ({ default: m.TwDevTools })),
@@ -1233,7 +1294,7 @@ const DevTools = dynamic(
             {/* ── Env Vars ── */}
             <H2 id="env-vars">
               Environment Variables
-              <a href="#env-vars" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#env-vars">#</AnchorLink>
             </H2>
 
             <TableWrapper>
@@ -1247,15 +1308,15 @@ const DevTools = dynamic(
                 </thead>
                 <tbody>
                   {[
-                    ["TWS_LOG_LEVEL",      "info", "debug | info | warn | error | silent"],
-                    ["TWS_DEBUG_SCANNER",  "0",    "1 = aktifkan scanner debug logs"],
-                    ["TWS_NO_NATIVE",      "—",    "1 = disable native module (fallback JS)"],
-                    ["TWS_NO_RUST",        "—",    "1 = disable Rust, gunakan JS fallback"],
-                    ["TWS_DISABLE_NATIVE", "—",    "Alias TWS_NO_NATIVE"],
+                    ["TWS_LOG_LEVEL", "info", "debug | info | warn | error | silent"],
+                    ["TWS_DEBUG_SCANNER", "0", "1 = aktifkan scanner debug logs"],
+                    ["TWS_NO_NATIVE", "—", "1 = disable native module (fallback JS)"],
+                    ["TWS_NO_RUST", "—", "1 = disable Rust, gunakan JS fallback"],
+                    ["TWS_DISABLE_NATIVE", "—", "Alias TWS_NO_NATIVE"],
                   ].map(([v, d, desc]) => (
                     <tr key={v}>
                       <TdMono>{v}</TdMono>
-                      <Td className="text-center text-gray-400">{d}</Td>
+                      <Td tone="mutedCenter">{d}</Td>
                       <Td>{desc}</Td>
                     </tr>
                   ))}
@@ -1268,7 +1329,7 @@ const DevTools = dynamic(
             {/* ── Benchmark ── */}
             <H2 id="benchmark">
               Benchmark
-              <a href="#benchmark" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#benchmark">#</AnchorLink>
             </H2>
             <P>Diukur di Node.js 22, Rust 1.75, M1 MacBook Pro.</P>
 
@@ -1284,17 +1345,17 @@ const DevTools = dynamic(
                 </thead>
                 <tbody>
                   {[
-                    ["Scan 1000 file",    "0.8 ms",   "~340 ms",  "~425×"],
-                    ["Compile 500 class", "0.02 ms",  "~1.2 ms",  "~60×"],
-                    ["Parse class str",   "0.010 ms", "~0.8 ms",  "~80×"],
-                    ["Cache read/write",  "0.009 ms", "~0.5 ms",  "~55×"],
-                    ["Watch rebuild",     "< 5 ms",   "~85 ms",   "~17×"],
+                    ["Scan 1000 file", "0.8 ms", "~340 ms", "~425×"],
+                    ["Compile 500 class", "0.02 ms", "~1.2 ms", "~60×"],
+                    ["Parse class str", "0.010 ms", "~0.8 ms", "~80×"],
+                    ["Cache read/write", "0.009 ms", "~0.5 ms", "~55×"],
+                    ["Watch rebuild", "< 5 ms", "~85 ms", "~17×"],
                   ].map(([op, tw, js, sp]) => (
                     <tr key={op}>
-                      <Td className="font-medium">{op}</Td>
-                      <Td className="text-emerald-700 font-semibold">{tw}</Td>
+                      <Td tone="label">{op}</Td>
+                      <Td tone="successBold">{tw}</Td>
                       <Td>{js}</Td>
-                      <Td className="text-indigo-700 font-bold">{sp}</Td>
+                      <Td tone="indigoBold">{sp}</Td>
                     </tr>
                   ))}
                 </tbody>
@@ -1306,13 +1367,13 @@ const DevTools = dynamic(
             {/* ── Architecture ── */}
             <H2 id="architecture">
               Architecture
-              <a href="#architecture" className="opacity-0 group-hover:opacity-100 text-[var(--accent)] text-lg">#</a>
+              <AnchorLink href="#architecture">#</AnchorLink>
             </H2>
 
             <CardsGrid>
               {[
-                { title: "🦀 native/",        href: "#architecture", desc: "Rust engine via NAPI-RS. Domain, application, infrastructure layers. 11 NAPI bridge modules." },
-                { title: "📦 packages/domain/",href: "#architecture", desc: "core, compiler, scanner, theme, shared, runtime-css. Clean domain separation." },
+                { title: "🦀 native/", href: "#architecture", desc: "Rust engine via NAPI-RS. Domain, application, infrastructure layers. 11 NAPI bridge modules." },
+                { title: "📦 packages/domain/", href: "#architecture", desc: "core, compiler, scanner, theme, shared, runtime-css. Clean domain separation." },
                 { title: "🔌 packages/presentation/", href: "#architecture", desc: "Next.js, Vite, Rspack plugins. Thin wrapper atas domain packages." },
                 { title: "🖥️ packages/infrastructure/", href: "#architecture", desc: "CLI, DevTools, Dashboard, VSCode extension, Storybook addon." },
               ].map((c) => (
@@ -1324,7 +1385,7 @@ const DevTools = dynamic(
             </CardsGrid>
 
             <Code filename="monorepo structure">
-{`tailwind-styled-v4/
+              {`tailwind-styled-v4/
 ├── native/                  # 🦀 Rust engine (NAPI-RS)
 │   ├── src/domain/          # variants, CSS gen, theme
 │   ├── src/application/     # parser, scanner, resolver
@@ -1370,20 +1431,19 @@ const DevTools = dynamic(
         {/* RIGHT TOC — sticky scroll-spy */}
         <TocAside>
           <TocLabel>On this page</TocLabel>
-          <div className="space-y-0.5 border-l border-[var(--border)] pl-3">
+          <TocList>
             {TOC_ITEMS.map((item) => (
               <TocItem key={item.id} item={item} activeId={tocActiveId} />
             ))}
-          </div>
-          <div className="mt-6 pt-4 border-t border-[var(--border)]">
-            <a
+          </TocList>
+          <TocFooter>
+            <EditGithubLink
               href="https://github.com/Dictionar32/tailwind-styled-v4"
               target="_blank"
-              className="text-xs text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)] transition-colors flex items-center gap-1"
             >
               Edit on GitHub ↗
-            </a>
-          </div>
+            </EditGithubLink>
+          </TocFooter>
         </TocAside>
 
       </BodyGrid>

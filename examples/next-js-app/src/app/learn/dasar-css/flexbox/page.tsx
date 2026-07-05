@@ -144,6 +144,58 @@ const Chip = tw.button({
 })
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 
+// ─── Shared small primitives (dipakai berulang di seluruh halaman) ────────────
+
+const PlaygroundDesc = tw.p({
+    base: "text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
+})
+const MiniLabel = tw.span({ base: "text-[9px] opacity-70" })
+const NoteBlock = tw.div({ base: "space-y-3 my-5" })
+const RoundedCard = tw.div({
+    base: "rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] overflow-hidden my-5",
+    variants: { tone: { plain: "", surface: "bg-[var(--surface)]" } },
+    defaultVariants: { tone: "plain" },
+})
+const TwoColGrid = tw.div({ base: "grid sm:grid-cols-2 gap-4 my-5" })
+const BarLabel = tw.div({ base: "bg-blue-200 p-2 text-center" })
+const DemoCard = tw.p({ base: "text-sm bg-white border border-gray-200 rounded-lg p-3" })
+const MicroMuted = tw.p({
+    base: "text-[10px] text-gray-400 font-mono",
+    variants: { mb: { 1: "mb-1", 2: "mb-2" }, mt: { 0: "", 2: "mt-2" } },
+    defaultVariants: { mb: 1, mt: 0 },
+})
+const MiniPreLine = tw.span({
+    base: "text-[10px] text-[color-mix(in_srgb,var(--foreground)_65%,transparent)] whitespace-pre",
+})
+const DemoRow = tw.div({
+    base: "flex gap-2 border-2 rounded-lg p-3 bg-white",
+    variants: {
+        tone: {
+            neutral: "border-dashed border-gray-300",
+            danger: "border-rose-200",
+            success: "border-emerald-200",
+        },
+    },
+    defaultVariants: { tone: "neutral" },
+})
+const MicroIconBox = tw.div({
+    base: "rounded flex items-center justify-center text-white text-xs shrink-0",
+    variants: {
+        tone: { danger: "bg-rose-400", success: "bg-emerald-400" },
+        size: { md: "w-16 h-10" },
+    },
+    defaultVariants: { size: "md" },
+})
+const InlineBadge = tw.div({
+    base: "flex-1 border rounded p-2 text-xs",
+    variants: {
+        tone: {
+            danger: "bg-red-50 border-red-200",
+            success: "bg-emerald-50 border-emerald-200",
+        },
+    },
+})
+
 // ─── Flex container demo items ────────────────────────────────────────────────
 
 const FlexDemo = tw.div({
@@ -165,7 +217,15 @@ const FlexItem = tw.div({
             md: "w-16 h-16",
             lg: "w-20 h-20",
             auto: "px-4 py-3",
+            boxA: "w-16 h-10",
+            boxB: "w-16 h-16",
+            boxC: "w-16 h-6",
         },
+    },
+    states: {
+        textLg: "text-[1.25rem]",
+        mlAuto: "ml-auto",
+        mxAuto: "mx-auto",
     },
     defaultVariants: { color: 1, size: "md" },
 })
@@ -186,7 +246,7 @@ const DirectionContainer = tw.div({
 
 // flex-wrap playground
 const WrapContainer = tw.div({
-    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white transition-all duration-300",
+    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white transition-all duration-300 w-60",
     variants: {
         wrap: {
             nowrap: "flex flex-nowrap gap-2",
@@ -199,7 +259,7 @@ const WrapContainer = tw.div({
 
 // justify-content playground
 const JustifyContainer = tw.div({
-    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white transition-all duration-300 flex",
+    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white transition-all duration-300 flex gap-2",
     variants: {
         justify: {
             "flex-start": "justify-start",
@@ -216,7 +276,7 @@ const JustifyContainer = tw.div({
 
 // align-items playground
 const AlignItemsContainer = tw.div({
-    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white h-32 transition-all duration-300 flex",
+    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white h-32 transition-all duration-300 flex gap-2",
     variants: {
         align: {
             "flex-start": "items-start",
@@ -245,9 +305,13 @@ const AlignSelfItem = tw.div({
     defaultVariants: { self: "auto" },
 })
 
+const SelfDemoRow = tw.div({
+    base: "flex items-start gap-2 h-32 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white",
+})
+
 // align-content playground (multi-line)
 const AlignContentContainer = tw.div({
-    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white h-52 flex flex-wrap transition-all duration-300",
+    base: "border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white h-52 flex flex-wrap transition-all duration-300 gap-2 w-60",
     variants: {
         content: {
             "flex-start": "content-start",
@@ -271,8 +335,62 @@ const FlexRatioItem = tw.div({
             2: "bg-blue-400",
             3: "bg-emerald-400",
         },
+        growValue: {
+            0: "[flex-grow:0]",
+            1: "[flex-grow:1]",
+            2: "[flex-grow:2]",
+            3: "[flex-grow:3]",
+            4: "[flex-grow:4]",
+            5: "[flex-grow:5]",
+        },
+        shrinkValue: {
+            0: "[flex-shrink:0]",
+            1: "[flex-shrink:1]",
+            2: "[flex-shrink:2]",
+            3: "[flex-shrink:3]",
+            4: "[flex-shrink:4]",
+            5: "[flex-shrink:5]",
+        },
+        basis: {
+            auto: "basis-auto grow min-w-0",
+            0: "basis-0 grow min-w-0",
+            content: "basis-[content] grow min-w-0",
+            "100px": "basis-[100px] grow min-w-0",
+            "33%": "basis-1/3 grow min-w-0",
+            "50%": "basis-1/2 grow min-w-0",
+        },
     },
     defaultVariants: { color: 1 },
+})
+
+const SliderGrid = tw.div({ base: "grid grid-cols-3 gap-4" })
+const SliderCol = tw.div({ base: "space-y-1" })
+const SliderRow = tw.div({ base: "flex justify-between text-[10px]" })
+const SliderLabel = tw.span({ base: "font-semibold text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]" })
+const SliderVal = tw.span({ base: "font-mono" })
+const RangeInput = tw.input({ base: "w-full accent-[var(--accent)]" })
+const RatioTrack = tw.div({
+    base: "flex gap-0 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg bg-white overflow-hidden",
+})
+const BasisTrack = tw.div({
+    base: "flex flex-wrap gap-2 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-2 bg-white",
+})
+const OrderTrack = tw.div({
+    base: "flex gap-2 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white",
+})
+const GapTrack = tw.div({
+    base: "flex flex-wrap border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white w-[260px]",
+    variants: {
+        gap: {
+            0: "gap-0",
+            2: "gap-2",
+            4: "gap-4",
+            6: "gap-6",
+            8: "gap-8",
+            asymmetric: "gap-x-8 gap-y-2",
+        },
+    },
+    defaultVariants: { gap: 4 },
 })
 
 // order playground item
@@ -368,7 +486,7 @@ function DirectionPlayground() {
                         <Chip key={v} active={dir === v} onClick={() => setDir(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[dir]}</p>
+                <PlaygroundDesc>{desc[dir]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <DirectionContainer dir={dir}>
@@ -402,10 +520,10 @@ function WrapPlayground() {
                         <Chip key={v} active={wrap === v} onClick={() => setWrap(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[wrap]}</p>
+                <PlaygroundDesc>{desc[wrap]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <WrapContainer wrap={wrap} style={{ width: "240px" }}>
+                <WrapContainer wrap={wrap}>
                     {["1", "2", "3", "4", "5"].map(n => (
                         <FlexItem key={n} color={1} size="md">{n}</FlexItem>
                     ))}
@@ -440,10 +558,10 @@ function JustifyPlayground() {
                         <Chip key={v} active={justify === v} onClick={() => setJustify(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[justify]}</p>
+                <PlaygroundDesc>{desc[justify]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <JustifyContainer justify={justify} style={{ gap: "8px" }}>
+                <JustifyContainer justify={justify}>
                     {[1, 2, 3].map(n => (
                         <FlexItem key={n} color={n as 1 | 2 | 3} size="md">{n}</FlexItem>
                     ))}
@@ -476,13 +594,13 @@ function AlignItemsPlayground() {
                         <Chip key={v} active={align === v} onClick={() => setAlign(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[align]}</p>
+                <PlaygroundDesc>{desc[align]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <AlignItemsContainer align={align} style={{ gap: "8px" }}>
-                    <FlexItem color={1} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "40px" }}>1</FlexItem>
-                    <FlexItem color={2} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "64px", fontSize: align === "baseline" ? "1.25rem" : undefined }}>2</FlexItem>
-                    <FlexItem color={3} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "24px" }}>3</FlexItem>
+                <AlignItemsContainer align={align}>
+                    <FlexItem color={1} size={align === "stretch" ? "auto" : "boxA"}>1</FlexItem>
+                    <FlexItem color={2} size={align === "stretch" ? "auto" : "boxB"} textLg={align === "baseline"}>2</FlexItem>
+                    <FlexItem color={3} size={align === "stretch" ? "auto" : "boxC"}>3</FlexItem>
                 </AlignItemsContainer>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`align-items: ${align};`}</PlaygroundWrap.codeline>
@@ -513,14 +631,14 @@ function AlignSelfPlayground() {
                         <Chip key={v} active={self === v} onClick={() => setSelf(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[self]}</p>
+                <PlaygroundDesc>{desc[self]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className="flex items-start gap-2 h-32 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white">
+                <SelfDemoRow>
                     <FlexItem color={2} size="md">A</FlexItem>
                     <AlignSelfItem self={self}>B ← self</AlignSelfItem>
                     <FlexItem color={3} size="md">C</FlexItem>
-                </div>
+                </SelfDemoRow>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`/* Container: align-items: flex-start */\n.item-b { align-self: ${self}; }`}</PlaygroundWrap.codeline>
         </PlaygroundWrap>
@@ -551,10 +669,10 @@ function AlignContentPlayground() {
                         <Chip key={v} active={content === v} onClick={() => setContent(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[content]}</p>
+                <PlaygroundDesc>{desc[content]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <AlignContentContainer content={content} style={{ gap: "8px", width: "240px" }}>
+                <AlignContentContainer content={content}>
                     {[1, 2, 3, 4, 5, 1, 2].map((n, i) => (
                         <FlexItem key={i} color={n as 1 | 2 | 3 | 4 | 5} size="md">{n}</FlexItem>
                     ))}
@@ -581,43 +699,42 @@ function GrowShrinkPlayground() {
                     <Chip active={mode === "grow"} onClick={() => setMode("grow")}>flex-grow (positive free space)</Chip>
                     <Chip active={mode === "shrink"} onClick={() => setMode("shrink")}>flex-shrink (negative free space)</Chip>
                 </ChipRow>
-                <div className="grid grid-cols-3 gap-4">
+                <SliderGrid>
                     {[
                         { label: "Item A (merah)", val: growA, set: setGrowA },
                         { label: "Item B (biru)", val: growB, set: setGrowB },
                         { label: "Item C (hijau)", val: growC, set: setGrowC },
                     ].map(({ label, val, set }) => (
-                        <div key={label} className="space-y-1">
-                            <div className="flex justify-between text-[10px]">
-                                <span className="font-semibold text-[color-mix(in_srgb,var(--foreground)_50%,transparent)]">{label}</span>
-                                <span className="font-mono">{val}</span>
-                            </div>
-                            <input type="range" min={0} max={5} value={val} onChange={e => set(+e.target.value)}
-                                className="w-full accent-[var(--accent)]" />
-                        </div>
+                        <SliderCol key={label}>
+                            <SliderRow>
+                                <SliderLabel>{label}</SliderLabel>
+                                <SliderVal>{val}</SliderVal>
+                            </SliderRow>
+                            <RangeInput type="range" min={0} max={5} value={val} onChange={e => set(+e.target.value)} />
+                        </SliderCol>
                     ))}
-                </div>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+                </SliderGrid>
+                <PlaygroundDesc>
                     {mode === "grow"
                         ? `Ratio A:B:C = ${growA}:${growB}:${growC} — free space dibagi dengan ratio ini. B mendapat porsi ${growA + growB + growC > 0 ? Math.round((growB / (growA + growB + growC)) * 100) : 0}% dari sisa ruang.`
                         : `Ratio shrink A:B:C = ${growA}:${growB}:${growC} — kalau tidak muat, item dengan nilai lebih tinggi menyusut lebih banyak.`}
-                </p>
+                </PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className="flex gap-0 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg bg-white overflow-hidden">
-                    <FlexRatioItem color={1} style={{ flexGrow: mode === "grow" ? growA : 1, flexShrink: mode === "shrink" ? growA : 1 }}>
+                <RatioTrack>
+                    <FlexRatioItem color={1} growValue={1} shrinkValue={1}>
                         <span>A</span>
-                        <span className="text-[9px] opacity-70">{mode}-{growA}</span>
+                        <MiniLabel>{mode}-{growA}</MiniLabel>
                     </FlexRatioItem>
-                    <FlexRatioItem color={2} style={{ flexGrow: mode === "grow" ? growB : 1, flexShrink: mode === "shrink" ? growB : 1 }}>
+                    <FlexRatioItem color={2} growValue={1} shrinkValue={1}>
                         <span>B</span>
-                        <span className="text-[9px] opacity-70">{mode}-{growB}</span>
+                        <MiniLabel>{mode}-{growB}</MiniLabel>
                     </FlexRatioItem>
-                    <FlexRatioItem color={3} style={{ flexGrow: mode === "grow" ? growC : 1, flexShrink: mode === "shrink" ? growC : 1 }}>
+                    <FlexRatioItem color={3} growValue={1} shrinkValue={1}>
                         <span>C</span>
-                        <span className="text-[9px] opacity-70">{mode}-{growC}</span>
+                        <MiniLabel>{mode}-{growC}</MiniLabel>
                     </FlexRatioItem>
-                </div>
+                </RatioTrack>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>
                 {`.a { flex-${mode}: ${growA}; } .b { flex-${mode}: ${growB}; } .c { flex-${mode}: ${growC}; }`}
@@ -652,18 +769,17 @@ function BasisPlayground() {
                         <Chip key={v} active={basis === v} onClick={() => setBasis(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[basis]}</p>
+                <PlaygroundDesc>{desc[basis]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className="flex flex-wrap gap-2 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-2 bg-white">
+                <BasisTrack>
                     {[1, 2, 3].map(n => (
-                        <FlexRatioItem key={n} color={n as 1 | 2 | 3}
-                            style={{ flexBasis: basisValue[basis], flexGrow: 1, minWidth: 0 }}>
+                        <FlexRatioItem key={n} color={3} basis={0}>
                             <span>{n}</span>
-                            <span className="text-[9px] opacity-70">basis: {basis}</span>
+                            <MiniLabel>basis: {basis}</MiniLabel>
                         </FlexRatioItem>
                     ))}
-                </div>
+                </BasisTrack>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`flex-basis: ${basisValue[basis]}; /* shorthand: flex: 1 1 ${basisValue[basis]} */`}</PlaygroundWrap.codeline>
         </PlaygroundWrap>
@@ -683,18 +799,18 @@ function OrderPlayground() {
                         <Chip key={v} active={orderB === v} onClick={() => setOrderB(v)}>order: {v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
+                <PlaygroundDesc>
                     Default semua item = order 0. Item dengan order lebih kecil muncul lebih dahulu.
                     DOM tetap A→B→C→D, tapi visual bisa berbeda.
-                </p>
+                </PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className="flex gap-2 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white">
+                <OrderTrack>
                     <OrderItem color={1} order={0}>A</OrderItem>
                     <OrderItem color={2} order={0}>B</OrderItem>
                     <OrderItem color={3} order={0}>C</OrderItem>
                     <OrderItem color={4} order={0}>D</OrderItem>
-                </div>
+                </OrderTrack>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`.item-b { order: ${orderB === "last" ? "9999 /* order-last */" : orderB}; } /* DOM: A B C D, visual: sesuai order */`}</PlaygroundWrap.codeline>
         </PlaygroundWrap>
@@ -707,10 +823,6 @@ type GapMode = "0" | "2" | "4" | "6" | "8" | "asymmetric"
 
 function GapPlayground() {
     const [gap, setGap] = useState<GapMode>("4")
-    const gapClass: Record<GapMode, string> = {
-        "0": "gap-0", "2": "gap-2", "4": "gap-4", "6": "gap-6", "8": "gap-8",
-        "asymmetric": "gap-x-8 gap-y-2",
-    }
     const gapDesc: Record<GapMode, string> = {
         "0": "Tidak ada gap", "2": "gap: 8px", "4": "gap: 16px",
         "6": "gap: 24px", "8": "gap: 32px",
@@ -725,14 +837,14 @@ function GapPlayground() {
                         <Chip key={v} active={gap === v} onClick={() => setGap(v)}>{v}</Chip>
                     ))}
                 </ChipRow>
-                <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{gapDesc[gap]}</p>
+                <PlaygroundDesc>{gapDesc[gap]}</PlaygroundDesc>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className={`flex flex-wrap border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white ${gapClass[gap]}`} style={{ width: "260px" }}>
+                <GapTrack gap={0}>
                     {[1, 2, 3, 4, 5].map(n => (
                         <FlexItem key={n} color={1} size="md">{n}</FlexItem>
                     ))}
-                </div>
+                </GapTrack>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>
                 {gap === "asymmetric"
