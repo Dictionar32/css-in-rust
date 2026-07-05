@@ -335,7 +335,7 @@ export const FakeOverlay = tw.div({
             false: "opacity-0 pointer-events-none",
         },
     },
-    defaultVariants: { show: "false" },
+    defaultVariants: { show: false },
 })
 
 export const FakeModal = tw.div({
@@ -380,7 +380,7 @@ export const AnchorTooltip = tw.div({
             false: "opacity-0 translate-y-0 pointer-events-none",
         },
     },
-    defaultVariants: { show: "false" },
+    defaultVariants: { show: false },
 })
 
 export const StickyTrapScroll = tw.div({
@@ -412,7 +412,7 @@ export const ErrorText = tw.p({
             false: "text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
         },
     },
-    defaultVariants: { error: "false" },
+    defaultVariants: { error: false },
 })
 
 export const StickyStatusText = tw.span({
@@ -423,5 +423,5 @@ export const StickyStatusText = tw.span({
             false: "text-emerald-600",
         },
     },
-    defaultVariants: { broken: "false" },
+    defaultVariants: { broken: false },
 })

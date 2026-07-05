@@ -65,5 +65,5 @@ export const ObserverBox = tw.div({
             false: "border-gray-200 bg-gray-50 text-gray-400",
         },
     },
-    defaultVariants: { visible: "false" },
+    defaultVariants: { visible: false },
 })

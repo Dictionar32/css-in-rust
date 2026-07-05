@@ -43,7 +43,7 @@ const TocItem = tw.a({
             false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 
 // ─── Content primitives ───────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ const Chip = tw.button({
             false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 
@@ -154,11 +154,11 @@ const FlexItem = tw.div({
     base: "rounded-lg flex items-center justify-center text-[11px] font-bold text-white shrink-0 transition-all duration-300",
     variants: {
         color: {
-            "1": "bg-rose-400",
-            "2": "bg-blue-400",
-            "3": "bg-emerald-400",
-            "4": "bg-amber-400",
-            "5": "bg-violet-400",
+            1: "bg-rose-400",
+            2: "bg-blue-400",
+            3: "bg-emerald-400",
+            4: "bg-amber-400",
+            5: "bg-violet-400",
         },
         size: {
             sm: "w-10 h-10",
@@ -167,7 +167,7 @@ const FlexItem = tw.div({
             auto: "px-4 py-3",
         },
     },
-    defaultVariants: { color: "1", size: "md" },
+    defaultVariants: { color: 1, size: "md" },
 })
 
 // flex-direction playground
@@ -267,12 +267,12 @@ const FlexRatioItem = tw.div({
     base: "rounded-lg flex flex-col items-center justify-center text-[10px] font-mono text-white py-3 px-2 transition-all duration-300 min-w-0",
     variants: {
         color: {
-            "1": "bg-rose-400",
-            "2": "bg-blue-400",
-            "3": "bg-emerald-400",
+            1: "bg-rose-400",
+            2: "bg-blue-400",
+            3: "bg-emerald-400",
         },
     },
-    defaultVariants: { color: "1" },
+    defaultVariants: { color: 1 },
 })
 
 // order playground item
@@ -280,21 +280,20 @@ const OrderItem = tw.div({
     base: "w-12 h-12 rounded-lg flex items-center justify-center text-[11px] font-bold text-white transition-all duration-300",
     variants: {
         color: {
-            "1": "bg-rose-400",
-            "2": "bg-blue-400",
-            "3": "bg-emerald-400",
-            "4": "bg-amber-400",
+            1: "bg-rose-400",
+            2: "bg-blue-400",
+            3: "bg-emerald-400",
+            4: "bg-amber-400",
         },
         order: {
-            "-1": "-order-1",
-            "0": "order-none",
-            "1": "order-1",
-            "2": "order-2",
-            "3": "order-3",
-            "last": "order-last",
+            0: "-order-1",
+            1: "order-none",
+            2: "order-2",
+            3: "order-3",
+            last: "order-last",
         },
     },
-    defaultVariants: { color: "1", order: "0" },
+    defaultVariants: { color: 1, order: 0 },
 })
 
 // ─── TOC ─────────────────────────────────────────────────────────────────────
@@ -374,7 +373,7 @@ function DirectionPlayground() {
             <PlaygroundWrap.canvas>
                 <DirectionContainer dir={dir}>
                     {["1", "2", "3", "4"].map(n => (
-                        <FlexItem key={n} color={n as "1" | "2" | "3" | "4"} size="md">{n}</FlexItem>
+                        <FlexItem key={n} color={1} size="md">{n}</FlexItem>
                     ))}
                 </DirectionContainer>
             </PlaygroundWrap.canvas>
@@ -408,7 +407,7 @@ function WrapPlayground() {
             <PlaygroundWrap.canvas>
                 <WrapContainer wrap={wrap} style={{ width: "240px" }}>
                     {["1", "2", "3", "4", "5"].map(n => (
-                        <FlexItem key={n} color={n as "1" | "2" | "3" | "4" | "5"} size="md">{n}</FlexItem>
+                        <FlexItem key={n} color={1} size="md">{n}</FlexItem>
                     ))}
                 </WrapContainer>
             </PlaygroundWrap.canvas>
@@ -445,8 +444,8 @@ function JustifyPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <JustifyContainer justify={justify} style={{ gap: "8px" }}>
-                    {["1", "2", "3"].map(n => (
-                        <FlexItem key={n} color={n as "1" | "2" | "3"} size="md">{n}</FlexItem>
+                    {[1, 2, 3].map(n => (
+                        <FlexItem key={n} color={n as 1 | 2 | 3} size="md">{n}</FlexItem>
                     ))}
                 </JustifyContainer>
             </PlaygroundWrap.canvas>
@@ -481,9 +480,9 @@ function AlignItemsPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <AlignItemsContainer align={align} style={{ gap: "8px" }}>
-                    <FlexItem color="1" size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "40px" }}>1</FlexItem>
-                    <FlexItem color="2" size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "64px", fontSize: align === "baseline" ? "1.25rem" : undefined }}>2</FlexItem>
-                    <FlexItem color="3" size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "24px" }}>3</FlexItem>
+                    <FlexItem color={1} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "40px" }}>1</FlexItem>
+                    <FlexItem color={2} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "64px", fontSize: align === "baseline" ? "1.25rem" : undefined }}>2</FlexItem>
+                    <FlexItem color={3} size={align === "stretch" ? "auto" : "md"} style={{ height: align === "stretch" ? undefined : "24px" }}>3</FlexItem>
                 </AlignItemsContainer>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`align-items: ${align};`}</PlaygroundWrap.codeline>
@@ -518,9 +517,9 @@ function AlignSelfPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="flex items-start gap-2 h-32 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white">
-                    <FlexItem color="2" size="md">A</FlexItem>
+                    <FlexItem color={2} size="md">A</FlexItem>
                     <AlignSelfItem self={self}>B ← self</AlignSelfItem>
-                    <FlexItem color="3" size="md">C</FlexItem>
+                    <FlexItem color={3} size="md">C</FlexItem>
                 </div>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`/* Container: align-items: flex-start */\n.item-b { align-self: ${self}; }`}</PlaygroundWrap.codeline>
@@ -556,8 +555,8 @@ function AlignContentPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <AlignContentContainer content={content} style={{ gap: "8px", width: "240px" }}>
-                    {["1", "2", "3", "4", "5", "1", "2"].map((n, i) => (
-                        <FlexItem key={i} color={n as "1" | "2" | "3" | "4" | "5"} size="md">{n}</FlexItem>
+                    {[1, 2, 3, 4, 5, 1, 2].map((n, i) => (
+                        <FlexItem key={i} color={n as 1 | 2 | 3 | 4 | 5} size="md">{n}</FlexItem>
                     ))}
                 </AlignContentContainer>
             </PlaygroundWrap.canvas>
@@ -606,15 +605,15 @@ function GrowShrinkPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="flex gap-0 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg bg-white overflow-hidden">
-                    <FlexRatioItem color="1" style={{ flexGrow: mode === "grow" ? growA : 1, flexShrink: mode === "shrink" ? growA : 1 }}>
+                    <FlexRatioItem color={1} style={{ flexGrow: mode === "grow" ? growA : 1, flexShrink: mode === "shrink" ? growA : 1 }}>
                         <span>A</span>
                         <span className="text-[9px] opacity-70">{mode}-{growA}</span>
                     </FlexRatioItem>
-                    <FlexRatioItem color="2" style={{ flexGrow: mode === "grow" ? growB : 1, flexShrink: mode === "shrink" ? growB : 1 }}>
+                    <FlexRatioItem color={2} style={{ flexGrow: mode === "grow" ? growB : 1, flexShrink: mode === "shrink" ? growB : 1 }}>
                         <span>B</span>
                         <span className="text-[9px] opacity-70">{mode}-{growB}</span>
                     </FlexRatioItem>
-                    <FlexRatioItem color="3" style={{ flexGrow: mode === "grow" ? growC : 1, flexShrink: mode === "shrink" ? growC : 1 }}>
+                    <FlexRatioItem color={3} style={{ flexGrow: mode === "grow" ? growC : 1, flexShrink: mode === "shrink" ? growC : 1 }}>
                         <span>C</span>
                         <span className="text-[9px] opacity-70">{mode}-{growC}</span>
                     </FlexRatioItem>
@@ -657,8 +656,8 @@ function BasisPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="flex flex-wrap gap-2 w-full border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-2 bg-white">
-                    {["1", "2", "3"].map(n => (
-                        <FlexRatioItem key={n} color={n as "1" | "2" | "3"}
+                    {[1, 2, 3].map(n => (
+                        <FlexRatioItem key={n} color={n as 1 | 2 | 3}
                             style={{ flexBasis: basisValue[basis], flexGrow: 1, minWidth: 0 }}>
                             <span>{n}</span>
                             <span className="text-[9px] opacity-70">basis: {basis}</span>
@@ -691,10 +690,10 @@ function OrderPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="flex gap-2 border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white">
-                    <OrderItem color="1" order="0">A</OrderItem>
-                    <OrderItem color="2" order={orderB}>B</OrderItem>
-                    <OrderItem color="3" order="0">C</OrderItem>
-                    <OrderItem color="4" order="0">D</OrderItem>
+                    <OrderItem color={1} order={0}>A</OrderItem>
+                    <OrderItem color={2} order={0}>B</OrderItem>
+                    <OrderItem color={3} order={0}>C</OrderItem>
+                    <OrderItem color={4} order={0}>D</OrderItem>
                 </div>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`.item-b { order: ${orderB === "last" ? "9999 /* order-last */" : orderB}; } /* DOM: A B C D, visual: sesuai order */`}</PlaygroundWrap.codeline>
@@ -730,8 +729,8 @@ function GapPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className={`flex flex-wrap border-2 border-dashed border-[color-mix(in_srgb,var(--foreground)_15%,transparent)] rounded-lg p-3 bg-white ${gapClass[gap]}`} style={{ width: "260px" }}>
-                    {["1", "2", "3", "4", "5"].map(n => (
-                        <FlexItem key={n} color={n as "1" | "2" | "3" | "4" | "5"} size="md">{n}</FlexItem>
+                    {[1, 2, 3, 4, 5].map(n => (
+                        <FlexItem key={n} color={1} size="md">{n}</FlexItem>
                     ))}
                 </div>
             </PlaygroundWrap.canvas>
@@ -1289,19 +1288,19 @@ const AppFooter = tw.footer({ base: "shrink-0 h-12 border-t flex items-center px
                                 <div key={label}>
                                     <p className="text-[10px] text-gray-400 font-mono mb-1">{label}</p>
                                     <div className={className}>
-                                        <FlexItem color="1" size="md">A</FlexItem>
-                                        <FlexItem color="2" size="md">B</FlexItem>
-                                        <FlexItem color="3" size="md" style={{ marginLeft: "auto" }}>C ← ml-auto</FlexItem>
-                                        <FlexItem color="4" size="md">D</FlexItem>
+                                        <FlexItem color={1} size="md">A</FlexItem>
+                                        <FlexItem color={2} size="md">B</FlexItem>
+                                        <FlexItem color={3} size="md" style={{ marginLeft: "auto" }}>C ← ml-auto</FlexItem>
+                                        <FlexItem color={4} size="md">D</FlexItem>
                                     </div>
                                 </div>
                             ))}
                             <div>
                                 <p className="text-[10px] text-gray-400 font-mono mb-1">mx-auto pada satu item → center</p>
                                 <div className="flex gap-2 border-2 border-dashed border-gray-300 rounded-lg p-3 bg-white">
-                                    <FlexItem color="1" size="md">A</FlexItem>
-                                    <FlexItem color="2" size="md" style={{ marginLeft: "auto", marginRight: "auto" }}>B ← mx-auto</FlexItem>
-                                    <FlexItem color="3" size="md">C</FlexItem>
+                                    <FlexItem color={1} size="md">A</FlexItem>
+                                    <FlexItem color={2} size="md" style={{ marginLeft: "auto", marginRight: "auto" }}>B ← mx-auto</FlexItem>
+                                    <FlexItem color={3} size="md">C</FlexItem>
                                 </div>
                             </div>
                         </div>
@@ -1388,10 +1387,10 @@ const Text = tw.p({ base: "truncate" })              // sekarang bekerja!
                         </P>
                         <div className="rounded-xl border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] p-4 my-5 bg-[var(--surface)]">
                             <div className="flex gap-2 relative h-20 border-2 border-dashed border-gray-300 rounded-lg bg-white p-2">
-                                <FlexItem color="1" size="md">A</FlexItem>
-                                <FlexItem color="2" size="md">B</FlexItem>
+                                <FlexItem color={1} size="md">A</FlexItem>
+                                <FlexItem color={2} size="md">B</FlexItem>
                                 <div className="absolute top-2 right-2 w-10 h-10 rounded-lg bg-rose-500 flex items-center justify-center text-white text-[10px] font-bold shadow-lg">abs</div>
-                                <FlexItem color="3" size="md">C</FlexItem>
+                                <FlexItem color={3} size="md">C</FlexItem>
                             </div>
                             <p className="text-[10px] text-gray-400 font-mono mt-2">Item "abs" (merah kanan) tidak mempengaruhi A, B, C — dia absolute</p>
                         </div>
@@ -1587,7 +1586,7 @@ const HStack = tw.div({
     align: { start: "items-start", center: "items-center", end: "items-end" },
     wrap:  { true: "flex-wrap", false: "" },
   },
-  defaultVariants: { gap: "md", align: "center", wrap: "false" },
+  defaultVariants: { gap: "md", align: "center", wrap: false },
 })
 
 // Spacer — push items auseinander

@@ -66,7 +66,7 @@ const TocItem = tw.a({
       false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,7 +187,7 @@ const Chip = tw.button({
       false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
 
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
@@ -225,7 +225,7 @@ const PositionGhost = tw.div({
       false: "opacity-0",
     },
   },
-  defaultVariants: { show: "false" },
+  defaultVariants: { show: false },
 })
 
 const PositionBox = tw.div({
@@ -389,12 +389,12 @@ const DirectionItem = tw.div({
   base: "px-3 py-2 rounded text-[11px] font-mono",
   variants: {
     n: {
-      "1": "bg-rose-100 border border-rose-300 text-rose-800",
-      "2": "bg-amber-100 border border-amber-300 text-amber-800",
-      "3": "bg-emerald-100 border border-emerald-300 text-emerald-800",
+      1: "bg-rose-100 border border-rose-300 text-rose-800",
+      2: "bg-amber-100 border border-amber-300 text-amber-800",
+      3: "bg-emerald-100 border border-emerald-300 text-emerald-800",
     },
   },
-  defaultVariants: { n: "1" },
+  defaultVariants: { n: 1 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -520,7 +520,7 @@ function PositionPlayground() {
 
       <PlaygroundWrap.canvas>
         <PositionParent>
-          <PositionGhost show={mode === "absolute" ? "true" : "false"} />
+          <PositionGhost show={mode === "absolute"} />
           <PositionBox mode={mode}>box ({mode})</PositionBox>
         </PositionParent>
       </PlaygroundWrap.canvas>
@@ -583,12 +583,12 @@ const ContentsChild = tw.div({
   base: "px-3 py-2 rounded-lg text-[11px] font-mono text-white flex items-center justify-center",
   variants: {
     n: {
-      "1": "bg-rose-400",
-      "2": "bg-blue-400",
-      "3": "bg-emerald-400",
+      1: "bg-rose-400",
+      2: "bg-blue-400",
+      3: "bg-emerald-400",
     },
   },
-  defaultVariants: { n: "1" },
+  defaultVariants: { n: 1 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -599,12 +599,12 @@ const StrutLine = tw.div({
   base: "bg-white border border-gray-200 rounded-lg p-3 relative flex items-baseline gap-1 transition-all duration-200",
   variants: {
     lh: {
-      "1": "leading-none",
-      "1.5": "leading-normal",
-      "2": "leading-loose",
+      1: "leading-none",
+      1.5: "leading-normal",
+      2: "leading-loose",
     },
   },
-  defaultVariants: { lh: "1.5" },
+  defaultVariants: { lh: 1.5 },
 })
 
 const StrutSpan = tw.span({
@@ -970,9 +970,9 @@ function DirectionPlayground() {
             {dir === "ltr" ? "urutan visual: 1 → 2 → 3 (kiri ke kanan)" : "urutan visual: 3 ← 2 ← 1 (kanan ke kiri)"}
           </p>
           <DirectionRow>
-            <DirectionItem n="1">Item 1</DirectionItem>
-            <DirectionItem n="2">Item 2</DirectionItem>
-            <DirectionItem n="3">Item 3</DirectionItem>
+            <DirectionItem n={1}>Item 1</DirectionItem>
+            <DirectionItem n={2}>Item 2</DirectionItem>
+            <DirectionItem n={3}>Item 3</DirectionItem>
           </DirectionRow>
         </div>
       </PlaygroundWrap.canvas>
@@ -1235,12 +1235,12 @@ function DisplayContentsPlayground() {
 
       <PlaygroundWrap.canvas className="flex-col items-stretch">
         <div className="flex gap-2 items-stretch bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] rounded-lg p-3 border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)]">
-          <ContentsChild n="1">Item A</ContentsChild>
+          <ContentsChild n={1}>Item A</ContentsChild>
           <ContentsWrapper mode={mode}>
-            <ContentsChild n="2">Item B (dalam wrapper)</ContentsChild>
-            <ContentsChild n="3">Item C (dalam wrapper)</ContentsChild>
+            <ContentsChild n={2}>Item B (dalam wrapper)</ContentsChild>
+            <ContentsChild n={3}>Item C (dalam wrapper)</ContentsChild>
           </ContentsWrapper>
-          <ContentsChild n="1">Item D</ContentsChild>
+          <ContentsChild n={1}>Item D</ContentsChild>
         </div>
         <p className="text-[10px] font-mono text-center mt-2 text-[color-mix(in_srgb,var(--foreground)_45%,transparent)]">
           {mode === "block"
@@ -1288,14 +1288,14 @@ function LineHeightStrutPlayground() {
       <PlaygroundWrap.canvas className="flex-col items-stretch gap-3">
         <div>
           <p className="text-[10px] text-gray-400 mb-1 font-mono">Teks kecil saja — tinggi line box = strut</p>
-          <StrutLine lh={lh}>
+          <StrutLine lh={1}>
             <span className="text-xs text-gray-600">Teks normal xs</span>
             <StrutSpan size="sm">inline-sm</StrutSpan>
           </StrutLine>
         </div>
         <div>
           <p className="text-[10px] text-gray-400 mb-1 font-mono">Elemen besar ikut → mendorong tinggi line box</p>
-          <StrutLine lh={lh}>
+          <StrutLine lh={1}>
             <span className="text-xs text-gray-600">Teks xs</span>
             <StrutSpan size="lg">BIG</StrutSpan>
             <span className="text-xs text-gray-600">xs lagi</span>

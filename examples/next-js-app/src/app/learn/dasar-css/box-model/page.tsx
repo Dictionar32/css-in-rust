@@ -70,7 +70,7 @@ const TocItem = tw.a({
       3: "pl-3",
     },
   },
-  defaultVariants: { active: "false", depth: 2 },
+  defaultVariants: { active: false, depth: 2 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -345,7 +345,7 @@ const Chip = tw.button({
       false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
 
 const ChipRow = tw.div({

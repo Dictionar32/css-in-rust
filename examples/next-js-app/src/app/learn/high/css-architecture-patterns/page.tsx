@@ -492,7 +492,7 @@ const NavItem = tw.a({
       false: "text-[var(--color-text-muted)] hover:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
             `}</Code>
           </Section>

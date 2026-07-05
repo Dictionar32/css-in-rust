@@ -352,7 +352,7 @@ export type TwSubComponentAccessor<
   Tag extends HtmlTagName = "span",
   ExtraProps extends Record<string, unknown> = Record<never, never>
 > =
-  React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref"> & ExtraProps & {
+  React.FC<Omit<React.ComponentPropsWithoutRef<Tag>, "ref" | keyof ExtraProps> & ExtraProps & {
     children?: React.ReactNode
     className?: string
   }>
@@ -425,7 +425,7 @@ export type TwStyledComponent<
   Tag extends HtmlTagName = HtmlTagName,
   SubVariantsMap extends Record<string, Record<string, unknown>> = Record<string, never>
 > = {
-  (props: React.ComponentPropsWithoutRef<Tag> & StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
+  (props: Omit<React.ComponentPropsWithoutRef<Tag>, keyof InferVariantProps<Config> | keyof InferSizeProps<Config> | keyof InferStatesProps<Config>> & StyledComponentProps & InferVariantProps<Config> & InferSizeProps<Config> & InferStatesProps<Config>): React.ReactElement | null
   displayName?: string
   extend: {
     (strings: TemplateStringsArray, ...exprs: unknown[]): TwStyledComponent<Config, S, TagMap, Tag, SubVariantsMap>

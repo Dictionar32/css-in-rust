@@ -626,7 +626,7 @@ function Progress({ value }: { value: number }) {
 const AnimatedSection = tw.section({
   base: "transition-all duration-700 opacity-0 translate-y-4",
   variants: { visible: { true: "opacity-100 translate-y-0" } },
-  defaultVariants: { visible: "false" },
+  defaultVariants: { visible: false },
 })
 
 // ✅ matchMedia hook dengan tw component

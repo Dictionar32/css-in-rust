@@ -640,7 +640,7 @@ const Body = tw.p({
       false: "",
     },
   },
-  defaultVariants: { size: "base", balance: "false" },
+  defaultVariants: { size: "base", balance: false },
 })
 
 /* Label komponen dengan OpenType features */

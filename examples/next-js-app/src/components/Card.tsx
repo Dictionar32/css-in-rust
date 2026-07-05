@@ -32,7 +32,7 @@ export const Card = tw.article({
     },
   },
   defaultVariants: {
-    hoverable: "false",
+    hoverable: false,
     intent: "default",
   },
   sub: {

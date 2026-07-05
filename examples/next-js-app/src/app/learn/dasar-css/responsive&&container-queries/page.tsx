@@ -36,7 +36,7 @@ const TocItem = tw.a({
             false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 
 // ─── Content primitives ────────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ const Chip = tw.button({
             false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 

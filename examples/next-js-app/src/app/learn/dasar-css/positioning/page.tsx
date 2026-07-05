@@ -69,7 +69,7 @@ const TocItem = tw.a({
       false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ const Chip = tw.button({
       false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
     },
   },
-  defaultVariants: { active: "false" },
+  defaultVariants: { active: false },
 })
 
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
@@ -283,13 +283,13 @@ const StackBox = tw.div({
       c: "bg-amber-400 top-20 left-28",
     },
     z: {
-      "0": "z-0",
-      "10": "z-10",
-      "20": "z-20",
-      "30": "z-30",
+      0: "z-0",
+      10: "z-10",
+      20: "z-20",
+      30: "z-30",
     },
   },
-  defaultVariants: { layer: "a", z: "0" },
+  defaultVariants: { layer: "a", z: 0 },
 })
 
 // Opacity-context demo — z-index trap
@@ -351,7 +351,7 @@ const FakeOverlay = tw.div({
       false: "opacity-0 pointer-events-none",
     },
   },
-  defaultVariants: { show: "false" },
+  defaultVariants: { show: false },
 })
 
 const FakeModal = tw.div({
@@ -374,14 +374,14 @@ const SnapItem = tw.div({
   base: "shrink-0 w-32 h-full rounded-lg flex items-center justify-center text-white font-bold snap-center",
   variants: {
     color: {
-      "0": "bg-rose-400",
-      "1": "bg-blue-400",
-      "2": "bg-emerald-400",
-      "3": "bg-amber-400",
-      "4": "bg-violet-400",
+      0: "bg-rose-400",
+      1: "bg-blue-400",
+      2: "bg-emerald-400",
+      3: "bg-amber-400",
+      4: "bg-violet-400",
     },
   },
-  defaultVariants: { color: "0" },
+  defaultVariants: { color: 0 },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -404,7 +404,7 @@ const AnchorTooltip = tw.div({
       false: "opacity-0 translate-y-0 pointer-events-none",
     },
   },
-  defaultVariants: { show: "false" },
+  defaultVariants: { show: false },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -483,7 +483,7 @@ const ErrorText = tw.p({
       false: "text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]",
     },
   },
-  defaultVariants: { error: "false" },
+  defaultVariants: { error: false },
 })
 
 const StickyStatusText = tw.span({
@@ -494,7 +494,7 @@ const StickyStatusText = tw.span({
       false: "text-emerald-600",
     },
   },
-  defaultVariants: { broken: "false" },
+  defaultVariants: { broken: false },
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -712,9 +712,9 @@ function ZIndexPlayground() {
 
       <PlaygroundWrap.canvas>
         <StackCanvas>
-          <StackBox layer="a" z={zA}>A</StackBox>
-          <StackBox layer="b" z={zB}>B</StackBox>
-          <StackBox layer="c" z={zC}>C</StackBox>
+          <StackBox layer="a" z={0}>A</StackBox>
+          <StackBox layer="b" z={10}>B</StackBox>
+          <StackBox layer="c" z={20}>C</StackBox>
         </StackCanvas>
       </PlaygroundWrap.canvas>
 
@@ -780,7 +780,7 @@ function ModalPatternPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Pattern: Modal/Overlay — kombinasi fixed + inset-0 + z-index</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={show ? "false" : "true"} onClick={() => setShow(true)}>Buka modal</Chip>
+          <Chip active={show} onClick={() => setShow(true)}>Buka modal</Chip>
           <Chip active={show} onClick={() => setShow(false)}>Tutup modal</Chip>
         </ChipRow>
       </PlaygroundWrap.controls>
@@ -788,7 +788,7 @@ function ModalPatternPlayground() {
       <PlaygroundWrap.canvas>
         <FakeViewport>
           <div className="p-3 text-[10px] text-gray-400">simulasi "viewport" halaman</div>
-          <FakeOverlay show={show ? "true" : "false"}>
+          <FakeOverlay show={show}>
             <FakeModal>
               <FakeModal.title>Modal Dialog</FakeModal.title>
               <FakeModal.desc>fixed inset-0 + flex center + overlay</FakeModal.desc>
@@ -821,8 +821,8 @@ function ScrollSnapPlayground() {
 
       <PlaygroundWrap.canvas>
         <SnapContainer>
-          {(["0", "1", "2", "3", "4"] as const).map((c, i) => (
-            <SnapItem key={c} color={c}>Slide {i + 1}</SnapItem>
+          {([0, 1, 2, 3, 4]).map((c, i) => (
+            <SnapItem key={c} color={0}>Slide {i + 1}</SnapItem>
           ))}
         </SnapContainer>
       </PlaygroundWrap.canvas>
@@ -843,7 +843,7 @@ function AnchorPositioningPlayground() {
       <PlaygroundWrap.controls>
         <PlaygroundWrap.label>🎛 Ilustrasi CSS Anchor Positioning (fitur baru, dukungan browser terbatas)</PlaygroundWrap.label>
         <ChipRow>
-          <Chip active={show ? "false" : "true"} onClick={() => setShow(true)}>Tampilkan tooltip</Chip>
+          <Chip active={show } onClick={() => setShow(true)}>Tampilkan tooltip</Chip>
           <Chip active={show} onClick={() => setShow(false)}>Sembunyikan</Chip>
         </ChipRow>
         <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">
@@ -861,7 +861,7 @@ function AnchorPositioningPlayground() {
                 These dynamic positioning properties (bottom, left, transform, marginBottom) are specific
                 to demonstrating the CSS Anchor Positioning API and cannot be abstracted to tw() variants
                 without losing clarity about what CSS properties are being illustrated. */}
-            <AnchorTooltip show={show ? "true" : "false"} style={{ bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: 8 }}>
+            <AnchorTooltip show={show} style={{ bottom: "100%", left: "50%", transform: "translateX(-50%)", marginBottom: 8 }}>
               Tooltip "ter-anchor"
             </AnchorTooltip>
           </RelativeContainer>
@@ -907,7 +907,7 @@ function StickyOverflowTrapPlayground() {
         {/* ✅ EXCEPTION: ternary className used here to show error state (text-red when overflow:hidden breaks sticky)
             This demonstrates the broken behavior vs working behavior and needs conditional styling based on
             the playground state. StatusText component doesn't support this specific use case with template literal. */}
-        <ErrorText error={overflow === "hidden" ? "true" : "false"}>
+        <ErrorText error={overflow === "hidden"}>
           {descriptions[overflow]}
         </ErrorText>
       </PlaygroundWrap.controls>
@@ -1470,7 +1470,7 @@ const Slide = tw.div({
               ].map(row => (
                 <div key={row.overflow} className="grid grid-cols-3 gap-2 p-3 border-b border-[color-mix(in_srgb,var(--foreground)_6%,transparent)] last:border-0 text-xs items-center">
                   <IC>{row.overflow}</IC>
-                  <StickyStatusText broken={row.sticky.startsWith("❌") ? "true" : "false"}>{row.sticky}</StickyStatusText>
+                  <StickyStatusText broken={row.sticky.startsWith("❌")}>{row.sticky}</StickyStatusText>
                   <span className="text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{row.note}</span>
                 </div>
               ))}

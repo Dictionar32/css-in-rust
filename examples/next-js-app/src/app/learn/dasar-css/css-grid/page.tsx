@@ -36,7 +36,7 @@ const TocItem = tw.a({
             false: "text-[color-mix(in_srgb,var(--foreground)_45%,transparent)] hover:text-[var(--foreground)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 
 // ─── Content primitives ───────────────────────────────────────────────────────
@@ -122,7 +122,7 @@ const Chip = tw.button({
             false: "border-[color-mix(in_srgb,var(--foreground)_12%,transparent)] text-[color-mix(in_srgb,var(--foreground)_55%,transparent)] hover:border-[var(--accent)] hover:text-[var(--accent)]",
         },
     },
-    defaultVariants: { active: "false" },
+    defaultVariants: { active: false },
 })
 const ChipRow = tw.div({ base: "flex flex-wrap gap-1.5" })
 
@@ -132,14 +132,14 @@ const GCell = tw.div({
     base: "rounded-lg flex items-center justify-center text-[11px] font-bold text-white transition-all duration-300 p-2",
     variants: {
         color: {
-            "1": "bg-rose-400", "2": "bg-blue-400",
-            "3": "bg-emerald-400", "4": "bg-amber-400",
-            "5": "bg-violet-400", "6": "bg-pink-400",
-            "7": "bg-cyan-400", "8": "bg-orange-400",
+            1: "bg-rose-400", 2: "bg-blue-400",
+            3: "bg-emerald-400", 4: "bg-amber-400",
+            5: "bg-violet-400", 6: "bg-pink-400",
+            7: "bg-cyan-400", 8: "bg-orange-400",
             accent: "bg-[var(--accent)]",
         },
     },
-    defaultVariants: { color: "1" },
+    defaultVariants: { color: 1 },
 })
 
 // ─── TOC ──────────────────────────────────────────────────────────────────────
@@ -226,10 +226,10 @@ function ColsPlayground() {
                 <p className="text-xs text-[color-mix(in_srgb,var(--foreground)_55%,transparent)]">{desc[mode]}</p>
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
-                <div className={`grid gap-2 ${gridClass[mode]}`}>
-                    {["1", "2", "3", "4", "5", "6"].map(n => (
-                        <GCell key={n} color={n as "1" | "2" | "3" | "4" | "5" | "6"}>{n}</GCell>
-                    ))}
+                <div className={`grid gap-2 ${gridClass[mode]}`}>     
+                     <GCell color="accent">1</GCell>
+                    <GCell color="accent">2</GCell>
+                    <GCell color="accent">3</GCell>
                 </div>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>
@@ -265,12 +265,9 @@ function FrPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="grid gap-2" style={{ gridTemplateColumns: cols }}>
-                    {cols.split(" ").map((c, i) => (
-                        <GCell key={i} color={String(i + 1) as "1" | "2" | "3" | "4" | "5"}>
-                            <span>{String(i + 1)}</span>
-                            <span className="text-[9px] opacity-75">{c}</span>
-                        </GCell>
-                    ))}
+                    <GCell color={1}>1</GCell>
+                    <GCell color={2}>2</GCell>
+                    <GCell color={3}>3</GCell>
                 </div>
             </PlaygroundWrap.canvas>
             <PlaygroundWrap.codeline>{`grid-template-columns: ${cols};`}</PlaygroundWrap.codeline>
@@ -311,8 +308,8 @@ function RepeatPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="grid gap-2" style={{ gridTemplateColumns: gridStyle[mode] }}>
-                    {["1", "2", "3"].map(n => (
-                        <GCell key={n} color={n as "1" | "2" | "3"}>{n}</GCell>
+                    {[1, 2, 3].map(n => (
+                        <GCell key={n} color={1}>{n}</GCell>
                     ))}
                 </div>
             </PlaygroundWrap.canvas>
@@ -347,14 +344,14 @@ function PlacementPlayground() {
             </PlaygroundWrap.controls>
             <PlaygroundWrap.canvas>
                 <div className="grid grid-cols-3 gap-2">
-                    <GCell color="1" style={{
+                    <GCell color={1} style={{
                         gridColumn: mode === "col-span" ? "span 2" : mode === "both-span" ? "span 2" : mode === "specific-line" ? "2 / 4" : undefined,
                         gridRow: mode === "row-span" ? "span 2" : mode === "both-span" ? "span 2" : undefined,
                     }}>
                         {mode === "normal" ? "1" : mode === "col-span" ? "1 (col-span 2)" : mode === "row-span" ? "1 (row-span 2)" : mode === "both-span" ? "1 (2×2)" : "1 (col 2→4)"}
                     </GCell>
                     {["2", "3", "4", "5", "6", "7"].map(n => (
-                        <GCell key={n} color={n as "2" | "3" | "4" | "5" | "6" | "7"}>{n}</GCell>
+                        <GCell key={n} color={1}>{n}</GCell>
                     ))}
                 </div>
             </PlaygroundWrap.canvas>
@@ -471,7 +468,7 @@ function DensePlayground() {
                         { n: "5", span: false },
                         { n: "6", span: false },
                     ].map(({ n, span }, i) => (
-                        <GCell key={n} color={String(i % 6 + 1) as "1" | "2" | "3" | "4" | "5" | "6"}
+                        <GCell  color={1}
                             style={{ gridColumn: span ? "span 2" : undefined }}>
                             {n}
                         </GCell>
@@ -537,7 +534,7 @@ function AlignmentPlayground() {
                 <div className="grid grid-cols-3 gap-2 h-40" style={containerStyle[prop]}>
                     {["1", "2", "3", "4", "5", "6"].map((n, i) => (
                         <div key={n} className="bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] rounded border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] flex items-center justify-center">
-                            <GCell color={String(i + 1) as "1" | "2" | "3" | "4" | "5" | "6"}
+                            <GCell color={1}
                                 style={i === 0 ? item1Style[prop] : {}}>
                                 {n}{i === 0 && (prop === "justify-self" || prop === "align-self") ? "←self" : ""}
                             </GCell>
@@ -900,7 +897,7 @@ export default function CssGridPage() {
                                 <div className="col-start-2 col-end-4 row-start-1 row-end-2 bg-blue-400 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ zIndex: 1 }}>
                                     Item B (col 2-3, row 1) — overlap
                                 </div>
-                                <GCell color="3" className="col-start-3 row-start-2">C</GCell>
+                                <GCell color={1} className="col-start-3 row-start-2">C</GCell>
                             </div>
                         </div>
                         <Code file="overlap.css">{`
